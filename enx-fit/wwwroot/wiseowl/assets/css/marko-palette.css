@@ -1,0 +1,199 @@
+/* WiseOwl recolored with the Marko palette while preserving the original WiseOwl layout. */
+body.wiseowl-marko-palette {
+  --marko-primary: #D1D1D1;
+  --marko-secondary: #040404;
+  --marko-text: #8B8B8B;
+  --marko-accent: #C82AEF;
+  --marko-accent-soft: rgba(200, 42, 239, 0.18);
+  --marko-panel: #0E0E0E;
+  --marko-panel-2: #1F1F1F;
+  --marko-white: #FFFFFF;
+  --marko-star: #EFBC2A;
+  --marko-error: #e63946;
+  background-color: var(--marko-secondary) !important;
+  color: var(--marko-primary) !important;
+}
+
+body.wiseowl-marko-palette .wrapper,
+body.wiseowl-marko-palette .content-wrapper,
+body.wiseowl-marko-palette .main-wrapper,
+body.wiseowl-marko-palette .page-content,
+body.wiseowl-marko-palette .body-bg,
+body.wiseowl-marko-palette .main-slider,
+body.wiseowl-marko-palette section,
+body.wiseowl-marko-palette .footer {
+  background-color: var(--marko-secondary) !important;
+  color: var(--marko-primary) !important;
+}
+
+body.wiseowl-marko-palette .navbar,
+body.wiseowl-marko-palette .site-sidebar,
+body.wiseowl-marko-palette .right-sidebar,
+body.wiseowl-marko-palette .sidebar,
+body.wiseowl-marko-palette .card,
+body.wiseowl-marko-palette .card-header,
+body.wiseowl-marko-palette .card-footer,
+body.wiseowl-marko-palette .widget-holder,
+body.wiseowl-marko-palette .widget-bg,
+body.wiseowl-marko-palette .dropdown-menu,
+body.wiseowl-marko-palette .modal-content,
+body.wiseowl-marko-palette .list-group-item,
+body.wiseowl-marko-palette .mail-sidebar,
+body.wiseowl-marko-palette .mail-list,
+body.wiseowl-marko-palette .chat-panel,
+body.wiseowl-marko-palette .invoice-wrapper,
+body.wiseowl-marko-palette .table,
+body.wiseowl-marko-palette .table td,
+body.wiseowl-marko-palette .table th,
+body.wiseowl-marko-palette .pricing-table,
+body.wiseowl-marko-palette .user-card,
+body.wiseowl-marko-palette .demo-card {
+  background-color: var(--marko-panel) !important;
+  color: var(--marko-primary) !important;
+  border-color: var(--marko-panel-2) !important;
+}
+
+body.wiseowl-marko-palette .navbar-brand-dark .navbar-header,
+body.wiseowl-marko-palette .sidebar-dark .site-sidebar,
+body.wiseowl-marko-palette .sidebar-dark .side-user,
+body.wiseowl-marko-palette .sidebar-dark .side-content,
+body.wiseowl-marko-palette .sidebar-dark .side-menu,
+body.wiseowl-marko-palette .header-light .navbar,
+body.wiseowl-marko-palette .dropdown-card .card {
+  background-color: var(--marko-panel) !important;
+}
+
+body.wiseowl-marko-palette a,
+body.wiseowl-marko-palette .color-primary,
+body.wiseowl-marko-palette .text-primary,
+body.wiseowl-marko-palette .nav-link.active,
+body.wiseowl-marko-palette .current-page > a,
+body.wiseowl-marko-palette .side-menu li.current-page > a,
+body.wiseowl-marko-palette .breadcrumb-item a,
+body.wiseowl-marko-palette .list-icon,
+body.wiseowl-marko-palette .highlight,
+body.wiseowl-marko-palette .text-warning,
+body.wiseowl-marko-palette .section-title .heading .highlight {
+  color: var(--marko-accent) !important;
+}
+
+body.wiseowl-marko-palette .btn-primary,
+body.wiseowl-marko-palette .btn-success,
+body.wiseowl-marko-palette .btn-info,
+body.wiseowl-marko-palette .bg-primary,
+body.wiseowl-marko-palette .bg-success,
+body.wiseowl-marko-palette .bg-info,
+body.wiseowl-marko-palette .badge-primary,
+body.wiseowl-marko-palette .badge-success,
+body.wiseowl-marko-palette .badge-info,
+body.wiseowl-marko-palette .label-primary,
+body.wiseowl-marko-palette .label-success,
+body.wiseowl-marko-palette .label-info,
+body.wiseowl-marko-palette .progress-bar,
+body.wiseowl-marko-palette .switchery,
+body.wiseowl-marko-palette .button-pulse,
+body.wiseowl-marko-palette .wizard > .steps .current a,
+body.wiseowl-marko-palette .pagination .page-item.active .page-link {
+  background-color: var(--marko-accent) !important;
+  border-color: var(--marko-accent) !important;
+  color: var(--marko-white) !important;
+}
+
+body.wiseowl-marko-palette .btn-outline-primary,
+body.wiseowl-marko-palette .btn-outline-success,
+body.wiseowl-marko-palette .btn-outline-info,
+body.wiseowl-marko-palette .page-link,
+body.wiseowl-marko-palette .form-control:focus,
+body.wiseowl-marko-palette .custom-select:focus {
+  border-color: var(--marko-accent) !important;
+  color: var(--marko-accent) !important;
+  box-shadow: 0 0 0 0.15rem var(--marko-accent-soft) !important;
+}
+
+body.wiseowl-marko-palette .btn-primary:hover,
+body.wiseowl-marko-palette .btn-success:hover,
+body.wiseowl-marko-palette .btn-info:hover,
+body.wiseowl-marko-palette a.bg-primary:hover,
+body.wiseowl-marko-palette a.bg-success:hover,
+body.wiseowl-marko-palette a.bg-info:hover {
+  background-color: #a91cd0 !important;
+  border-color: #a91cd0 !important;
+}
+
+body.wiseowl-marko-palette .btn-light,
+body.wiseowl-marko-palette .btn-secondary,
+body.wiseowl-marko-palette .bg-light,
+body.wiseowl-marko-palette .alert-light,
+body.wiseowl-marko-palette .input-group-text {
+  background-color: var(--marko-panel-2) !important;
+  border-color: var(--marko-panel-2) !important;
+  color: var(--marko-primary) !important;
+}
+
+body.wiseowl-marko-palette .bg-warning,
+body.wiseowl-marko-palette .badge-warning,
+body.wiseowl-marko-palette .btn-warning,
+body.wiseowl-marko-palette .alert-warning {
+  background-color: var(--marko-star) !important;
+  border-color: var(--marko-star) !important;
+  color: var(--marko-secondary) !important;
+}
+
+body.wiseowl-marko-palette .bg-danger,
+body.wiseowl-marko-palette .badge-danger,
+body.wiseowl-marko-palette .btn-danger,
+body.wiseowl-marko-palette .alert-danger,
+body.wiseowl-marko-palette .text-danger {
+  background-color: var(--marko-error) !important;
+  border-color: var(--marko-error) !important;
+  color: var(--marko-white) !important;
+}
+
+body.wiseowl-marko-palette .text-muted,
+body.wiseowl-marko-palette .color-content,
+body.wiseowl-marko-palette .subheading,
+body.wiseowl-marko-palette .media-content,
+body.wiseowl-marko-palette .breadcrumb,
+body.wiseowl-marko-palette p,
+body.wiseowl-marko-palette small,
+body.wiseowl-marko-palette .form-text {
+  color: var(--marko-text) !important;
+}
+
+body.wiseowl-marko-palette .form-control,
+body.wiseowl-marko-palette .custom-select,
+body.wiseowl-marko-palette textarea,
+body.wiseowl-marko-palette input,
+body.wiseowl-marko-palette select,
+body.wiseowl-marko-palette .note-editor.note-frame,
+body.wiseowl-marko-palette .select2-container .select2-selection {
+  background-color: var(--marko-panel-2) !important;
+  border-color: #2d2d2d !important;
+  color: var(--marko-primary) !important;
+}
+
+body.wiseowl-marko-palette .table thead th,
+body.wiseowl-marko-palette .table-hover tbody tr:hover,
+body.wiseowl-marko-palette .dropdown-item:hover,
+body.wiseowl-marko-palette .dropdown-item:focus,
+body.wiseowl-marko-palette .side-menu li a:hover,
+body.wiseowl-marko-palette .nav-tabs .nav-link.active {
+  background-color: var(--marko-panel-2) !important;
+  color: var(--marko-accent) !important;
+}
+
+body.wiseowl-marko-palette hr,
+body.wiseowl-marko-palette .dropdown-divider,
+body.wiseowl-marko-palette .border,
+body.wiseowl-marko-palette .card-header,
+body.wiseowl-marko-palette .card-footer,
+body.wiseowl-marko-palette .table td,
+body.wiseowl-marko-palette .table th {
+  border-color: var(--marko-panel-2) !important;
+}
+
+body.wiseowl-marko-palette .main-footer,
+body.wiseowl-marko-palette .main-header,
+body.wiseowl-marko-palette .pos-0 {
+  border-color: rgba(200, 42, 239, 0.22) !important;
+}

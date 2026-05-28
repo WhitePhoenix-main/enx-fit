@@ -1,0 +1,773 @@
+@page "/wiseowl/default/ui-grid"
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+    <link rel="icon" type="image/png" sizes="16x16" href="/wiseowl/html/default/assets/img/favicon.png">
+    <link rel="stylesheet" href="/wiseowl/html/default/assets/css/pace.css">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Grid Page</title>
+    <!-- CSS -->
+    <link href="/wiseowl/assets/css/disabled-external.css" data-original-href="https://fonts.googleapis.com/css?family=Montserrat:200,300,400,500,600%7CRoboto:400" rel="stylesheet" type="text/css">
+    <link href="/wiseowl/html/default/assets/vendors/material-icons/material-icons.css" rel="stylesheet" type="text/css">
+    <link href="/wiseowl/html/default/assets/vendors/mono-social-icons/monosocialiconsfont.css" rel="stylesheet" type="text/css">
+    <link href="/wiseowl/html/default/assets/vendors/feather-icons/feather.css" rel="stylesheet" type="text/css">
+    <link href="/wiseowl/assets/css/disabled-external.css" data-original-href="https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.7.0/css/perfect-scrollbar.min.css" rel="stylesheet" type="text/css">
+    <link href="/wiseowl/html/default/assets/css/style.css" rel="stylesheet" type="text/css">
+    <!-- Head Libs -->
+    <script src="/wiseowl/assets/js/disabled-external.js" data-original-src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
+    <script data-pace-options='{ "ajax": false, "selectors": [ "img" ]}' src="/wiseowl/assets/js/disabled-external.js" data-original-src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
+    <link href="/wiseowl/assets/css/marko-palette.css" rel="stylesheet" type="text/css">
+</head>
+
+<body class="sidebar-dark sidebar-expand navbar-brand-dark header-light wiseowl-marko-palette">
+    <div id="wrapper" class="wrapper">
+        <!-- HEADER & TOP NAVIGATION -->
+        <nav class="navbar">
+            <!-- Logo Area -->
+            <div class="navbar-header">
+                <a href="/wiseowl/default" class="navbar-brand">
+                    <img class="logo-expand" alt="" src="/wiseowl/html/default/assets/img/logo-dark.png">
+                    <img class="logo-collapse" alt="" src="/wiseowl/html/default/assets/img/logo-collapse.png">
+                    <!-- <p>BonVue</p> -->
+                </a>
+            </div>
+            <!-- /.navbar-header -->
+            <!-- Left Menu & Sidebar Toggle -->
+            <ul class="nav navbar-nav">
+                <li class="sidebar-toggle dropdown"><a href="#" class="ripple"><i class="feather feather-menu list-icon fs-20"></i></a>
+                </li>
+            </ul>
+            <!-- /.navbar-left -->
+            <!-- Search Form -->
+            <form class="navbar-search d-none d-sm-block" role="search"><i class="feather feather-search list-icon"></i> 
+                <input type="search" class="search-query" placeholder="Search anything..."> <a href="#" class="remove-focus"><i class="feather feather-x"></i></a>
+            </form>
+            <!-- /.navbar-search -->
+            <div class="spacer"></div>
+            <!-- Right Menu -->
+            <ul class="nav navbar-nav d-none d-lg-flex ml-2 ml-0-rtl">
+                <li class="dropdown"><a href="/wiseowl/default/ui-grid#" class="dropdown-toggle" data-toggle="dropdown"><i class="feather feather-bell list-icon"></i> <span class="button-pulse bg-danger"></span></a>
+                    <div class="dropdown-menu dropdown-left dropdown-card animated flipInY">
+                        <div class="card">
+                            <header class="card-header d-flex justify-content-between mb-0"><a href="#"><i class="feather feather-bell color-primary" aria-hidden="true"></i></a>  <span class="heading-font-family flex-1 text-center fw-400">Notifications</span>  <a href="#"><i class="feather feather-settings color-content"></i></a>
+                            </header>
+                            <ul class="card-body list-unstyled dropdown-list-group">
+                                <li><a href="/wiseowl/default/ui-grid#" class="media"><span class="d-flex"><i class="material-icons list-icon">check</i> </span><span class="media-body"><span class="heading-font-family media-heading">Invitation accepted</span> <span class="media-content">Your have been Invited ...</span></span></a>
+                                </li>
+                                <li><a href="/wiseowl/default/ui-grid#" class="media"><span class="d-flex thumb-xs user--online"><img src="/wiseowl/html/default/assets/demo/users/user3.jpg" class="rounded-circle" alt=""> </span><span class="media-body"><span class="heading-font-family media-heading">Steve Smith</span> <span class="media-content">I slowly updated projects</span></span></a>
+                                </li>
+                                <li><a href="/wiseowl/default/ui-grid#" class="media"><span class="d-flex"><i class="material-icons list-icon">event_available</i> </span><span class="media-body"><span class="-heading-font-family media-heading">To Do</span> <span class="media-content">Meeting with Nathan on Friday 8 AM ...</span></span></a>
+                                </li>
+                            </ul>
+                            <!-- /.dropdown-list-group -->
+                            <footer class="card-footer text-center"><a href="#" class="headings-font-family text-uppercase fs-13">See all activity</a>
+                            </footer>
+                        </div>
+                        <!-- /.card -->
+                    </div>
+                    <!-- /.dropdown-menu -->
+                </li>
+                <!-- /.dropdown -->
+                <li><a href="#" class="right-sidebar-toggle"><i class="feather feather-settings list-icon"></i></a>
+                </li>
+            </ul>
+            <!-- /.navbar-right -->
+            <!-- User Image with Dropdown -->
+            <ul class="nav navbar-nav">
+                <li class="dropdown"><a href="#" class="dropdown-toggle dropdown-toggle-user ripple" data-toggle="dropdown"><span class="avatar thumb-xs2"><img src="/wiseowl/html/default/assets/demo/users/user1.jpg" class="rounded-circle" alt=""> <i class="feather feather-chevron-down list-icon"></i></span></a>
+                    <div
+                    class="dropdown-menu dropdown-left dropdown-card dropdown-card-profile animated flipInY">
+                        <div class="card">
+                            <header class="card-header d-flex mb-0"><a href="#" class="col-md-4 text-center"><i class="feather feather-user-plus align-middle"></i> </a><a href="#" class="col-md-4 text-center"><i class="feather feather-settings align-middle"></i> </a>
+                                <a
+                                href="#" class="col-md-4 text-center"><i class="feather feather-power align-middle"></i>
+                                    </a>
+                            </header>
+                            <ul class="list-unstyled card-body">
+                                <li><a href="/wiseowl/default/ui-grid#"><span><span class="align-middle">Manage Accounts</span></span></a>
+                                </li>
+                                <li><a href="/wiseowl/default/ui-grid#"><span><span class="align-middle">Change Password</span></span></a>
+                                </li>
+                                <li><a href="/wiseowl/default/ui-grid#"><span><span class="align-middle">Check Inbox</span></span></a>
+                                </li>
+                                <li><a href="/wiseowl/default/ui-grid#"><span><span class="align-middle">Sign Out</span></span></a>
+                                </li>
+                            </ul>
+                            <!-- /.card-body -->
+                        </div>
+                        <!-- /.card -->
+    </div>
+    <!-- /.dropdown-card-profile -->
+    </li>
+    <!-- /.dropdown -->
+    </ul>
+    <!-- /.navbar-nav -->
+    </nav>
+    <!-- /.navbar -->
+    <div class="content-wrapper">
+        <!-- SIDEBAR -->
+        <aside class="site-sidebar scrollbar-enabled" data-suppress-scroll-x="true">
+            <!-- User Details -->
+            <div class="side-user d-none">
+                <div class="col-sm-12 text-center p-0 clearfix">
+                    <div class="d-inline-block pos-relative mr-b-10">
+                        <figure class="thumb-sm mr-b-0 user--online">
+                            <img src="/wiseowl/html/default/assets/demo/users/user1.jpg" class="rounded-circle" alt="">
+                        </figure><a href="/wiseowl/default/page-profile" class="text-muted side-user-link"><i class="feather feather-settings list-icon"></i></a>
+                    </div>
+                    <!-- /.d-inline-block -->
+                    <div class="lh-14 mr-t-5"><a href="/wiseowl/default/page-profile" class="hide-menu mt-3 mb-0 side-user-heading fw-500">Scott Adams</a>
+                        <br><small class="hide-menu">Developer</small>
+                    </div>
+                </div>
+                <!-- /.col-sm-12 -->
+            </div>
+            <!-- /.side-user -->
+            <!-- Call to Action -->
+            <div class="side-content mr-t-30 mr-lr-15"><a class="btn btn-block btn-success ripple fw-600" href="/wiseowl/default/ui-grid#"><i class="fa fa-plus-square-o mr-1 mr-0-rtl ml-1-rtl"></i> New Project</a>
+            </div>
+            <!-- Sidebar Menu -->
+            <nav class="sidebar-nav">
+                <ul class="nav in side-menu">
+                    <li class="current-page menu-item-has-children"><a href="/wiseowl/default"><i class="list-icon feather feather-command"></i> <span class="hide-menu">Dashboard</span></a>
+                        <ul class="list-unstyled sub-menu">
+                            <li><a href="/wiseowl/default">Default</a>
+                            </li>
+                            <li><a href="/wiseowl/collapsed-light">Collapsed Light</a>
+                            </li>
+                            <li><a href="/wiseowl/dark">Dark</a>
+                            </li>
+                            <li><a href="/wiseowl/default">Horizontal Nav</a>
+                            </li>
+                            <li><a href="/wiseowl/default">RTL Demo</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="menu-item-has-children"><a href="#"><i class="list-icon feather feather-briefcase"></i> <span class="hide-menu">Apps <span class="badge bg-primary">6</span></span></a>
+                        <ul class="list-unstyled sub-menu">
+                            <li><a href="/wiseowl/default/app-calender">Calender</a>
+                            </li>
+                            <li><a href="/wiseowl/default/app-chat">Chat</a>
+                            </li>
+                            <li><a href="/wiseowl/default/app-inbox">Inbox</a>
+                            </li>
+                            <li><a href="/wiseowl/default/app-contacts">Contacts</a>
+                            </li>
+                            <li><a href="/wiseowl/default/app-products">Products</a>
+                            </li>
+                            <li><a href="/wiseowl/default/app-blog">Blog</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="menu-item-has-children"><a href="#"><i class="list-icon feather feather-user"></i> <span class="hide-menu">Profile Pages</span></a>
+                        <ul class="list-unstyled sub-menu">
+                            <li><a href="/wiseowl/default/page-profile">Profile</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-login">Login Page</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-login2">Login Page 2</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-register">Sign Up</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-register2">Sign Up 2</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-register-3-step">3 Step Sign Up</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-forgot-pwd">Forgot Password</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-email-confirm">Confirm Email</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-lock-screen">Lock Screen</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-timeline">Timeline</a>
+                            </li>
+                            <li class="menu-item-has-children"><a href="#">Error Pages</a>
+                                <ul class="list-unstyled sub-menu">
+                                    <li><a href="/wiseowl/default/page-error-403">Error 403</a>
+                                    </li>
+                                    <li><a href="/wiseowl/default/page-error-404">Error 404</a>
+                                    </li>
+                                    <li><a href="/wiseowl/default/page-error-500">Error 500</a>
+                                    </li>
+                                    <li><a href="/wiseowl/default/page-error-503">Error 503</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="menu-item-has-children"><a href="#"><i class="list-icon feather feather-folder"></i> <span class="hide-menu">Sample Pages</span></a>
+                        <ul class="list-unstyled sub-menu">
+                            <li><a href="/wiseowl/default/page-blank">Blank Page</a>
+                            </li>
+                            <li class="menu-item-has-children"><a href="#">Email Templates</a>
+                                <ul class="list-unstyled sub-menu">
+                                    <li><a href="/wiseowl/default/email-templates/basic">Basic</a>
+                                    </li>
+                                    <li><a href="/wiseowl/default/email-templates/billing">Billing</a>
+                                    </li>
+                                    <li><a href="/wiseowl/default/email-templates/friend-request">Friend Request</a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="menu-item-has-children"><a href="#">Maps</a>
+                                <ul class="list-unstyled sub-menu">
+                                    <li><a href="/wiseowl/default/maps-google">Google Maps</a>
+                                    </li>
+                                    <li><a href="/wiseowl/default/maps-vector">Vector Maps</a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><a href="/wiseowl/default/page-lightbox">Lightbox Popup</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-sitemap">Sitemap</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-search-results">Search Results</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-custom-scroll">Custom Scroll</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-utility-classes">Utility Classes</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-animations">Animations</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-faq">FAQ</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-pricing-table">Pricing</a>
+                            </li>
+                            <li><a href="/wiseowl/default/page-invoice">Invoice</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="menu-item-has-children"><a href="#"><i class="list-icon feather feather-feather"></i> <span class="hide-menu">UI Elements <span class="badge bg-info">7</span></span></a>
+                        <ul class="list-unstyled sub-menu">
+                            <li><a href="/wiseowl/default/ui-typography">Typography</a>
+                            </li>
+                            <li><a href="/wiseowl/default/ui-buttons">Buttons</a>
+                            </li>
+                            <li><a href="/wiseowl/default/ui-cards">Cards</a>
+                            </li>
+                            <li><a href="/wiseowl/default/ui-tabs">Tabs</a>
+                            </li>
+                            <li><a href="/wiseowl/default/ui-accordions">Accordions</a>
+                            </li>
+                            <li><a href="/wiseowl/default/ui-modals">Modals</a>
+                            </li>
+                            <li><a href="/wiseowl/default/ui-icon-boxes">Icon Boxes</a>
+                            </li>
+                            <li><a href="/wiseowl/default/ui-lists">Lists &amp; Media Object</a>
+                            </li>
+                            <li><a href="/wiseowl/default/ui-grid">Grid</a>
+                            </li>
+                            <li><a href="/wiseowl/default/ui-progress">Progress Bars</a>
+                            </li>
+                            <li><a href="/wiseowl/default/ui-notifications">Notifications &amp; Alerts</a>
+                            </li>
+                            <li><a href="/wiseowl/default/ui-pagination">Pagination</a>
+                            </li>
+                            <li><a href="/wiseowl/default/ui-media">Media</a>
+                            </li>
+                            <li><a href="/wiseowl/default/ui-carousel">Carousel</a>
+                            </li>
+                            <li><a href="/wiseowl/default/ui-bootstrap">Bootstrap Elements</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="menu-item-has-children"><a href="#"><i class="list-icon feather feather-layout"></i> <span class="hide-menu">Forms</span></a>
+                        <ul class="list-unstyled sub-menu">
+                            <li><a href="/wiseowl/default/form-elements">Elements</a>
+                            </li>
+                            <li><a href="/wiseowl/default/form-material">Material Design</a>
+                            </li>
+                            <li><a href="/wiseowl/default/form-validation">Form Validation</a>
+                            </li>
+                            <li><a href="/wiseowl/default/form-dropzone">File Upload</a>
+                            </li>
+                            <li><a href="/wiseowl/default/form-pickers">Picker</a>
+                            </li>
+                            <li><a href="/wiseowl/default/form-select">Select and Multiselect</a>
+                            </li>
+                            <li><a href="/wiseowl/default/form-tags-categories">Tags and Categories</a>
+                            </li>
+                            <li><a href="/wiseowl/default/form-addons">Addons</a>
+                            </li>
+                            <li><a href="/wiseowl/default/form-editors">Editors</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="menu-item-has-children"><a href="#"><i class="list-icon feather feather-clipboard"></i> <span class="hide-menu">Tables</span></a>
+                        <ul class="list-unstyled sub-menu">
+                            <li><a href="/wiseowl/default/tables-basic">Basic Tables</a>
+                            </li>
+                            <li><a href="/wiseowl/default/tables-data-table">Data Table</a>
+                            </li>
+                            <li><a href="/wiseowl/default/tables-bootstrap">Bootstrap Tables</a>
+                            </li>
+                            <li><a href="/wiseowl/default/tables-responsive">Responsive Tables</a>
+                            </li>
+                            <li><a href="/wiseowl/default/tables-editable">Editable Tables</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="menu-item-has-children"><a href="#"><i class="list-icon feather feather-pie-chart"></i> <span class="hide-menu">Charts</span></a>
+                        <ul class="list-unstyled sub-menu">
+                            <li><a href="/wiseowl/default/charts-flot">Flot Charts</a>
+                            </li>
+                            <li><a href="/wiseowl/default/charts-morris">Morris Charts</a>
+                            </li>
+                            <li><a href="/wiseowl/default/charts-js">Chart-js</a>
+                            </li>
+                            <li><a href="/wiseowl/default/charts-sparkline">Sparkline Charts</a>
+                            </li>
+                            <li><a href="/wiseowl/default/charts-knob">Knob Charts</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="menu-item-has-children"><a href="#"><i class="list-icon feather feather-heart"></i> <span class="hide-menu">Icons</span></a>
+                        <ul class="list-unstyled sub-menu">
+                            <li><a href="/wiseowl/default/icons-material-design">Material Design</a>
+                            </li>
+                            <li><a href="/wiseowl/default/icons-font-awesome">Font Awesome</a>
+                            </li>
+                            <li><a href="/wiseowl/default/icons-mono-social">Social Icons</a>
+                            </li>
+                            <li><a href="/wiseowl/default/icons-weather">Weather Icons</a>
+                            </li>
+                            <li><a href="/wiseowl/default/icons-linea">Linea Icons</a>
+                            </li>
+                            <li><a href="/wiseowl/default/icons-feather">Feather Icons</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+                <!-- /.side-menu -->
+            </nav>
+            <!-- /.sidebar-nav -->
+        </aside>
+        <!-- /.site-sidebar -->
+        <main class="main-wrapper clearfix">
+            <!-- Page Title Area -->
+            <div class="row page-title clearfix">
+                <div class="page-title-left">
+                    <h6 class="page-title-heading mr-0 mr-r-5">Grid Page</h6>
+                    <p class="page-title-description mr-0 d-none d-md-inline-block">statistics, charts and events</p>
+                </div>
+                <!-- /.page-title-left -->
+                <div class="page-title-right d-none d-sm-inline-flex">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/wiseowl/default">Dashboard</a>
+                        </li>
+                        <li class="breadcrumb-item active">Grid Page</li>
+                    </ol>
+                </div>
+                <!-- /.page-title-right -->
+            </div>
+            <!-- /.page-title -->
+            <!-- =================================== -->
+            <!-- Different data widgets ============ -->
+            <!-- =================================== -->
+            <div class="widget-list">
+                <div class="row">
+                    <div class="col-md-12 widget-holder">
+                        <div class="widget-bg">
+                            <div class="widget-body clearfix">
+                                <h5 class="box-title mr-b-0">Grid Options</h5>
+                                <p class="text-muted">See how aspects of the Bootstrap grid system work across multiple devices with a handy table.</p>
+                                <table class="table table-bordered table-striped table-responsive">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th>Extra small devices <small>Phones</small>
+                                                <br><small>(&#60;576px)</small>
+                                            </th>
+                                            <th>Small devices <small>Landscape Phones</small>
+                                                <br><small>(&#8805;576px)</small>
+                                            </th>
+                                            <th>Medium devices <small>Dekstops</small>
+                                                <br><small>(&#8805;768px)</small>
+                                            </th>
+                                            <th>Large devices <small>Dekstops</small>
+                                                <br><small>(&#8805;992px)</small>
+                                            </th>
+                                            <th>Extra large devices <small>Dekstops</small>
+                                                <br><small>(&#8805;1200px)</small>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <th>Grid behavior</th>
+                                            <td>Horizontal at all times</td>
+                                            <td colspan="4">Collapsed to start, horizontal above breakpoints</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Max container width</th>
+                                            <td>None (auto)</td>
+                                            <td>540px</td>
+                                            <td>750px</td>
+                                            <td>970px</td>
+                                            <td>1170px</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Class prefix</th>
+                                            <td><code>.col-</code>
+                                            </td>
+                                            <td><code>.col-sm-</code>
+                                            </td>
+                                            <td><code>.col-md-</code>
+                                            </td>
+                                            <td><code>.col-lg-</code>
+                                            </td>
+                                            <td><code>.col-xl-</code>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th># of columns</th>
+                                            <td colspan="5">12</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Max column width</th>
+                                            <td>Auto</td>
+                                            <td>60px</td>
+                                            <td>78px</td>
+                                            <td>95px</td>
+                                            <td>112px</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Gutter width</th>
+                                            <td colspan="5">30px (15px on each side of a column)</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Nestable</th>
+                                            <td colspan="5">Yes</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Offsets</th>
+                                            <td colspan="5">Yes</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Column Ordering</th>
+                                            <td colspan="5">Yes</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <p class="text-muted">Grid classes apply to devices with screen widths greater than or equal to the breakpoint sizes, and override grid classes targeted at smaller devices. Therefore, applying any <code>.col-md-</code> class to an element will
+                                    not only affect its styling on medium devices but also on large devices if a <code>.col-lg-</code> class is not present.</p>
+                            </div>
+                            <!-- /.widget-body -->
+                        </div>
+                        <!-- /.widget-bg -->
+                    </div>
+                    <!-- /.widget-holder -->
+                    <div class="col-md-12 widget-holder">
+                        <div class="widget-bg">
+                            <div class="widget-body clearfix">
+                                <h5 class="box-title mr-b-0">Example: Stacked-To-Horizontal</h5>
+                                <p class="text-muted">Using a single set of <code>.col-md-*</code> grid classes, you can create a default grid system that starts out stacked on mobile devices and tablet devices (the extra small to small range) before becoming horizontal on desktop
+                                    (medium) devices. Place grid columns in any <code>.row</code>.</p>
+                                <div class="row show-grid">
+                                    <div class="col-md-1">.col-md-1</div>
+                                    <div class="col-md-1">.col-md-1</div>
+                                    <div class="col-md-1">.col-md-1</div>
+                                    <div class="col-md-1">.col-md-1</div>
+                                    <div class="col-md-1">.col-md-1</div>
+                                    <div class="col-md-1">.col-md-1</div>
+                                    <div class="col-md-1">.col-md-1</div>
+                                    <div class="col-md-1">.col-md-1</div>
+                                    <div class="col-md-1">.col-md-1</div>
+                                    <div class="col-md-1">.col-md-1</div>
+                                    <div class="col-md-1">.col-md-1</div>
+                                    <div class="col-md-1">.col-md-1</div>
+                                </div>
+                                <div class="row show-grid">
+                                    <div class="col-md-8">.col-md-8</div>
+                                    <div class="col-md-4">.col-md-4</div>
+                                </div>
+                                <div class="row show-grid">
+                                    <div class="col-md-4">.col-md-4</div>
+                                    <div class="col-md-4">.col-md-4</div>
+                                    <div class="col-md-4">.col-md-4</div>
+                                </div>
+                                <div class="row show-grid">
+                                    <div class="col-md-6">.col-md-6</div>
+                                    <div class="col-md-6">.col-md-6</div>
+                                </div>
+                            </div>
+                            <!-- /.widget-body -->
+                        </div>
+                        <!-- /.widget-bg -->
+                    </div>
+                    <!-- /.widget-holder -->
+                    <div class="col-md-12 widget-holder">
+                        <div class="widget-bg">
+                            <div class="widget-body clearfix">
+                                <h5 class="box-title mr-b-0">Example: Mobile and Desktop</h5>
+                                <p class="text-muted">Don't want your columns to simply stack in smaller devices? Use the extra small and medium device grid classes by adding <code>.col-*</code>  <code>.col-md-*</code> to your columns. See the example below for a better idea of
+                                    how it all works.</p>
+                                <div class="row show-grid">
+                                    <div class="col-12 col-md-8">.col-12 .col-md-8</div>
+                                    <div class="col-6 col-md-4">.col-6 .col-md-4</div>
+                                </div>
+                                <div class="row show-grid">
+                                    <div class="col-6 col-md-4">.col-6 .col-md-4</div>
+                                    <div class="col-6 col-md-4">.col-6 .col-md-4</div>
+                                    <div class="col-6 col-md-4">.col-6 .col-md-4</div>
+                                </div>
+                                <div class="row show-grid">
+                                    <div class="col-6">.col-6</div>
+                                    <div class="col-6">.col-6</div>
+                                </div>
+                            </div>
+                            <!-- /.widget-body -->
+                        </div>
+                        <!-- /.widget-bg -->
+                    </div>
+                    <!-- /.widget-holder -->
+                    <div class="col-md-12 widget-holder">
+                        <div class="widget-bg">
+                            <div class="widget-body clearfix">
+                                <h5 class="box-title mr-b-0">Example: Mobile, Tablet, Dekstops</h5>
+                                <p class="text-muted">Build on the previous example by creating even more dynamic and powerful layouts with tablet <code>.col-sm-*</code> classes.</p>
+                                <div class="row show-grid">
+                                    <div class="col-12 col-sm-6 col-md-8">.col-12 .col-sm-6 .col-md-8</div>
+                                    <div class="col-6 col-md-4">.col-6 .col-md-4</div>
+                                </div>
+                                <div class="row show-grid">
+                                    <div class="col-6 col-sm-4">.col-6 .col-sm-4</div>
+                                    <div class="col-6 col-sm-4">.col-6 .col-sm-4</div>
+                                    <!-- Optional: clear the XS cols if their content doesn't match in height -->
+                                    <div class="clearfix visible-xs"></div>
+                                    <div class="col-6 col-sm-4">.col-6 .col-sm-4</div>
+                                </div>
+                            </div>
+                            <!-- /.widget-body -->
+                        </div>
+                        <!-- /.widget-bg -->
+                    </div>
+                    <!-- /.widget-holder -->
+                    <div class="col-md-12 widget-holder">
+                        <div class="widget-bg">
+                            <div class="widget-body clearfix">
+                                <h5 class="box-title mr-b-0">Responsive Column Resets</h5>
+                                <p class="text-muted">With the four tiers of grids available you're bound to run into issues where, at certain breakpoints, your columns don't clear quite right as one is taller than the other. To fix that, use a combination of a <code>.clearfix</code> and
+                                    our responsive utility classes.</p>
+                                <div class="row show-grid">
+                                    <div class="col-6 col-sm-3">.col-6 .col-sm-3
+                                        <br>Resize your viewport or check it out on your phone for an example.</div>
+                                    <div class="col-6 col-sm-3">.col-6 .col-sm-3</div>
+                                    <!-- Add the extra clearfix for only the required viewport -->
+                                    <div class="clearfix visible-xs"></div>
+                                    <div class="col-6 col-sm-3">.col-6 .col-sm-3</div>
+                                    <div class="col-6 col-sm-3">.col-6 .col-sm-3</div>
+                                </div>
+                            </div>
+                            <!-- /.widget-body -->
+                        </div>
+                        <!-- /.widget-bg -->
+                    </div>
+                    <!-- /.widget-holder -->
+                    <div class="col-md-12 widget-holder">
+                        <div class="widget-bg">
+                            <div class="widget-body clearfix">
+                                <h5 class="box-title mr-b-0">Offsetting Columns</h5>
+                                <p class="text-muted">With the move to flexbox, we no longer have style of offset classes. Instead, use margin utilities like <code>.mr-auto</code> to force sibling columns away from one another.</p>
+                                <div class="row show-grid">
+                                    <div class="col-md-4">.col-md-4</div>
+                                    <div class="col-md-4 ml-auto">.col-md-4 .ml-auto</div>
+                                </div>
+                                <div class="row show-grid">
+                                    <div class="col-md-3 ml-md-auto">.col-md-3 .ml-md-auto</div>
+                                    <div class="col-md-3 ml-md-auto">.col-md-3 .ml-md-auto</div>
+                                </div>
+                                <div class="row show-grid">
+                                    <div class="col-md-6 mx-auto">.col-md-6 .mx-auto</div>
+                                </div>
+                            </div>
+                            <!-- /.widget-body -->
+                        </div>
+                        <!-- /.widget-bg -->
+                    </div>
+                    <!-- /.widget-holder -->
+                </div>
+                <!-- /.row -->
+            </div>
+            <!-- /.widget-list -->
+        </main>
+        <!-- /.main-wrappper -->
+        <!-- RIGHT SIDEBAR -->
+        <aside class="right-sidebar scrollbar-enabled suppress-x">
+            <div class="sidebar-chat" data-plugin="chat-sidebar">
+                <div class="sidebar-chat-info">
+                    <h6 class="fs-16">Chat List</h6>
+                    <form class="mr-t-10">
+                        <div class="form-group">
+                            <input type="search" class="form-control form-control-rounded fs-13 heading-font-family pd-r-30" placeholder="Search for friends ..."> <i class="feather feather-search post-absolute pos-right vertical-center mr-3 text-muted"></i>
+                        </div>
+                    </form>
+                </div>
+                <div class="chat-list">
+                    <div class="list-group row">
+                        <a href="#" class="list-group-item" data-chat-user="Julein Renvoye">
+                            <figure class="thumb-xs user--online mr-3 mr-0-rtl ml-3-rtl">
+                                <img src="/wiseowl/html/default/assets/demo/users/user2.jpg" class="rounded-circle" alt="">
+                            </figure><span><span class="name">Gene Newman</span>  <span class="username">@@gene_newman</span> </span>
+                        </a>
+                        <a href="#" class="list-group-item" data-chat-user="Eddie Lebanovkiy">
+                            <figure class="thumb-xs user--online mr-3 mr-0-rtl ml-3-rtl">
+                                <img src="/wiseowl/html/default/assets/demo/users/user3.jpg" class="rounded-circle" alt="">
+                            </figure><span><span class="name">Billy Black</span>  <span class="username">@@billyblack</span> </span>
+                        </a>
+                        <a href="#" class="list-group-item" data-chat-user="Cameron Moll">
+                            <figure class="thumb-xs user--online mr-3 mr-0-rtl ml-3-rtl">
+                                <img src="/wiseowl/html/default/assets/demo/users/user5.jpg" class="rounded-circle" alt="">
+                            </figure><span><span class="name">Herbert Diaz</span>  <span class="username">@@herbert</span> </span>
+                        </a>
+                        <a href="#" class="list-group-item" data-chat-user="Bill S Kenny">
+                            <figure class="user--busy thumb-xs mr-3 mr-0-rtl ml-3-rtl">
+                                <img src="/wiseowl/html/default/assets/demo/users/user4.jpg" class="rounded-circle" alt="">
+                            </figure><span><span class="name">Sylvia Harvey</span>  <span class="username">@@sylvia</span> </span>
+                        </a>
+                        <a href="#" class="list-group-item" data-chat-user="Trent Walton">
+                            <figure class="user--busy thumb-xs mr-3 mr-0-rtl ml-3-rtl">
+                                <img src="/wiseowl/html/default/assets/demo/users/user6.jpg" class="rounded-circle" alt="">
+                            </figure><span><span class="name">Marsha Hoffman</span>  <span class="username">@@m_hoffman</span> </span>
+                        </a>
+                        <a href="#" class="list-group-item" data-chat-user="Julien Renvoye">
+                            <figure class="user--offline thumb-xs mr-3 mr-0-rtl ml-3-rtl">
+                                <img src="/wiseowl/html/default/assets/demo/users/user7.jpg" class="rounded-circle" alt="">
+                            </figure><span><span class="name">Mason Grant</span>  <span class="username">@@masongrant</span> </span>
+                        </a>
+                        <a href="#" class="list-group-item" data-chat-user="Eddie Lebaovskiy">
+                            <figure class="user--offline thumb-xs mr-3 mr-0-rtl ml-3-rtl">
+                                <img src="/wiseowl/html/default/assets/demo/users/user8.jpg" class="rounded-circle" alt="">
+                            </figure><span><span class="name">Shelly Sullivan</span>  <span class="username">@@shelly</span></span>
+                        </a>
+                    </div>
+                    <!-- /.list-group -->
+                </div>
+                <!-- /.chat-list -->
+            </div>
+            <!-- /.sidebar-chat -->
+        </aside>
+        <!-- CHAT PANEL -->
+        <div class="chat-panel" hidden>
+            <div class="card">
+                <div class="card-header d-flex justify-content-between"><a href="#"><i class="feather feather-message-square text-success"></i></a>  <span class="user-name heading-font-family fw-400">John Doe</span> 
+                    <button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <!-- /.card-header -->
+                <div class="card-body">
+                    <div class="widget-chat-activity flex-1">
+                        <div class="messages scrollbar-enabled suppress-x">
+                            <div class="message media reply">
+                                <figure class="thumb-xs2 user--online">
+                                    <a href="/wiseowl/default/ui-grid#">
+                                        <img src="/wiseowl/html/default/assets/demo/users/user3.jpg" class="rounded-circle" alt="">
+                                    </a>
+                                </figure>
+                                <div class="message-body media-body">
+                                    <p>Epic Cheeseburgers come in all kind of styles.</p>
+                                </div>
+                                <!-- /.message-body -->
+                            </div>
+                            <!-- /.message -->
+                            <div class="message media">
+                                <figure class="thumb-xs2 user--online">
+                                    <a href="/wiseowl/default/ui-grid#">
+                                        <img src="/wiseowl/html/default/assets/demo/users/user1.jpg" class="rounded-circle" alt="">
+                                    </a>
+                                </figure>
+                                <div class="message-body media-body">
+                                    <p>Cheeseburgers make your knees weak.</p>
+                                </div>
+                                <!-- /.message-body -->
+                            </div>
+                            <!-- /.message -->
+                            <div class="message media reply">
+                                <figure class="thumb-xs2 user--offline">
+                                    <a href="/wiseowl/default/ui-grid#">
+                                        <img src="/wiseowl/html/default/assets/demo/users/user5.jpg" class="rounded-circle" alt="">
+                                    </a>
+                                </figure>
+                                <div class="message-body media-body">
+                                    <p>Cheeseburgers will never let you down.</p>
+                                    <p>They'll also never run around or desert you.</p>
+                                </div>
+                                <!-- /.message-body -->
+                            </div>
+                            <!-- /.message -->
+                            <div class="message media">
+                                <figure class="thumb-xs2 user--online">
+                                    <a href="/wiseowl/default/ui-grid#">
+                                        <img src="/wiseowl/html/default/assets/demo/users/user1.jpg" class="rounded-circle" alt="">
+                                    </a>
+                                </figure>
+                                <div class="message-body media-body">
+                                    <p>A great cheeseburger is a gastronomical event.</p>
+                                </div>
+                                <!-- /.message-body -->
+                            </div>
+                            <!-- /.message -->
+                            <div class="message media reply">
+                                <figure class="thumb-xs2 user--busy">
+                                    <a href="/wiseowl/default/ui-grid#">
+                                        <img src="/wiseowl/html/default/assets/demo/users/user6.jpg" class="rounded-circle" alt="">
+                                    </a>
+                                </figure>
+                                <div class="message-body media-body">
+                                    <p>There's a cheesy incarnation waiting for you no matter what you palete preferences are.</p>
+                                </div>
+                                <!-- /.message-body -->
+                            </div>
+                            <!-- /.message -->
+                            <div class="message media">
+                                <figure class="thumb-xs2 user--online">
+                                    <a href="/wiseowl/default/ui-grid#">
+                                        <img src="/wiseowl/html/default/assets/demo/users/user1.jpg" class="rounded-circle" alt="">
+                                    </a>
+                                </figure>
+                                <div class="message-body media-body">
+                                    <p>If you are a vegan, we are sorry for you loss.</p>
+                                </div>
+                                <!-- /.message-body -->
+                            </div>
+                            <!-- /.message -->
+                        </div>
+                        <!-- /.messages -->
+                    </div>
+                    <!-- /.widget-chat-acitvity -->
+                </div>
+                <!-- /.card-body -->
+                <form action="#" class="card-footer" method="post">
+                    <div class="d-flex justify-content-end"><i class="feather feather-plus-circle list-icon my-1 mr-3"></i>
+                        <textarea class="border-0 flex-1" rows="1" style="resize: none" placeholder="Type your message here"></textarea>
+                        <button class="btn btn-sm btn-circle bg-transparent" type="submit"><i class="feather feather-arrow-right list-icon fs-26 text-success"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <!-- /.card -->
+        </div>
+        <!-- /.chat-panel -->
+    </div>
+    <!-- /.content-wrapper -->
+    <!-- FOOTER -->
+    <footer class="footer"><span class="heading-font-family">Copyright @@ 2025. All rights reserved WiseOwl Admin by Unifato</span>
+    </footer>
+    </div>
+    <!--/ #wrapper -->
+    <!-- Scripts -->
+    <script src="/lib/jquery/dist/jquery.min.js" data-original-src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="/wiseowl/assets/js/disabled-external.js" data-original-src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.2/umd/popper.min.js"></script>
+    <script src="/wiseowl/html/default/assets/js/bootstrap.min.js"></script>
+    <script src="/wiseowl/assets/js/disabled-external.js" data-original-src="https://cdnjs.cloudflare.com/ajax/libs/metisMenu/2.7.0/metisMenu.min.js"></script>
+    <script src="/wiseowl/assets/js/disabled-external.js" data-original-src="https://cdnjs.cloudflare.com/ajax/libs/jquery.perfect-scrollbar/0.7.0/js/perfect-scrollbar.jquery.js"></script>
+    <script src="/wiseowl/html/default/assets/js/theme.js"></script>
+    <script src="/wiseowl/html/default/assets/js/custom.js"></script>
+</body>
+
+</html>
