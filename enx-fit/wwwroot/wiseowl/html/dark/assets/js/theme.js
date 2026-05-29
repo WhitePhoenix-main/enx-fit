@@ -1266,8 +1266,8 @@
         if( this.unifato === undefined )
           this.unifato = {};
         $this.mediaelementplayer({
-          pluginPath: 'https://cdnjs.com/libraries/mediaelement/',
-          shimScriptAccess: 'always'
+          // pluginPath: 'https://cdnjs.com/libraries/mediaelement/',
+          // shimScriptAccess: 'always'
         });
         if( this.tagName === 'VIDEO' ) {
           $this.on('playing', function() {
