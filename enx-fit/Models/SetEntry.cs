@@ -12,9 +12,11 @@ public class SetEntry
 
     public int Reps { get; set; }
 
-    public decimal WeightKg { get; set; }
+    public decimal Weight { get; set; }
 
-    public decimal? Rpe { get; set; }
+    public int? Rir { get; set; }
+
+    public bool IsWarmup { get; set; }
 
     public string? Notes { get; set; }
 }

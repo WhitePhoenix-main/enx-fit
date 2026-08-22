@@ -66,7 +66,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<SetEntry>(entity =>
+        /*modelBuilder.Entity<SetEntry>(entity =>
         {
             entity.Property(s => s.WeightKg)
                 .HasPrecision(7, 2);
@@ -76,15 +76,15 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
             entity.Property(s => s.Notes)
                 .HasMaxLength(500);
-        });
+        });*/
 
         modelBuilder.Entity<BodyMeasurement>(entity =>
         {
             entity.Property(b => b.WeightKg)
                 .HasPrecision(7, 2);
 
-            entity.Property(b => b.BodyFatPercentage)
-                .HasPrecision(5, 2);
+            /*entity.Property(b => b.BodyFatPercentage)
+                .HasPrecision(5, 2);*/
 
             entity.Property(b => b.WaistCm)
                 .HasPrecision(6, 2);
