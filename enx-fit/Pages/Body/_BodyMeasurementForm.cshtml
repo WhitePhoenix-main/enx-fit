@@ -1,0 +1,60 @@
+@model enx_fit.ViewModels.BodyMeasurementInputModel
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <label class="form-label" asp-for="Date"></label>
+        <input class="form-control" asp-for="Date" />
+        <span class="text-danger" asp-validation-for="Date"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label class="form-label" asp-for="WeightKg"></label>
+        <input class="form-control" asp-for="WeightKg" step="0.01" />
+        <span class="text-danger" asp-validation-for="WeightKg"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label class="form-label" asp-for="HeightCm"></label>
+        <input class="form-control" asp-for="HeightCm" step="0.01" />
+        <span class="text-danger" asp-validation-for="HeightCm"></span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <label class="form-label" asp-for="BodyFatPercent"></label>
+        <input class="form-control" asp-for="BodyFatPercent" step="0.01" />
+        <span class="text-danger" asp-validation-for="BodyFatPercent"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label class="form-label" asp-for="WaistCm"></label>
+        <input class="form-control" asp-for="WaistCm" step="0.01" />
+        <span class="text-danger" asp-validation-for="WaistCm"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label class="form-label" asp-for="ChestCm"></label>
+        <input class="form-control" asp-for="ChestCm" step="0.01" />
+        <span class="text-danger" asp-validation-for="ChestCm"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label class="form-label" asp-for="HipCm"></label>
+        <input class="form-control" asp-for="HipCm" step="0.01" />
+        <span class="text-danger" asp-validation-for="HipCm"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label class="form-label" asp-for="ArmCm"></label>
+        <input class="form-control" asp-for="ArmCm" step="0.01" />
+        <span class="text-danger" asp-validation-for="ArmCm"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label class="form-label" asp-for="ThighCm"></label>
+        <input class="form-control" asp-for="ThighCm" step="0.01" />
+        <span class="text-danger" asp-validation-for="ThighCm"></span>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label" asp-for="Notes"></label>
+    <textarea class="form-control" asp-for="Notes" rows="4"></textarea>
+    <span class="text-danger" asp-validation-for="Notes"></span>
+</div>

@@ -1,0 +1,25 @@
+@page "{id:int}"
+@model enx_fit.Pages.Workouts.DeleteModel
+@{
+    ViewData["Title"] = "Delete workout";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-1">Delete workout</h1>
+    <p class="text-muted mb-0">Review the session before removing it.</p>
+</div>
+
+<div class="card border-danger">
+    <div class="card-body">
+        <h2 class="h5">@(string.IsNullOrWhiteSpace(Model.Workout.Title) ? "Workout" : Model.Workout.Title)</h2>
+        <p class="text-muted">@Model.Workout.Date.ToString("yyyy-MM-dd")</p>
+        <p>This deletes the workout, its exercises, and all logged sets.</p>
+        <form method="post">
+            <input type="hidden" asp-for="Workout.Id" />
+            <div class="d-flex gap-2">
+                <button class="btn btn-danger" type="submit">Delete workout</button>
+                <a class="btn btn-outline-secondary" asp-page="./Details" asp-route-id="@Model.Workout.Id">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>

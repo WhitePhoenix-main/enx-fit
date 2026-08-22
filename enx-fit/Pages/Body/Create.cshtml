@@ -1,0 +1,26 @@
+@page
+@model enx_fit.Pages.Body.CreateModel
+@{
+    ViewData["Title"] = "Add body measurement";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-1">Add body measurement</h1>
+    <p class="text-muted mb-0">Record your current body metrics.</p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            <partial name="_BodyMeasurementForm" for="Input" />
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary" type="submit">Add measurement</button>
+                <a class="btn btn-outline-secondary" asp-page="./Index">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

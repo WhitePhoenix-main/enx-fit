@@ -1,0 +1,21 @@
+@model enx_fit.ViewModels.WorkoutSessionInputModel
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="mb-3">
+    <label class="form-label" asp-for="Date"></label>
+    <input class="form-control" asp-for="Date" />
+    <span class="text-danger" asp-validation-for="Date"></span>
+</div>
+
+<div class="mb-3">
+    <label class="form-label" asp-for="Title"></label>
+    <input class="form-control" asp-for="Title" />
+    <span class="text-danger" asp-validation-for="Title"></span>
+</div>
+
+<div class="mb-3">
+    <label class="form-label" asp-for="Notes"></label>
+    <textarea class="form-control" asp-for="Notes" rows="4"></textarea>
+    <span class="text-danger" asp-validation-for="Notes"></span>
+</div>

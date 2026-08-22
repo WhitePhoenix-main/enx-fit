@@ -1,0 +1,26 @@
+@page
+@model enx_fit.Pages.Workouts.CreateModel
+@{
+    ViewData["Title"] = "Add workout";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-1">Add workout</h1>
+    <p class="text-muted mb-0">Create the session first, then add exercises and sets.</p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            <partial name="_WorkoutForm" for="Input" />
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary" type="submit">Create workout</button>
+                <a class="btn btn-outline-secondary" asp-page="./Index">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
