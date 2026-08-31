@@ -17,6 +17,25 @@
     <div class="alert alert-success" role="alert">@statusMessage</div>
 }
 
+@if (Model.IsAdministrator)
+{
+    <form method="get" class="row g-2 align-items-end mb-4">
+        <div class="col-sm-8 col-md-5">
+            <label class="form-label" asp-for="UserId">Пользователь</label>
+            <select class="form-select" asp-for="UserId">
+                <option value="">Все пользователи</option>
+                @foreach (var user in Model.Users)
+                {
+                    <option value="@user.Id">@user.DisplayName</option>
+                }
+            </select>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-outline-primary" type="submit">Применить</button>
+        </div>
+    </form>
+}
+
 @if (Model.Measurements.Count == 0)
 {
     <div class="border rounded-3 p-5 text-center bg-body-tertiary">
@@ -27,6 +46,8 @@
 }
 else
 {
+    @if (Model.CanShowCharts)
+    {
     <div class="row g-3 mb-4">
         <div class="col-lg-6">
             <section class="card h-100">
@@ -49,6 +70,7 @@ else
             </section>
         </div>
     </div>
+    }
 
     <script id="body-measurement-chart-data" type="application/json">@Html.Raw(Model.ChartDataJson)</script>
 
@@ -61,6 +83,10 @@ else
                     <th scope="col">Height</th>
                     <th scope="col">BMI</th>
                     <th scope="col">Body fat</th>
+                    @if (Model.IsAdministrator)
+                    {
+                        <th scope="col">Пользователь</th>
+                    }
                     <th scope="col" class="text-end">Actions</th>
                 </tr>
             </thead>
@@ -73,6 +99,10 @@ else
                         <td>@measurement.HeightCm cm</td>
                         <td class="fw-semibold">@measurement.Bmi</td>
                         <td>@(measurement.BodyFatPercent.HasValue ? $"{measurement.BodyFatPercent}%" : "-")</td>
+                        @if (Model.IsAdministrator)
+                        {
+                            <td>@Model.OwnerName(measurement.UserId)</td>
+                        }
                         <td class="text-end text-nowrap">
                             <a class="btn btn-sm btn-outline-primary" asp-page="./Edit" asp-route-id="@measurement.Id">Edit</a>
                             <a class="btn btn-sm btn-outline-danger" asp-page="./Delete" asp-route-id="@measurement.Id">Delete</a>
@@ -85,7 +115,7 @@ else
 }
 
 @section Scripts {
-    @if (Model.Measurements.Count > 0)
+    @if (Model.Measurements.Count > 0 && Model.CanShowCharts)
     {
         <script src="~/lib/chart.js/dist/chart.umd.min.js"></script>
         <script src="~/js/body-measurements.js" asp-append-version="true"></script>
