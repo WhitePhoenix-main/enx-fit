@@ -6,6 +6,8 @@ public class BodyMeasurement
 {
     public int Id { get; set; }
 
+    public string? UserId { get; set; }
+
     public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
 
     public decimal WeightKg { get; set; }
