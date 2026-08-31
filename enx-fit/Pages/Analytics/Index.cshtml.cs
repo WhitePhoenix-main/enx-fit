@@ -1,6 +1,7 @@
 using System.Text.Json;
 using enx_fit.Models;
 using enx_fit.Services;
+using enx_fit.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -8,12 +9,21 @@ namespace enx_fit.Pages.Analytics;
 
 public class IndexModel(
     AnalyticsDataService analyticsDataService,
-    TrainingAnalyticsService trainingAnalyticsService) : PageModel
+    TrainingAnalyticsService trainingAnalyticsService,
+    CurrentUser currentUser,
+    UserDirectoryService userDirectory) : PageModel
 {
     public IReadOnlyList<Exercise> Exercises { get; private set; } = [];
 
     [BindProperty(SupportsGet = true)]
     public int? ExerciseId { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public string? UserId { get; set; }
+
+    public bool IsAdministrator => currentUser.IsAdministrator;
+
+    public IReadOnlyList<UserOption> Users { get; private set; } = [];
 
     public BestExerciseSet? BestSet { get; private set; }
 
@@ -27,13 +37,23 @@ public class IndexModel(
     {
         Exercises = await analyticsDataService.GetExercisesAsync();
 
+        if (IsAdministrator)
+        {
+            Users = await userDirectory.GetAllAsync();
+            if (!await userDirectory.ExistsAsync(UserId))
+            {
+                UserId = null;
+                return;
+            }
+        }
+
         if (!ExerciseId.HasValue || Exercises.All(exercise => exercise.Id != ExerciseId.Value))
         {
             ExerciseId = null;
             return;
         }
 
-        var workouts = await analyticsDataService.GetWorkoutsForExerciseAsync(ExerciseId.Value);
+        var workouts = await analyticsDataService.GetWorkoutsForExerciseAsync(ExerciseId.Value, UserId);
         var workingWeightTrend = trainingAnalyticsService.GetWorkingWeightTrend(workouts, ExerciseId.Value);
         var estimatedOneRepMaxTrend = trainingAnalyticsService.GetEstimatedOneRepMaxTrend(workouts, ExerciseId.Value);
         var volumeTrend = trainingAnalyticsService.GetExerciseVolumeTrend(workouts, ExerciseId.Value);

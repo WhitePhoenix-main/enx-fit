@@ -14,12 +14,28 @@
     <div class="border rounded-3 p-5 text-center bg-body-tertiary">
         <h2 class="h5">No exercises available</h2>
         <p class="text-muted mb-4">Add exercises before opening training analytics.</p>
-        <a class="btn btn-primary" asp-page="/Exercises/Create">Add exercise</a>
+        @if (User.IsInRole("Administrator"))
+        {
+            <a class="btn btn-primary" asp-page="/Exercises/Create">Add exercise</a>
+        }
     </div>
 }
 else
 {
     <form method="get" class="row g-2 align-items-end mb-4">
+        @if (Model.IsAdministrator)
+        {
+            <div class="col-sm-8 col-md-5">
+                <label class="form-label" asp-for="UserId">Пользователь</label>
+                <select class="form-select" asp-for="UserId">
+                    <option value="">Выберите пользователя</option>
+                    @foreach (var user in Model.Users)
+                    {
+                        <option value="@user.Id">@user.DisplayName</option>
+                    }
+                </select>
+            </div>
+        }
         <div class="col-sm-8 col-md-5">
             <label class="form-label" asp-for="ExerciseId">Exercise</label>
             <select class="form-select" asp-for="ExerciseId">
@@ -35,7 +51,13 @@ else
         </div>
     </form>
 
-    @if (!Model.ExerciseId.HasValue)
+    @if (Model.IsAdministrator && string.IsNullOrWhiteSpace(Model.UserId))
+    {
+        <div class="border rounded-3 p-4 bg-body-tertiary">
+            <p class="text-muted mb-0">Выберите пользователя для просмотра его статистики.</p>
+        </div>
+    }
+    else if (!Model.ExerciseId.HasValue)
     {
         <div class="border rounded-3 p-4 bg-body-tertiary">
             <p class="text-muted mb-0">Select an exercise to view progress charts and your best set.</p>
