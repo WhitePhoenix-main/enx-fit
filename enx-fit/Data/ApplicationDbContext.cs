@@ -41,6 +41,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         modelBuilder.Entity<WorkoutSession>(entity =>
         {
+            entity.Property(w => w.UserId)
+                .HasMaxLength(450);
+
+            entity.HasIndex(w => w.UserId);
+
             entity.Property(w => w.Title)
                 .HasMaxLength(160);
 
@@ -80,6 +85,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         modelBuilder.Entity<BodyMeasurement>(entity =>
         {
+            entity.Property(b => b.UserId)
+                .HasMaxLength(450);
+
+            entity.HasIndex(b => b.UserId);
+
             entity.Property(b => b.WeightKg)
                 .HasPrecision(7, 2);
 
