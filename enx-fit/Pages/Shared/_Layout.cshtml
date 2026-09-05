@@ -1,45 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Enix Fit</title>
+    <title>@(ViewData["DocumentTitle"] ?? $"{ViewData["Title"]} - Enix Fit")</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app-header.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/enx_fit.styles.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom">
-            <div class="container">
-                <a class="navbar-brand fw-semibold" asp-page="/Dashboard">Enix Fit</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavigation" aria-controls="mainNavigation" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="mainNavigation">
-                    <ul class="navbar-nav ms-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Dashboard">Dashboard</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Workouts/Index">Workouts</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Exercises/Index">Exercises</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Body/Index">Body</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Analytics/Index">Analytics</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
+    <a class="skip-link" href="#main-content">Перейти к основному содержимому</a>
+    <partial name="_Header" />
 
-    <main class="container py-4" role="main">
+    <main id="main-content" class="container py-4" role="main" tabindex="-1">
         @RenderBody()
     </main>
 
@@ -49,6 +24,7 @@
         </div>
     </footer>
 
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
