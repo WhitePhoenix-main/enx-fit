@@ -1,22 +1,32 @@
 using enx_fit.Data;
 using enx_fit.Models;
+using enx_fit.Security;
 using enx_fit.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace enx_fit.Services;
 
-public class WorkoutService(ApplicationDbContext dbContext)
+public class WorkoutService(ApplicationDbContext dbContext, CurrentUser currentUser)
 {
-    public async Task<IReadOnlyList<WorkoutSession>> GetAllAsync() =>
-        await dbContext.WorkoutSessions
+    public async Task<IReadOnlyList<WorkoutSession>> GetAllAsync(string? ownerId = null)
+    {
+        var query = VisibleWorkouts();
+
+        if (currentUser.IsAdministrator && !string.IsNullOrWhiteSpace(ownerId))
+        {
+            query = query.Where(workout => workout.UserId == ownerId);
+        }
+
+        return await query
             .AsNoTracking()
             .Include(w => w.WorkoutExercises)
             .OrderByDescending(w => w.Date)
             .ThenByDescending(w => w.Id)
             .ToListAsync();
+    }
 
     public Task<WorkoutSession?> FindAsync(int id) =>
-        dbContext.WorkoutSessions
+        VisibleWorkouts()
             .AsNoTracking()
             .AsSplitQuery()
             .Include(w => w.WorkoutExercises)
@@ -28,13 +38,17 @@ public class WorkoutService(ApplicationDbContext dbContext)
     public async Task<IReadOnlyList<Exercise>> GetExercisesAsync(int workoutSessionId) =>
         await dbContext.Exercises
             .AsNoTracking()
+            .Where(e => VisibleWorkouts().Any(workout => workout.Id == workoutSessionId))
             .Where(e => !e.WorkoutExercises.Any(w => w.WorkoutSessionId == workoutSessionId))
             .OrderBy(e => e.Name)
             .ToListAsync();
 
     public async Task<int> CreateAsync(WorkoutSessionInputModel input)
     {
-        var workout = new WorkoutSession();
+        var workout = new WorkoutSession
+        {
+            UserId = currentUser.ResolveOwnerId(input.OwnerId)
+        };
         ApplyInput(workout, input);
         dbContext.WorkoutSessions.Add(workout);
         await dbContext.SaveChangesAsync();
@@ -43,7 +57,7 @@ public class WorkoutService(ApplicationDbContext dbContext)
 
     public async Task<bool> UpdateAsync(int id, WorkoutSessionInputModel input)
     {
-        var workout = await dbContext.WorkoutSessions.FindAsync(id);
+        var workout = await VisibleWorkouts().SingleOrDefaultAsync(candidate => candidate.Id == id);
 
         if (workout is null)
         {
@@ -51,13 +65,17 @@ public class WorkoutService(ApplicationDbContext dbContext)
         }
 
         ApplyInput(workout, input);
+        if (currentUser.IsAdministrator && !string.IsNullOrWhiteSpace(input.OwnerId))
+        {
+            workout.UserId = input.OwnerId;
+        }
         await dbContext.SaveChangesAsync();
         return true;
     }
 
     public async Task<bool> DeleteAsync(int id)
     {
-        var workout = await dbContext.WorkoutSessions.FindAsync(id);
+        var workout = await VisibleWorkouts().SingleOrDefaultAsync(candidate => candidate.Id == id);
 
         if (workout is null)
         {
@@ -71,7 +89,7 @@ public class WorkoutService(ApplicationDbContext dbContext)
 
     public async Task<AddWorkoutExerciseResult> AddExerciseAsync(int workoutSessionId, int exerciseId)
     {
-        if (!await dbContext.WorkoutSessions.AnyAsync(w => w.Id == workoutSessionId))
+        if (!await VisibleWorkouts().AnyAsync(w => w.Id == workoutSessionId))
         {
             return AddWorkoutExerciseResult.WorkoutNotFound;
         }
@@ -106,7 +124,10 @@ public class WorkoutService(ApplicationDbContext dbContext)
     public async Task<AddSetEntryResult> AddSetAsync(int workoutSessionId, AddSetEntryInputModel input)
     {
         var workoutExerciseExists = await dbContext.WorkoutExercises
-            .AnyAsync(w => w.Id == input.WorkoutExerciseId && w.WorkoutSessionId == workoutSessionId);
+            .AnyAsync(w =>
+                w.Id == input.WorkoutExerciseId &&
+                w.WorkoutSessionId == workoutSessionId &&
+                VisibleWorkouts().Any(workout => workout.Id == w.WorkoutSessionId));
 
         if (!workoutExerciseExists)
         {
@@ -134,6 +155,11 @@ public class WorkoutService(ApplicationDbContext dbContext)
         workout.Title = string.IsNullOrWhiteSpace(input.Title) ? null : input.Title.Trim();
         workout.Notes = string.IsNullOrWhiteSpace(input.Notes) ? null : input.Notes.Trim();
     }
+
+    private IQueryable<WorkoutSession> VisibleWorkouts() =>
+        currentUser.IsAdministrator
+            ? dbContext.WorkoutSessions
+            : dbContext.WorkoutSessions.Where(workout => workout.UserId == currentUser.Id);
 }
 
 public enum AddWorkoutExerciseResult

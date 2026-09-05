@@ -1,27 +1,40 @@
 using enx_fit.Data;
 using enx_fit.Models;
+using enx_fit.Security;
 using enx_fit.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace enx_fit.Services;
 
-public class BodyMeasurementService(ApplicationDbContext dbContext)
+public class BodyMeasurementService(ApplicationDbContext dbContext, CurrentUser currentUser)
 {
-    public async Task<IReadOnlyList<BodyMeasurement>> GetAllAsync() =>
-        await dbContext.BodyMeasurements
+    public async Task<IReadOnlyList<BodyMeasurement>> GetAllAsync(string? ownerId = null)
+    {
+        var query = VisibleMeasurements();
+
+        if (currentUser.IsAdministrator && !string.IsNullOrWhiteSpace(ownerId))
+        {
+            query = query.Where(measurement => measurement.UserId == ownerId);
+        }
+
+        return await query
             .AsNoTracking()
             .OrderByDescending(m => m.Date)
             .ThenByDescending(m => m.Id)
             .ToListAsync();
+    }
 
     public Task<BodyMeasurement?> FindAsync(int id) =>
-        dbContext.BodyMeasurements
+        VisibleMeasurements()
             .AsNoTracking()
             .SingleOrDefaultAsync(m => m.Id == id);
 
     public async Task CreateAsync(BodyMeasurementInputModel input)
     {
-        var measurement = new BodyMeasurement();
+        var measurement = new BodyMeasurement
+        {
+            UserId = currentUser.ResolveOwnerId(input.OwnerId)
+        };
         ApplyInput(measurement, input);
         dbContext.BodyMeasurements.Add(measurement);
         await dbContext.SaveChangesAsync();
@@ -29,7 +42,7 @@ public class BodyMeasurementService(ApplicationDbContext dbContext)
 
     public async Task<bool> UpdateAsync(int id, BodyMeasurementInputModel input)
     {
-        var measurement = await dbContext.BodyMeasurements.FindAsync(id);
+        var measurement = await VisibleMeasurements().SingleOrDefaultAsync(candidate => candidate.Id == id);
 
         if (measurement is null)
         {
@@ -37,13 +50,17 @@ public class BodyMeasurementService(ApplicationDbContext dbContext)
         }
 
         ApplyInput(measurement, input);
+        if (currentUser.IsAdministrator && !string.IsNullOrWhiteSpace(input.OwnerId))
+        {
+            measurement.UserId = input.OwnerId;
+        }
         await dbContext.SaveChangesAsync();
         return true;
     }
 
     public async Task<bool> DeleteAsync(int id)
     {
-        var measurement = await dbContext.BodyMeasurements.FindAsync(id);
+        var measurement = await VisibleMeasurements().SingleOrDefaultAsync(candidate => candidate.Id == id);
 
         if (measurement is null)
         {
@@ -68,4 +85,9 @@ public class BodyMeasurementService(ApplicationDbContext dbContext)
         measurement.ThighCm = input.ThighCm;
         measurement.Notes = string.IsNullOrWhiteSpace(input.Notes) ? null : input.Notes.Trim();
     }
+
+    private IQueryable<BodyMeasurement> VisibleMeasurements() =>
+        currentUser.IsAdministrator
+            ? dbContext.BodyMeasurements
+            : dbContext.BodyMeasurements.Where(measurement => measurement.UserId == currentUser.Id);
 }
