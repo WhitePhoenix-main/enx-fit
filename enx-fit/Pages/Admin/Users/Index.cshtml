@@ -1,0 +1,67 @@
+@page
+@model enx_fit.Pages.Admin.Users.IndexModel
+@{
+    ViewData["Title"] = "Пользователи";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-1">Пользователи и роли</h1>
+    <p class="text-muted mb-0">Назначение и снятие роли администратора.</p>
+</div>
+
+@if (TempData["StatusMessage"] is string statusMessage)
+{
+    <div class="alert alert-success" role="alert">@statusMessage</div>
+}
+
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger" role="alert">@errorMessage</div>
+}
+
+<div class="table-responsive border rounded-3">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th scope="col">Пользователь</th>
+                <th scope="col">Роль</th>
+                <th scope="col" class="text-end">Действие</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model.Users)
+            {
+                <tr>
+                    <td>
+                        @user.DisplayName
+                        @if (user.IsCurrentUser)
+                        {
+                            <span class="badge text-bg-secondary">текущий</span>
+                        }
+                    </td>
+                    <td>
+                        @if (user.IsAdministrator)
+                        {
+                            <span class="badge text-bg-primary">Администратор</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-light">Пользователь</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <form method="post" asp-page-handler="SetAdministrator" class="d-inline">
+                            <input type="hidden" name="userId" value="@user.Id" />
+                            <input type="hidden" name="enabled" value="@(!user.IsAdministrator ? "true" : "false")" />
+                            <button class="btn btn-sm @(user.IsAdministrator ? "btn-outline-danger" : "btn-outline-primary")"
+                                    type="submit"
+                                    disabled="@(user.IsCurrentUser && user.IsAdministrator)">
+                                @(user.IsAdministrator ? "Снять роль" : "Назначить администратором")
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
