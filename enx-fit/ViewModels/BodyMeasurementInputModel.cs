@@ -5,6 +5,9 @@ namespace enx_fit.ViewModels;
 
 public class BodyMeasurementInputModel
 {
+    [Display(Name = "Пользователь")]
+    public string? OwnerId { get; set; }
+
     [Required]
     [DataType(DataType.Date)]
     public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Today);
@@ -46,6 +49,7 @@ public class BodyMeasurementInputModel
 
     public static BodyMeasurementInputModel FromMeasurement(BodyMeasurement measurement) => new()
     {
+        OwnerId = measurement.UserId,
         Date = measurement.Date,
         WeightKg = measurement.WeightKg,
         HeightCm = measurement.HeightCm,

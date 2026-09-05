@@ -5,6 +5,9 @@ namespace enx_fit.ViewModels;
 
 public class WorkoutSessionInputModel
 {
+    [Display(Name = "Пользователь")]
+    public string? OwnerId { get; set; }
+
     [Required]
     [DataType(DataType.Date)]
     public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Today);
@@ -17,6 +20,7 @@ public class WorkoutSessionInputModel
 
     public static WorkoutSessionInputModel FromWorkout(WorkoutSession workout) => new()
     {
+        OwnerId = workout.UserId,
         Date = workout.Date,
         Title = workout.Title,
         Notes = workout.Notes
