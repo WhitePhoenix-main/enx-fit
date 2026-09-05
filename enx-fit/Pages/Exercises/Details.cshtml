@@ -10,7 +10,10 @@
         <p class="text-muted mb-0">Exercise details</p>
     </div>
     <div class="d-flex gap-2">
-        <a class="btn btn-primary" asp-page="./Edit" asp-route-id="@Model.Exercise.Id">Edit</a>
+        @if (User.IsInRole("Administrator"))
+        {
+            <a class="btn btn-primary" asp-page="./Edit" asp-route-id="@Model.Exercise.Id">Edit</a>
+        }
         <a class="btn btn-outline-secondary" asp-page="./Index">Back to list</a>
     </div>
 </div>

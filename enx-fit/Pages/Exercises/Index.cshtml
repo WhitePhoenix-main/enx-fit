@@ -9,7 +9,10 @@
         <h1 class="h3 mb-1">Exercises</h1>
         <p class="text-muted mb-0">Manage the exercise library used in your workouts.</p>
     </div>
-    <a class="btn btn-primary" asp-page="./Create">Add exercise</a>
+    @if (User.IsInRole("Administrator"))
+    {
+        <a class="btn btn-primary" asp-page="./Create">Add exercise</a>
+    }
 </div>
 
 @if (TempData["StatusMessage"] is string statusMessage)
@@ -48,7 +51,10 @@
                 ? "Add your first exercise to start building workouts."
                 : "Try another muscle group or add a new exercise.")
         </p>
-        <a class="btn btn-primary" asp-page="./Create">Add exercise</a>
+        @if (User.IsInRole("Administrator"))
+        {
+            <a class="btn btn-primary" asp-page="./Create">Add exercise</a>
+        }
     </div>
 }
 else
@@ -72,8 +78,11 @@ else
                         <td>@exercise.Equipment</td>
                         <td class="text-end text-nowrap">
                             <a class="btn btn-sm btn-outline-secondary" asp-page="./Details" asp-route-id="@exercise.Id">Details</a>
-                            <a class="btn btn-sm btn-outline-primary" asp-page="./Edit" asp-route-id="@exercise.Id">Edit</a>
-                            <a class="btn btn-sm btn-outline-danger" asp-page="./Delete" asp-route-id="@exercise.Id">Delete</a>
+                            @if (User.IsInRole("Administrator"))
+                            {
+                                <a class="btn btn-sm btn-outline-primary" asp-page="./Edit" asp-route-id="@exercise.Id">Edit</a>
+                                <a class="btn btn-sm btn-outline-danger" asp-page="./Delete" asp-route-id="@exercise.Id">Delete</a>
+                            }
                         </td>
                     </tr>
                 }
