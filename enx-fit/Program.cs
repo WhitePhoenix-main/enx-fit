@@ -20,10 +20,7 @@ builder.Services
     .AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<IdentityContext>();
-builder.Services.AddAuthorization(options =>
-    options.AddPolicy(
-        AppPolicies.AdministratorOnly,
-        policy => policy.RequireRole(AppRoles.Administrator)));
+builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<ExerciseService>();
@@ -33,18 +30,6 @@ builder.Services.AddScoped<AnalyticsDataService>();
 builder.Services.AddScoped<UserDirectoryService>();
 builder.Services.AddSingleton<TrainingAnalyticsService>();
 builder.Services.AddSingleton<BodyAnalyticsService>();
-builder.Services.AddRazorPages(options =>
-{
-    options.Conventions.AuthorizePage("/Dashboard");
-    options.Conventions.AuthorizeFolder("/Workouts");
-    options.Conventions.AuthorizeFolder("/Body");
-    options.Conventions.AuthorizeFolder("/Analytics");
-    options.Conventions.AuthorizeFolder("/Exercises");
-    options.Conventions.AuthorizePage("/Exercises/Create", AppPolicies.AdministratorOnly);
-    options.Conventions.AuthorizePage("/Exercises/Edit", AppPolicies.AdministratorOnly);
-    options.Conventions.AuthorizePage("/Exercises/Delete", AppPolicies.AdministratorOnly);
-    options.Conventions.AuthorizeFolder("/Admin", AppPolicies.AdministratorOnly);
-});
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "DataProtectionKeys")));
 
@@ -86,8 +71,10 @@ await using (var scope = app.Services.CreateAsyncScope())
     }
 
     var administratorEmail = builder.Configuration["IdentitySeed:AdministratorEmail"];
-    var administrators = await userManager.GetUsersInRoleAsync(AppRoles.Administrator);
-    if (administrators.Count == 0 && !string.IsNullOrWhiteSpace(administratorEmail))
+    // Promote the configured bootstrap account idempotently, even when other
+    // administrators already exist. This allows access recovery by setting the
+    // email and restarting the application.
+    if (!string.IsNullOrWhiteSpace(administratorEmail))
     {
         var administrator = await userManager.FindByEmailAsync(administratorEmail);
         if (administrator is not null && !await userManager.IsInRoleAsync(administrator, AppRoles.Administrator))
