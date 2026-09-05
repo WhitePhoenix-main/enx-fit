@@ -12,6 +12,20 @@
 <div class="card">
     <div class="card-body">
         <form method="post">
+            @if (Model.IsAdministrator)
+            {
+                <div class="mb-3">
+                    <label class="form-label" asp-for="Input.OwnerId"></label>
+                    <select class="form-select" asp-for="Input.OwnerId">
+                        <option value="">Выберите пользователя</option>
+                        @foreach (var user in Model.Users)
+                        {
+                            <option value="@user.Id">@user.DisplayName</option>
+                        }
+                    </select>
+                    <span class="text-danger" asp-validation-for="Input.OwnerId"></span>
+                </div>
+            }
             <partial name="_WorkoutForm" for="Input" />
             <div class="d-flex gap-2">
                 <button class="btn btn-primary" type="submit">Create workout</button>

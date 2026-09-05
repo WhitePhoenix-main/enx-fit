@@ -1,16 +1,24 @@
 using enx_fit.Models;
 using enx_fit.Services;
+using enx_fit.Security;
 using enx_fit.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace enx_fit.Pages.Workouts;
 
-public class DetailsModel(WorkoutService workoutService) : PageModel
+public class DetailsModel(
+    WorkoutService workoutService,
+    CurrentUser currentUser,
+    UserDirectoryService userDirectory) : PageModel
 {
     public WorkoutSession Workout { get; private set; } = null!;
 
     public IReadOnlyList<Exercise> AvailableExercises { get; private set; } = [];
+
+    public bool IsAdministrator => currentUser.IsAdministrator;
+
+    public string OwnerName { get; private set; } = string.Empty;
 
     [BindProperty]
     public AddWorkoutExerciseInputModel AddExercise { get; set; } = new();
@@ -81,6 +89,10 @@ public class DetailsModel(WorkoutService workoutService) : PageModel
         }
 
         Workout = workout;
+        if (IsAdministrator)
+        {
+            OwnerName = await userDirectory.GetDisplayNameAsync(workout.UserId);
+        }
         AvailableExercises = await workoutService.GetExercisesAsync(id);
         return Page();
     }

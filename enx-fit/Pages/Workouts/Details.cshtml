@@ -8,6 +8,10 @@
     <div>
         <p class="text-muted mb-1">@Model.Workout.Date.ToString("yyyy-MM-dd")</p>
         <h1 class="h3 mb-2">@(string.IsNullOrWhiteSpace(Model.Workout.Title) ? "Workout" : Model.Workout.Title)</h1>
+        @if (Model.IsAdministrator)
+        {
+            <p class="small text-muted mb-2">Пользователь: @Model.OwnerName</p>
+        }
         @if (!string.IsNullOrWhiteSpace(Model.Workout.Notes))
         {
             <p class="mb-0">@Model.Workout.Notes</p>
