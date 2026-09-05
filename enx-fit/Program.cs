@@ -41,6 +41,21 @@ await using (var scope = app.Services.CreateAsyncScope())
     var identityContext = services.GetRequiredService<IdentityContext>();
     await identityContext.Database.MigrateAsync();
 
+    // Identity cannot build a ClaimsPrincipal from a malformed user-claim row.
+    // Older databases may contain rows with a NULL/empty ClaimType, so remove
+    // those unusable records before the first authenticated request is handled.
+    var malformedClaims = await identityContext.UserClaims
+        .Where(claim => string.IsNullOrWhiteSpace(claim.ClaimType))
+        .ToListAsync();
+    if (malformedClaims.Count > 0)
+    {
+        app.Logger.LogWarning(
+            "Removing {Count} malformed Identity user claim(s) with an empty ClaimType.",
+            malformedClaims.Count);
+        identityContext.UserClaims.RemoveRange(malformedClaims);
+        await identityContext.SaveChangesAsync();
+    }
+
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
     foreach (var roleName in AppRoles.All)
     {
