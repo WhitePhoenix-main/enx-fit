@@ -1,13 +1,330 @@
 @page
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Enix Fit";
+    ViewData["DocumentTitle"] = "Enix Fit";
 }
 
-<div class="p-4 p-md-5 mb-4 rounded-3 bg-body-tertiary">
-    <div class="container-fluid py-3">
-        <h1 class="display-6 fw-semibold">Enix Fit Dashboard</h1>
-        <p class="col-md-8 fs-5 text-muted mb-0">
-            Базовый каркас приложения готов. Здесь позже появится сводка тренировок, тела и прогресса.
+@section Styles {
+    <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
+}
+
+<section class="landing-hero" aria-labelledby="landing-title">
+    <div class="landing-hero__content">
+        <p class="landing-hero__eyebrow">Fitness analytics platform</p>
+        <h1 id="landing-title" class="landing-hero__title">
+            Тренируйся. <span>Отслеживай.</span> Прогрессируй.
+        </h1>
+        <p class="landing-hero__description">
+            Веди тренировки, следи за силовыми показателями и изменениями тела. Enix Fit превращает историю тренировок в понятную статистику прогресса.
         </p>
+        <div class="landing-hero__actions">
+            <a class="btn btn-primary btn-lg" asp-area="Identity" asp-page="/Account/Register">Начать бесплатно</a>
+            <a class="btn btn-outline-light btn-lg" asp-page="/Index" asp-fragment="features">Посмотреть возможности</a>
+        </div>
     </div>
-</div>
+
+    <div class="progress-preview" role="region" aria-labelledby="progress-preview-title">
+        <div class="progress-preview__header">
+            <div>
+                <p class="progress-preview__eyebrow">Обзор прогресса</p>
+                <h2 id="progress-preview-title">Твои показатели</h2>
+            </div>
+            <span>Последние 30 дней</span>
+        </div>
+
+        <div class="progress-preview__metrics">
+            <article class="progress-metric">
+                <div class="progress-metric__heading">
+                    <span>Weight</span>
+                    <span class="progress-trend progress-trend--positive">−2.1 kg</span>
+                </div>
+                <strong>94.2 <small>kg</small></strong>
+                <span class="progress-metric__caption">Текущий вес</span>
+            </article>
+
+            <article class="progress-metric">
+                <div class="progress-metric__heading">
+                    <span>Bench Press</span>
+                    <span class="progress-trend progress-trend--positive">+10 kg</span>
+                </div>
+                <strong>110 <small>kg</small></strong>
+                <span class="progress-metric__caption">Лучший результат</span>
+            </article>
+
+            <article class="progress-metric">
+                <div class="progress-metric__heading">
+                    <span>Workouts this month</span>
+                    <span class="progress-metric__icon" aria-hidden="true">12</span>
+                </div>
+                <strong>12</strong>
+                <span class="progress-metric__caption">3 тренировки в неделю</span>
+            </article>
+
+            <article class="progress-metric">
+                <div class="progress-metric__heading">
+                    <span>Training streak</span>
+                    <span class="progress-metric__icon" aria-hidden="true">8</span>
+                </div>
+                <strong>8 <small>days</small></strong>
+                <span class="progress-metric__caption">Текущая серия</span>
+            </article>
+        </div>
+
+        <div class="progress-chart">
+            <div class="progress-chart__heading">
+                <div>
+                    <span>Объём тренировок</span>
+                    <strong>18 420 kg</strong>
+                </div>
+                <span class="progress-trend progress-trend--positive">+12.4%</span>
+            </div>
+            <svg class="progress-chart__graphic" viewBox="0 0 600 170" role="img" aria-label="График роста тренировочного объёма">
+                <line class="progress-chart__grid" x1="0" y1="25" x2="600" y2="25" />
+                <line class="progress-chart__grid" x1="0" y1="85" x2="600" y2="85" />
+                <line class="progress-chart__grid" x1="0" y1="145" x2="600" y2="145" />
+                <path class="progress-chart__line" d="M10 137 C70 132 88 118 135 121 S207 100 250 105 S323 74 365 83 S442 53 480 59 S544 28 590 34" />
+                <circle class="progress-chart__point" cx="590" cy="34" r="5" />
+            </svg>
+            <div class="progress-chart__labels" aria-hidden="true">
+                <span>1 неделя</span>
+                <span>2 неделя</span>
+                <span>3 неделя</span>
+                <span>4 неделя</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="features" class="landing-section" aria-labelledby="features-title">
+    <div class="landing-section__heading">
+        <p class="landing-section__eyebrow">Возможности</p>
+        <h2 id="features-title">Всё для системного прогресса</h2>
+        <p>Записывай результаты в одном месте и принимай решения на основе собственных данных.</p>
+    </div>
+
+    <div class="features-grid">
+        <article class="feature-card">
+            <div class="feature-card__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                    <path d="M5 8v8M8 6v12M16 6v12M19 8v8M8 12h8M3 10v4M21 10v4" />
+                </svg>
+            </div>
+            <h3>Тренировки</h3>
+            <p>Записывай подходы, повторения и рабочий вес.</p>
+        </article>
+
+        <article class="feature-card">
+            <div class="feature-card__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 18 9 13l3 3 7-8" />
+                    <path d="M15 8h4v4" />
+                    <path d="M4 5v14h16" />
+                </svg>
+            </div>
+            <h3>Прогресс упражнений</h3>
+            <p>Следи за ростом силы и личными рекордами.</p>
+        </article>
+
+        <article class="feature-card">
+            <div class="feature-card__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                    <path d="M8 4h8M9 4 7 20h10L15 4" />
+                    <path d="M8 11h8" />
+                </svg>
+            </div>
+            <h3>Тело</h3>
+            <p>Отслеживай массу тела, ИМТ и другие показатели.</p>
+        </article>
+
+        <article class="feature-card">
+            <div class="feature-card__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                    <path d="M5 19V9M12 19V5M19 19v-7" />
+                    <path d="M3 19h18" />
+                </svg>
+            </div>
+            <h3>Аналитика</h3>
+            <p>Смотри тенденции и оценивай эффективность тренировок.</p>
+        </article>
+    </div>
+</section>
+
+<section id="analytics" class="landing-section" aria-labelledby="exercise-progress-title">
+    <div class="landing-section__heading landing-section__heading--wide">
+        <p class="landing-section__eyebrow">Exercise progress</p>
+        <h2 id="exercise-progress-title">Смотри, как меняются твои результаты</h2>
+        <p>История каждого упражнения показывает динамику силы, личные рекорды и устойчивость прогресса.</p>
+    </div>
+
+    <div class="exercise-progress-preview">
+        <div class="exercise-progress-summary">
+            <div class="exercise-progress-summary__heading">
+                <span>Упражнение</span>
+                <span class="exercise-progress-summary__status">Personal Record</span>
+            </div>
+            <h3>Bench Press</h3>
+            <p>Лучший рабочий вес за последние 6 месяцев.</p>
+
+            <dl class="exercise-progress-stats">
+                <div>
+                    <dt>Current</dt>
+                    <dd>110 <small>kg</small></dd>
+                </div>
+                <div>
+                    <dt>Изменение</dt>
+                    <dd class="exercise-progress-stats__positive">+15 <small>kg</small></dd>
+                </div>
+                <div>
+                    <dt>Рост</dt>
+                    <dd class="exercise-progress-stats__positive">+15.8%</dd>
+                </div>
+            </dl>
+        </div>
+
+        <div class="exercise-progress-chart">
+            <div class="exercise-progress-chart__heading">
+                <div>
+                    <span>Рабочий вес</span>
+                    <strong>95 → 110 kg</strong>
+                </div>
+                <span>6 месяцев</span>
+            </div>
+
+            <div class="exercise-progress-chart__canvas">
+                <div class="exercise-progress-chart__scale" aria-hidden="true">
+                    <span>115 kg</span>
+                    <span>105 kg</span>
+                    <span>95 kg</span>
+                </div>
+                <svg viewBox="0 0 720 300" role="img" aria-label="График роста результата в жиме лёжа с 95 до 110 килограммов">
+                    <line class="exercise-progress-chart__grid" x1="0" y1="35" x2="720" y2="35" />
+                    <line class="exercise-progress-chart__grid" x1="0" y1="145" x2="720" y2="145" />
+                    <line class="exercise-progress-chart__grid" x1="0" y1="255" x2="720" y2="255" />
+                    <path class="exercise-progress-chart__line" d="M12 245 C70 238 94 224 132 226 S211 193 260 201 S337 158 390 165 S472 121 520 129 S615 77 708 65" />
+                    <circle class="exercise-progress-chart__point" cx="12" cy="245" r="5" />
+                    <circle class="exercise-progress-chart__point" cx="132" cy="226" r="5" />
+                    <circle class="exercise-progress-chart__point" cx="260" cy="201" r="5" />
+                    <circle class="exercise-progress-chart__point" cx="390" cy="165" r="5" />
+                    <circle class="exercise-progress-chart__point" cx="520" cy="129" r="5" />
+                    <circle class="exercise-progress-chart__point exercise-progress-chart__point--current" cx="708" cy="65" r="7" />
+                </svg>
+            </div>
+
+            <div class="exercise-progress-chart__labels" aria-hidden="true">
+                <span>Март</span>
+                <span>Апрель</span>
+                <span>Май</span>
+                <span>Июнь</span>
+                <span>Июль</span>
+                <span>Август</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="body-analytics" class="landing-section" aria-labelledby="body-analytics-title">
+    <div class="body-analytics-layout">
+        <div class="body-analytics-content">
+            <div class="landing-section__heading">
+                <p class="landing-section__eyebrow">Body analytics</p>
+                <h2 id="body-analytics-title">Следи не только за весом</h2>
+                <p>Состав тела помогает точнее оценивать результат тренировок и понимать, как меняется форма со временем.</p>
+            </div>
+
+            <div class="body-metrics">
+                <article class="body-metric">
+                    <span>Weight</span>
+                    <strong>94.2 <small>kg</small></strong>
+                    <span class="body-metric__trend">↓ 1.8 kg</span>
+                </article>
+                <article class="body-metric">
+                    <span>Body fat</span>
+                    <strong>15.3<small>%</small></strong>
+                    <span class="body-metric__trend">↓ 0.9%</span>
+                </article>
+                <article class="body-metric">
+                    <span>BMI</span>
+                    <strong>27.1</strong>
+                    <span class="body-metric__caption">Текущий показатель</span>
+                </article>
+                <article class="body-metric">
+                    <span>Muscle mass</span>
+                    <strong>76.4 <small>kg</small></strong>
+                    <span class="body-metric__trend">↑ 1.2 kg</span>
+                </article>
+            </div>
+        </div>
+
+        <div class="body-composition-preview">
+            <div class="body-composition-preview__heading">
+                <div>
+                    <span>Динамика состава тела</span>
+                    <strong>Последние 6 месяцев</strong>
+                </div>
+                <span class="body-composition-preview__result">Позитивная динамика</span>
+            </div>
+
+            <svg class="body-composition-chart" viewBox="0 0 640 280" role="img" aria-label="График снижения веса и процента жира при росте мышечной массы">
+                <line class="body-composition-chart__grid" x1="10" y1="35" x2="630" y2="35" />
+                <line class="body-composition-chart__grid" x1="10" y1="140" x2="630" y2="140" />
+                <line class="body-composition-chart__grid" x1="10" y1="245" x2="630" y2="245" />
+                <path class="body-composition-chart__weight" d="M18 62 C90 69 114 88 164 91 S245 119 300 122 S390 150 448 154 S540 184 622 194" />
+                <path class="body-composition-chart__fat" d="M18 96 C86 101 119 116 165 119 S247 143 302 147 S390 167 448 174 S549 203 622 211" />
+                <path class="body-composition-chart__muscle" d="M18 225 C83 218 113 202 165 204 S244 174 302 181 S390 141 448 148 S538 102 622 91" />
+                <circle class="body-composition-chart__point body-composition-chart__point--weight" cx="622" cy="194" r="6" />
+                <circle class="body-composition-chart__point body-composition-chart__point--fat" cx="622" cy="211" r="6" />
+                <circle class="body-composition-chart__point body-composition-chart__point--muscle" cx="622" cy="91" r="6" />
+            </svg>
+
+            <div class="body-composition-preview__labels" aria-hidden="true">
+                <span>Март</span>
+                <span>Апрель</span>
+                <span>Май</span>
+                <span>Июнь</span>
+                <span>Июль</span>
+                <span>Август</span>
+            </div>
+
+            <ul class="body-composition-legend" aria-label="Обозначения графика">
+                <li><span class="body-composition-legend__weight"></span>Weight</li>
+                <li><span class="body-composition-legend__fat"></span>Body fat</li>
+                <li><span class="body-composition-legend__muscle"></span>Muscle mass</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section id="how-it-works" class="landing-section" aria-labelledby="how-it-works-title">
+    <div class="landing-section__heading">
+        <p class="landing-section__eyebrow">Как это работает</p>
+        <h2 id="how-it-works-title">От записи подхода до понятного вывода</h2>
+        <p>Enix Fit превращает обычный тренировочный дневник в последовательную историю твоего прогресса.</p>
+    </div>
+
+    <ol class="workflow-steps">
+        <li class="workflow-step">
+            <span class="workflow-step__number">01</span>
+            <h3>Запиши тренировку</h3>
+            <p>Подходы, вес и повторения.</p>
+        </li>
+        <li class="workflow-step">
+            <span class="workflow-step__number">02</span>
+            <h3>Собирай историю</h3>
+            <p>Enix Fit сохраняет результаты тренировок.</p>
+        </li>
+        <li class="workflow-step">
+            <span class="workflow-step__number">03</span>
+            <h3>Анализируй прогресс</h3>
+            <p>Графики помогают видеть рост и замечать плато.</p>
+        </li>
+    </ol>
+</section>
+
+<section class="landing-cta" aria-labelledby="landing-cta-title">
+    <div>
+        <p class="landing-section__eyebrow">Начни сегодня</p>
+        <h2 id="landing-cta-title">Готов увидеть свой прогресс?</h2>
+        <p>Начни вести тренировки в Enix Fit.</p>
+    </div>
+    <a class="btn btn-primary btn-lg" asp-area="Identity" asp-page="/Account/Register">Создать аккаунт</a>
+</section>
