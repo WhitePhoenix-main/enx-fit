@@ -57,6 +57,10 @@ namespace enx_fit.Migrations
                     b.Property<decimal?>("ThighCm")
                         .HasColumnType("numeric");
 
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
                     b.Property<decimal?>("WaistCm")
                         .HasPrecision(6, 2)
                         .HasColumnType("numeric(6,2)");
@@ -66,6 +70,8 @@ namespace enx_fit.Migrations
                         .HasColumnType("numeric(7,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("BodyMeasurements");
                 });
@@ -247,7 +253,13 @@ namespace enx_fit.Migrations
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
 
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("WorkoutSessions");
                 });
