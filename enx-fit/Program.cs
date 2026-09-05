@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using enx_fit.Data;
 using enx_fit.Services;
 using enx_fit.Areas.Identity.Data;
+using enx_fit.Security;
 using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,14 +16,35 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDbContext<IdentityContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<IdentityContext>();
+builder.Services
+    .AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<IdentityContext>();
+builder.Services.AddAuthorization(options =>
+    options.AddPolicy(
+        AppPolicies.AdministratorOnly,
+        policy => policy.RequireRole(AppRoles.Administrator)));
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<ExerciseService>();
 builder.Services.AddScoped<WorkoutService>();
 builder.Services.AddScoped<BodyMeasurementService>();
 builder.Services.AddScoped<AnalyticsDataService>();
+builder.Services.AddScoped<UserDirectoryService>();
 builder.Services.AddSingleton<TrainingAnalyticsService>();
 builder.Services.AddSingleton<BodyAnalyticsService>();
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AuthorizePage("/Dashboard");
+    options.Conventions.AuthorizeFolder("/Workouts");
+    options.Conventions.AuthorizeFolder("/Body");
+    options.Conventions.AuthorizeFolder("/Analytics");
+    options.Conventions.AuthorizeFolder("/Exercises");
+    options.Conventions.AuthorizePage("/Exercises/Create", AppPolicies.AdministratorOnly);
+    options.Conventions.AuthorizePage("/Exercises/Edit", AppPolicies.AdministratorOnly);
+    options.Conventions.AuthorizePage("/Exercises/Delete", AppPolicies.AdministratorOnly);
+    options.Conventions.AuthorizeFolder("/Admin", AppPolicies.AdministratorOnly);
+});
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "DataProtectionKeys")));
 
@@ -30,8 +52,57 @@ var app = builder.Build();
 
 await using (var scope = app.Services.CreateAsyncScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    await dbContext.Database.MigrateAsync();
+    var services = scope.ServiceProvider;
+    var identityContext = services.GetRequiredService<IdentityContext>();
+    await identityContext.Database.MigrateAsync();
+
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+    foreach (var roleName in AppRoles.All)
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
+        {
+            var result = await roleManager.CreateAsync(new IdentityRole(roleName));
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(
+                    $"Unable to create role '{roleName}': {string.Join(", ", result.Errors.Select(error => error.Description))}");
+            }
+        }
+    }
+
+    var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
+    var users = await userManager.Users.ToListAsync();
+    foreach (var user in users)
+    {
+        if (!await userManager.IsInRoleAsync(user, AppRoles.User))
+        {
+            var result = await userManager.AddToRoleAsync(user, AppRoles.User);
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(
+                    $"Unable to assign the default role: {string.Join(", ", result.Errors.Select(error => error.Description))}");
+            }
+        }
+    }
+
+    var administratorEmail = builder.Configuration["IdentitySeed:AdministratorEmail"];
+    var administrators = await userManager.GetUsersInRoleAsync(AppRoles.Administrator);
+    if (administrators.Count == 0 && !string.IsNullOrWhiteSpace(administratorEmail))
+    {
+        var administrator = await userManager.FindByEmailAsync(administratorEmail);
+        if (administrator is not null && !await userManager.IsInRoleAsync(administrator, AppRoles.Administrator))
+        {
+            var result = await userManager.AddToRoleAsync(administrator, AppRoles.Administrator);
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(
+                    $"Unable to assign the administrator role: {string.Join(", ", result.Errors.Select(error => error.Description))}");
+            }
+        }
+    }
+
+    var applicationContext = services.GetRequiredService<ApplicationDbContext>();
+    await applicationContext.Database.MigrateAsync();
 }
 
 app.Use(async (context, next) =>
@@ -72,8 +143,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
