@@ -5,7 +5,7 @@
     },
 
     enableParticle: function() {
-      particlesJS.load('particles-background', 'assets/js/particles.json', function() {
+      particlesJS.load('particles-background', '/wiseowl/assets/js/particles.json', function() {
         console.log('callback - particles.js config loaded');
       });
     }

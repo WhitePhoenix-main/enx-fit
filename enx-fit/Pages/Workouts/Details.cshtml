@@ -1,0 +1,165 @@
+@page "{id:int}"
+@model enx_fit.Pages.Workouts.DetailsModel
+@{
+    ViewData["Title"] = "Workout details";
+}
+
+<div class="d-flex flex-column flex-md-row align-items-md-start justify-content-between gap-3 mb-4">
+    <div>
+        <p class="text-muted mb-1">@Model.Workout.Date.ToString("yyyy-MM-dd")</p>
+        <h1 class="h3 mb-2">@(string.IsNullOrWhiteSpace(Model.Workout.Title) ? "Workout" : Model.Workout.Title)</h1>
+        @if (Model.IsAdministrator)
+        {
+            <p class="small text-muted mb-2">Пользователь: @Model.OwnerName</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Workout.Notes))
+        {
+            <p class="mb-0">@Model.Workout.Notes</p>
+        }
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" asp-page="./Edit" asp-route-id="@Model.Workout.Id">Edit</a>
+        <a class="btn btn-outline-secondary" asp-page="./Index">Back to list</a>
+    </div>
+</div>
+
+@if (TempData["StatusMessage"] is string statusMessage)
+{
+    <div class="alert alert-success" role="alert">@statusMessage</div>
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+}
+
+<section class="border rounded-3 p-3 p-md-4 mb-4">
+    <h2 class="h5 mb-3">Add exercise</h2>
+    @if (Model.AvailableExercises.Count == 0)
+    {
+        <p class="text-muted mb-0">All exercises from the library are already in this workout.</p>
+    }
+    else
+    {
+        <form method="post" asp-page-handler="AddExercise" class="row g-2 align-items-end">
+            <div class="col-md-8">
+                <label class="form-label" asp-for="AddExercise.ExerciseId"></label>
+                <select class="form-select" asp-for="AddExercise.ExerciseId">
+                    <option value="">Select an exercise</option>
+                    @foreach (var exercise in Model.AvailableExercises)
+                    {
+                        <option value="@exercise.Id">@exercise.Name &middot; @exercise.MuscleGroup</option>
+                    }
+                </select>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary" type="submit">Add exercise</button>
+            </div>
+        </form>
+    }
+</section>
+
+@if (Model.Workout.WorkoutExercises.Count == 0)
+{
+    <div class="border rounded-3 p-5 text-center bg-body-tertiary">
+        <h2 class="h5">No exercises in this workout</h2>
+        <p class="text-muted mb-0">Use the form above to add the first exercise.</p>
+    </div>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        @foreach (var workoutExercise in Model.Workout.WorkoutExercises.OrderBy(w => w.Order))
+        {
+            var nextSetNumber = workoutExercise.SetEntries.Count == 0
+                ? 1
+                : workoutExercise.SetEntries.Max(s => s.SetNumber) + 1;
+
+            <section class="card">
+                <div class="card-header bg-body d-flex flex-column flex-sm-row justify-content-between gap-2">
+                    <div>
+                        <h2 class="h5 mb-1">@workoutExercise.Exercise.Name</h2>
+                        <p class="small text-muted mb-0">@workoutExercise.Exercise.MuscleGroup &middot; @workoutExercise.Exercise.Equipment</p>
+                    </div>
+                    <span class="text-muted small">@workoutExercise.SetEntries.Count set(s)</span>
+                </div>
+                <div class="card-body">
+                    @if (workoutExercise.SetEntries.Count > 0)
+                    {
+                        <div class="table-responsive mb-4">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Set</th>
+                                        <th scope="col">Weight</th>
+                                        <th scope="col">Reps</th>
+                                        <th scope="col">RIR</th>
+                                        <th scope="col">Type</th>
+                                        <th scope="col">Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var set in workoutExercise.SetEntries.OrderBy(s => s.SetNumber).ThenBy(s => s.Id))
+                                    {
+                                        <tr>
+                                            <td>@set.SetNumber</td>
+                                            <td>@set.Weight</td>
+                                            <td>@set.Reps</td>
+                                            <td>@(set.Rir?.ToString() ?? "-")</td>
+                                            <td>
+                                                @if (set.IsWarmup)
+                                                {
+                                                    <span class="badge text-bg-secondary">Warm-up</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge text-bg-primary">Working</span>
+                                                }
+                                            </td>
+                                            <td>@set.Notes</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+
+                    <h3 class="h6">Add set</h3>
+                    <form method="post" asp-page-handler="AddSet" class="row g-2 align-items-end">
+                        <input type="hidden" name="AddSet.WorkoutExerciseId" value="@workoutExercise.Id" />
+                        <div class="col-4 col-md-2">
+                            <label class="form-label small" for="set-number-@workoutExercise.Id">Set</label>
+                            <input class="form-control" id="set-number-@workoutExercise.Id" name="AddSet.SetNumber" type="number" min="1" value="@nextSetNumber" />
+                        </div>
+                        <div class="col-4 col-md-2">
+                            <label class="form-label small" for="weight-@workoutExercise.Id">Weight</label>
+                            <input class="form-control" id="weight-@workoutExercise.Id" name="AddSet.Weight" type="number" min="0" step="0.01" value="0" />
+                        </div>
+                        <div class="col-4 col-md-2">
+                            <label class="form-label small" for="reps-@workoutExercise.Id">Reps</label>
+                            <input class="form-control" id="reps-@workoutExercise.Id" name="AddSet.Reps" type="number" min="0" value="0" />
+                        </div>
+                        <div class="col-4 col-md-2">
+                            <label class="form-label small" for="rir-@workoutExercise.Id">RIR</label>
+                            <input class="form-control" id="rir-@workoutExercise.Id" name="AddSet.Rir" type="number" min="0" max="10" />
+                        </div>
+                        <div class="col-8 col-md-3">
+                            <label class="form-label small" for="notes-@workoutExercise.Id">Notes</label>
+                            <input class="form-control" id="notes-@workoutExercise.Id" name="AddSet.Notes" maxlength="500" />
+                        </div>
+                        <div class="col-auto">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" id="warmup-@workoutExercise.Id" name="AddSet.IsWarmup" type="checkbox" value="true" />
+                                <input name="AddSet.IsWarmup" type="hidden" value="false" />
+                                <label class="form-check-label" for="warmup-@workoutExercise.Id">Warm-up</label>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-outline-primary" type="submit">Add set</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        }
+    </div>
+}

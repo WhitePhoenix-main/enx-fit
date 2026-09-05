@@ -1,0 +1,123 @@
+@page
+@model enx_fit.Pages.Body.IndexModel
+@{
+    ViewData["Title"] = "Body measurements";
+}
+
+<div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
+    <div>
+        <h1 class="h3 mb-1">Body measurements</h1>
+        <p class="text-muted mb-0">Track body weight, BMI, and key measurements over time.</p>
+    </div>
+    <a class="btn btn-primary" asp-page="./Create">Add measurement</a>
+</div>
+
+@if (TempData["StatusMessage"] is string statusMessage)
+{
+    <div class="alert alert-success" role="alert">@statusMessage</div>
+}
+
+@if (Model.IsAdministrator)
+{
+    <form method="get" class="row g-2 align-items-end mb-4">
+        <div class="col-sm-8 col-md-5">
+            <label class="form-label" asp-for="UserId">Пользователь</label>
+            <select class="form-select" asp-for="UserId">
+                <option value="">Все пользователи</option>
+                @foreach (var user in Model.Users)
+                {
+                    <option value="@user.Id">@user.DisplayName</option>
+                }
+            </select>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-outline-primary" type="submit">Применить</button>
+        </div>
+    </form>
+}
+
+@if (Model.Measurements.Count == 0)
+{
+    <div class="border rounded-3 p-5 text-center bg-body-tertiary">
+        <h2 class="h5">No body measurements yet</h2>
+        <p class="text-muted mb-4">Add your first measurement to start tracking weight and BMI.</p>
+        <a class="btn btn-primary" asp-page="./Create">Add measurement</a>
+    </div>
+}
+else
+{
+    @if (Model.CanShowCharts)
+    {
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <section class="card h-100">
+                <div class="card-body">
+                    <h2 class="h5">Weight</h2>
+                    <div class="ratio ratio-16x9">
+                        <canvas id="weight-chart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <div class="col-lg-6">
+            <section class="card h-100">
+                <div class="card-body">
+                    <h2 class="h5">BMI</h2>
+                    <div class="ratio ratio-16x9">
+                        <canvas id="bmi-chart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    }
+
+    <script id="body-measurement-chart-data" type="application/json">@Html.Raw(Model.ChartDataJson)</script>
+
+    <div class="table-responsive border rounded-3">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Weight</th>
+                    <th scope="col">Height</th>
+                    <th scope="col">BMI</th>
+                    <th scope="col">Body fat</th>
+                    @if (Model.IsAdministrator)
+                    {
+                        <th scope="col">Пользователь</th>
+                    }
+                    <th scope="col" class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var measurement in Model.Measurements)
+                {
+                    <tr>
+                        <td>@measurement.Date.ToString("yyyy-MM-dd")</td>
+                        <td>@measurement.WeightKg kg</td>
+                        <td>@measurement.HeightCm cm</td>
+                        <td class="fw-semibold">@measurement.Bmi</td>
+                        <td>@(measurement.BodyFatPercent.HasValue ? $"{measurement.BodyFatPercent}%" : "-")</td>
+                        @if (Model.IsAdministrator)
+                        {
+                            <td>@Model.OwnerName(measurement.UserId)</td>
+                        }
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-sm btn-outline-primary" asp-page="./Edit" asp-route-id="@measurement.Id">Edit</a>
+                            <a class="btn btn-sm btn-outline-danger" asp-page="./Delete" asp-route-id="@measurement.Id">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@section Scripts {
+    @if (Model.Measurements.Count > 0 && Model.CanShowCharts)
+    {
+        <script src="~/lib/chart.js/dist/chart.umd.min.js"></script>
+        <script src="~/js/body-measurements.js" asp-append-version="true"></script>
+    }
+}

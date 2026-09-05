@@ -1,0 +1,84 @@
+@page
+@model enx_fit.Pages.Workouts.IndexModel
+@{
+    ViewData["Title"] = "Workouts";
+}
+
+<div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
+    <div>
+        <h1 class="h3 mb-1">Workouts</h1>
+        <p class="text-muted mb-0">Log training sessions and keep each set in one place.</p>
+    </div>
+    <a class="btn btn-primary" asp-page="./Create">Add workout</a>
+</div>
+
+@if (TempData["StatusMessage"] is string statusMessage)
+{
+    <div class="alert alert-success" role="alert">@statusMessage</div>
+}
+
+@if (Model.IsAdministrator)
+{
+    <form method="get" class="row g-2 align-items-end mb-4">
+        <div class="col-sm-8 col-md-5">
+            <label class="form-label" asp-for="UserId">Пользователь</label>
+            <select class="form-select" asp-for="UserId">
+                <option value="">Все пользователи</option>
+                @foreach (var user in Model.Users)
+                {
+                    <option value="@user.Id">@user.DisplayName</option>
+                }
+            </select>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-outline-primary" type="submit">Применить</button>
+        </div>
+    </form>
+}
+
+@if (Model.Workouts.Count == 0)
+{
+    <div class="border rounded-3 p-5 text-center bg-body-tertiary">
+        <h2 class="h5">No workouts yet</h2>
+        <p class="text-muted mb-4">Create your first session and start adding exercises and sets.</p>
+        <a class="btn btn-primary" asp-page="./Create">Add workout</a>
+    </div>
+}
+else
+{
+    <div class="table-responsive border rounded-3">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Title</th>
+                    <th scope="col">Exercises</th>
+                    @if (Model.IsAdministrator)
+                    {
+                        <th scope="col">Пользователь</th>
+                    }
+                    <th scope="col" class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var workout in Model.Workouts)
+                {
+                    <tr>
+                        <td>@workout.Date.ToString("yyyy-MM-dd")</td>
+                        <td class="fw-semibold">@(string.IsNullOrWhiteSpace(workout.Title) ? "Workout" : workout.Title)</td>
+                        <td>@workout.WorkoutExercises.Count</td>
+                        @if (Model.IsAdministrator)
+                        {
+                            <td>@Model.OwnerName(workout.UserId)</td>
+                        }
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-sm btn-outline-secondary" asp-page="./Details" asp-route-id="@workout.Id">Open</a>
+                            <a class="btn btn-sm btn-outline-primary" asp-page="./Edit" asp-route-id="@workout.Id">Edit</a>
+                            <a class="btn btn-sm btn-outline-danger" asp-page="./Delete" asp-route-id="@workout.Id">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

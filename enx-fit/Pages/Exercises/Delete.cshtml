@@ -1,0 +1,26 @@
+@page "{id:int}"
+@model enx_fit.Pages.Exercises.DeleteModel
+@{
+    ViewData["Title"] = "Delete exercise";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-1">Delete exercise</h1>
+    <p class="text-muted mb-0">Review the exercise before removing it.</p>
+</div>
+
+<div class="card border-danger">
+    <div class="card-body">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+        <h2 class="h5">@Model.Exercise.Name</h2>
+        <p class="text-muted">@Model.Exercise.MuscleGroup · @Model.Exercise.Equipment</p>
+        <p>This action cannot be undone.</p>
+        <form method="post">
+            <input type="hidden" asp-for="Exercise.Id" />
+            <div class="d-flex gap-2">
+                <button class="btn btn-danger" type="submit">Delete exercise</button>
+                <a class="btn btn-outline-secondary" asp-page="./Index">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>

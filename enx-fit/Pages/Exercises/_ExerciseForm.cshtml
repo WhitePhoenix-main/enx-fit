@@ -1,0 +1,28 @@
+@model enx_fit.ViewModels.ExerciseInputModel
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="mb-3">
+    <label class="form-label" asp-for="Name"></label>
+    <input class="form-control" asp-for="Name" />
+    <span class="text-danger" asp-validation-for="Name"></span>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label class="form-label" asp-for="MuscleGroup"></label>
+        <input class="form-control" asp-for="MuscleGroup" />
+        <span class="text-danger" asp-validation-for="MuscleGroup"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="form-label" asp-for="Equipment"></label>
+        <input class="form-control" asp-for="Equipment" />
+        <span class="text-danger" asp-validation-for="Equipment"></span>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label" asp-for="Notes"></label>
+    <textarea class="form-control" asp-for="Notes" rows="4"></textarea>
+    <span class="text-danger" asp-validation-for="Notes"></span>
+</div>
