@@ -7,20 +7,25 @@ using enx_fit.Security;
 using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration
+        .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
+        .AddEnvironmentVariables()
+        .AddCommandLine(args);
+}
+
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddDbContext<IdentityContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services
-    .AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
+    .AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<IdentityContext>();
-builder.Services.AddAuthorization();
+    .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<ExerciseService>();
@@ -38,13 +43,13 @@ var app = builder.Build();
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var services = scope.ServiceProvider;
-    var identityContext = services.GetRequiredService<IdentityContext>();
-    await identityContext.Database.MigrateAsync();
+    var db = services.GetRequiredService<ApplicationDbContext>();
+    await db.Database.MigrateAsync();
 
     // Identity cannot build a ClaimsPrincipal from a malformed user-claim row.
     // Older databases may contain rows with a NULL/empty ClaimType, so remove
     // those unusable records before the first authenticated request is handled.
-    var malformedClaims = await identityContext.UserClaims
+    var malformedClaims = await db.UserClaims
         .Where(claim => string.IsNullOrWhiteSpace(claim.ClaimType))
         .ToListAsync();
     if (malformedClaims.Count > 0)
@@ -52,8 +57,8 @@ await using (var scope = app.Services.CreateAsyncScope())
         app.Logger.LogWarning(
             "Removing {Count} malformed Identity user claim(s) with an empty ClaimType.",
             malformedClaims.Count);
-        identityContext.UserClaims.RemoveRange(malformedClaims);
-        await identityContext.SaveChangesAsync();
+        db.UserClaims.RemoveRange(malformedClaims);
+        await db.SaveChangesAsync();
     }
 
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
@@ -70,7 +75,7 @@ await using (var scope = app.Services.CreateAsyncScope())
         }
     }
 
-    var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
+    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
     var users = await userManager.Users.ToListAsync();
     foreach (var user in users)
     {
@@ -84,27 +89,6 @@ await using (var scope = app.Services.CreateAsyncScope())
             }
         }
     }
-
-    var administratorEmail = builder.Configuration["IdentitySeed:AdministratorEmail"];
-    // Promote the configured bootstrap account idempotently, even when other
-    // administrators already exist. This allows access recovery by setting the
-    // email and restarting the application.
-    if (!string.IsNullOrWhiteSpace(administratorEmail))
-    {
-        var administrator = await userManager.FindByEmailAsync(administratorEmail);
-        if (administrator is not null && !await userManager.IsInRoleAsync(administrator, AppRoles.Administrator))
-        {
-            var result = await userManager.AddToRoleAsync(administrator, AppRoles.Administrator);
-            if (!result.Succeeded)
-            {
-                throw new InvalidOperationException(
-                    $"Unable to assign the administrator role: {string.Join(", ", result.Errors.Select(error => error.Description))}");
-            }
-        }
-    }
-
-    var applicationContext = services.GetRequiredService<ApplicationDbContext>();
-    await applicationContext.Database.MigrateAsync();
 }
 
 app.Use(async (context, next) =>
