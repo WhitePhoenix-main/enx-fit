@@ -1,12 +1,12 @@
 @page "{id:int}"
 @model enx_fit.Pages.Workouts.EditModel
 @{
-    ViewData["Title"] = "Edit workout";
+    ViewData["Title"] = "Редактировать тренировку";
 }
 
 <div class="mb-4">
-    <h1 class="h3 mb-1">Edit workout</h1>
-    <p class="text-muted mb-0">Update the session date, title, or notes.</p>
+    <h1 class="h3 mb-1">Редактировать тренировку</h1>
+    <p class="text-muted mb-0">Измените владельца, дату, название или заметки к тренировке.</p>
 </div>
 
 <div class="card">
@@ -29,8 +29,8 @@
             }
             <partial name="_WorkoutForm" for="Input" />
             <div class="d-flex gap-2">
-                <button class="btn btn-primary" type="submit">Save changes</button>
-                <a class="btn btn-outline-secondary" asp-page="./Details" asp-route-id="@Model.Id">Cancel</a>
+                <button class="btn btn-primary" type="submit">Сохранить изменения</button>
+                <a class="btn btn-outline-secondary" asp-page="./Details" asp-route-id="@Model.Id">Отмена</a>
             </div>
         </form>
     </div>

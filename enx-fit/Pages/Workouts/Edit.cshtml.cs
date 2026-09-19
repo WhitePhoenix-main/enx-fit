@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace enx_fit.Pages.Workouts;
 
+[MinimumRole(UserRole.User)]
 public class EditModel(
     WorkoutService workoutService,
     CurrentUser currentUser,
@@ -49,7 +50,7 @@ public class EditModel(
             return NotFound();
         }
 
-        TempData["StatusMessage"] = "Workout updated.";
+        TempData["StatusMessage"] = "Тренировка обновлена.";
         return RedirectToPage("./Details", new { id = Id });
     }
 

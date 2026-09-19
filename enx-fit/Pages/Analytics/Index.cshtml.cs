@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace enx_fit.Pages.Analytics;
 
+[MinimumRole(UserRole.User)]
 public class IndexModel(
     AnalyticsDataService analyticsDataService,
     TrainingAnalyticsService trainingAnalyticsService,

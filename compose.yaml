@@ -1,0 +1,45 @@
+name: enx-fit
+
+services:
+  web:
+    build: .
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=enix_fit;Username=enix_fit"
+      Database__PasswordFile: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - data_protection_keys:/app/App_Data/DataProtectionKeys
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: enix_fit
+      POSTGRES_USER: enix_fit
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U enix_fit -d enix_fit"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+secrets:
+  db_password:
+    file: ./.secrets/db_password.txt
+
+volumes:
+  postgres_data:
+  data_protection_keys:

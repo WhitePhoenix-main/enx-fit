@@ -1,12 +1,12 @@
 @page "{id:int}"
 @model enx_fit.Pages.Body.EditModel
 @{
-    ViewData["Title"] = "Edit body measurement";
+    ViewData["Title"] = "Редактировать замер";
 }
 
 <div class="mb-4">
-    <h1 class="h3 mb-1">Edit body measurement</h1>
-    <p class="text-muted mb-0">Update the recorded metrics.</p>
+    <h1 class="h3 mb-1">Редактировать замер</h1>
+    <p class="text-muted mb-0">Измените владельца, дату и показатели замера.</p>
 </div>
 
 <div class="card">
@@ -29,8 +29,8 @@
             }
             <partial name="_BodyMeasurementForm" for="Input" />
             <div class="d-flex gap-2">
-                <button class="btn btn-primary" type="submit">Save changes</button>
-                <a class="btn btn-outline-secondary" asp-page="./Index">Cancel</a>
+                <button class="btn btn-primary" type="submit">Сохранить изменения</button>
+                <a class="btn btn-outline-secondary" asp-page="./Index">Отмена</a>
             </div>
         </form>
     </div>

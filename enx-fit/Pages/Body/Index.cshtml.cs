@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace enx_fit.Pages.Body;
 
+[MinimumRole(UserRole.User)]
 public class IndexModel(
     BodyMeasurementService measurementService,
     CurrentUser currentUser,

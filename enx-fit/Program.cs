@@ -11,6 +11,7 @@ if (builder.Environment.IsDevelopment())
 {
     builder.Configuration
         .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
+        .AddUserSecrets<Program>(optional: true)
         .AddEnvironmentVariables()
         .AddCommandLine(args);
 }
@@ -19,13 +20,16 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
 // Add services to the container.
+var databaseConnection = DatabaseConnectionSettings.Resolve(builder.Configuration);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(databaseConnection));
 
 builder.Services
     .AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddUserRoleAuthorization();
+builder.Services.AddRazorPages();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<ExerciseService>();
@@ -33,6 +37,7 @@ builder.Services.AddScoped<WorkoutService>();
 builder.Services.AddScoped<BodyMeasurementService>();
 builder.Services.AddScoped<AnalyticsDataService>();
 builder.Services.AddScoped<UserDirectoryService>();
+builder.Services.AddScoped<RegistrationService>();
 builder.Services.AddSingleton<TrainingAnalyticsService>();
 builder.Services.AddSingleton<BodyAnalyticsService>();
 builder.Services.AddDataProtection()

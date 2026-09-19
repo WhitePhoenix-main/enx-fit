@@ -9,41 +9,43 @@ public class BodyMeasurementInputModel
     public string? OwnerId { get; set; }
 
     [Required]
+    [Display(Name = "Дата замера")]
     [DataType(DataType.Date)]
     public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
     [Range(typeof(decimal), "1", "500")]
-    [Display(Name = "Weight (kg)")]
+    [Display(Name = "Вес, кг")]
     public decimal WeightKg { get; set; }
 
     [Range(typeof(decimal), "50", "300")]
-    [Display(Name = "Height (cm)")]
+    [Display(Name = "Рост, см")]
     public decimal HeightCm { get; set; }
 
     [Range(typeof(decimal), "0", "100")]
-    [Display(Name = "Body fat (%)")]
+    [Display(Name = "Жир, %")]
     public decimal? BodyFatPercent { get; set; }
 
     [Range(typeof(decimal), "1", "300")]
-    [Display(Name = "Waist (cm)")]
+    [Display(Name = "Талия, см")]
     public decimal? WaistCm { get; set; }
 
     [Range(typeof(decimal), "1", "300")]
-    [Display(Name = "Chest (cm)")]
+    [Display(Name = "Грудь, см")]
     public decimal? ChestCm { get; set; }
 
     [Range(typeof(decimal), "1", "300")]
-    [Display(Name = "Hip (cm)")]
+    [Display(Name = "Ягодицы, см")]
     public decimal? HipCm { get; set; }
 
     [Range(typeof(decimal), "1", "150")]
-    [Display(Name = "Arm (cm)")]
+    [Display(Name = "Рука, см")]
     public decimal? ArmCm { get; set; }
 
     [Range(typeof(decimal), "1", "200")]
-    [Display(Name = "Thigh (cm)")]
+    [Display(Name = "Бедро, см")]
     public decimal? ThighCm { get; set; }
 
+    [Display(Name = "Заметки")]
     [StringLength(1000)]
     public string? Notes { get; set; }
 

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace enx_fit.Pages.Body;
 
+[MinimumRole(UserRole.User)]
 public class CreateModel(
     BodyMeasurementService measurementService,
     CurrentUser currentUser,
@@ -34,7 +35,7 @@ public class CreateModel(
         }
 
         await measurementService.CreateAsync(Input);
-        TempData["StatusMessage"] = "Body measurement added.";
+        TempData["StatusMessage"] = "Замер добавлен.";
         return RedirectToPage("./Index");
     }
 

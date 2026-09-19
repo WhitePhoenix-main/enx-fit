@@ -1,12 +1,12 @@
 @page
 @model enx_fit.Pages.Body.CreateModel
 @{
-    ViewData["Title"] = "Add body measurement";
+    ViewData["Title"] = "Добавить замер";
 }
 
 <div class="mb-4">
-    <h1 class="h3 mb-1">Add body measurement</h1>
-    <p class="text-muted mb-0">Record your current body metrics.</p>
+    <h1 class="h3 mb-1">Добавить замер</h1>
+    <p class="text-muted mb-0">Выберите пользователя и заполните показатели тела.</p>
 </div>
 
 <div class="card">
@@ -28,8 +28,8 @@
             }
             <partial name="_BodyMeasurementForm" for="Input" />
             <div class="d-flex gap-2">
-                <button class="btn btn-primary" type="submit">Add measurement</button>
-                <a class="btn btn-outline-secondary" asp-page="./Index">Cancel</a>
+                <button class="btn btn-primary" type="submit">Добавить замер</button>
+                <a class="btn btn-outline-secondary" asp-page="./Index">Отмена</a>
             </div>
         </form>
     </div>

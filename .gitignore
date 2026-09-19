@@ -12,3 +12,5 @@ enx-fit/obj/
 enx-fit/.idea/
 enx-fit/App_Data/DataProtectionKeys/
 appsettings.Local.json
+.secrets/
+.artifacts/

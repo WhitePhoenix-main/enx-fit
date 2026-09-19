@@ -1,15 +1,15 @@
 @page
 @model enx_fit.Pages.Body.IndexModel
 @{
-    ViewData["Title"] = "Body measurements";
+    ViewData["Title"] = "Замеры тела";
 }
 
 <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
     <div>
-        <h1 class="h3 mb-1">Body measurements</h1>
-        <p class="text-muted mb-0">Track body weight, BMI, and key measurements over time.</p>
+        <h1 class="h3 mb-1">Замеры тела</h1>
+        <p class="text-muted mb-0">Вес, состав тела и история изменений каждого пользователя.</p>
     </div>
-    <a class="btn btn-primary" asp-page="./Create">Add measurement</a>
+    <a class="btn btn-primary" asp-page="./Create">Добавить замер</a>
 </div>
 
 @if (TempData["StatusMessage"] is string statusMessage)
@@ -39,9 +39,9 @@
 @if (Model.Measurements.Count == 0)
 {
     <div class="border rounded-3 p-5 text-center bg-body-tertiary">
-        <h2 class="h5">No body measurements yet</h2>
-        <p class="text-muted mb-4">Add your first measurement to start tracking weight and BMI.</p>
-        <a class="btn btn-primary" asp-page="./Create">Add measurement</a>
+        <h2 class="h5">Замеров пока нет</h2>
+        <p class="text-muted mb-4">Добавьте замер, чтобы отслеживать изменения веса и ИМТ.</p>
+        <a class="btn btn-primary" asp-page="./Create">Добавить замер</a>
     </div>
 }
 else
@@ -52,7 +52,7 @@ else
         <div class="col-lg-6">
             <section class="card h-100">
                 <div class="card-body">
-                    <h2 class="h5">Weight</h2>
+                    <h2 class="h5">Вес, кг</h2>
                     <div class="ratio ratio-16x9">
                         <canvas id="weight-chart"></canvas>
                     </div>
@@ -62,7 +62,7 @@ else
         <div class="col-lg-6">
             <section class="card h-100">
                 <div class="card-body">
-                    <h2 class="h5">BMI</h2>
+                    <h2 class="h5">ИМТ</h2>
                     <div class="ratio ratio-16x9">
                         <canvas id="bmi-chart"></canvas>
                     </div>
@@ -78,16 +78,16 @@ else
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
                 <tr>
-                    <th scope="col">Date</th>
-                    <th scope="col">Weight</th>
-                    <th scope="col">Height</th>
-                    <th scope="col">BMI</th>
-                    <th scope="col">Body fat</th>
+                    <th scope="col">Дата</th>
+                    <th scope="col">Вес, кг</th>
+                    <th scope="col">Рост, см</th>
+                    <th scope="col">ИМТ</th>
+                    <th scope="col">Процент жира</th>
                     @if (Model.IsAdministrator)
                     {
                         <th scope="col">Пользователь</th>
                     }
-                    <th scope="col" class="text-end">Actions</th>
+                    <th scope="col" class="text-end">Действия</th>
                 </tr>
             </thead>
             <tbody>
@@ -104,8 +104,8 @@ else
                             <td>@Model.OwnerName(measurement.UserId)</td>
                         }
                         <td class="text-end text-nowrap">
-                            <a class="btn btn-sm btn-outline-primary" asp-page="./Edit" asp-route-id="@measurement.Id">Edit</a>
-                            <a class="btn btn-sm btn-outline-danger" asp-page="./Delete" asp-route-id="@measurement.Id">Delete</a>
+                            <a class="btn btn-sm btn-outline-primary" asp-page="./Edit" asp-route-id="@measurement.Id">Изменить</a>
+                            <a class="btn btn-sm btn-outline-danger" asp-page="./Delete" asp-route-id="@measurement.Id">Удалить</a>
                         </td>
                     </tr>
                 }

@@ -1,0 +1,84 @@
+@page "{id}"
+@model enx_fit.Pages.Admin.Users.EditModel
+@{ ViewData["Title"] = "Профиль пользователя"; }
+<div class="admin-page-heading">
+    <div>
+        <p class="admin-eyebrow">ПОЛЬЗОВАТЕЛИ / ПРОФИЛЬ</p>
+        <h1>Редактирование профиля</h1>
+        <p>Контактная информация, права доступа и данные пользователя.</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-page="./Index">
+        <admin-icon name="back" />К списку</a>
+</div>
+<partial name="_AdminStatus" />
+<div class="admin-edit-grid">
+    <section class="admin-card">
+        <div class="admin-card-heading">
+            <h2>Основная информация</h2>
+            <admin-icon name="users" />
+        </div>
+        <form method="post" class="admin-form">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <div class="mb-3">
+                <label class="form-label" asp-for="Input.UserName"></label>
+                <input class="form-control" asp-for="Input.UserName" autocomplete="off" />
+                <span class="text-danger" asp-validation-for="Input.UserName"></span>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" asp-for="Input.Email"></label>
+                <input class="form-control" asp-for="Input.Email" autocomplete="off" />
+                <span class="text-danger" asp-validation-for="Input.Email"></span>
+                <small class="admin-field-help">При изменении адреса потребуется повторное подтверждение email.</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" asp-for="Input.PhoneNumber"></label>
+                <input class="form-control" asp-for="Input.PhoneNumber" autocomplete="off" placeholder="+7 (___) ___-__-__" />
+                <span class="text-danger" asp-validation-for="Input.PhoneNumber"></span>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" asp-for="Input.Role"></label>
+                @if(Model.IsCurrentUser) {
+                    <input type="hidden" asp-for="Input.Role" />
+                    <p><span class="admin-badge purple">@((int)Model.Input.Role) — @Model.Input.Role.DisplayName()</span></p>
+                    <small class="admin-field-help">Роль своего аккаунта изменить нельзя.</small>
+                }
+                else
+                {
+                    <select class="form-select" asp-for="Input.Role">
+                        @foreach (var role in Model.AvailableRoles)
+                        {
+                            <option value="@((int)role)">@((int)role) — @role.DisplayName()</option>
+                        }
+                    </select>
+                    <small class="admin-field-help">Чем выше число, тем больше прав. Максимальный уровень — 9.</small>
+                }
+                <span class="text-danger" asp-validation-for="Input.Role"></span>
+            </div>
+            <div class="admin-form-actions">
+                <button class="btn btn-primary" type="submit">
+                    <admin-icon name="check" />Сохранить изменения</button>
+                <a class="btn btn-outline-secondary" asp-page="./Index">Отмена</a>
+            </div>
+        </form>
+    </section>
+    <aside class="admin-card admin-profile-data">
+        <span class="admin-empty-icon">
+            <admin-icon name="activity" />
+        </span>
+        <h2>Данные пользователя</h2>
+        <p>Перейдите к истории или добавьте новую запись.</p>
+        <a class="admin-data-link" asp-page="/Workouts/Index" asp-route-userId="@Model.Id">
+            <span>Тренировки</span>
+            <strong>@Model.WorkoutCount</strong>
+            <admin-icon name="arrow" />
+        </a>
+        <a class="admin-data-link" asp-page="/Body/Index" asp-route-userId="@Model.Id">
+            <span>Замеры тела</span>
+            <strong>@Model.MeasurementCount</strong>
+            <admin-icon name="arrow" />
+        </a>
+        <a class="btn btn-primary" asp-page="/Workouts/Create" asp-route-userId="@Model.Id">
+            <admin-icon name="plus" />Добавить тренировку</a>
+    </aside>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

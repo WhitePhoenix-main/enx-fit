@@ -1,9 +1,13 @@
+using enx_fit.Areas.Identity.Data;
 using enx_fit.Models;
+using enx_fit.Security;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace enx_fit.Data;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+    : IdentityDbContext<ApplicationUser>(options)
 {
     public DbSet<Exercise> Exercises => Set<Exercise>();
 
@@ -18,6 +22,16 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<ApplicationUser>(user =>
+        {
+            user.Property(item => item.Role)
+                .HasConversion<int>()
+                .HasDefaultValue(UserRole.User)
+                .HasSentinel(UserRole.User);
+            user.ToTable("AspNetUsers", table => table.HasCheckConstraint(
+                "CK_AspNetUsers_Role", "\"Role\" IN (0, 1, 3, 5, 8, 9)"));
+        });
 
         modelBuilder.Entity<Exercise>(entity =>
         {
@@ -45,6 +59,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasMaxLength(450);
 
             entity.HasIndex(w => w.UserId);
+
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(w => w.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             entity.Property(w => w.Title)
                 .HasMaxLength(160);
@@ -89,6 +108,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasMaxLength(450);
 
             entity.HasIndex(b => b.UserId);
+
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(b => b.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             entity.Property(b => b.WeightKg)
                 .HasPrecision(7, 2);

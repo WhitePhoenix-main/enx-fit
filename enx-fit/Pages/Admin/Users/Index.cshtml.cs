@@ -1,81 +1,56 @@
+using enx_fit.Admin;
+using enx_fit.Areas.Identity.Data;
+using enx_fit.Data;
+using enx_fit.Extensions;
 using enx_fit.Security;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
 namespace enx_fit.Pages.Admin.Users;
 
-public class IndexModel(
-    UserManager<IdentityUser> userManager,
-    CurrentUser currentUser) : PageModel
+public static class CalendarPageUrls
 {
-    public IReadOnlyList<UserRoleRow> Users { get; private set; } = [];
-
-    public async Task OnGetAsync() => await LoadUsersAsync();
-
-    public async Task<IActionResult> OnPostSetAdministratorAsync(string userId, bool enabled)
+    public static string CreateUserUrl(this IUrlHelper url)
+        => url.PageUrl("/Admin/Users/CreateUser", nameof(CreateUserModel.OnGet));
+}   
+[MinimumRole(UserRole.Administrator)]
+public class IndexModel(ApplicationDbContext db, CurrentUser currentUser) : PageModel
+{
+    [BindProperty(SupportsGet = true)] public string? Search { get; set; }
+    [BindProperty(SupportsGet = true)] public UserRole? Role { get; set; }
+    [BindProperty(SupportsGet = true)] public int PageNumber { get; set; } = 1;
+    public const int PageSize = 12;
+    public int TotalUsers { get; private set; }
+    public int AdministratorCount { get; private set; }
+    public int FilteredCount { get; private set; }
+    public int PageCount => Math.Max(1, (int)Math.Ceiling(FilteredCount / (double)PageSize));
+    public IReadOnlyList<UserRow> Users { get; private set; } = [];
+    public async Task OnGetAsync()
     {
-        var user = await userManager.FindByIdAsync(userId);
-        if (user is null)
+        TotalUsers = await db.Users.CountAsync();
+        AdministratorCount = await db.Users.CountAsync(u => u.Role >= UserRole.Administrator);
+        var query = db.Users.AsNoTracking();
+        Search = Search?.Trim();
+        if (!string.IsNullOrWhiteSpace(Search))
         {
-            return NotFound();
+            var search = Search.ToUpperInvariant();
+            query = query.Where(u => (u.NormalizedEmail != null && u.NormalizedEmail.Contains(search)) || (u.NormalizedUserName != null && u.NormalizedUserName.Contains(search)));
         }
-
-        if (!enabled && userId == currentUser.Id)
-        {
-            TempData["ErrorMessage"] = "Нельзя снять роль администратора у текущего аккаунта.";
-            return RedirectToPage();
-        }
-
-        var isAdministrator = await userManager.IsInRoleAsync(user, AppRoles.Administrator);
-        IdentityResult result = IdentityResult.Success;
-
-        if (enabled && !isAdministrator)
-        {
-            result = await userManager.AddToRoleAsync(user, AppRoles.Administrator);
-        }
-        else if (!enabled && isAdministrator)
-        {
-            result = await userManager.RemoveFromRoleAsync(user, AppRoles.Administrator);
-        }
-
-        if (!result.Succeeded)
-        {
-            TempData["ErrorMessage"] = string.Join(" ", result.Errors.Select(error => error.Description));
-            return RedirectToPage();
-        }
-
-        await userManager.UpdateSecurityStampAsync(user);
-        TempData["StatusMessage"] = enabled
-            ? "Пользователю назначена роль администратора."
-            : "Роль администратора снята.";
-        return RedirectToPage();
-    }
-
-    private async Task LoadUsersAsync()
-    {
-        var users = await userManager.Users
-            .AsNoTracking()
-            .OrderBy(user => user.Email ?? user.UserName)
-            .ToListAsync();
-
-        var rows = new List<UserRoleRow>(users.Count);
-        foreach (var user in users)
-        {
-            rows.Add(new UserRoleRow(
-                user.Id,
-                user.Email ?? user.UserName ?? user.Id,
-                await userManager.IsInRoleAsync(user, AppRoles.Administrator),
-                user.Id == currentUser.Id));
-        }
-
-        Users = rows;
+        if (Role is { } role && Enum.IsDefined(role)) query = query.Where(u => u.Role == role);
+        else Role = null;
+        FilteredCount = await query.CountAsync();
+        PageNumber = Math.Clamp(PageNumber, 1, PageCount);
+        var users = await query.OrderBy(u => u.Email ?? u.UserName).ThenBy(u => u.Id).Skip((PageNumber - 1) * PageSize).Take(PageSize)
+            .Select(u => new { u.Id, u.UserName, u.Email, u.EmailConfirmed, u.Role }).ToListAsync();
+        var ids = users.Select(u => u.Id).ToArray();
+        var workouts = await db.WorkoutSessions.Where(w => w.UserId != null && ids.Contains(w.UserId)).GroupBy(w => w.UserId!)
+            .Select(g => new { Id = g.Key, Count = g.Count(), Last = g.Max(w => w.Date) }).ToDictionaryAsync(g => g.Id);
+        Users = users.Select(u => new UserRow(u.Id, u.UserName ?? u.Email ?? u.Id, u.Email, u.EmailConfirmed, u.Role, u.Id == currentUser.Id,
+            workouts.GetValueOrDefault(u.Id)?.Count ?? 0, workouts.GetValueOrDefault(u.Id)?.Last)).ToList();
     }
 }
-
-public sealed record UserRoleRow(
-    string Id,
-    string DisplayName,
-    bool IsAdministrator,
-    bool IsCurrentUser);
+public sealed record UserRow(string Id, string Name, string? Email, bool EmailConfirmed, UserRole Role, bool IsCurrentUser, int Workouts, DateOnly? LastWorkout)
+{
+    public bool IsAdministrator => Role >= UserRole.Administrator;
+}

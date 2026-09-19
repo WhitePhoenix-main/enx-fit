@@ -1,3 +1,6 @@
 ﻿@{
-    Layout = "_Layout";
+    var pagePath = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+    var isManagementPage = new[] { "/Admin", "/Workouts", "/Exercises", "/Body" }
+        .Any(prefix => pagePath.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase));
+    Layout = User.HasMinimumRole(UserRole.Administrator) && isManagementPage ? "_AdminLayout" : "_Layout";
 }

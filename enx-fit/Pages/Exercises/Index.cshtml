@@ -1,17 +1,17 @@
 @page
 @model enx_fit.Pages.Exercises.IndexModel
 @{
-    ViewData["Title"] = "Exercises";
+    ViewData["Title"] = "Упражнения";
 }
 
 <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
     <div>
-        <h1 class="h3 mb-1">Exercises</h1>
-        <p class="text-muted mb-0">Manage the exercise library used in your workouts.</p>
+        <h1 class="h3 mb-1">Упражнения</h1>
+        <p class="text-muted mb-0">Библиотека упражнений для составления тренировок.</p>
     </div>
     @if (User.IsInRole("Administrator"))
     {
-        <a class="btn btn-primary" asp-page="./Create">Add exercise</a>
+        <a class="btn btn-primary" asp-page="./Create">Добавить упражнение</a>
     }
 </div>
 
@@ -22,9 +22,9 @@
 
 <form method="get" class="row g-2 align-items-end mb-4">
     <div class="col-sm-6 col-md-4">
-        <label class="form-label" asp-for="SelectedMuscleGroup">Muscle group</label>
+        <label class="form-label" asp-for="SelectedMuscleGroup">Группа мышц</label>
         <select class="form-select" asp-for="SelectedMuscleGroup">
-            <option value="">All muscle groups</option>
+            <option value="">Все группы мышц</option>
             @foreach (var muscleGroup in Model.MuscleGroups)
             {
                 <option value="@muscleGroup">@muscleGroup</option>
@@ -32,12 +32,12 @@
         </select>
     </div>
     <div class="col-auto">
-        <button class="btn btn-outline-primary" type="submit">Apply filter</button>
+        <button class="btn btn-outline-primary" type="submit">Применить фильтр</button>
     </div>
     @if (!string.IsNullOrWhiteSpace(Model.SelectedMuscleGroup))
     {
         <div class="col-auto">
-            <a class="btn btn-link" asp-page="./Index">Clear</a>
+            <a class="btn btn-link" asp-page="./Index">Сбросить</a>
         </div>
     }
 </form>
@@ -45,15 +45,15 @@
 @if (Model.Exercises.Count == 0)
 {
     <div class="border rounded-3 p-5 text-center bg-body-tertiary">
-        <h2 class="h5">No exercises found</h2>
+        <h2 class="h5">Упражнения не найдены</h2>
         <p class="text-muted mb-4">
             @(string.IsNullOrWhiteSpace(Model.SelectedMuscleGroup)
-                ? "Add your first exercise to start building workouts."
-                : "Try another muscle group or add a new exercise.")
+                ? "Добавьте первое упражнение для составления тренировок."
+                : "Выберите другую группу мышц или добавьте упражнение.")
         </p>
         @if (User.IsInRole("Administrator"))
         {
-            <a class="btn btn-primary" asp-page="./Create">Add exercise</a>
+            <a class="btn btn-primary" asp-page="./Create">Добавить упражнение</a>
         }
     </div>
 }
@@ -63,10 +63,10 @@ else
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
                 <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Muscle group</th>
-                    <th scope="col">Equipment</th>
-                    <th scope="col" class="text-end">Actions</th>
+                    <th scope="col">Название</th>
+                    <th scope="col">Группа мышц</th>
+                    <th scope="col">Оборудование</th>
+                    <th scope="col" class="text-end">Действия</th>
                 </tr>
             </thead>
             <tbody>
@@ -77,11 +77,11 @@ else
                         <td>@exercise.MuscleGroup</td>
                         <td>@exercise.Equipment</td>
                         <td class="text-end text-nowrap">
-                            <a class="btn btn-sm btn-outline-secondary" asp-page="./Details" asp-route-id="@exercise.Id">Details</a>
+                            <a class="btn btn-sm btn-outline-secondary" asp-page="./Details" asp-route-id="@exercise.Id">Подробнее</a>
                             @if (User.IsInRole("Administrator"))
                             {
-                                <a class="btn btn-sm btn-outline-primary" asp-page="./Edit" asp-route-id="@exercise.Id">Edit</a>
-                                <a class="btn btn-sm btn-outline-danger" asp-page="./Delete" asp-route-id="@exercise.Id">Delete</a>
+                                <a class="btn btn-sm btn-outline-primary" asp-page="./Edit" asp-route-id="@exercise.Id">Изменить</a>
+                                <a class="btn btn-sm btn-outline-danger" asp-page="./Delete" asp-route-id="@exercise.Id">Удалить</a>
                             }
                         </td>
                     </tr>

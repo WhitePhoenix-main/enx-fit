@@ -1,3 +1,4 @@
+using enx_fit.Security;
 using enx_fit.Models;
 using enx_fit.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -5,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace enx_fit.Pages.Exercises;
 
+[MinimumRole(UserRole.Administrator)]
 public class DeleteModel(ExerciseService exerciseService) : PageModel
 {
     [BindProperty]
@@ -24,11 +26,11 @@ public class DeleteModel(ExerciseService exerciseService) : PageModel
 
         if (result == ExerciseDeleteResult.InUse)
         {
-            ModelState.AddModelError(string.Empty, "This exercise is used by a workout and cannot be deleted.");
+            ModelState.AddModelError(string.Empty, "Упражнение используется в тренировках и не может быть удалено.");
             return await LoadPageAsync(Exercise.Id);
         }
 
-        TempData["StatusMessage"] = "Exercise deleted.";
+        TempData["StatusMessage"] = "Упражнение удалено.";
         return RedirectToPage("./Index");
     }
 

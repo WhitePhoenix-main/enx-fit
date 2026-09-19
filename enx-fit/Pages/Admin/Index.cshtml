@@ -1,0 +1,223 @@
+@page "/Admin"
+@model enx_fit.Pages.Admin.IndexModel
+@{ ViewData["Title"] = "Обзор"; }
+<div class="admin-page-heading">
+    <div>
+        <p class="admin-eyebrow">ВАШ РАБОЧИЙ ЦЕНТР</p>
+        <h1>Обзор платформы<span class="admin-title-dot">.</span>
+        </h1>
+        <p>Всё, что происходит в Enix Fit, — в одном месте.</p>
+    </div>
+    <a class="btn btn-primary" asp-page="/Workouts/Create">
+        <admin-icon name="plus" />Новая тренировка</a>
+</div>
+<div class="admin-metrics">
+    <a class="admin-metric" asp-page="/Admin/Users/Index">
+        <span class="admin-metric-top">Пользователи<span class="admin-metric-icon blue">
+                <admin-icon name="users" />
+            </span>
+        </span>
+        <strong>@Model.UserCount.ToString("N0")</strong>
+        <span class="admin-metric-caption">
+            <span class="admin-dot green"></span>@Model.ActiveUsers тренируются за период</span>
+    </a>
+    <a class="admin-metric" asp-page="/Workouts/Index">
+        <span class="admin-metric-top">Тренировки<span class="admin-metric-icon green">
+                <admin-icon name="workout" />
+            </span>
+        </span>
+        <strong>@Model.WorkoutCount.ToString("N0")</strong>
+        <span class="admin-metric-caption">
+            <span class="admin-dot green"></span>@Model.PeriodWorkouts за выбранный период</span>
+    </a>
+    <a class="admin-metric" asp-page="/Exercises/Index">
+        <span class="admin-metric-top">Упражнения<span class="admin-metric-icon purple">
+                <admin-icon name="book" />
+            </span>
+        </span>
+        <strong>@Model.ExerciseCount.ToString("N0")</strong>
+        <span class="admin-metric-caption">В библиотеке платформы<admin-icon name="arrow" />
+        </span>
+    </a>
+    <a class="admin-metric" asp-page="/Body/Index">
+        <span class="admin-metric-top">Замеры тела<span class="admin-metric-icon orange">
+                <admin-icon name="activity" />
+            </span>
+        </span>
+        <strong>@Model.MeasurementCount.ToString("N0")</strong>
+        <span class="admin-metric-caption">Записей о прогрессе<admin-icon name="arrow" />
+        </span>
+    </a>
+</div>
+<div class="admin-overview-grid">
+    <section class="admin-card admin-chart-card">
+        <div class="admin-card-heading">
+            <div>
+                <h2>Активность тренировок</h2>
+                <p>Количество тренировок по дням</p>
+            </div>
+            <form method="get">
+                <label class="sr-only" for="period">Период</label>
+                <select class="form-select" id="period" asp-for="Days" data-auto-submit>
+                    <option value="7">За 7 дней</option>
+                    <option value="30">За 30 дней</option>
+                    <option value="90">За 90 дней</option>
+                </select>
+                <noscript>
+                    <button class="btn" type="submit">Применить</button>
+                </noscript>
+            </form>
+        </div>
+        <div class="admin-chart-summary">
+            <strong>@Model.PeriodWorkouts <span>тренировок</span>
+            </strong>
+            <span class="admin-period-comparison">За предыдущие @Model.Days дн.: @Model.PreviousWorkouts</span>
+        </div>
+        <div class="admin-chart">
+            <canvas id="admin-activity-chart" role="img" aria-label="График тренировок за @Model.Days дней. Всего @Model.PeriodWorkouts тренировок.">
+            </canvas>
+        </div>
+        @if(Model.PeriodWorkouts == 0) {
+            <p class="admin-chart-empty">За этот период тренировок пока нет.</p>
+        }<script id="admin-chart-data" type="application/json">@Html.Raw(Model.ChartJson)</script>
+        </section>
+        <section class="admin-card admin-quick-card">
+            <div class="admin-card-heading">
+                <div>
+                    <h2>Быстрые действия</h2>
+                    <p>От планов — к результатам</p>
+                </div>
+                <admin-icon name="plus" />
+            </div>
+            <a class="admin-quick-link" asp-page="/Workouts/Create">
+                <span class="admin-metric-icon blue">
+                    <admin-icon name="workout" />
+                </span>
+                <span>
+                    <strong>Добавить тренировку</strong>
+                    <small>Пользователь, упражнения и подходы</small>
+                </span>
+                <admin-icon name="chevron" />
+            </a>
+            <a class="admin-quick-link" asp-page="/Admin/Users/Create">
+                <span class="admin-metric-icon purple">
+                    <admin-icon name="users" />
+                </span>
+                <span>
+                    <strong>Новый пользователь</strong>
+                    <small>Создать аккаунт на платформе</small>
+                </span>
+                <admin-icon name="chevron" />
+            </a>
+            <a class="admin-quick-link" asp-page="/Exercises/Create">
+                <span class="admin-metric-icon green">
+                    <admin-icon name="book" />
+                </span>
+                <span>
+                    <strong>Добавить упражнение</strong>
+                    <small>Пополнить библиотеку</small>
+                </span>
+                <admin-icon name="chevron" />
+            </a>
+            <a class="admin-quick-link" asp-page="/Body/Create">
+                <span class="admin-metric-icon orange">
+                    <admin-icon name="activity" />
+                </span>
+                <span>
+                    <strong>Записать замеры</strong>
+                    <small>Зафиксировать изменения тела</small>
+                </span>
+                <admin-icon name="chevron" />
+            </a>
+        </section>
+    </div>
+    <div class="admin-overview-grid">
+        <section class="admin-card">
+            <div class="admin-card-heading">
+                <div>
+                    <h2>Последние тренировки</h2>
+                    <p>Недавно добавленные записи</p>
+                </div>
+                <a class="admin-text-link" asp-page="/Workouts/Index">Все тренировки<admin-icon name="arrow" />
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table admin-table">
+                    <thead>
+                        <tr>
+                            <th>Тренировка</th>
+                            <th>Пользователь</th>
+                            <th>Дата</th>
+                            <th aria-label="Открыть"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var workout in Model.RecentWorkouts) {
+                            <tr>
+                                <td>
+                                    <a class="admin-row-title" asp-page="/Workouts/Details" asp-route-id="@workout.Id">@(workout.Title ?? "Тренировка")</a>
+                                    <small class="admin-cell-sub">Упражнений: @workout.WorkoutExercises.Count</small>
+                                </td>
+                                <td>
+                                    <span class="admin-ellipsis">@Model.OwnerName(workout.UserId)</span>
+                                </td>
+                                <td class="text-nowrap">@workout.Date.ToString("dd.MM.yyyy")</td>
+                                <td>
+                                    <a class="admin-icon-button" asp-page="/Workouts/Details" asp-route-id="@workout.Id" aria-label="Открыть тренировку @(workout.Title ?? workout.Id.ToString())">
+                                        <admin-icon name="arrow" />
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if(Model.RecentWorkouts.Count == 0) {
+                <div class="admin-empty">
+                    <span class="admin-empty-icon">
+                        <admin-icon name="workout" />
+                    </span>
+                    <h3>Начнём с первой тренировки</h3>
+                    <p>Добавленные тренировки появятся здесь.</p>
+                    <a class="admin-text-link" asp-page="/Workouts/Create">Создать тренировку<admin-icon name="arrow" />
+                    </a>
+                </div>
+            }
+        </section>
+        <section class="admin-card">
+            <div class="admin-card-heading">
+                <div>
+                    <h2>Популярные упражнения</h2>
+                    <p>По числу тренировок за @Model.Days дней</p>
+                </div>
+            </div>
+            <div class="admin-popular-list">
+                @for(var i = 0; i < Model.PopularExercises.Count; i++){var exercise = Model.PopularExercises[i];
+                <div class="admin-popular">
+                    <span class="admin-rank">@((i + 1).ToString("00"))</span>
+                    <div>
+                        <strong>@exercise.Name</strong>
+                        <small>@(string.IsNullOrWhiteSpace(exercise.MuscleGroup) ? "В библиотеке упражнений" : exercise.MuscleGroup)</small>
+                        <progress max="@Model.PopularExercises.Max(e => e.Count)" value="@exercise.Count" aria-label="@exercise.Name: @exercise.Count тренировок">
+                        </progress>
+                    </div>
+                    <span class="admin-popular-count">@exercise.Count</span>
+                </div>
+            }
+        </div>
+        @if(Model.PopularExercises.Count == 0) {
+            <div class="admin-empty">
+                <span class="admin-empty-icon">
+                    <admin-icon name="book" />
+                </span>
+                <h3>Здесь будут ваши фавориты</h3>
+                <p>Добавляйте упражнения в тренировки, чтобы увидеть статистику.</p>
+            </div>
+        }
+    </section>
+</div>
+@section Scripts {<script src="~/lib/chart.js/dist/chart.umd.min.js">
+</script>
+<script src="~/js/admin-dashboard.js" asp-append-version="true">
+</script>
+}
