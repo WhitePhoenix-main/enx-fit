@@ -1,9 +1,10 @@
+using enx_fit.Areas.Identity.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace enx_fit.Services;
 
-public sealed class UserDirectoryService(UserManager<IdentityUser> userManager)
+public sealed class UserDirectoryService(UserManager<ApplicationUser> userManager)
 {
     public async Task<IReadOnlyList<UserOption>> GetAllAsync() =>
         await userManager.Users

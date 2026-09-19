@@ -1,24 +1,24 @@
 @page "{id:int}"
 @model enx_fit.Pages.Body.DeleteModel
 @{
-    ViewData["Title"] = "Delete body measurement";
+    ViewData["Title"] = "Удалить замер";
 }
 
 <div class="mb-4">
-    <h1 class="h3 mb-1">Delete body measurement</h1>
-    <p class="text-muted mb-0">Review the measurement before removing it.</p>
+    <h1 class="h3 mb-1">Удалить замер</h1>
+    <p class="text-muted mb-0">Проверьте замер перед удалением.</p>
 </div>
 
 <div class="card border-danger">
     <div class="card-body">
         <h2 class="h5">@Model.Measurement.Date.ToString("yyyy-MM-dd")</h2>
         <p class="text-muted mb-2">@Model.Measurement.WeightKg kg &middot; BMI @Model.Measurement.Bmi</p>
-        <p>This action cannot be undone.</p>
+        <p>Восстановить удалённую запись будет невозможно.</p>
         <form method="post">
             <input type="hidden" asp-for="Measurement.Id" />
             <div class="d-flex gap-2">
-                <button class="btn btn-danger" type="submit">Delete measurement</button>
-                <a class="btn btn-outline-secondary" asp-page="./Index">Cancel</a>
+                <button class="btn btn-danger" type="submit">Удалить замер</button>
+                <a class="btn btn-outline-secondary" asp-page="./Index">Отмена</a>
             </div>
         </form>
     </div>

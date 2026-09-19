@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace enx_fit.Pages.Workouts;
 
+[MinimumRole(UserRole.User)]
 public class IndexModel(
     WorkoutService workoutService,
     CurrentUser currentUser,

@@ -1,67 +1,135 @@
 @page
 @model enx_fit.Pages.Admin.Users.IndexModel
-@{
-    ViewData["Title"] = "Пользователи";
-}
-
-<div class="mb-4">
-    <h1 class="h3 mb-1">Пользователи и роли</h1>
-    <p class="text-muted mb-0">Назначение и снятие роли администратора.</p>
+@{ ViewData["Title"] = "Пользователи"; }
+<div class="admin-page-heading">
+    <div>
+        <p class="admin-eyebrow">СООБЩЕСТВО ENIX FIT</p>
+        <h1>Пользователи<span class="admin-title-dot">.</span>
+        </h1>
+        <p>Аккаунты, права доступа и история тренировок.</p>
+    </div>
+    <a class="btn btn-primary" href="@Url.CreateUserUrl()">
+        <admin-icon name="plus" />Добавить пользователя</a>
 </div>
-
-@if (TempData["StatusMessage"] is string statusMessage)
-{
-    <div class="alert alert-success" role="alert">@statusMessage</div>
-}
-
-@if (TempData["ErrorMessage"] is string errorMessage)
-{
-    <div class="alert alert-danger" role="alert">@errorMessage</div>
-}
-
-<div class="table-responsive border rounded-3">
-    <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-            <tr>
-                <th scope="col">Пользователь</th>
-                <th scope="col">Роль</th>
-                <th scope="col" class="text-end">Действие</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var user in Model.Users)
+<partial name="_AdminStatus" />
+<div class="admin-user-summary">
+    <span>
+        <span class="admin-metric-icon blue">
+            <admin-icon name="users" />
+        </span>
+        <strong>@Model.TotalUsers</strong> всего пользователей</span>
+    <span>
+        <span class="admin-dot purple"></span>
+        <strong>@Model.AdministratorCount</strong> администраторов</span>
+    <span>
+        <span class="admin-dot green"></span>
+        <strong>@(Model.TotalUsers - Model.AdministratorCount)</strong> пользователей</span>
+</div>
+<section class="admin-card">
+    <div class="admin-card-heading">
+        <div>
+            <h2>Все пользователи <span class="admin-count">@Model.FilteredCount</span>
+            </h2>
+            <p>Управляйте профилями и переходите к данным участников</p>
+        </div>
+    </div>
+    <form method="get" class="admin-filter">
+        <div class="admin-search-field">
+            <admin-icon name="search" />
+            <input asp-for="Search" class="form-control" type="search" placeholder="Имя или email пользователя" aria-label="Имя или email пользователя" maxlength="256" />
+        </div>
+        <select class="form-select" asp-for="Role" aria-label="Роль">
+            <option value="">Все роли</option>
+            @foreach (var role in Enum.GetValues<UserRole>())
             {
-                <tr>
-                    <td>
-                        @user.DisplayName
-                        @if (user.IsCurrentUser)
-                        {
-                            <span class="badge text-bg-secondary">текущий</span>
-                        }
-                    </td>
-                    <td>
-                        @if (user.IsAdministrator)
-                        {
-                            <span class="badge text-bg-primary">Администратор</span>
-                        }
-                        else
-                        {
-                            <span class="badge text-bg-light">Пользователь</span>
-                        }
-                    </td>
-                    <td class="text-end">
-                        <form method="post" asp-page-handler="SetAdministrator" class="d-inline">
-                            <input type="hidden" name="userId" value="@user.Id" />
-                            <input type="hidden" name="enabled" value="@(!user.IsAdministrator ? "true" : "false")" />
-                            <button class="btn btn-sm @(user.IsAdministrator ? "btn-outline-danger" : "btn-outline-primary")"
-                                    type="submit"
-                                    disabled="@(user.IsCurrentUser && user.IsAdministrator)">
-                                @(user.IsAdministrator ? "Снять роль" : "Назначить администратором")
-                            </button>
-                        </form>
-                    </td>
-                </tr>
+                <option value="@((int)role)">@((int)role) — @role.DisplayName()</option>
             }
-        </tbody>
-    </table>
-</div>
+        </select>
+        <button class="btn btn-outline-primary" type="submit">Найти</button>
+        @if(!string.IsNullOrEmpty(Model.Search) || Model.Role != null) {
+            <a class="admin-text-link" asp-page="./Index">Сбросить</a>
+        }
+    </form>
+    <div class="table-responsive">
+        <table class="table admin-table">
+            <thead>
+                <tr>
+                    <th>Пользователь</th>
+                    <th>Роль</th>
+                    <th>Email</th>
+                    <th>Тренировки</th>
+                    <th>Последняя тренировка</th>
+                    <th class="text-end">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var user in Model.Users) {
+                    <tr>
+                        <td>
+                            <div class="admin-person">
+                                <span class="admin-avatar @(user.IsAdministrator ? "purple" : "")">@user.Name[..1].ToUpperInvariant()</span>
+                                <div>
+                                    @if (User.HasMinimumRole(user.Role))
+                                    {
+                                        <a class="admin-row-title" asp-page="./Edit" asp-route-id="@user.Id">@user.Name</a>
+                                    }
+                                    else
+                                    {
+                                        <span class="admin-row-title">@user.Name</span>
+                                    }
+                                    <small class="admin-cell-sub">@(user.IsCurrentUser ? "Ваш аккаунт" : user.Email)</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="admin-badge @(user.IsAdministrator ? "purple" : "blue")">@((int)user.Role) — @user.Role.DisplayName()</span>
+                        </td>
+                        <td>
+                            <span class="admin-badge @(user.EmailConfirmed ? "green" : "neutral")">
+                                <span class="admin-dot"></span>@(user.EmailConfirmed ? "Подтверждён" : "Не подтверждён")</span>
+                        </td>
+                        <td>
+                            <a class="admin-text-link" asp-page="/Workouts/Index" asp-route-userId="@user.Id">@user.Workouts<admin-icon name="arrow" />
+                            </a>
+                        </td>
+                        <td>@(user.LastWorkout?.ToString("dd.MM.yyyy") ?? "Ещё нет тренировок")</td>
+                        <td class="text-end">
+                            @if (User.HasMinimumRole(user.Role))
+                            {
+                                <a class="admin-icon-button" asp-page="./Edit" asp-route-id="@user.Id" aria-label="Редактировать @user.Name" title="Редактировать">
+                                    <admin-icon name="edit" />
+                                </a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if(Model.Users.Count == 0) {
+        <div class="admin-empty">
+            <span class="admin-empty-icon">
+                <admin-icon name="search" />
+            </span>
+            <h3>Пользователи не найдены</h3>
+            <p>Попробуйте изменить поисковый запрос или сбросить фильтры.</p>
+            <a class="admin-text-link" asp-page="./Index">Показать всех<admin-icon name="arrow" />
+            </a>
+        </div>
+    }
+    <div class="admin-table-footer">
+        <span>@(Model.FilteredCount == 0 ? 0 : (Model.PageNumber - 1) * 12 + 1)–@Math.Min(Model.PageNumber * 12, Model.FilteredCount) из @Model.FilteredCount пользователей</span>
+        <nav class="admin-pagination" aria-label="Страницы пользователей">
+            @if(Model.PageNumber > 1) {
+                <a class="btn btn-sm" asp-route-PageNumber="@(Model.PageNumber - 1)" asp-route-Search="@Model.Search" asp-route-Role="@Model.Role" aria-label="Предыдущая страница">
+                    <admin-icon name="back" />
+                </a>
+            }<span>@Model.PageNumber / @Model.PageCount</span>
+                @if(Model.PageNumber < Model.PageCount) {
+                    <a class="btn btn-sm" asp-route-PageNumber="@(Model.PageNumber + 1)" asp-route-Search="@Model.Search" asp-route-Role="@Model.Role" aria-label="Следующая страница">
+                        <admin-icon name="arrow" />
+                    </a>
+                }
+            </nav>
+        </div>
+    </section>

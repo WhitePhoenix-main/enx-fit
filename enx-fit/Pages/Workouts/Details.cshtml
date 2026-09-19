@@ -1,13 +1,13 @@
 @page "{id:int}"
 @model enx_fit.Pages.Workouts.DetailsModel
 @{
-    ViewData["Title"] = "Workout details";
+    ViewData["Title"] = "Детали тренировки";
 }
 
 <div class="d-flex flex-column flex-md-row align-items-md-start justify-content-between gap-3 mb-4">
     <div>
         <p class="text-muted mb-1">@Model.Workout.Date.ToString("yyyy-MM-dd")</p>
-        <h1 class="h3 mb-2">@(string.IsNullOrWhiteSpace(Model.Workout.Title) ? "Workout" : Model.Workout.Title)</h1>
+        <h1 class="h3 mb-2">@(string.IsNullOrWhiteSpace(Model.Workout.Title) ? "Тренировка" : Model.Workout.Title)</h1>
         @if (Model.IsAdministrator)
         {
             <p class="small text-muted mb-2">Пользователь: @Model.OwnerName</p>
@@ -18,8 +18,8 @@
         }
     </div>
     <div class="d-flex gap-2">
-        <a class="btn btn-outline-primary" asp-page="./Edit" asp-route-id="@Model.Workout.Id">Edit</a>
-        <a class="btn btn-outline-secondary" asp-page="./Index">Back to list</a>
+        <a class="btn btn-outline-primary" asp-page="./Edit" asp-route-id="@Model.Workout.Id">Изменить</a>
+        <a class="btn btn-outline-secondary" asp-page="./Index">К списку</a>
     </div>
 </div>
 
@@ -34,10 +34,10 @@
 }
 
 <section class="border rounded-3 p-3 p-md-4 mb-4">
-    <h2 class="h5 mb-3">Add exercise</h2>
+    <h2 class="h5 mb-3">Добавить упражнение</h2>
     @if (Model.AvailableExercises.Count == 0)
     {
-        <p class="text-muted mb-0">All exercises from the library are already in this workout.</p>
+        <p class="text-muted mb-0">Все упражнения из библиотеки уже добавлены в эту тренировку.</p>
     }
     else
     {
@@ -45,7 +45,7 @@
             <div class="col-md-8">
                 <label class="form-label" asp-for="AddExercise.ExerciseId"></label>
                 <select class="form-select" asp-for="AddExercise.ExerciseId">
-                    <option value="">Select an exercise</option>
+                    <option value="">Выберите упражнение</option>
                     @foreach (var exercise in Model.AvailableExercises)
                     {
                         <option value="@exercise.Id">@exercise.Name &middot; @exercise.MuscleGroup</option>
@@ -53,7 +53,7 @@
                 </select>
             </div>
             <div class="col-auto">
-                <button class="btn btn-primary" type="submit">Add exercise</button>
+                <button class="btn btn-primary" type="submit">Добавить упражнение</button>
             </div>
         </form>
     }
@@ -62,8 +62,8 @@
 @if (Model.Workout.WorkoutExercises.Count == 0)
 {
     <div class="border rounded-3 p-5 text-center bg-body-tertiary">
-        <h2 class="h5">No exercises in this workout</h2>
-        <p class="text-muted mb-0">Use the form above to add the first exercise.</p>
+        <h2 class="h5">В тренировке пока нет упражнений</h2>
+        <p class="text-muted mb-0">Добавьте первое упражнение с помощью формы выше.</p>
     </div>
 }
 else
@@ -81,7 +81,7 @@ else
                         <h2 class="h5 mb-1">@workoutExercise.Exercise.Name</h2>
                         <p class="small text-muted mb-0">@workoutExercise.Exercise.MuscleGroup &middot; @workoutExercise.Exercise.Equipment</p>
                     </div>
-                    <span class="text-muted small">@workoutExercise.SetEntries.Count set(s)</span>
+                    <span class="text-muted small">@workoutExercise.SetEntries.Count подходов</span>
                 </div>
                 <div class="card-body">
                     @if (workoutExercise.SetEntries.Count > 0)
@@ -90,12 +90,12 @@ else
                             <table class="table table-sm align-middle mb-0">
                                 <thead>
                                     <tr>
-                                        <th scope="col">Set</th>
-                                        <th scope="col">Weight</th>
-                                        <th scope="col">Reps</th>
+                                        <th scope="col">Подход</th>
+                                        <th scope="col">Вес, кг</th>
+                                        <th scope="col">Повторения</th>
                                         <th scope="col">RIR</th>
-                                        <th scope="col">Type</th>
-                                        <th scope="col">Notes</th>
+                                        <th scope="col">Тип</th>
+                                        <th scope="col">Заметки</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -109,11 +109,11 @@ else
                                             <td>
                                                 @if (set.IsWarmup)
                                                 {
-                                                    <span class="badge text-bg-secondary">Warm-up</span>
+                                                    <span class="badge text-bg-secondary">Разминка</span>
                                                 }
                                                 else
                                                 {
-                                                    <span class="badge text-bg-primary">Working</span>
+                                                    <span class="badge text-bg-primary">Рабочий</span>
                                                 }
                                             </td>
                                             <td>@set.Notes</td>
@@ -124,19 +124,19 @@ else
                         </div>
                     }
 
-                    <h3 class="h6">Add set</h3>
+                    <h3 class="h6">Добавить подход</h3>
                     <form method="post" asp-page-handler="AddSet" class="row g-2 align-items-end">
                         <input type="hidden" name="AddSet.WorkoutExerciseId" value="@workoutExercise.Id" />
                         <div class="col-4 col-md-2">
-                            <label class="form-label small" for="set-number-@workoutExercise.Id">Set</label>
+                            <label class="form-label small" for="set-number-@workoutExercise.Id">Подход</label>
                             <input class="form-control" id="set-number-@workoutExercise.Id" name="AddSet.SetNumber" type="number" min="1" value="@nextSetNumber" />
                         </div>
                         <div class="col-4 col-md-2">
-                            <label class="form-label small" for="weight-@workoutExercise.Id">Weight</label>
+                            <label class="form-label small" for="weight-@workoutExercise.Id">Вес, кг</label>
                             <input class="form-control" id="weight-@workoutExercise.Id" name="AddSet.Weight" type="number" min="0" step="0.01" value="0" />
                         </div>
                         <div class="col-4 col-md-2">
-                            <label class="form-label small" for="reps-@workoutExercise.Id">Reps</label>
+                            <label class="form-label small" for="reps-@workoutExercise.Id">Повторения</label>
                             <input class="form-control" id="reps-@workoutExercise.Id" name="AddSet.Reps" type="number" min="0" value="0" />
                         </div>
                         <div class="col-4 col-md-2">
@@ -144,18 +144,18 @@ else
                             <input class="form-control" id="rir-@workoutExercise.Id" name="AddSet.Rir" type="number" min="0" max="10" />
                         </div>
                         <div class="col-8 col-md-3">
-                            <label class="form-label small" for="notes-@workoutExercise.Id">Notes</label>
+                            <label class="form-label small" for="notes-@workoutExercise.Id">Заметки</label>
                             <input class="form-control" id="notes-@workoutExercise.Id" name="AddSet.Notes" maxlength="500" />
                         </div>
                         <div class="col-auto">
                             <div class="form-check mb-2">
                                 <input class="form-check-input" id="warmup-@workoutExercise.Id" name="AddSet.IsWarmup" type="checkbox" value="true" />
                                 <input name="AddSet.IsWarmup" type="hidden" value="false" />
-                                <label class="form-check-label" for="warmup-@workoutExercise.Id">Warm-up</label>
+                                <label class="form-check-label" for="warmup-@workoutExercise.Id">Разминка</label>
                             </div>
                         </div>
                         <div class="col-auto">
-                            <button class="btn btn-outline-primary" type="submit">Add set</button>
+                            <button class="btn btn-outline-primary" type="submit">Добавить подход</button>
                         </div>
                     </form>
                 </div>

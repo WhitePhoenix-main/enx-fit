@@ -7,23 +7,29 @@ using enx_fit.Security;
 using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration
+        .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
+        .AddUserSecrets<Program>(optional: true)
+        .AddEnvironmentVariables()
+        .AddCommandLine(args);
+}
+
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
 // Add services to the container.
+var databaseConnection = DatabaseConnectionSettings.Resolve(builder.Configuration);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddDbContext<IdentityContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(databaseConnection));
 
 builder.Services
-    .AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
+    .AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<IdentityContext>();
-builder.Services.AddAuthorization(options =>
-    options.AddPolicy(
-        AppPolicies.AdministratorOnly,
-        policy => policy.RequireRole(AppRoles.Administrator)));
+    .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddUserRoleAuthorization();
+builder.Services.AddRazorPages();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<ExerciseService>();
@@ -31,20 +37,9 @@ builder.Services.AddScoped<WorkoutService>();
 builder.Services.AddScoped<BodyMeasurementService>();
 builder.Services.AddScoped<AnalyticsDataService>();
 builder.Services.AddScoped<UserDirectoryService>();
+builder.Services.AddScoped<RegistrationService>();
 builder.Services.AddSingleton<TrainingAnalyticsService>();
 builder.Services.AddSingleton<BodyAnalyticsService>();
-builder.Services.AddRazorPages(options =>
-{
-    options.Conventions.AuthorizePage("/Dashboard");
-    options.Conventions.AuthorizeFolder("/Workouts");
-    options.Conventions.AuthorizeFolder("/Body");
-    options.Conventions.AuthorizeFolder("/Analytics");
-    options.Conventions.AuthorizeFolder("/Exercises");
-    options.Conventions.AuthorizePage("/Exercises/Create", AppPolicies.AdministratorOnly);
-    options.Conventions.AuthorizePage("/Exercises/Edit", AppPolicies.AdministratorOnly);
-    options.Conventions.AuthorizePage("/Exercises/Delete", AppPolicies.AdministratorOnly);
-    options.Conventions.AuthorizeFolder("/Admin", AppPolicies.AdministratorOnly);
-});
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "DataProtectionKeys")));
 
@@ -53,8 +48,23 @@ var app = builder.Build();
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var services = scope.ServiceProvider;
-    var identityContext = services.GetRequiredService<IdentityContext>();
-    await identityContext.Database.MigrateAsync();
+    var db = services.GetRequiredService<ApplicationDbContext>();
+    await db.Database.MigrateAsync();
+
+    // Identity cannot build a ClaimsPrincipal from a malformed user-claim row.
+    // Older databases may contain rows with a NULL/empty ClaimType, so remove
+    // those unusable records before the first authenticated request is handled.
+    var malformedClaims = await db.UserClaims
+        .Where(claim => string.IsNullOrWhiteSpace(claim.ClaimType))
+        .ToListAsync();
+    if (malformedClaims.Count > 0)
+    {
+        app.Logger.LogWarning(
+            "Removing {Count} malformed Identity user claim(s) with an empty ClaimType.",
+            malformedClaims.Count);
+        db.UserClaims.RemoveRange(malformedClaims);
+        await db.SaveChangesAsync();
+    }
 
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
     foreach (var roleName in AppRoles.All)
@@ -70,7 +80,7 @@ await using (var scope = app.Services.CreateAsyncScope())
         }
     }
 
-    var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
+    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
     var users = await userManager.Users.ToListAsync();
     foreach (var user in users)
     {
@@ -84,25 +94,6 @@ await using (var scope = app.Services.CreateAsyncScope())
             }
         }
     }
-
-    var administratorEmail = builder.Configuration["IdentitySeed:AdministratorEmail"];
-    var administrators = await userManager.GetUsersInRoleAsync(AppRoles.Administrator);
-    if (administrators.Count == 0 && !string.IsNullOrWhiteSpace(administratorEmail))
-    {
-        var administrator = await userManager.FindByEmailAsync(administratorEmail);
-        if (administrator is not null && !await userManager.IsInRoleAsync(administrator, AppRoles.Administrator))
-        {
-            var result = await userManager.AddToRoleAsync(administrator, AppRoles.Administrator);
-            if (!result.Succeeded)
-            {
-                throw new InvalidOperationException(
-                    $"Unable to assign the administrator role: {string.Join(", ", result.Errors.Select(error => error.Description))}");
-            }
-        }
-    }
-
-    var applicationContext = services.GetRequiredService<ApplicationDbContext>();
-    await applicationContext.Database.MigrateAsync();
 }
 
 app.Use(async (context, next) =>

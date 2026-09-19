@@ -1,0 +1,130 @@
+@using System.Security.Claims
+@{
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+    var accountName = User.Identity?.Name ?? "Администратор";
+    var initial = accountName[..1].ToUpperInvariant();
+    var links = new[] {
+        (Page: "/Admin/Index", Label: "Обзор", Icon: "grid", Prefix: "/Admin/Index"),
+        (Page: "/Admin/Users/Index", Label: "Пользователи", Icon: "users", Prefix: "/Admin/Users/"),
+        (Page: "/Workouts/Index", Label: "Тренировки", Icon: "workout", Prefix: "/Workouts/"),
+        (Page: "/Exercises/Index", Label: "Упражнения", Icon: "book", Prefix: "/Exercises/"),
+        (Page: "/Body/Index", Label: "Замеры тела", Icon: "activity", Prefix: "/Body/")
+    };
+    var sectionLabel = links.FirstOrDefault(link => currentPage.StartsWith(link.Prefix)).Label ?? "Обзор";
+}
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="color-scheme" content="light" />
+        <title>@ViewData["Title"] · Администрирование · Enix Fit</title>
+        <link rel="icon" href="~/favicon.ico" />
+        <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+        @await RenderSectionAsync("Styles", required: false)
+    </head>
+    <body class="admin-shell">
+        <a class="admin-skip" href="#main-content">К содержимому</a>
+        <aside class="admin-sidebar" id="admin-sidebar" aria-label="Меню администратора">
+            <a class="admin-brand" asp-page="/Admin/Index">
+                <span class="admin-brand-mark">
+                    <i>
+                    </i>
+                    <i>
+                    </i>
+                    <i>
+                    </i>
+                </span>
+                <span>enix<span class="admin-brand-light">fit</span>
+                    <small>ADMINISTRATION</small>
+                </span>
+            </a>
+            <div class="admin-workspace">
+                <span class="admin-workspace-icon">
+                    <admin-icon name="shield" />
+                </span>
+                <div>
+                    <strong>Панель управления</strong>
+                    <small>Enix Fit Workspace</small>
+                </div>
+                <span class="admin-online" title="Сеанс активен"></span>
+            </div>
+            <a class="admin-new" asp-page="/Workouts/Create">
+                <admin-icon name="plus" /> Добавить тренировку</a>
+            <p class="admin-nav-label">УПРАВЛЕНИЕ</p>
+            <nav class="admin-nav">
+                @foreach (var link in links)
+                {
+                    var active = currentPage.StartsWith(link.Prefix);
+                    <a class="@(active ? "is-active" : "")" asp-page="@link.Page" aria-current="@(active ? "page" : null)">
+                        <admin-icon name="@link.Icon" />
+                        <span>@link.Label</span>
+                        @if(active) {
+                            <span class="admin-nav-dot"></span>
+                        }
+                    </a>
+                }
+            </nav>
+            <div class="admin-sidebar-bottom">
+                <p class="admin-nav-label">ЛИЧНЫЙ КАБИНЕТ</p>
+                <nav class="admin-nav">
+                    <a asp-page="/Dashboard">
+                        <admin-icon name="back" />
+                        <span>Вернуться в приложение</span>
+                    </a>
+                    <a asp-area="Identity" asp-page="/Account/Manage/Index">
+                        <admin-icon name="shield" />
+                        <span>Настройки аккаунта</span>
+                    </a>
+                </nav>
+                <div class="admin-sidebar-note">
+                    <span class="admin-online"></span> Всё для уверенного прогресса</div>
+            </div>
+        </aside>
+        <button type="button" class="admin-backdrop" aria-label="Закрыть меню" tabindex="-1" hidden>
+        </button>
+        <div class="admin-workarea">
+            <header class="admin-topbar">
+                <button class="admin-icon-button" id="admin-menu-toggle" type="button" aria-controls="admin-sidebar" aria-expanded="true" aria-label="Переключить меню">
+                    <admin-icon name="menu" />
+                </button>
+                <form class="admin-global-search" method="get" asp-page="/Admin/Users/Index" role="search">
+                    <admin-icon name="search" />
+                    <input name="Search" type="search" placeholder="Найти пользователя…" aria-label="Поиск пользователей" />
+                    <kbd>/</kbd>
+                </form>
+                <div class="admin-topbar-end">
+                    <span class="admin-admin-label">
+                        <admin-icon name="shield" /> Администратор</span>
+                    <a class="admin-account" asp-page="/Admin/Users/Edit" asp-route-id="@User.FindFirstValue(ClaimTypes.NameIdentifier)" title="@accountName">
+                        <span class="admin-avatar">@initial</span>
+                        <span>@accountName<small>Мой профиль</small>
+                        </span>
+                    </a>
+                    <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })" method="post">
+                        <button class="admin-icon-button" type="submit" aria-label="Выйти">
+                            <admin-icon name="logout" />
+                        </button>
+                    </form>
+                </div>
+            </header>
+            <main class="admin-main" id="main-content" tabindex="-1">
+                <div class="admin-breadcrumb">
+                    <a asp-page="/Admin/Index">Панель управления</a>
+                    <admin-icon name="chevron" />
+                    <span>@sectionLabel</span>
+                </div>
+                @RenderBody()
+            </main>
+            <footer class="admin-footer">
+                <span>© @DateTime.Today.Year Enix Fit</span>
+                <span>Тренировки. Данные. Прогресс.</span>
+            </footer>
+        </div>
+        <script src="~/lib/jquery/dist/jquery.min.js">
+        </script>
+        <script src="~/js/admin.js" asp-append-version="true">
+        </script>
+        @await RenderSectionAsync("Scripts", required: false)
+    </body>
+</html>

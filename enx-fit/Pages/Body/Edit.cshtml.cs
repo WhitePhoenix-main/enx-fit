@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace enx_fit.Pages.Body;
 
+[MinimumRole(UserRole.User)]
 public class EditModel(
     BodyMeasurementService measurementService,
     CurrentUser currentUser,
@@ -49,7 +50,7 @@ public class EditModel(
             return NotFound();
         }
 
-        TempData["StatusMessage"] = "Body measurement updated.";
+        TempData["StatusMessage"] = "Замер обновлён.";
         return RedirectToPage("./Index");
     }
 

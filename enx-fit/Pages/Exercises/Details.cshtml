@@ -1,34 +1,34 @@
 @page "{id:int}"
 @model enx_fit.Pages.Exercises.DetailsModel
 @{
-    ViewData["Title"] = "Exercise details";
+    ViewData["Title"] = "Детали упражнения";
 }
 
 <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
     <div>
         <h1 class="h3 mb-1">@Model.Exercise.Name</h1>
-        <p class="text-muted mb-0">Exercise details</p>
+        <p class="text-muted mb-0">Детали упражнения</p>
     </div>
     <div class="d-flex gap-2">
         @if (User.IsInRole("Administrator"))
         {
-            <a class="btn btn-primary" asp-page="./Edit" asp-route-id="@Model.Exercise.Id">Edit</a>
+            <a class="btn btn-primary" asp-page="./Edit" asp-route-id="@Model.Exercise.Id">Изменить</a>
         }
-        <a class="btn btn-outline-secondary" asp-page="./Index">Back to list</a>
+        <a class="btn btn-outline-secondary" asp-page="./Index">К списку</a>
     </div>
 </div>
 
 <div class="card">
     <div class="card-body">
         <dl class="row mb-0">
-            <dt class="col-sm-3">Muscle group</dt>
+            <dt class="col-sm-3">Группа мышц</dt>
             <dd class="col-sm-9">@Model.Exercise.MuscleGroup</dd>
 
-            <dt class="col-sm-3">Equipment</dt>
+            <dt class="col-sm-3">Оборудование</dt>
             <dd class="col-sm-9">@Model.Exercise.Equipment</dd>
 
-            <dt class="col-sm-3">Notes</dt>
-            <dd class="col-sm-9 mb-0">@(string.IsNullOrWhiteSpace(Model.Exercise.Notes) ? "No notes" : Model.Exercise.Notes)</dd>
+            <dt class="col-sm-3">Заметки</dt>
+            <dd class="col-sm-9 mb-0">@(string.IsNullOrWhiteSpace(Model.Exercise.Notes) ? "Нет заметок" : Model.Exercise.Notes)</dd>
         </dl>
     </div>
 </div>

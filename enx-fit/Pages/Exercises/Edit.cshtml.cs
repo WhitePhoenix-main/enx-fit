@@ -1,3 +1,4 @@
+using enx_fit.Security;
 using enx_fit.Services;
 using enx_fit.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -5,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace enx_fit.Pages.Exercises;
 
+[MinimumRole(UserRole.Administrator)]
 public class EditModel(ExerciseService exerciseService) : PageModel
 {
     [BindProperty]
@@ -43,11 +45,11 @@ public class EditModel(ExerciseService exerciseService) : PageModel
 
         if (result == ExerciseWriteResult.DuplicateName)
         {
-            ModelState.AddModelError("Input.Name", "An exercise with this name already exists.");
+            ModelState.AddModelError("Input.Name", "Упражнение с таким названием уже существует.");
             return Page();
         }
 
-        TempData["StatusMessage"] = "Exercise updated.";
+        TempData["StatusMessage"] = "Упражнение обновлено.";
         return RedirectToPage("./Index");
     }
 }

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace enx_fit.Pages.Workouts;
 
+[MinimumRole(UserRole.User)]
 public class DetailsModel(
     WorkoutService workoutService,
     CurrentUser currentUser,
@@ -47,17 +48,17 @@ public class DetailsModel(
 
         if (result == AddWorkoutExerciseResult.ExerciseNotFound)
         {
-            ModelState.AddModelError("AddExercise.ExerciseId", "Select an existing exercise.");
+            ModelState.AddModelError("AddExercise.ExerciseId", "Выберите существующее упражнение.");
             return await LoadPageAsync(id);
         }
 
         if (result == AddWorkoutExerciseResult.AlreadyAdded)
         {
-            ModelState.AddModelError("AddExercise.ExerciseId", "This exercise is already in the workout.");
+            ModelState.AddModelError("AddExercise.ExerciseId", "Это упражнение уже есть в тренировке.");
             return await LoadPageAsync(id);
         }
 
-        TempData["StatusMessage"] = "Exercise added to workout.";
+        TempData["StatusMessage"] = "Упражнение добавлено в тренировку.";
         return RedirectToPage(new { id });
     }
 
@@ -75,7 +76,7 @@ public class DetailsModel(
             return NotFound();
         }
 
-        TempData["StatusMessage"] = "Set added.";
+        TempData["StatusMessage"] = "Подход добавлен.";
         return RedirectToPage(new { id });
     }
 

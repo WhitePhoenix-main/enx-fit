@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace enx_fit.Pages.Workouts;
 
+[MinimumRole(UserRole.User)]
 public class CreateModel(
     WorkoutService workoutService,
     CurrentUser currentUser,
@@ -18,9 +19,14 @@ public class CreateModel(
 
     public IReadOnlyList<UserOption> Users { get; private set; } = [];
 
-    public async Task<IActionResult> OnGetAsync()
+    public async Task<IActionResult> OnGetAsync(string? userId)
     {
         Input.OwnerId = currentUser.Id;
+        if (IsAdministrator && !string.IsNullOrWhiteSpace(userId))
+        {
+            if (!await userDirectory.ExistsAsync(userId)) return NotFound();
+            Input.OwnerId = userId;
+        }
         await LoadUsersAsync();
         return Page();
     }
@@ -34,7 +40,7 @@ public class CreateModel(
         }
 
         var id = await workoutService.CreateAsync(Input);
-        TempData["StatusMessage"] = "Workout created.";
+        TempData["StatusMessage"] = "Тренировка создана.";
         return RedirectToPage("./Details", new { id });
     }
 

@@ -1,0 +1,15 @@
+.git
+.codex
+.agents
+.secrets
+.artifacts
+**/bin
+**/obj
+**/.vs
+**/.idea
+**/App_Data
+**/appsettings.Local.json
+**/appsettings.Development.json
+**/appsettings.Local.example.json
+**/*.user
+tests

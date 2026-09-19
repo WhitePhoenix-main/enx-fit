@@ -1,0 +1,46 @@
+@page
+@model enx_fit.Admin.CreateUserModel
+@{
+    ViewData["Title"] = "Новый пользователь";
+    Layout = "Shared/_AdminLayout";
+}
+<div class="admin-page-heading">
+    <div>
+        <p class="admin-eyebrow">ПОЛЬЗОВАТЕЛИ / НОВЫЙ АККАУНТ</p>
+        <h1>Добавить пользователя</h1>
+        <p>Создайте аккаунт, чтобы назначать тренировки и вести историю прогресса.</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-page="./Index">
+        <admin-icon name="back" />К списку</a>
+</div>
+<section class="admin-card admin-form-card">
+    <div class="admin-card-heading">
+        <h2>Данные для входа</h2>
+        <span class="admin-badge blue">Пользователь</span>
+    </div>
+    <form method="post" class="admin-form">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+        <div class="mb-3">
+            <label asp-for="Input.Email" class="form-label"></label>
+            <input asp-for="Input.Email" class="form-control" autocomplete="off" placeholder="name@example.com" />
+            <span asp-validation-for="Input.Email" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Input.Password" class="form-label"></label>
+            <input asp-for="Input.Password" class="form-control" autocomplete="new-password" />
+            <span asp-validation-for="Input.Password" class="text-danger"></span>
+            <small class="admin-field-help">Минимум 6 символов: заглавная и строчная буквы, цифра и специальный символ.</small>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Input.ConfirmPassword" class="form-label"></label>
+            <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" />
+            <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+        </div>
+        <div class="admin-form-actions">
+            <button class="btn btn-primary" type="submit">
+                <admin-icon name="plus" />Создать пользователя</button>
+            <a class="btn btn-outline-secondary" asp-page="./Index">Отмена</a>
+        </div>
+    </form>
+</section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

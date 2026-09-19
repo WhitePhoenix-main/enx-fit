@@ -1,3 +1,4 @@
+using enx_fit.Security;
 using enx_fit.Models;
 using enx_fit.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -5,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace enx_fit.Pages.Body;
 
+[MinimumRole(UserRole.User)]
 public class DeleteModel(BodyMeasurementService measurementService) : PageModel
 {
     [BindProperty]
@@ -20,7 +22,7 @@ public class DeleteModel(BodyMeasurementService measurementService) : PageModel
             return NotFound();
         }
 
-        TempData["StatusMessage"] = "Body measurement deleted.";
+        TempData["StatusMessage"] = "Замер удалён.";
         return RedirectToPage("./Index");
     }
 
