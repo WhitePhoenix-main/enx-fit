@@ -6,6 +6,15 @@ internal static class DatabaseConnectionChecks
 {
     public static void Run()
     {
+        var neonConfiguration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["ConnectionStrings:DefaultConnection"] = "Host=ep-damp-violet-b1prt7h4.c-5.eu-central-1.aws.neon.tech;Port=5432;Database=neondb;Username=neondb_owner;SSL Mode=VerifyFull;Channel Binding=Require"
+        }).Build();
+        var neonConnection = new NpgsqlConnectionStringBuilder(DatabaseConnectionSettings.Resolve(neonConfiguration));
+        if (neonConnection.SslMode != SslMode.VerifyFull || neonConnection.ChannelBinding != ChannelBinding.Require)
+            throw new InvalidOperationException("Neon connection settings were not preserved.");
+        Console.WriteLine("PASS: Neon connection string syntax (no database connection attempted)");
+
         var values = new Dictionary<string, string?>
         {
             ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test;Username=test;Password=legacy"
