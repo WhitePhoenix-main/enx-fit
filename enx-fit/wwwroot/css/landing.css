@@ -2539,3 +2539,94 @@ ul,ol {
     animation:none!important;
   }
 }
+
+/* Readable public-page typography, independent of miniature product-preview scaling. */
+.landing-header { min-height: 76px; }
+.landing-nav { margin-left: 1rem; gap: clamp(16px, 1.8vw, 28px); }
+.landing-nav a { font-size: 16px; font-weight: 500; }
+.header-actions { gap: 12px; flex-shrink: 0; }
+.header-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 20px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #f5f8ff;
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background .2s, border-color .2s;
+}
+.header-login:hover { color: white; border-color: transparent; background: #233e5d; }
+.header-actions .button { min-height: 44px; font-size: 15px; padding: 10px 20px; }
+
+@media (min-width: 901px) {
+  .hero { min-height: max(30rem, 460px); padding-bottom: 32px; }
+  .hero-copy .eyebrow { font-size: 11px; white-space: normal; line-height: 1.5; }
+  .hero-description { font-size: 17px; line-height: 1.6; }
+  .hero .button-row { flex-wrap: wrap; gap: 10px; }
+  .hero .button, .section-copy .button, .cta-inner .button { font-size: 15px; min-height: 44px; padding: 11px 16px; }
+  .hero-benefits { flex-wrap: wrap; row-gap: 8px; }
+  .hero-benefits li { font-size: 12px; }
+  .eyebrow { font-size: 12px; }
+  .section-copy h2 { font-size: max(1.96rem, 27px); }
+  .planner .section-copy h2 { font-size: max(1.56rem, 24px); white-space: normal; }
+  .section-copy > p:not(.eyebrow), .planner .section-copy > p:not(.eyebrow), .pricing .section-copy > p:not(.eyebrow), .cta-inner > div > p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #bec8d6;
+  }
+  .social-proof { height: auto; min-height: 88px; padding-block: 12px; }
+  .social-proof > div { gap: 18px; padding-inline: 12px; }
+  .social-proof strong { font-size: 21px; }
+  .social-proof p > span { font-size: 14px; line-height: 1.4; }
+  .feature-card h3 { font-size: 18px; }
+  .feature-card p { font-size: 15px; line-height: 1.55; color: #b3bece; }
+  .feature-card a, .feature-card button { font-size: 15px; }
+  .feature-card { min-height: max(18.5rem, 320px); }
+  .steps h3 { font-size: 16px; white-space: normal; }
+  .steps p { font-size: 14px; line-height: 1.5; color: #b3bece; }
+  .billing-control { font-size: 14px; flex-wrap: wrap; }
+  .discount { font-size: 12px; }
+  .price-card h3 { font-size: 18px; }
+  .price { font-size: 25px; }
+  .price small { font-size: 15px; }
+  .price-caption { font-size: 13px; }
+  .price-card ul { font-size: 15px; line-height: 1.55; color: #b8c4d5; }
+  .price-card .button { font-size: 14px; min-height: 44px; }
+  .price-card { min-height: max(18.5rem, 340px); }
+  .popular-badge { font-size: 11px; }
+  .cta-inner { gap: 24px; padding-block: 24px; flex-wrap: wrap; }
+  .cta-inner .button-row { margin-left: 0; }
+  .landing-footer { flex-wrap: wrap; padding-block: 20px; }
+  .landing-footer nav { flex-wrap: wrap; margin-left: auto; gap: 16px; }
+  .landing-footer nav a, .landing-footer nav button { font-size: 13px; }
+  .landing-footer > small { font-size: 12px; }
+}
+
+@media (min-width: 901px) and (max-width: 1200px) {
+  .features, .pricing .section-grid { grid-template-columns: 1fr; gap: 28px; }
+  .features .section-copy > p:not(.eyebrow), .pricing .section-copy > p:not(.eyebrow) { max-width: 560px; }
+  .feature-card { min-height: 290px; }
+  .social-proof { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .social-proof > div { justify-content: flex-start; padding-left: 24px; }
+  .social-proof > div:nth-child(2) { border-right: 0; }
+}
+
+@media (max-width: 1100px) {
+  .landing-header { flex-wrap: wrap; gap: 12px; }
+  .landing-nav { display: none; order: 4; position: absolute; top: 100%; left: 0; right: 0; margin: 0; padding: 20px; background: #111c27f7; border: 1px solid #29445f; border-radius: 10px; box-shadow: 0 12px 36px #0008; }
+  .landing-nav.is-open { display: flex; justify-content: center; }
+  .landing-nav a { font-size: 16px; }
+  .menu-toggle { display: grid; place-items: center; order: 3; min-width: 44px; min-height: 44px; margin-left: 0; padding: 8px; border: 1px solid #385371; border-radius: 8px; background: #111c27; }
+  .header-actions { margin-left: auto; }
+}
+@media (max-width: 600px) {
+  .header-login { font-size: 16px; padding-inline: 14px; }
+  .landing-header { gap: 8px; }
+  .header-actions { gap: 0; }
+}
