@@ -1,330 +1,144 @@
 @page
 @{
-    ViewData["Title"] = "Enix Fit";
-    ViewData["DocumentTitle"] = "Enix Fit";
+    Layout = "_LandingLayout";
 }
+@* The statistics, plans and prices below reproduce the supplied design and use illustrative data. *@
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
-}
-
-<section class="landing-hero" aria-labelledby="landing-title">
-    <div class="landing-hero__content">
-        <p class="landing-hero__eyebrow">Fitness analytics platform</p>
-        <h1 id="landing-title" class="landing-hero__title">
-            Тренируйся. <span>Отслеживай.</span> Прогрессируй.
-        </h1>
-        <p class="landing-hero__description">
-            Веди тренировки, следи за силовыми показателями и изменениями тела. Enix Fit превращает историю тренировок в понятную статистику прогресса.
-        </p>
-        <div class="landing-hero__actions">
-            <a class="btn btn-primary btn-lg" asp-area="Identity" asp-page="/Account/Register">Начать бесплатно</a>
-            <a class="btn btn-outline-light btn-lg" asp-page="/Index" asp-fragment="features">Посмотреть возможности</a>
+<section class="hero wrap" aria-labelledby="hero-title">
+    <div class="hero-copy">
+        <p class="eyebrow">Больше, чем просто дневник тренировок</p>
+        <h1 id="hero-title">Тренируйся<br />осознанно.<br /><span>Расти быстрее.</span></h1>
+        <p class="hero-description">Enix Fit анализирует твои тренировки, отслеживает прогресс и помогает достигать целей с помощью понятной аналитики и персональных инсайтов.</p>
+        <div class="button-row">
+            <a class="button button-primary" asp-area="Identity" asp-page="/Account/Register">Начать бесплатно</a>
+            <button class="button button-outline" type="button" data-demo><svg class="icon"><use href="#i-play" /></svg>Посмотреть демо</button>
         </div>
+        <ul class="hero-benefits">
+            <li><svg class="icon"><use href="#i-check" /></svg>Бесплатный старт</li>
+            <li><svg class="icon"><use href="#i-check" /></svg>Без привязки карты</li>
+            <li><svg class="icon"><use href="#i-check" /></svg>Работает на всех устройствах</li>
+        </ul>
     </div>
-
-    <div class="progress-preview" role="region" aria-labelledby="progress-preview-title">
-        <div class="progress-preview__header">
-            <div>
-                <p class="progress-preview__eyebrow">Обзор прогресса</p>
-                <h2 id="progress-preview-title">Твои показатели</h2>
+    <div class="hero-visual" aria-label="Пример интерфейса Enix Fit с демонстрационными данными">
+        <div class="dashboard-device">
+            <aside class="preview-sidebar">
+                <div class="preview-brand"><span class="brand-mark"><i></i><i></i><i></i></span><b>Enix Fit</b></div>
+                <button type="button" class="preview-nav active" data-replay-hero aria-label="Обзор — повторить демонстрацию"><svg class="icon"><use href="#i-grid" /></svg>Обзор</button>
+                <button type="button" class="preview-nav" data-demo><svg class="icon"><use href="#i-dumbbell" /></svg>Тренировки</button>
+                <a class="preview-nav" href="#analytics"><svg class="icon"><use href="#i-bars" /></svg>Аналитика</a>
+                <a class="preview-nav" href="#planner"><svg class="icon"><use href="#i-calendar" /></svg>Планы</a>
+                <button type="button" class="preview-nav" data-info="achievements"><svg class="icon"><use href="#i-trophy" /></svg>Достижения</button>
+                <a class="preview-nav" asp-area="Identity" asp-page="/Account/Manage/Index"><svg class="icon"><use href="#i-settings" /></svg>Настройки</a>
+            </aside>
+            <div class="preview-main">
+                <div class="preview-window-bar"><button type="button" data-replay-hero class="preview-replay" aria-label="Повторить анимацию интерфейса" title="Повторить анимацию интерфейса">↻</button><span aria-hidden="true">⛶</span></div>
+                <div class="preview-heading"><div><h2>Привет, Алексей! <span>👋</span></h2><p>Отличная неделя. Продолжай в том же духе!</p></div><span class="preview-date">12 — 18 мая 2024</span></div>
+                <div class="preview-metrics">
+                    <div><span>Общий объём</span><strong><span data-count="12420">12 420</span> <small>кг</small></strong><em>+12%</em></div>
+                    <div><span>Тренировок</span><strong><span data-count="4">4</span></strong><em>+1</em></div>
+                    <div><span>Средний вес</span><strong><span data-count="94.2" data-count-from="90" data-decimals="1">94.2</span> <small>кг</small></strong><em>−2.1 кг</em></div>
+                    <div><span>Серия</span><strong><span data-count="8">8</span> <small>дней</small> <span class="fire">🔥</span></strong></div>
+                </div>
+                <div class="preview-charts">
+                    <div class="preview-bars"><h3>Прогресс по объёму</h3><div class="bar-tooltip" id="hero-bar-tooltip"><b>12 420 кг</b><span>+12% к прошлой неделе</span></div>
+                        <div class="bar-chart"><div class="bar-scale"><span>20K</span><span>15K</span><span>10K</span><span>5K</span><span>0</span></div><div class="bar-columns">
+                            @foreach (var bar in new[] { (33, "13 мая", 6600), (46, "14 мая", 9200), (60, "15 мая", 12000), (78, "16 мая", 15600), (71, "17 мая", 14200), (81, "18 мая", 16200), (94, "19 мая", 18800) })
+                            { <button type="button" class="bar-column" data-bar-value="@bar.Item3" data-bar-date="@bar.Item2" aria-label="@bar.Item2: @bar.Item3 кг" aria-describedby="hero-bar-tooltip" aria-pressed="false"><div style="--bar-height: @(bar.Item1)%"></div><span>@bar.Item2</span></button> }
+                        </div></div>
+                    </div>
+                    <div class="preview-goals"><h3>Выполнение цели</h3><div class="mini-donut"><b data-count="78" data-suffix="%">78%</b></div><p>4 из 5 тренировок</p><ul><li>Силовые <b>3</b></li><li>Кардио <b>1</b></li><li>Мобильность <b>0</b></li><li>Другое <b>0</b></li></ul></div>
+                </div>
             </div>
-            <span>Последние 30 дней</span>
         </div>
-
-        <div class="progress-preview__metrics">
-            <article class="progress-metric">
-                <div class="progress-metric__heading">
-                    <span>Weight</span>
-                    <span class="progress-trend progress-trend--positive">−2.1 kg</span>
-                </div>
-                <strong>94.2 <small>kg</small></strong>
-                <span class="progress-metric__caption">Текущий вес</span>
-            </article>
-
-            <article class="progress-metric">
-                <div class="progress-metric__heading">
-                    <span>Bench Press</span>
-                    <span class="progress-trend progress-trend--positive">+10 kg</span>
-                </div>
-                <strong>110 <small>kg</small></strong>
-                <span class="progress-metric__caption">Лучший результат</span>
-            </article>
-
-            <article class="progress-metric">
-                <div class="progress-metric__heading">
-                    <span>Workouts this month</span>
-                    <span class="progress-metric__icon" aria-hidden="true">12</span>
-                </div>
-                <strong>12</strong>
-                <span class="progress-metric__caption">3 тренировки в неделю</span>
-            </article>
-
-            <article class="progress-metric">
-                <div class="progress-metric__heading">
-                    <span>Training streak</span>
-                    <span class="progress-metric__icon" aria-hidden="true">8</span>
-                </div>
-                <strong>8 <small>days</small></strong>
-                <span class="progress-metric__caption">Текущая серия</span>
-            </article>
-        </div>
-
-        <div class="progress-chart">
-            <div class="progress-chart__heading">
-                <div>
-                    <span>Объём тренировок</span>
-                    <strong>18 420 kg</strong>
-                </div>
-                <span class="progress-trend progress-trend--positive">+12.4%</span>
-            </div>
-            <svg class="progress-chart__graphic" viewBox="0 0 600 170" role="img" aria-label="График роста тренировочного объёма">
-                <line class="progress-chart__grid" x1="0" y1="25" x2="600" y2="25" />
-                <line class="progress-chart__grid" x1="0" y1="85" x2="600" y2="85" />
-                <line class="progress-chart__grid" x1="0" y1="145" x2="600" y2="145" />
-                <path class="progress-chart__line" d="M10 137 C70 132 88 118 135 121 S207 100 250 105 S323 74 365 83 S442 53 480 59 S544 28 590 34" />
-                <circle class="progress-chart__point" cx="590" cy="34" r="5" />
-            </svg>
-            <div class="progress-chart__labels" aria-hidden="true">
-                <span>1 неделя</span>
-                <span>2 неделя</span>
-                <span>3 неделя</span>
-                <span>4 неделя</span>
-            </div>
+        <p class="athlete-quote">Лучшая<br />версия себя<br />— каждый день</p>
+        <div class="phone-device" aria-label="Мобильный экран тренировки">
+            <div class="phone-notch"></div><div class="phone-status"><b>9:41</b><span>▴ ▰ ▰</span></div>
+            <div class="phone-heading"><span>‹</span><b>Тренировка</b><span>＋</span></div>
+            <div class="phone-timer"><strong>00:45:32</strong><span>Время тренировки</span></div>
+            <div class="phone-metrics"><div><b>6</b><span>Упражнений</span></div><div><b>12 420 <small>кг</small></b><span>Общий объём</span></div></div>
+            <div class="phone-actions"><button type="button" data-demo>Завершить</button><button type="button" id="preview-pause" aria-label="Приостановить таймер" aria-pressed="false">Ⅱ</button></div><div class="phone-home"></div>
         </div>
     </div>
 </section>
 
-<section id="features" class="landing-section" aria-labelledby="features-title">
-    <div class="landing-section__heading">
-        <p class="landing-section__eyebrow">Возможности</p>
-        <h2 id="features-title">Всё для системного прогресса</h2>
-        <p>Записывай результаты в одном месте и принимай решения на основе собственных данных.</p>
-    </div>
+<section class="social-proof wrap" aria-label="Enix Fit в цифрах">
+    <div><svg class="icon"><use href="#i-users" /></svg><p><strong data-count="50000" data-suffix="+">50 000+</strong><span>активных пользователей</span></p></div>
+    <div><svg class="icon"><use href="#i-bars" /></svg><p><strong data-count="1200000" data-suffix="+">1 200 000+</strong><span>записанных тренировок</span></p></div>
+    <div><svg class="icon"><use href="#i-trophy" /></svg><p><strong data-count="94" data-suffix="%">94%</strong><span>отмечают прогресс</span></p></div>
+    <div><svg class="icon"><use href="#i-star" /></svg><p><strong data-count="4.9" data-suffix="/5" data-decimals="1">4.9/5</strong><span>средняя оценка</span></p></div>
+</section>
 
-    <div class="features-grid">
-        <article class="feature-card">
-            <div class="feature-card__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                    <path d="M5 8v8M8 6v12M16 6v12M19 8v8M8 12h8M3 10v4M21 10v4" />
-                </svg>
-            </div>
-            <h3>Тренировки</h3>
-            <p>Записывай подходы, повторения и рабочий вес.</p>
-        </article>
-
-        <article class="feature-card">
-            <div class="feature-card__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                    <path d="M4 18 9 13l3 3 7-8" />
-                    <path d="M15 8h4v4" />
-                    <path d="M4 5v14h16" />
-                </svg>
-            </div>
-            <h3>Прогресс упражнений</h3>
-            <p>Следи за ростом силы и личными рекордами.</p>
-        </article>
-
-        <article class="feature-card">
-            <div class="feature-card__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                    <path d="M8 4h8M9 4 7 20h10L15 4" />
-                    <path d="M8 11h8" />
-                </svg>
-            </div>
-            <h3>Тело</h3>
-            <p>Отслеживай массу тела, ИМТ и другие показатели.</p>
-        </article>
-
-        <article class="feature-card">
-            <div class="feature-card__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                    <path d="M5 19V9M12 19V5M19 19v-7" />
-                    <path d="M3 19h18" />
-                </svg>
-            </div>
-            <h3>Аналитика</h3>
-            <p>Смотри тенденции и оценивай эффективность тренировок.</p>
-        </article>
+<section class="features wrap" id="features" aria-labelledby="features-title">
+    <div class="section-copy"><p class="eyebrow">Возможности</p><h2 id="features-title">Всё, что нужно<br />для твоего прогресса</h2><p>Enix Fit объединяет тренировочный дневник, аналитику и умные рекомендации в одном приложении.</p></div>
+    <div class="feature-grid">
+        <article class="feature-card panel"><svg class="feature-icon icon"><use href="#i-bars" /></svg><h3>Аналитика<br />и статистика</h3><p>Наглядные графики, тенденции и инсайты о твоём прогрессе.</p><a href="#analytics">Подробнее <span>→</span></a></article>
+        <article class="feature-card panel"><svg class="feature-icon icon"><use href="#i-dumbbell" /></svg><h3>Планирование<br />тренировок</h3><p>Создавай свои планы или используй готовые программы.</p><a href="#planner">Подробнее <span>→</span></a></article>
+        <article class="feature-card panel"><svg class="feature-icon icon"><use href="#i-target" /></svg><h3>Постановка целей</h3><p>Ставь цели, отслеживай их выполнение и получай мотивацию.</p><button type="button" data-info="goals">Подробнее <span>→</span></button></article>
+        <article class="feature-card panel"><svg class="feature-icon icon"><use href="#i-crown" /></svg><h3>Достижения<br />и мотивация</h3><p>Открывай достижения, поддерживай серию тренировок и расти.</p><button type="button" data-info="achievements">Подробнее <span>→</span></button></article>
     </div>
 </section>
 
-<section id="analytics" class="landing-section" aria-labelledby="exercise-progress-title">
-    <div class="landing-section__heading landing-section__heading--wide">
-        <p class="landing-section__eyebrow">Exercise progress</p>
-        <h2 id="exercise-progress-title">Смотри, как меняются твои результаты</h2>
-        <p>История каждого упражнения показывает динамику силы, личные рекорды и устойчивость прогресса.</p>
-    </div>
-
-    <div class="exercise-progress-preview">
-        <div class="exercise-progress-summary">
-            <div class="exercise-progress-summary__heading">
-                <span>Упражнение</span>
-                <span class="exercise-progress-summary__status">Personal Record</span>
+<section class="section-band analytics" id="analytics" aria-labelledby="analytics-title">
+    <div class="wrap section-grid">
+        <div class="section-copy"><p class="eyebrow">Глубже, чем просто цифры</p><h2 id="analytics-title">Аналитика,<br />которая имеет смысл</h2><p>Мы превращаем твои тренировки в понятные данные. Смотри на прогресс в динамике, находи сильные стороны и области для роста.</p><a class="button button-outline" asp-page="/Analytics/Index">Посмотреть все возможности</a></div>
+        <div class="analytics-panels">
+            <div class="line-chart-panel panel">
+                <div class="chart-toolbar"><div class="chart-tabs" role="group" aria-label="Показатель графика"><button type="button" class="active" data-metric="volume" aria-pressed="true">Объём</button><button type="button" data-metric="weight" aria-pressed="false">Вес</button><button type="button" data-metric="reps" aria-pressed="false">Повторы</button><button type="button" data-metric="time" aria-pressed="false">Время</button></div><select id="chart-period" aria-label="Период графика"><option value="12">Последние 12 недель</option><option value="6">Последние 6 недель</option></select></div>
+                <div class="line-chart"><div class="line-chart-scale" id="chart-scale"><span>20K</span><span>15K</span><span>10K</span><span>5K</span><span>0</span></div>
+                    <div class="line-chart-plot"><div class="chart-tooltip"><span id="tooltip-period">Неделя 8</span><strong id="tooltip-value">16 420 кг</strong><span><em id="tooltip-change">+18%</em> к предыдущей</span></div>
+                        <svg viewBox="0 0 480 160" preserveAspectRatio="none" role="img" aria-label="Демонстрационный график роста тренировочного объёма" id="progress-chart"><path class="chart-area" id="chart-area" d="M0 143 C25 131 35 129 58 130 S92 111 118 115 S150 120 172 108 S209 100 232 101 S266 87 282 85 S316 91 341 79 S377 67 405 67 S450 60 480 47 L480 160 H0Z" /><path class="chart-line" id="chart-line" d="M0 143 C25 131 35 129 58 130 S92 111 118 115 S150 120 172 108 S209 100 232 101 S266 87 282 85 S316 91 341 79 S377 67 405 67 S450 60 480 47" /><path class="chart-guide" d="M282 85v75" /><circle class="chart-point-ring" cx="282" cy="85" r="7" /><circle class="chart-point" cx="282" cy="85" r="3" /></svg>
+                        <div class="chart-x-labels" id="chart-labels">@for (var week = 1; week <= 12; week++) { <span>@week</span> }</div>
+                    </div>
+                </div>
+                <p class="chart-interaction-hint" id="chart-help">Выбери неделю на графике <span>← →</span></p>
             </div>
-            <h3>Bench Press</h3>
-            <p>Лучший рабочий вес за последние 6 месяцев.</p>
-
-            <dl class="exercise-progress-stats">
-                <div>
-                    <dt>Current</dt>
-                    <dd>110 <small>kg</small></dd>
-                </div>
-                <div>
-                    <dt>Изменение</dt>
-                    <dd class="exercise-progress-stats__positive">+15 <small>kg</small></dd>
-                </div>
-                <div>
-                    <dt>Рост</dt>
-                    <dd class="exercise-progress-stats__positive">+15.8%</dd>
-                </div>
-            </dl>
-        </div>
-
-        <div class="exercise-progress-chart">
-            <div class="exercise-progress-chart__heading">
-                <div>
-                    <span>Рабочий вес</span>
-                    <strong>95 → 110 kg</strong>
-                </div>
-                <span>6 месяцев</span>
-            </div>
-
-            <div class="exercise-progress-chart__canvas">
-                <div class="exercise-progress-chart__scale" aria-hidden="true">
-                    <span>115 kg</span>
-                    <span>105 kg</span>
-                    <span>95 kg</span>
-                </div>
-                <svg viewBox="0 0 720 300" role="img" aria-label="График роста результата в жиме лёжа с 95 до 110 килограммов">
-                    <line class="exercise-progress-chart__grid" x1="0" y1="35" x2="720" y2="35" />
-                    <line class="exercise-progress-chart__grid" x1="0" y1="145" x2="720" y2="145" />
-                    <line class="exercise-progress-chart__grid" x1="0" y1="255" x2="720" y2="255" />
-                    <path class="exercise-progress-chart__line" d="M12 245 C70 238 94 224 132 226 S211 193 260 201 S337 158 390 165 S472 121 520 129 S615 77 708 65" />
-                    <circle class="exercise-progress-chart__point" cx="12" cy="245" r="5" />
-                    <circle class="exercise-progress-chart__point" cx="132" cy="226" r="5" />
-                    <circle class="exercise-progress-chart__point" cx="260" cy="201" r="5" />
-                    <circle class="exercise-progress-chart__point" cx="390" cy="165" r="5" />
-                    <circle class="exercise-progress-chart__point" cx="520" cy="129" r="5" />
-                    <circle class="exercise-progress-chart__point exercise-progress-chart__point--current" cx="708" cy="65" r="7" />
-                </svg>
-            </div>
-
-            <div class="exercise-progress-chart__labels" aria-hidden="true">
-                <span>Март</span>
-                <span>Апрель</span>
-                <span>Май</span>
-                <span>Июнь</span>
-                <span>Июль</span>
-                <span>Август</span>
-            </div>
+            <div class="muscles-panel panel"><h3>Распределение по группам мышц</h3><div class="muscles-content"><div class="muscles-donut" role="img" aria-label="42 тренировки: грудь 28%, спина 22%, ноги 20%, плечи 15%, руки 10%, пресс 5%"><div><strong data-count="42">42</strong><span>тренировки</span></div></div><ul class="muscle-legend"><li><i></i>Грудь<b>28%</b></li><li><i></i>Спина<b>22%</b></li><li><i></i>Ноги<b>20%</b></li><li><i></i>Плечи<b>15%</b></li><li><i></i>Руки<b>10%</b></li><li><i></i>Пресс<b>5%</b></li></ul></div></div>
         </div>
     </div>
 </section>
 
-<section id="body-analytics" class="landing-section" aria-labelledby="body-analytics-title">
-    <div class="body-analytics-layout">
-        <div class="body-analytics-content">
-            <div class="landing-section__heading">
-                <p class="landing-section__eyebrow">Body analytics</p>
-                <h2 id="body-analytics-title">Следи не только за весом</h2>
-                <p>Состав тела помогает точнее оценивать результат тренировок и понимать, как меняется форма со временем.</p>
-            </div>
+<section class="planner section-band" id="planner" aria-labelledby="planner-title"><div class="wrap planner-grid">
+    <div class="section-copy"><p class="eyebrow">Твой план на успех</p><h2 id="planner-title">Планируй. Тренируйся. Развивайся.</h2><p>Создавай собственные программы или используй готовые шаблоны от профессионалов.</p><a class="button button-outline" asp-page="/Workouts/Index">Открыть планировщик</a></div>
+    <div class="weekly-plan panel"><div class="plan-heading"><h3>Мой план</h3><a asp-page="/Workouts/Index">Смотреть все →</a></div><div class="plan-days">
+        @foreach (var day in new[] { ("Пн", "Силовая", "Верх тела", true), ("Вт", "Кардио", "Бег 5 км", true), ("Ср", "Отдых", "", false), ("Чт", "Силовая", "Ноги", true), ("Пт", "Мобильность", "Растяжка", true), ("Сб", "Силовая", "Верх тела", false), ("Вс", "Отдых", "", false) })
+        {
+            <button type="button" class="plan-day" data-day="@day.Item1" data-workout="@day.Item2" data-detail="@day.Item3" data-completed="@day.Item4.ToString().ToLowerInvariant()" aria-pressed="false"><span>@day.Item1</span><span class="plan-day-workout">@day.Item2<small>@day.Item3</small></span>@if (day.Item4) { <svg class="icon day-done" aria-label="Выполнено"><use href="#i-check" /></svg> } else { <span class="day-pending" aria-label="Запланировано"></span> }</button>
+        }
+    </div><p class="plan-selection" id="plan-selection" role="status">Выбери день, чтобы посмотреть тренировку</p></div>
+</div></section>
 
-            <div class="body-metrics">
-                <article class="body-metric">
-                    <span>Weight</span>
-                    <strong>94.2 <small>kg</small></strong>
-                    <span class="body-metric__trend">↓ 1.8 kg</span>
-                </article>
-                <article class="body-metric">
-                    <span>Body fat</span>
-                    <strong>15.3<small>%</small></strong>
-                    <span class="body-metric__trend">↓ 0.9%</span>
-                </article>
-                <article class="body-metric">
-                    <span>BMI</span>
-                    <strong>27.1</strong>
-                    <span class="body-metric__caption">Текущий показатель</span>
-                </article>
-                <article class="body-metric">
-                    <span>Muscle mass</span>
-                    <strong>76.4 <small>kg</small></strong>
-                    <span class="body-metric__trend">↑ 1.2 kg</span>
-                </article>
-            </div>
-        </div>
-
-        <div class="body-composition-preview">
-            <div class="body-composition-preview__heading">
-                <div>
-                    <span>Динамика состава тела</span>
-                    <strong>Последние 6 месяцев</strong>
-                </div>
-                <span class="body-composition-preview__result">Позитивная динамика</span>
-            </div>
-
-            <svg class="body-composition-chart" viewBox="0 0 640 280" role="img" aria-label="График снижения веса и процента жира при росте мышечной массы">
-                <line class="body-composition-chart__grid" x1="10" y1="35" x2="630" y2="35" />
-                <line class="body-composition-chart__grid" x1="10" y1="140" x2="630" y2="140" />
-                <line class="body-composition-chart__grid" x1="10" y1="245" x2="630" y2="245" />
-                <path class="body-composition-chart__weight" d="M18 62 C90 69 114 88 164 91 S245 119 300 122 S390 150 448 154 S540 184 622 194" />
-                <path class="body-composition-chart__fat" d="M18 96 C86 101 119 116 165 119 S247 143 302 147 S390 167 448 174 S549 203 622 211" />
-                <path class="body-composition-chart__muscle" d="M18 225 C83 218 113 202 165 204 S244 174 302 181 S390 141 448 148 S538 102 622 91" />
-                <circle class="body-composition-chart__point body-composition-chart__point--weight" cx="622" cy="194" r="6" />
-                <circle class="body-composition-chart__point body-composition-chart__point--fat" cx="622" cy="211" r="6" />
-                <circle class="body-composition-chart__point body-composition-chart__point--muscle" cx="622" cy="91" r="6" />
-            </svg>
-
-            <div class="body-composition-preview__labels" aria-hidden="true">
-                <span>Март</span>
-                <span>Апрель</span>
-                <span>Май</span>
-                <span>Июнь</span>
-                <span>Июль</span>
-                <span>Август</span>
-            </div>
-
-            <ul class="body-composition-legend" aria-label="Обозначения графика">
-                <li><span class="body-composition-legend__weight"></span>Weight</li>
-                <li><span class="body-composition-legend__fat"></span>Body fat</li>
-                <li><span class="body-composition-legend__muscle"></span>Muscle mass</li>
-            </ul>
-        </div>
+<section class="integrations section-band" aria-labelledby="integrations-title"><div class="wrap integration-grid">
+    <div class="section-copy"><p class="eyebrow">Синхронизация</p><h2 id="integrations-title">Работает с твоими<br />устройствами</h2><p>Подключай любимые сервисы и устройства.<br />Все данные в одном месте.</p></div>
+    <div class="integration-cards">
+        <button type="button" class="integration-card panel" data-integration="Apple Health"><svg class="integration-logo"><use href="#i-apple" /></svg><b>Apple Health</b><span>Пульс, активность</span></button>
+        <button type="button" class="integration-card panel" data-integration="Apple Watch"><svg class="integration-logo"><use href="#i-watch" /></svg><b>Apple Watch</b><span>Тренировки, пульс</span></button>
+        <button type="button" class="integration-card panel" data-integration="Garmin"><span class="garmin-logo">GARMIN<span>▲</span></span><b>Garmin</b><span>Занятия, статистика</span></button>
+        <button type="button" class="integration-card panel" data-integration="Strava"><svg class="integration-logo"><use href="#i-strava" /></svg><b>Strava</b><span>Активности</span></button>
+        <button type="button" class="integration-card panel" data-integration="Fitbit"><svg class="integration-logo"><use href="#i-fitbit" /></svg><b>Fitbit</b><span>Сон, активность</span></button>
+        <button type="button" class="integration-card panel" data-integration="Google Fit"><svg class="integration-logo"><use href="#i-googlefit" /></svg><b>Google Fit</b><span>Активность</span></button>
+        <button type="button" class="integration-card panel" data-integration="Другие устройства"><svg class="integration-logo"><use href="#i-more" /></svg><b>И другие</b><span>Скоро</span></button>
     </div>
-</section>
+</div></section>
 
-<section id="how-it-works" class="landing-section" aria-labelledby="how-it-works-title">
-    <div class="landing-section__heading">
-        <p class="landing-section__eyebrow">Как это работает</p>
-        <h2 id="how-it-works-title">От записи подхода до понятного вывода</h2>
-        <p>Enix Fit превращает обычный тренировочный дневник в последовательную историю твоего прогресса.</p>
+<section class="how-it-works section-band" id="how-it-works" aria-labelledby="steps-title"><div class="wrap steps-grid">
+    <div class="section-copy"><p class="eyebrow">Как это работает</p><h2 id="steps-title">Три простых шага<br />к лучшей версии себя</h2></div>
+    <ol class="steps"><li><span class="step-number">1</span><div><h3>Создай аккаунт</h3><p>Это займёт меньше минуты.</p></div></li><li><span class="step-number">2</span><div><h3>Добавь тренировки</h3><p>Вручную или через синхронизацию<br />с устройствами.</p></div></li><li><span class="step-number">3</span><div><h3>Следи за прогрессом</h3><p>Получай аналитику и достигай<br />своих целей.</p></div></li></ol>
+</div></section>
+
+<section class="pricing section-band" id="pricing" aria-labelledby="pricing-title"><div class="wrap section-grid">
+    <div class="section-copy"><p class="eyebrow">Тарифы</p><h2 id="pricing-title">Выбери свой уровень</h2><p>Начни бесплатно и перейди на Pro, когда будешь готов к большему.</p><div class="billing-control"><span id="monthly-label">Ежемесячно</span><button type="button" class="billing-switch" id="billing-switch" role="switch" aria-checked="false" aria-label="Ежегодная оплата со скидкой 20%"><span></span></button><span>Ежегодно</span><span class="discount">−20%</span></div></div>
+    <div class="pricing-cards">
+        <article class="price-card panel"><h3>Бесплатный</h3><p class="price">0 ₽</p><ul><li>Базовая аналитика</li><li>До 5 тренировок в месяц</li><li>Доступ с любых устройств</li></ul><a class="button button-outline" asp-area="Identity" asp-page="/Account/Register">Начать бесплатно</a></article>
+        <article class="price-card price-card-pro panel"><span class="popular-badge">Популярный</span><h3>Pro</h3><p class="price"><span data-monthly="399" data-yearly="319">399</span> ₽<small> /мес</small></p><ul><li>Расширенная аналитика</li><li>Неограниченное количество тренировок</li><li>Планы тренировок и цели</li><li>Приоритетная поддержка</li></ul><button class="button button-primary" type="button" data-info="pro">Попробовать Pro</button></article>
+        <article class="price-card panel"><h3>Команда</h3><p class="price"><small>от </small><span data-monthly="1 990" data-yearly="1 592">1 990</span> ₽<small> /мес</small></p><p class="price-caption">Для тренеров и клубов</p><ul><li>Управление клиентами</li><li>Аналитика по группе</li><li>Брендирование</li><li>Выделенная поддержка</li></ul><button class="button button-outline" type="button" data-info="team">Связаться с нами</button></article>
     </div>
+</div></section>
 
-    <ol class="workflow-steps">
-        <li class="workflow-step">
-            <span class="workflow-step__number">01</span>
-            <h3>Запиши тренировку</h3>
-            <p>Подходы, вес и повторения.</p>
-        </li>
-        <li class="workflow-step">
-            <span class="workflow-step__number">02</span>
-            <h3>Собирай историю</h3>
-            <p>Enix Fit сохраняет результаты тренировок.</p>
-        </li>
-        <li class="workflow-step">
-            <span class="workflow-step__number">03</span>
-            <h3>Анализируй прогресс</h3>
-            <p>Графики помогают видеть рост и замечать плато.</p>
-        </li>
-    </ol>
-</section>
+<section class="closing-cta" aria-labelledby="cta-title"><div class="wrap cta-inner"><div><h2 id="cta-title">Готов сделать<br />следующий шаг?</h2><p>Присоединяйся к тысячам, кто уже тренируется умнее<br />вместе с Enix Fit.</p></div><div class="button-row"><a class="button button-primary" asp-area="Identity" asp-page="/Account/Register">Начать бесплатно</a><button class="button button-outline" type="button" data-demo><svg class="icon"><use href="#i-play" /></svg>Посмотреть демо</button></div><p class="mountain-quote">Дисциплина<br />сегодня —<br />большие результаты<br />завтра</p></div></section>
 
-<section class="landing-cta" aria-labelledby="landing-cta-title">
-    <div>
-        <p class="landing-section__eyebrow">Начни сегодня</p>
-        <h2 id="landing-cta-title">Готов увидеть свой прогресс?</h2>
-        <p>Начни вести тренировки в Enix Fit.</p>
-    </div>
-    <a class="btn btn-primary btn-lg" asp-area="Identity" asp-page="/Account/Register">Создать аккаунт</a>
-</section>
+<dialog class="landing-dialog demo-dialog" id="demo-dialog" aria-labelledby="demo-title">
+    <button class="dialog-close" type="button" data-close-dialog aria-label="Закрыть"><svg class="icon"><use href="#i-close" /></svg></button>
+    <p class="eyebrow">Знакомство с Enix Fit</p><h2 id="demo-title">Твой прогресс начинается здесь</h2><p>Записывай тренировки, сравнивай результаты и наблюдай, как каждый подход приближает тебя к цели.</p>
+    <div class="demo-workout panel"><span class="demo-step">Пример тренировки · Верх тела</span><h3>Жим штанги лёжа</h3><div class="demo-set-labels"><span>Подход</span><span>Вес</span><span>Повторения</span></div><div id="demo-sets"><div><span>1</span><b>60 кг</b><b>12</b></div><div><span>2</span><b>65 кг</b><b>10</b></div><div><span>3</span><b>70 кг</b><b>8</b></div></div><button type="button" class="button button-outline" id="add-demo-set">+ Добавить подход</button><p id="demo-total" aria-live="polite">3 подхода · Общий объём: 1 930 кг</p></div>
+    <a class="button button-primary" asp-area="Identity" asp-page="/Account/Register">Начать свою историю</a>
+</dialog>

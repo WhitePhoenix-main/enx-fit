@@ -1,0 +1,216 @@
+/* Interaction states are separate from the page's responsive composition. */
+:root {
+  --motion-ease: cubic-bezier(.22, 1, .36, 1);
+}
+
+.landing-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: 1px solid transparent;
+  transition: background .25s, box-shadow .25s, border-color .25s;
+}
+
+.landing-header.is-scrolled {
+  background: #0a1119ed;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 32px #0005, 20px 0 #0a1119ed, -20px 0 #0a1119ed;
+  border-bottom-color: #2b435b;
+}
+
+.landing-nav a { position: relative; padding-block: .5rem; }
+.landing-nav a::after {
+  content: '';
+  position: absolute;
+  bottom: -.25rem;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: #64adff;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .25s var(--motion-ease);
+}
+.landing-nav a:hover::after, .landing-nav a[aria-current='location']::after { transform: scaleX(1); }
+.landing-nav a[aria-current='location'] { color: #8bc5ff; }
+
+.button { position: relative; overflow: hidden; transition-duration: .25s; }
+.button-primary::after {
+  content: '';
+  position: absolute;
+  inset: -50% -35%;
+  background: linear-gradient(110deg, transparent 35%, #d8eeff35 50%, transparent 65%);
+  translate: -100% 0;
+  pointer-events: none;
+  transition: translate .65s var(--motion-ease);
+}
+.button-primary:hover::after, .button-primary:focus-visible::after { translate: 100% 0; }
+.button:active { transform: translateY(1px) scale(.98); }
+.button .icon, .feature-icon, .integration-logo { transition: transform .3s var(--motion-ease); }
+.button:hover .icon { transform: translateX(2px); }
+
+.feature-grid, .pricing-cards, .integration-cards { align-items: stretch; }
+.panel { position: relative; }
+.feature-card, .price-card, .integration-card {
+  transition: translate .2s var(--motion-ease), border-color .2s, box-shadow .2s, background .2s;
+}
+.feature-card::after, .price-card::after, .integration-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(220px circle at var(--pointer-x, 50%) var(--pointer-y, 0%), #568fff19, transparent 75%);
+  opacity: 0;
+  transition: opacity .3s;
+}
+.feature-card:focus-within, .price-card:focus-within {
+  border-color: #548dc8;
+  box-shadow: 0 12px 28px #0004;
+}
+.feature-card a span, .feature-card button span { display: inline-block; transition: translate .25s; }
+.feature-card a:hover span, .feature-card button:hover span { translate: 4px 0; }
+
+.social-proof strong, .phone-timer strong { font-variant-numeric: tabular-nums; }
+.social-proof > div { transition: background .25s; }
+.social-proof > div:hover { background: #4586ff08; }
+.bar-column > div { transform-origin: center bottom; }
+
+.line-chart-panel { display: flex; flex-direction: column; }
+.line-chart-panel .line-chart { flex: 1; min-height: 0; height: auto; }
+.chart-toolbar { flex-shrink: 0; }
+.chart-interaction-hint {
+  color: #8599b1;
+  font-size: .65rem;
+  margin-top: .8rem;
+  display: flex;
+  justify-content: space-between;
+}
+.chart-interaction-hint span { letter-spacing: .15em; color: #74a4d1; }
+#progress-chart { cursor: crosshair; touch-action: pan-y; border-radius: .25rem; }
+.chart-tooltip { pointer-events: none; }
+.chart-tabs button { transition: background .2s, border-color .2s, color .2s; }
+.chart-tabs button:hover { color: #d6e9ff; background: #203247; }
+.chart-point-ring { filter: drop-shadow(0 0 4px #438aff88); }
+
+.plan-day {
+  color: inherit;
+  transition: translate .25s var(--motion-ease), border-color .25s, background .25s;
+}
+.plan-day:hover, .plan-day[aria-pressed='true'] {
+  border-color: #5d9eff;
+  background: linear-gradient(145deg, #213b54, #14273a);
+}
+.plan-day[aria-pressed='true'] { box-shadow: inset 0 0 0 1px #5199ff55; }
+.plan-selection { min-height: 1.25em; color: #9ab5ce; font-size: .72rem; margin-top: 1rem; line-height: 1.5; }
+.phone-actions > button { transition: background .2s, box-shadow .2s; }
+.phone-actions > button:hover { box-shadow: 0 0 12px #4386ff55; }
+.phone-actions > button[aria-pressed='true'] { background: #263c55; color: #96c5ff; }
+.phone-timer > span::before { content: ''; display: inline-block; width: .3rem; height: .3rem; border-radius: 50%; background: #69d9a1; margin-right: .3rem; box-shadow: 0 0 5px #69d9a144; }
+.phone-device.is-paused .phone-timer > span::before { background: #a3adba; box-shadow: none; }
+
+.landing-dialog[open] { animation: dialog-enter .25s var(--motion-ease); }
+@keyframes dialog-enter {
+  from { opacity: 0; translate: 0 12px; scale: .98; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .feature-card:hover, .price-card:hover, .integration-card:hover {
+    translate: 0 -3px;
+    border-color: #548dc8;
+    box-shadow: 0 18px 35px #0005, 0 0 22px #408cff0b;
+  }
+  .price-card-pro:hover { box-shadow: 0 0 0 2px #0a0d12, 0 0 0 3px #6aafff, 0 18px 40px #23447740; }
+  .feature-card:hover::after, .price-card:hover::after, .integration-card:hover::after { opacity: 1; }
+  .feature-card:hover .feature-icon { filter: drop-shadow(0 0 5px #408cff66); }
+  .integration-card:hover .integration-logo { transform: scale(1.03); }
+  .plan-day:hover { translate: 0 -2px; }
+}
+
+@media (max-width: 900px) {
+  .features, .section-grid { padding-block: 3rem; gap: 2rem; }
+  .planner, .integrations, .how-it-works { padding-block: 3rem; }
+  .feature-grid { gap: 1.25rem; }
+  .feature-card { min-height: 16rem; }
+  .pricing { padding-bottom: 1.5rem; }
+  .pricing-cards { gap: 1.25rem; }
+  .price-card { min-height: 19rem; }
+  .muscles-content { min-height: 0; }
+  .integration-cards { gap: 1rem; }
+  .closing-cta { margin-block: 1rem 1.5rem; }
+}
+
+@media (max-width: 600px) {
+  .hero { min-height: 49rem; }
+  .social-proof { margin-top: 1rem; }
+  .feature-grid { gap: 1rem; }
+  .feature-card { min-height: 16.5rem; padding: 1.3rem 1.1rem; }
+  .analytics-panels { gap: 1.5rem; }
+  .plan-days { gap: .75rem; }
+  .plan-selection { min-height: 3em; font-size: .8rem; }
+  .integration-cards { gap: .8rem; }
+  .price-card { padding: 1.7rem; }
+  .landing-nav a::after { bottom: 0; }
+  .steps { gap: 1.75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .feature-card:hover, .price-card:hover, .integration-card:hover, .plan-day:hover { translate: none; }
+  .button:hover, .button:active, .button:hover .icon, .feature-card:hover .feature-icon, .integration-card:hover .integration-logo { transform: none; }
+}
+
+
+/* Product motion: animate the data inside the existing composition. */
+.preview-nav { width: 100%; text-align: left; border: 0; background: transparent; }
+.preview-nav:hover, .preview-nav:focus-visible { color: #b3d9ff; background: #213345; }
+.preview-replay { color: #8eafd3; border: 0; background: none; font-size: 1.05rem; padding: .1rem .3rem; border-radius: .2rem; visibility: hidden; }
+.motion-ready .preview-replay { visibility: visible; }
+.preview-replay:hover, .preview-replay:focus-visible { color: #dcecff; background: #24354b; }
+.preview-metrics strong { font-variant-numeric: tabular-nums; }
+[data-count] { position: relative; }
+[data-count].is-counting { color: transparent; }
+.counter-animated { position: absolute; inset: 0; white-space: nowrap; font: inherit; letter-spacing: inherit; }
+.preview-metrics strong > [data-count] { display: inline-block; }
+.bar-column { background: transparent; border: 0; padding-inline: 0; padding-top: 0; color: inherit; }
+.bar-column > div { transition: filter .18s, box-shadow .18s; }
+.bar-column:hover > div, .bar-column[aria-pressed='true'] > div, .bar-column:focus-visible > div { filter: brightness(1.22); box-shadow: inset 2px 0 #93bfff, 0 0 8px #357eff40; }
+.bar-column[aria-pressed='true'] > span { color: #bbdfff; }
+.bar-column:focus-visible { outline-offset: 2px; }
+
+/* A radial reveal exposes the original ring without hiding its central value. */
+.mini-donut { background: #2c3d50; }
+.muscles-donut { background: #1b2a3a; }
+.mini-donut::after, .muscles-donut::after { content: ''; position: absolute; inset: 0; border-radius: inherit; mask-image: conic-gradient(from -80deg, #000 0deg var(--ring-angle, 360deg), transparent var(--ring-angle, 360deg)); }
+.mini-donut::after { background: conic-gradient(from -80deg, #4086fc 0 78%, #2c3d50 78%); }
+.muscles-donut::after { background: conic-gradient(from 0deg, #417efb 0 28%, #629bff 28% 50%, #86b8e7 50% 70%, #447fab 70% 85%, #3162a2 85% 95%, #6bbfc4 95%); mask-image: conic-gradient(#000 0deg var(--ring-angle, 360deg), transparent var(--ring-angle, 360deg)); }
+.mini-donut::before, .muscles-donut::before { z-index: 1; }
+.mini-donut b, .muscles-donut > div { z-index: 2; }
+
+.steps li > div { position: relative; }
+.motion-ready .steps li > div { border-top-color: #5da9e838; }
+.step-progress { position: absolute; height: 1px; top: -1px; left: 0; right: 0; background: #5da9e8; transform-origin: left; }
+.phone-timer > span::before { opacity: var(--timer-light, 1); }
+.plan-day .day-done { transform-origin: center; }
+.plan-selection { transition: color .2s; }
+.chart-tab-indicator { position: absolute; inset: 0; border: 1px solid #427cb65c; border-radius: .4rem; background: #20354e; pointer-events: none; transform-origin: left; z-index: 0; }
+.chart-tabs { position: relative; isolation: isolate; }
+.chart-tabs button { position: relative; z-index: 1; }
+.chart-tabs.has-indicator button.active { background: transparent; border-color: transparent; }
+.chart-tabs.has-indicator button:hover { background: #6b9bcb13; }
+.price [data-monthly] { display: inline-block; font-variant-numeric: tabular-nums; }
+.price-card-pro:hover { translate: 0 -3px; }
+
+@media (min-width: 901px) and (hover: hover) and (pointer: fine) {
+  .dashboard-device { translate: calc(var(--hero-x, 0) * 4px) calc(var(--hero-y, 0) * 3px); transition: translate .45s var(--motion-ease); }
+  .phone-device { translate: calc(var(--hero-x, 0) * 7px) calc(var(--hero-y, 0) * 5px); transition: translate .55s var(--motion-ease); }
+  .page-atmosphere::before { translate: calc(var(--hero-x, 0) * 2px) calc(var(--hero-y, 0) * 2px); transition: translate .65s var(--motion-ease); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-device, .phone-device, .page-atmosphere::before { translate: none !important; }
+  .price-card-pro:hover { translate: none; }
+}
+/* Counter overlays must retain number typography despite surrounding caption selectors. */
+[data-count] > .counter-animated { display: block; margin: 0; font: inherit; line-height: inherit; letter-spacing: inherit; }
