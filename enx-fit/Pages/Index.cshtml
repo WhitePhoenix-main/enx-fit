@@ -10,7 +10,7 @@
         <h1 id="hero-title">Тренируйся<br />осознанно.<br /><span>Расти быстрее.</span></h1>
         <p class="hero-description">Enix Fit анализирует твои тренировки, отслеживает прогресс и помогает достигать целей с помощью понятной аналитики и персональных инсайтов.</p>
         <div class="button-row">
-            <a class="button button-primary" asp-area="Identity" asp-page="/Account/Register">Начать бесплатно</a>
+            <a class="button button-primary" asp-page="/TechnicalPages/Login" asp-page-handler="Register">Начать бесплатно</a>
             <button class="button button-outline" type="button" data-demo><svg class="icon"><use href="#i-play" /></svg>Посмотреть демо</button>
         </div>
         <ul class="hero-benefits">
@@ -128,17 +128,17 @@
 <section class="pricing section-band" id="pricing" aria-labelledby="pricing-title"><div class="wrap section-grid">
     <div class="section-copy"><p class="eyebrow">Тарифы</p><h2 id="pricing-title">Выбери свой уровень</h2><p>Начни бесплатно и перейди на Pro, когда будешь готов к большему.</p><div class="billing-control"><span id="monthly-label">Ежемесячно</span><button type="button" class="billing-switch" id="billing-switch" role="switch" aria-checked="false" aria-label="Ежегодная оплата со скидкой 20%"><span></span></button><span>Ежегодно</span><span class="discount">−20%</span></div></div>
     <div class="pricing-cards">
-        <article class="price-card panel"><h3>Бесплатный</h3><p class="price">0 ₽</p><ul><li>Базовая аналитика</li><li>До 5 тренировок в месяц</li><li>Доступ с любых устройств</li></ul><a class="button button-outline" asp-area="Identity" asp-page="/Account/Register">Начать бесплатно</a></article>
+        <article class="price-card panel"><h3>Бесплатный</h3><p class="price">0 ₽</p><ul><li>Базовая аналитика</li><li>До 5 тренировок в месяц</li><li>Доступ с любых устройств</li></ul><a class="button button-outline" asp-page="/TechnicalPages/Login" asp-page-handler="Register">Начать бесплатно</a></article>
         <article class="price-card price-card-pro panel"><span class="popular-badge">Популярный</span><h3>Pro</h3><p class="price"><span data-monthly="399" data-yearly="319">399</span> ₽<small> /мес</small></p><ul><li>Расширенная аналитика</li><li>Неограниченное количество тренировок</li><li>Планы тренировок и цели</li><li>Приоритетная поддержка</li></ul><button class="button button-primary" type="button" data-info="pro">Попробовать Pro</button></article>
         <article class="price-card panel"><h3>Команда</h3><p class="price"><small>от </small><span data-monthly="1 990" data-yearly="1 592">1 990</span> ₽<small> /мес</small></p><p class="price-caption">Для тренеров и клубов</p><ul><li>Управление клиентами</li><li>Аналитика по группе</li><li>Брендирование</li><li>Выделенная поддержка</li></ul><button class="button button-outline" type="button" data-info="team">Связаться с нами</button></article>
     </div>
 </div></section>
 
-<section class="closing-cta" aria-labelledby="cta-title"><div class="wrap cta-inner"><div><h2 id="cta-title">Готов сделать<br />следующий шаг?</h2><p>Присоединяйся к тысячам, кто уже тренируется умнее<br />вместе с Enix Fit.</p></div><div class="button-row"><a class="button button-primary" asp-area="Identity" asp-page="/Account/Register">Начать бесплатно</a><button class="button button-outline" type="button" data-demo><svg class="icon"><use href="#i-play" /></svg>Посмотреть демо</button></div><p class="mountain-quote">Дисциплина<br />сегодня —<br />большие результаты<br />завтра</p></div></section>
+<section class="closing-cta" aria-labelledby="cta-title"><div class="wrap cta-inner"><div><h2 id="cta-title">Готов сделать<br />следующий шаг?</h2><p>Присоединяйся к тысячам, кто уже тренируется умнее<br />вместе с Enix Fit.</p></div><div class="button-row"><a class="button button-primary" asp-page="/TechnicalPages/Login" asp-page-handler="Register">Начать бесплатно</a><button class="button button-outline" type="button" data-demo><svg class="icon"><use href="#i-play" /></svg>Посмотреть демо</button></div><p class="mountain-quote">Дисциплина<br />сегодня —<br />большие результаты<br />завтра</p></div></section>
 
 <dialog class="landing-dialog demo-dialog" id="demo-dialog" aria-labelledby="demo-title">
     <button class="dialog-close" type="button" data-close-dialog aria-label="Закрыть"><svg class="icon"><use href="#i-close" /></svg></button>
     <p class="eyebrow">Знакомство с Enix Fit</p><h2 id="demo-title">Твой прогресс начинается здесь</h2><p>Записывай тренировки, сравнивай результаты и наблюдай, как каждый подход приближает тебя к цели.</p>
     <div class="demo-workout panel"><span class="demo-step">Пример тренировки · Верх тела</span><h3>Жим штанги лёжа</h3><div class="demo-set-labels"><span>Подход</span><span>Вес</span><span>Повторения</span></div><div id="demo-sets"><div><span>1</span><b>60 кг</b><b>12</b></div><div><span>2</span><b>65 кг</b><b>10</b></div><div><span>3</span><b>70 кг</b><b>8</b></div></div><button type="button" class="button button-outline" id="add-demo-set">+ Добавить подход</button><p id="demo-total" aria-live="polite">3 подхода · Общий объём: 1 930 кг</p></div>
-    <a class="button button-primary" asp-area="Identity" asp-page="/Account/Register">Начать свою историю</a>
+    <a class="button button-primary" asp-page="/TechnicalPages/Login" asp-page-handler="Register">Начать свою историю</a>
 </dialog>

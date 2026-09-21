@@ -17,8 +17,8 @@
         }
         else
         {
-            <a class="header-login" asp-area="Identity" asp-page="/Account/Login">Войти</a>
-            <a class="button button-primary" asp-area="Identity" asp-page="/Account/Register">Начать бесплатно</a>
+            <a class="header-login" asp-page="/TechnicalPages/Login" asp-page-handler="Login">Войти</a>
+            <a class="button button-primary" asp-page="/TechnicalPages/Login" asp-page-handler="Register">Начать бесплатно</a>
         }
     </div>
 </header>

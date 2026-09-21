@@ -1,108 +1,164 @@
-using enx_fit.Admin;
-using enx_fit.Areas.Identity.Data;
-using enx_fit.Extensions;
-using LoginModel = enx_fit.Areas.Identity.Pages.Account.LoginModel;
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-#nullable disable
-
 using System.ComponentModel.DataAnnotations;
+using System.Text;
+using System.Text.Encodings.Web;
+using enx_fit.Areas.Identity.Data;
+using enx_fit.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-public static class TechnicalPageUrls
+using Microsoft.AspNetCore.WebUtilities;
+
+namespace enx_fit.Pages.TechnicalPages;
+
+[AllowAnonymous]
+public class LoginModel(
+    SignInManager<ApplicationUser> signInManager,
+    RegistrationService registration,
+    IEmailSender emailSender,
+    ILogger<LoginModel> logger) : PageModel
 {
-    public static string SignInUrl(this IUrlHelper url)
-        => url.PageUrl("/TechnicalPages/Login", nameof(LoginModel.OnGetAsync));
-}   
-namespace enx_fit.Areas.Identity.Pages.Account
-{
-    public class LoginModel : PageModel
+    [BindProperty]
+    public InputModel Input { get; set; } = new();
+
+    [TempData]
+    public string? ErrorMessage { get; set; }
+
+    public bool IsRegister { get; private set; }
+    public string ReturnUrl { get; private set; } = "/";
+    public IList<AuthenticationScheme> ExternalLogins { get; private set; } = [];
+    public PasswordOptions PasswordRules => signInManager.UserManager.Options.Password;
+
+    public class InputModel
     {
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly ILogger<LoginModel> _logger;
+        [Required(ErrorMessage = "Введите email.")]
+        [EmailAddress(ErrorMessage = "Введите корректный email.")]
+        public string Email { get; set; } = "";
 
-        public LoginModel(SignInManager<ApplicationUser> signInManager, ILogger<LoginModel> logger)
+        [Required(ErrorMessage = "Введите пароль.")]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
+
+        // Confirmation is validated only by the registration handler.
+        [DataType(DataType.Password)]
+        public string? ConfirmPassword { get; set; }
+
+        public bool RememberMe { get; set; } = true;
+    }
+
+    public Task OnGetAsync(string? returnUrl = null) => OnGetLoginAsync(returnUrl);
+
+    public async Task OnGetLoginAsync(string? returnUrl = null)
+    {
+        await PrepareAsync(false, returnUrl);
+        await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+        if (!string.IsNullOrEmpty(ErrorMessage))
+            ModelState.AddModelError(string.Empty, ErrorMessage);
+    }
+
+    public async Task OnGetRegisterAsync(string? returnUrl = null)
+    {
+        await PrepareAsync(true, returnUrl);
+        await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+    }
+
+    // Preserve old form submissions to the page without a named handler.
+    public Task<IActionResult> OnPostAsync(string? returnUrl = null) => OnPostLoginAsync(returnUrl);
+
+    public async Task<IActionResult> OnPostLoginAsync(string? returnUrl = null)
+    {
+        await PrepareAsync(false, returnUrl);
+        if (!ModelState.IsValid) return Page();
+
+        var account = await signInManager.UserManager.FindByEmailAsync(Input.Email.Trim());
+        var result = account is null
+            ? Microsoft.AspNetCore.Identity.SignInResult.Failed
+            : await signInManager.PasswordSignInAsync(account, Input.Password, Input.RememberMe, lockoutOnFailure: true);
+
+        if (result.Succeeded)
         {
-            _signInManager = signInManager;
-            _logger = logger;
+            logger.LogInformation("User logged in.");
+            return LocalRedirect(ReturnUrl);
         }
-        [BindProperty]
-        public InputModel Input { get; set; }
-        
-        public IList<AuthenticationScheme> ExternalLogins { get; set; }
-        
-        public string ReturnUrl { get; set; }
-        
-        [TempData]
-        public string ErrorMessage { get; set; }
-        
-        public class InputModel
+        if (result.RequiresTwoFactor)
+            return RedirectToPage("/Account/LoginWith2fa", new { area = "Identity", ReturnUrl, Input.RememberMe });
+        if (result.IsLockedOut)
+            return RedirectToPage("/Account/Lockout", new { area = "Identity" });
+
+        ModelState.AddModelError(string.Empty, result.IsNotAllowed
+            ? "Вход пока недоступен. Проверьте, подтверждён ли ваш email."
+            : "Неверный email или пароль. Попробуйте ещё раз.");
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostRegisterAsync(string? returnUrl = null)
+    {
+        await PrepareAsync(true, returnUrl);
+        if (string.IsNullOrEmpty(Input.ConfirmPassword))
+            ModelState.AddModelError("Input.ConfirmPassword", "Повторите пароль.");
+        else if (Input.Password != Input.ConfirmPassword)
+            ModelState.AddModelError("Input.ConfirmPassword", "Пароли не совпадают.");
+        if (!ModelState.IsValid) return Page();
+
+        var email = Input.Email.Trim();
+        var user = new ApplicationUser(email) { Email = email };
+        var result = await registration.RegisterAsync(user, Input.Password);
+        if (!result.Succeeded)
         {
-            [Required]
-            [EmailAddress]
-            public string Email { get; set; }
-            
-            [Required]
-            [DataType(DataType.Password)]
-            public string Password { get; set; }
-            
-            [Display(Name = "Remember me?")]
-            public bool RememberMe { get; set; }
-        }
-
-        public async Task OnGetAsync(string returnUrl = null)
-        {
-            if (!string.IsNullOrEmpty(ErrorMessage))
-            {
-                ModelState.AddModelError(string.Empty, ErrorMessage);
-            }
-
-            returnUrl ??= Url.Content("~/");
-
-            // Clear the existing external cookie to ensure a clean login process
-            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
-
-            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-
-            ReturnUrl = returnUrl;
-        }
-
-        public async Task<IActionResult> OnPostAsync(string returnUrl = null)
-        {
-            returnUrl ??= Url.Content("~/");
-
-            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-
-            if (ModelState.IsValid)
-            {
-                var account = await _signInManager.UserManager.FindByEmailAsync(Input.Email.Trim());
-                var result = account is null
-                    ? Microsoft.AspNetCore.Identity.SignInResult.Failed
-                    : await _signInManager.PasswordSignInAsync(account, Input.Password, Input.RememberMe, lockoutOnFailure: false);
-                if (result.Succeeded)
-                {
-                    _logger.LogInformation("User logged in.");
-                    return LocalRedirect(returnUrl);
-                }
-                if (result.RequiresTwoFactor)
-                {
-                    return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
-                }
-                if (result.IsLockedOut)
-                {
-                    _logger.LogWarning("User account locked out.");
-                    return RedirectToPage("./Lockout");
-                }
-                else
-                {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                    return Page();
-                }
-            }
-            
+            foreach (var error in result.Errors)
+                ModelState.AddModelError(string.Empty, DescribeError(error));
             return Page();
         }
+
+        logger.LogInformation("User created a new account with password.");
+        var users = signInManager.UserManager;
+        var code = await users.GenerateEmailConfirmationTokenAsync(user);
+        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+        var callbackUrl = Url.Page("/Account/ConfirmEmail", null,
+            new { area = "Identity", userId = user.Id, code, returnUrl = ReturnUrl }, Request.Scheme)!;
+        await emailSender.SendEmailAsync(email, "Подтвердите email в Enix Fit",
+            $"Подтвердите аккаунт: <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>подтвердить email</a>.");
+
+        if (users.Options.SignIn.RequireConfirmedAccount)
+            return RedirectToPage("/Account/RegisterConfirmation", new { area = "Identity", email, returnUrl = ReturnUrl });
+
+        await signInManager.SignInAsync(user, isPersistent: false);
+        return LocalRedirect(ReturnUrl);
     }
+
+    public async Task<IActionResult> OnPostExternalLoginAsync(string provider, string? returnUrl = null)
+    {
+        await PrepareAsync(false, returnUrl);
+        if (!ExternalLogins.Any(scheme => scheme.Name == provider))
+        {
+            ModelState.Clear();
+            ModelState.AddModelError(string.Empty, "Этот способ входа пока недоступен. Используйте email и пароль.");
+            return Page();
+        }
+
+        var callbackUrl = Url.Page("/Account/ExternalLogin", "Callback", new { area = "Identity", returnUrl = ReturnUrl });
+        return Challenge(signInManager.ConfigureExternalAuthenticationProperties(provider, callbackUrl), provider);
+    }
+
+    private async Task PrepareAsync(bool register, string? returnUrl)
+    {
+        IsRegister = register;
+        ReturnUrl = Url.IsLocalUrl(returnUrl) ? returnUrl! : Url.Content("~/");
+        ExternalLogins = (await signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+    }
+
+    private string DescribeError(IdentityError error) => error.Code switch
+    {
+        "DuplicateUserName" or "DuplicateEmail" => "Аккаунт с таким email уже существует. Войдите или восстановите пароль.",
+        "PasswordTooShort" => $"Пароль должен содержать не менее {PasswordRules.RequiredLength} символов.",
+        "PasswordRequiresNonAlphanumeric" => "Добавьте в пароль специальный символ, например ! или @.",
+        "PasswordRequiresDigit" => "Добавьте в пароль хотя бы одну цифру.",
+        "PasswordRequiresLower" => "Добавьте в пароль строчную латинскую букву.",
+        "PasswordRequiresUpper" => "Добавьте в пароль заглавную латинскую букву.",
+        "PasswordRequiresUniqueChars" => $"Используйте не менее {PasswordRules.RequiredUniqueChars} разных символов.",
+        "InvalidEmail" or "InvalidUserName" => "Проверьте правильность email.",
+        _ => "Не удалось создать аккаунт. Проверьте данные и попробуйте ещё раз."
+    };
 }
