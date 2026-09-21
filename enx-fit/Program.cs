@@ -28,6 +28,7 @@ builder.Services
     .AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.ConfigureApplicationCookie(options => options.LoginPath = "/TechnicalPages/Login");
 builder.Services.AddUserRoleAuthorization();
 builder.Services.AddRazorPages();
 builder.Services.AddHttpContextAccessor();

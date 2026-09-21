@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#060c15" />
+    <title>@ViewData["Title"] — Enix Fit</title>
+    <link rel="icon" href="~/images/landing/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" as="image" href="~/images/auth/space.webp" />
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+</head>
+<body class="auth-page">
+    <div class="auth-universe" aria-hidden="true">
+        <div class="auth-space"></div>
+        <div class="auth-aurora auth-aurora-one"></div>
+        <div class="auth-aurora auth-aurora-two"></div>
+        <canvas id="auth-particles"></canvas>
+    </div>
+    <a class="auth-skip" href="#main-content">Перейти к форме</a>
+    <partial name="_AuthIcons" />
+    <header class="auth-header">
+        <a class="auth-brand" asp-page="/Index" aria-label="Enix Fit — главная"><partial name="_LandingBrand" /></a>
+        <a class="auth-home" asp-page="/Index"><span>На главную</span><svg class="auth-icon" aria-hidden="true"><use href="#auth-arrow" /></svg></a>
+    </header>
+    <main id="main-content" class="auth-main">@RenderBody()</main>
+    <footer class="auth-footer">
+        <small>© @DateTime.UtcNow.Year Enix Fit. Все права защищены.</small>
+        <nav aria-label="Информация">
+            <button type="button" data-auth-info="privacy">Конфиденциальность</button>
+            <button type="button" data-auth-info="terms">Условия использования</button>
+            <button type="button" data-auth-info="support">Поддержка</button>
+        </nav>
+    </footer>
+    <dialog class="auth-dialog" id="auth-dialog" aria-labelledby="auth-dialog-title" aria-describedby="auth-dialog-description">
+        <button type="button" class="auth-dialog-close" data-close-auth-dialog aria-label="Закрыть">×</button>
+        <p class="auth-eyebrow">Enix Fit</p>
+        <h2 id="auth-dialog-title"></h2>
+        <p id="auth-dialog-description"></p>
+        <button type="button" class="auth-submit" data-close-auth-dialog>Понятно</button>
+    </dialog>
+    <script src="~/js/vendor/qrcode.js" asp-append-version="true" defer></script>
+    <script src="~/js/auth.js" asp-append-version="true" defer></script>
+</body>
+</html>

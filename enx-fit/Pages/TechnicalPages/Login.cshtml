@@ -1,83 +1,100 @@
-﻿@page
-@model enx_fit.Areas.Identity.Pages.Account.LoginModel
-
+@page
+@model enx_fit.Pages.TechnicalPages.LoginModel
 @{
-    ViewData["Title"] = "Log in";
+    Layout = "_AuthLayout";
+    ViewData["Title"] = Model.IsRegister ? "Регистрация" : "Вход";
+    var mode = Model.IsRegister ? "Register" : "Login";
 }
+<section class="auth-intro" aria-labelledby="auth-title">
+    <p class="auth-eyebrow">Твой прогресс начинается здесь</p>
+    <h1 id="auth-title">@(Model.IsRegister ? "Начни свой прогресс!" : "С возвращением!")</h1>
+    <p class="auth-description">@(Model.IsRegister ? "Создай аккаунт и сделай первый шаг" : "Войди в свой аккаунт и продолжай путь")<br /> к лучшей версии себя.</p>
+</section>
 
-<h1>@ViewData["Title"]</h1>
-<div class="row">
-    <div class="col-md-4">
-        <section>
-            <form id="account" method="post">
-                <h2>Use a local account to log in.</h2>
-                <hr />
-                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-                <div class="form-floating mb-3">
-                    <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                    <label asp-for="Input.Email" class="form-label">Email</label>
-                    <span asp-validation-for="Input.Email" class="text-danger"></span>
-                </div>
-                <div class="form-floating mb-3">
-                    <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label asp-for="Input.Password" class="form-label">Password</label>
-                    <span asp-validation-for="Input.Password" class="text-danger"></span>
-                </div>
-                <div class="checkbox mb-3">
-                    <label asp-for="Input.RememberMe" class="form-label">
-                        <input class="form-check-input" asp-for="Input.RememberMe" />
-                        @Html.DisplayNameFor(m => m.Input.RememberMe)
-                    </label>
-                </div>
-                <div>
-                    <button id="login-submit" type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                <div>
-                    <p>
-                        <a id="forgot-password" asp-page="./ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
-                </div>
-            </form>
-        </section>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            @{
-                if ((Model.ExternalLogins?.Count ?? 0) == 0)
-                {
-                    <div>
-                        <p>
-                            There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
-                            about setting up this ASP.NET application to support logging in via external services</a>.
-                        </p>
-                    </div>
-                }
-                else
-                {
-                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
-                        <div>
-                            <p>
-                                @foreach (var provider in Model.ExternalLogins!)
-                                {
-                                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
-                                }
-                            </p>
-                        </div>
-                    </form>
-                }
+<section class="auth-card" aria-label="@(Model.IsRegister ? "Создание аккаунта" : "Вход в аккаунт")">
+    <nav class="auth-tabs" aria-label="Вход или регистрация">
+        <a asp-page="/TechnicalPages/Login" asp-page-handler="Login" asp-route-returnUrl="@Model.ReturnUrl"
+           class="@(!Model.IsRegister ? "is-active" : null)" aria-current="@(!Model.IsRegister ? "page" : null)">Вход</a>
+        <a asp-page="/TechnicalPages/Login" asp-page-handler="Register" asp-route-returnUrl="@Model.ReturnUrl"
+           class="@(Model.IsRegister ? "is-active" : null)" aria-current="@(Model.IsRegister ? "page" : null)">Регистрация</a>
+    </nav>
+
+    <form id="auth-form" method="post" asp-page-handler="@mode" asp-route-returnUrl="@Model.ReturnUrl" data-auth-form>
+        <div asp-validation-summary="ModelOnly" class="auth-errors" role="alert"></div>
+        <div class="auth-field">
+            <label asp-for="Input.Email">Email</label>
+            <div class="auth-input">
+                <svg class="auth-icon" aria-hidden="true"><use href="#auth-mail" /></svg>
+                <input asp-for="Input.Email" type="email" placeholder="name@domain.com" autocomplete="username" inputmode="email" spellcheck="false" required aria-describedby="email-error" />
+            </div>
+            <span asp-validation-for="Input.Email" id="email-error" class="auth-field-error"></span>
+        </div>
+        <div class="auth-field">
+            <label asp-for="Input.Password">Пароль</label>
+            <div class="auth-input">
+                <svg class="auth-icon" aria-hidden="true"><use href="#auth-lock" /></svg>
+                <input asp-for="Input.Password" placeholder="@(Model.IsRegister ? "Придумайте пароль" : "Введите пароль")"
+                       autocomplete="@(Model.IsRegister ? "new-password" : "current-password")" required
+                       aria-describedby="@(Model.IsRegister ? "password-error password-hint" : "password-error")" />
+                <button type="button" class="auth-reveal" data-reveal="Input_Password" aria-label="Показать пароль" aria-pressed="false" hidden>
+                    <svg class="auth-icon" aria-hidden="true"><use href="#auth-eye-off" /></svg>
+                </button>
+            </div>
+            <span asp-validation-for="Input.Password" id="password-error" class="auth-field-error"></span>
+            @if (Model.IsRegister)
+            {
+                <p class="auth-hint" id="password-hint">
+                    От @Model.PasswordRules.RequiredLength символов@(Model.PasswordRules.RequireUppercase || Model.PasswordRules.RequireLowercase ? ", латинские буквы" : "")@(Model.PasswordRules.RequireUppercase ? " в верхнем" : "")@(Model.PasswordRules.RequireUppercase && Model.PasswordRules.RequireLowercase ? " и нижнем регистре" : Model.PasswordRules.RequireLowercase ? " в нижнем регистре" : Model.PasswordRules.RequireUppercase ? " регистре" : "")@(Model.PasswordRules.RequireDigit ? ", цифра" : "")@(Model.PasswordRules.RequireNonAlphanumeric ? " и специальный символ" : "").
+                </p>
             }
-        </section>
-    </div>
-</div>
+        </div>
+        @if (Model.IsRegister)
+        {
+            <div class="auth-field">
+                <label asp-for="Input.ConfirmPassword">Повторите пароль</label>
+                <div class="auth-input">
+                    <svg class="auth-icon" aria-hidden="true"><use href="#auth-lock" /></svg>
+                    <input asp-for="Input.ConfirmPassword" placeholder="Введите пароль ещё раз" autocomplete="new-password" required aria-describedby="confirm-error" />
+                    <button type="button" class="auth-reveal" data-reveal="Input_ConfirmPassword" aria-label="Показать повторный пароль" aria-pressed="false" hidden>
+                        <svg class="auth-icon" aria-hidden="true"><use href="#auth-eye-off" /></svg>
+                    </button>
+                </div>
+                <span asp-validation-for="Input.ConfirmPassword" id="confirm-error" class="auth-field-error"></span>
+            </div>
+        }
+        else
+        {
+            <div class="auth-options">
+                <label class="auth-remember"><input asp-for="Input.RememberMe" /><span>Запомнить меня</span></label>
+                <a asp-area="Identity" asp-page="/Account/ForgotPassword">Забыли пароль?</a>
+            </div>
+        }
+        <button class="auth-submit" type="submit">
+            <span>@(Model.IsRegister ? "Создать аккаунт" : "Войти в Enix Fit")</span>
+            <svg class="auth-icon" aria-hidden="true"><use href="#auth-arrow" /></svg>
+        </button>
+    </form>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+    <div class="auth-divider"><span>@(Model.IsRegister ? "или зарегистрируйтесь через" : "или войдите через")</span></div>
+    <form class="auth-providers" method="post" asp-page-handler="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl">
+        @foreach (var provider in new[] { "Google", "Apple" })
+        {
+            var available = Model.ExternalLogins.Any(scheme => scheme.Name == provider);
+            <button class="auth-provider" type="submit" name="provider" value="@provider" aria-label="Продолжить с @provider" data-unavailable-provider="@(!available ? provider : null)">
+                <svg class="auth-provider-icon" aria-hidden="true"><use href="@(provider == "Google" ? "#auth-google" : "#auth-apple")" /></svg>
+                <span><span class="auth-provider-prefix">Продолжить с </span>@provider</span>
+            </button>
+        }
+        @foreach (var provider in Model.ExternalLogins.Where(scheme => scheme.Name != "Google" && scheme.Name != "Apple"))
+        {
+            <button class="auth-provider" type="submit" name="provider" value="@provider.Name">Продолжить с @provider.DisplayName</button>
+        }
+    </form>
+    <p class="auth-security"><svg class="auth-icon" aria-hidden="true"><use href="#auth-lock" /></svg><span>Ваши данные защищены и не передаются третьим лицам.</span></p>
+</section>
+
+<a class="auth-app" asp-page="/TechnicalPages/Login" asp-page-handler="@mode" aria-label="Открыть Enix Fit на телефоне">
+    <span class="auth-qr" id="auth-qr" aria-hidden="true"><svg class="auth-icon"><use href="#auth-phone" /></svg></span>
+    <span class="auth-app-copy"><strong>Продолжить в приложении</strong><span>Сканируй QR-код, чтобы открыть<br class="auth-app-break" /> Enix Fit на телефоне.</span></span>
+    <svg class="auth-icon auth-app-arrow" aria-hidden="true"><use href="#auth-chevron" /></svg>
+</a>
