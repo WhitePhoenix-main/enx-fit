@@ -54,7 +54,17 @@
                 }
                 <span class="text-danger" asp-validation-for="Input.Role"></span>
             </div>
+                <div class="mb-3">
+                    <label class="form-label" asp-for="Input.TrainerId"></label>
+                    <select class="form-select" asp-for="Input.TrainerId">
+                        <option value="">Без тренера</option>
+                        @foreach (var trainer in Model.Trainers) { <option value="@trainer.Id">@trainer.UserName</option> }
+                    </select>
+                    <small class="admin-field-help">Тренер увидит статистику клиента и сможет настроить его цель.</small>
+                    <span class="text-danger" asp-validation-for="Input.TrainerId"></span>
+                </div>
             <div class="admin-form-actions">
+                <div class="mb-3"><label class="form-label" asp-for="Input.SubscriptionPlan">План Enix Fit</label><select class="form-select" asp-for="Input.SubscriptionPlan"><option value="Free">Athlete Free</option><option value="Pro">Athlete Pro</option><option value="Coach">Coach</option></select><span class="text-danger" asp-validation-for="Input.SubscriptionPlan"></span><small class="admin-field-help">Coach требует роль тренера. Программы и дневник доступны на всех планах.</small></div>
                 <button class="btn btn-primary" type="submit">
                     <admin-icon name="check" />Сохранить изменения</button>
                 <a class="btn btn-outline-secondary" asp-page="./Index">Отмена</a>
@@ -66,6 +76,7 @@
             <admin-icon name="activity" />
         </span>
         <h2>Данные пользователя</h2>
+        <a class="admin-data-link" asp-page="/Dashboard" asp-route-clientId="@Model.Id"><span>Дэшборд клиента</span><admin-icon name="arrow" /></a>
         <p>Перейдите к истории или добавьте новую запись.</p>
         <a class="admin-data-link" asp-page="/Workouts/Index" asp-route-userId="@Model.Id">
             <span>Тренировки</span>

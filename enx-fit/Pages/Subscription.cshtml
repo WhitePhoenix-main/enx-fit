@@ -1,0 +1,11 @@
+@page
+@model enx_fit.Pages.SubscriptionModel
+@{ Layout = "_ProgramsLayout"; ViewData["Title"] = "Возможности Enix Fit"; }
+<header class="page-heading"><div><h1>Тренировки, данные, решения</h1><p>Ваш текущий план: @Model.Access.Plan. Бесплатный дневник остаётся полноценным.</p></div></header>
+<div class="program-tier-grid">
+    <section class="panel"><p class="eyebrow">ATHLETE FREE</p><h2>Управляйте тренировками</h2><p>Программы без лимита, все шаблоны, расписание, ручная нагрузка, дневник, история, рекорды и базовая динамика.</p></section>
+    <section class="panel"><p class="eyebrow">ATHLETE PRO</p><h2>Выбирайте следующую нагрузку</h2><p>Рекомендации веса и обнаружение возможного плато по завершённым тренировкам. Каждая рекомендация объясняет причину; изменения применяются после подтверждения.</p></section>
+    <section class="panel"><p class="eyebrow">COACH</p><h2>Контролируйте клиентов</h2><p>Назначайте независимые копии программ своим клиентам, меняйте их нагрузку и просматривайте сигналы, требующие внимания.</p></section>
+</div>
+<section class="panel"><h2>Доступ к планам</h2><p>Платёжная система пока не подключена. План назначается администратором в профиле пользователя; Coach также требует роль тренера.</p><a class="button secondary" asp-page="/Programs/Index">К программам</a></section>
+<details class="panel program-roadmap"><summary>Что появится в следующих итерациях</summary><p>Анализ мышечного баланса, объёма, эффективности программы, рекомендации deload и долгосрочные выводы. AI Insights пока не подключены.</p></details>

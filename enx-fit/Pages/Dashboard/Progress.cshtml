@@ -1,0 +1,4 @@
+@page
+@model enx_fit.Pages.DashboardModel
+@{ Layout = "_DashboardLayout"; ViewData["Title"] = Model.Section!.Title; }
+<partial name="_DashboardSection" model="Model" />

@@ -1,0 +1,69 @@
+@page "/Programs"
+@model IndexModel
+@{ ViewData["Title"] = "Программы"; }
+<header class="page-heading"><div><p class="eyebrow">ТРЕНИРОВОЧНЫЙ ПЛАН</p><h1>Программы</h1><p>Создавайте тренировочные программы и отслеживайте их выполнение</p></div>
+    <a class="button primary" asp-page="Edit"><admin-icon name="plus" />Создать программу</a></header>
+@if (Model.PageError is not null) { <partial name="_ProgramError" model="Model.PageError" /> }
+else
+{
+    <nav class="program-tabs" aria-label="Разделы программ">
+        <a asp-route-Tab="mine" class="@(Model.Tab == "mine" ? "active" : "")" aria-current="@(Model.Tab == "mine" ? "page" : null)">Мои программы</a>
+        <a asp-route-Tab="templates" class="@(Model.Tab == "templates" ? "active" : "")" aria-current="@(Model.Tab == "templates" ? "page" : null)">Шаблоны</a>
+        @if (Model.Access.IsCoach) { <a asp-route-Tab="assigned" class="@(Model.Tab == "assigned" ? "active" : "")" aria-current="@(Model.Tab == "assigned" ? "page" : null)">Назначенные</a> }
+    </nav>
+    <div asp-validation-summary="All" class="program-notice error" role="alert"></div>
+    @if (Model.ShowUpgrade) { <partial name="_UpgradePrompt" model="@(-1)" /> }
+    @if (Model.Tab == "assigned" && !Model.Access.CanUse(Feature.CoachProgramAssignment))
+    { <section class="panel empty-state"><h2>Программы ваших клиентов</h2><p>В Coach вы можете назначать программы клиентам и следить за выполнением.</p><a class="button primary" asp-page="/Subscription">Посмотреть Coach</a></section> }
+    else
+    {
+        @if (Model.Tab == "templates")
+        {
+            <nav class="program-filters" aria-label="Категории шаблонов"><a asp-route-Tab="templates" class="@(Model.Category is null ? "selected" : "")">Все</a>
+            @foreach (var category in IndexModel.Categories) { <a asp-route-Tab="templates" asp-route-Category="@category" class="@(Model.Category == category ? "selected" : "")">@category</a> }</nav>
+        }
+        else
+        { <div class="program-toolbar"><span>@Model.Items.Count программ @(Model.Archived ? "в архиве" : "в списке")</span><a asp-route-Tab="@Model.Tab" asp-route-Archived="@(!Model.Archived)">@(Model.Archived ? "Текущие программы" : "Архив") <admin-icon name="arrow" /></a></div> }
+        @if (Model.Items.Count == 0)
+        {
+            <section class="panel empty-state"><admin-icon name="calendar" /><h2>@(Model.Archived ? "Архив пока пуст" : Model.Tab == "assigned" ? "Пока нет назначенных программ" : Model.Tab == "templates" ? "Шаблоны не найдены" : "У вас пока нет программ")</h2>
+                <p>Создайте собственную программу или начните с готового шаблона.</p><div class="program-actions"><a class="button primary" asp-page="Edit">Создать программу</a><a class="button secondary" asp-route-Tab="templates">Посмотреть шаблоны</a></div></section>
+        }
+        else
+        {
+            <div class="program-list @(Model.Tab == "templates" ? "template-list" : "")">
+            @foreach (var p in Model.Items)
+            {
+                var sessions = Model.Sessions.GetValueOrDefault(p.Id) ?? [];
+                var total = ProgramSchedule.Occurrences(p).Count();
+                var done = ProgramSchedule.Done(p, sessions);
+                var percent = total > 0 ? Math.Min(100, done * 100 / total) : 0;
+                var next = ProgramSchedule.Next(p, sessions);
+                <article class="program-row panel">
+                    <div class="program-row-main"><div class="program-kicker">@(p.IsTemplate ? ProgramSchedule.LevelName(p.Level) : p.IsArchived ? "В архиве" : p.StartDate.HasValue ? "Активная программа" : "Готова к старту") @if (p.Assignment is not null) { <span class="program-badge">От тренера</span> }</div>
+                    <h2>@if (p.IsTemplate) { @p.Name } else { <a asp-page="Details" asp-route-id="@p.Id">@p.Name</a> }</h2><p>@p.Goal</p><div class="program-meta"><span>@p.Weeks недель</span><span>@p.DaysPerWeek тренировки / неделю</span></div>
+                    @if (p.IsTemplate) { <p class="template-description">@p.Description</p> }
+                    </div>
+                    @if (!p.IsTemplate)
+                    {
+                        <div class="program-row-progress">@if (p.StartDate.HasValue) { <div class="program-meta"><span>Неделя @ProgramSchedule.CurrentWeek(p) из @p.Weeks</span><strong>@percent%</strong></div><progress max="100" value="@percent" aria-label="Выполнение программы">@percent%</progress><small>@(next is null ? "Ближайших тренировок нет" : $"Далее: {next.Workout.Name} · {next.Date:dd.MM}")</small> } else { <span class="program-muted">@p.Workouts.Count тренировок в программе</span><small>Начните, когда будете готовы</small> }</div>
+                    }
+                    <div class="program-actions">
+                    @if (p.IsTemplate) { <form method="post" asp-page-handler="Duplicate" asp-route-id="@p.Id" asp-route-Tab="templates" data-busy><button class="button secondary" type="submit">Использовать шаблон <admin-icon name="arrow" /></button></form> }
+                    else
+                    {
+                        <a class="button secondary" asp-page="Details" asp-route-id="@p.Id">Открыть <admin-icon name="arrow" /></a>
+                        <details class="program-menu"><summary class="icon-button" aria-label="Действия с программой @p.Name">⋯</summary><div class="program-menu-items">
+                        @if (!p.IsArchived) { <a asp-page="Edit" asp-route-id="@p.Id">Редактировать</a> }
+                        <form method="post" asp-page-handler="Duplicate" asp-route-id="@p.Id"><button>Дублировать</button></form>
+                        @if (Model.Access.IsCoach && !p.IsArchived) { <a asp-page="Assign" asp-route-id="@p.Id">Назначить клиенту</a> }
+                        <form method="post" asp-page-handler="Archive" asp-route-id="@p.Id" asp-route-restore="@p.IsArchived"><button>@(p.IsArchived ? "Восстановить" : "Архивировать")</button></form>
+                        </div></details>
+                    }
+                    </div>
+                </article>
+            }
+            </div>
+        }
+    }
+}

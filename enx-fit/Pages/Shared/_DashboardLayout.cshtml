@@ -1,0 +1,211 @@
+@using enx_fit.Services
+@using Microsoft.EntityFrameworkCore
+@inject enx_fit.Security.IFeatureAccessService FeatureAccess
+@inject enx_fit.Security.CurrentUser Viewer
+@inject enx_fit.Data.ApplicationDbContext LayoutDb
+@{
+    var featureAccess = await FeatureAccess.GetAsync();
+    var dashboard = ViewData["Dashboard"] as enx_fit.Pages.DashboardModel;
+    var goalTitle = dashboard?.Data.Settings.GoalTitle ?? await LayoutDb.DashboardSettings.AsNoTracking()
+        .Where(s => s.UserId == Viewer.Id).Select(s => s.GoalTitle).SingleOrDefaultAsync() ?? "Тренироваться регулярно";
+    var clientId = dashboard?.IsCoachView == true ? dashboard.Data.Subject.Id : null;
+    var activePage = ViewContext.RouteData.Values["page"] as string;
+    bool IsActive(string page) => page == "/Dashboard/Progress"
+        ? activePage is "/Dashboard/Progress" or "/Dashboard/Analytics" or "/Dashboard/Achievements"
+        : page == "/Dashboard/Workouts"
+        ? activePage == page || activePage?.StartsWith("/Workouts/", StringComparison.OrdinalIgnoreCase) == true
+        : page == "/Programs/Index"
+        ? activePage?.StartsWith("/Programs/", StringComparison.OrdinalIgnoreCase) == true || activePage == "/Dashboard/Plans"
+        : string.Equals(activePage, page, StringComparison.OrdinalIgnoreCase);
+    var navigation = DashboardSections.All.Where(tab => tab.Page is not ("/Dashboard/Analytics" or "/Dashboard/Achievements")).Select(tab => tab.Page == "/Dashboard/Plans"
+        ? tab with { Page = "/Programs/Index", Title = "Программы", Icon = "calendar" } : tab)
+        .OrderBy(tab => tab.Page switch { "/Dashboard/Workouts" => 0, "/Programs/Index" => 1, "/Dashboard/Progress" => 2, "/Dashboard/Habits" => 3, _ => 4 }).ToList();
+    string? PageUrl(string page) => Url.Page(page, dashboard?.NavigationValues);
+    var dashboardUrl = PageUrl("/Dashboard");
+    var viewer = User.Identity?.Name?.Split('@')[0] is { Length: > 0 } name ? name : "Спортсмен";
+    var isTrainer = User.GetUserRole() == UserRole.Trainer || User.HasMinimumRole(UserRole.Administrator);
+    var clientsActive = IsActive("/Trainer/Clients");
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b111b" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>@ViewData["Title"] — Enix Fit</title>
+    <link rel="icon" href="~/images/landing/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="~/manifest.webmanifest" />
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard-widgets.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="fitness-app @(clientId is not null ? "coach-mode" : "personal-mode")">
+<a class="skip-link" href="#main-content">Перейти к содержимому</a>
+<aside class="sidebar">
+    <a class="brand" asp-page="/Dashboard">
+<span class="brand-mark">
+<i>
+</i>
+<i>
+</i>
+<i>
+</i>
+</span>
+<span>Enix Fit</span>
+</a>
+    <nav aria-label="Основная навигация">
+        <a class="nav-item @(IsActive("/Dashboard") ? "active" : "")" href="@dashboardUrl" aria-current="@(IsActive("/Dashboard") ? "page" : null)">
+<admin-icon name="home" />Главная</a>
+        @if (isTrainer) { <a class="nav-item @(clientsActive ? "active" : "")" asp-page="/Trainer/Clients" aria-current="@(clientsActive ? "page" : null)">
+<admin-icon name="users" />Мои клиенты</a> }
+        @foreach (var tab in navigation)
+        {
+            <a class="nav-item @(IsActive(tab.Page) ? "active" : "")" href="@PageUrl(tab.Page)" aria-current="@(IsActive(tab.Page) ? "page" : null)">
+                <admin-icon name="@tab.Icon" />@tab.Title
+            </a>
+        }
+    </nav>
+    <div class="sidebar-bottom">
+        <a class="nav-item" asp-area="Identity" asp-page="/Account/Manage/Index">
+<admin-icon name="settings" />Настройки</a>
+        @if (User.HasMinimumRole(UserRole.Administrator)) { <a class="nav-item" asp-page="/Admin/Index">
+<admin-icon name="shield" />Администрирование</a> }
+        <div class="sidebar-motivation">
+<admin-icon name="spark" />
+<strong>Текущая цель</strong>
+<p>@goalTitle</p>
+<a href="@PageUrl("/Dashboard/Plans")" class="button secondary">К моей цели <admin-icon name="arrow" />
+</a>
+</div>
+        <form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/">
+<button class="nav-item" type="submit">
+<admin-icon name="logout" />Выйти</button>
+</form>
+    </div>
+</aside>
+<div class="app-body">
+    <header class="topbar">
+        <a class="brand mobile-brand" asp-page="/Dashboard">
+<span class="brand-mark">
+<i>
+</i>
+<i>
+</i>
+<i>
+</i>
+</span>
+<span>Enix Fit</span>
+</a>
+        <button class="search-trigger" data-dialog="search-dialog">
+<admin-icon name="search" />
+<span>Поиск по тренировкам, упражнениям, целям…</span><kbd>Ctrl K</kbd>
+</button>
+        <div class="topbar-actions">
+            <button class="icon-button notification-button" data-dialog="notifications-dialog" aria-label="Уведомления">
+<admin-icon name="bell" />
+</button>
+            <details class="account-menu"><summary>
+<span class="avatar">@viewer[..1].ToUpperInvariant()</span>
+<span class="account-copy">
+<strong>@viewer</strong>
+<small>@(featureAccess.Plan switch { SubscriptionPlan.Pro => "Athlete Pro", SubscriptionPlan.Coach => "Coach", _ => isTrainer ? "Тренер · Free" : "Athlete Free" })</small>
+</span>
+<admin-icon name="chevron" />
+</summary>
+<div class="account-dropdown">
+<a asp-page="/Dashboard">Моя статистика</a>@if (isTrainer) { <a asp-page="/Trainer/Clients">Мои клиенты</a> }<a asp-area="Identity" asp-page="/Account/Manage/Index">Настройки профиля</a>
+<form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/">
+<button type="submit">Выйти</button>
+</form>
+</div>
+</details>
+        </div>
+    </header>
+    <main id="main-content" tabindex="-1">@RenderBody()</main>
+</div>
+<nav class="bottom-nav" aria-label="Мобильная навигация">
+    <a class="@(IsActive("/Dashboard") ? "active" : "")" href="@dashboardUrl" aria-current="@(IsActive("/Dashboard") ? "page" : null)">
+<admin-icon name="home" />
+<span>Главная</span>
+</a>
+    <a class="@(IsActive("/Dashboard/Progress") ? "active" : "")" href="@PageUrl("/Dashboard/Progress")" aria-current="@(IsActive("/Dashboard/Progress") ? "page" : null)">
+<admin-icon name="bars" />
+<span>Прогресс</span>
+</a>
+    <a class="@(IsActive("/Dashboard/Workouts") ? "active" : "")" href="@PageUrl("/Dashboard/Workouts")" aria-current="@(IsActive("/Dashboard/Workouts") ? "page" : null)">
+<admin-icon name="workout" />
+<span>Тренировки</span>
+</a>
+    @if (isTrainer) { <a class="@(clientsActive ? "active" : "")" asp-page="/Trainer/Clients" aria-current="@(clientsActive ? "page" : null)">
+<admin-icon name="users" />
+<span>Клиенты</span>
+</a> }
+    else { <a class="@(IsActive("/Dashboard/Habits") ? "active" : "")" href="@PageUrl("/Dashboard/Habits")" aria-current="@(IsActive("/Dashboard/Habits") ? "page" : null)">
+<admin-icon name="activity" />
+<span>Привычки</span>
+</a> }
+    <button type="button" data-dialog="navigation-dialog" class="@(IsActive("/Programs/Index") || IsActive("/Dashboard/Progress") || IsActive("/Dashboard/Achievements") || (isTrainer && IsActive("/Dashboard/Habits")) ? "active" : "")" aria-label="Все разделы" aria-haspopup="dialog">
+<admin-icon name="menu" />
+<span>Ещё</span>
+</button>
+</nav>
+<dialog id="navigation-dialog" class="app-dialog">
+    <div class="dialog-heading">
+        <h2>Разделы</h2>
+        <button class="icon-button" data-close aria-label="Закрыть"><admin-icon name="close" /></button>
+    </div>
+    <nav class="search-results" aria-label="Все разделы">
+        <a href="@dashboardUrl" aria-current="@(IsActive("/Dashboard") ? "page" : null)">Главная <admin-icon name="home" /></a>
+        @foreach (var tab in navigation)
+        {
+            <a href="@PageUrl(tab.Page)" aria-current="@(IsActive(tab.Page) ? "page" : null)">@tab.Title <admin-icon name="@tab.Icon" /></a>
+        }
+        @if (isTrainer) { <a asp-page="/Trainer/Clients" aria-current="@(clientsActive ? "page" : null)">Мои клиенты <admin-icon name="users" /></a> }
+        <a asp-area="Identity" asp-page="/Account/Manage/Index">Профиль <admin-icon name="user" /></a>
+    </nav>
+</dialog>
+<dialog id="search-dialog" class="app-dialog">
+<div class="dialog-heading">
+<h2>Быстрый переход</h2>
+<button class="icon-button" data-close aria-label="Закрыть">
+<admin-icon name="close" />
+</button>
+</div>
+<input class="dialog-search" type="search" placeholder="Что хотите найти?" aria-label="Поиск раздела" data-section-search />
+<div class="search-results">
+<a href="@PageUrl("/Dashboard/Workouts")">Тренировки и упражнения <admin-icon name="workout" />
+</a>
+<a href="@PageUrl("/Dashboard/Analytics")">Аналитика и тренировочный объём <admin-icon name="bars" />
+</a>
+<a href="@PageUrl("/Dashboard/Progress")">Прогресс, вес и замеры тела <admin-icon name="scale" />
+</a>
+<a asp-page="/Programs/Index">Программы тренировок <admin-icon name="calendar" />
+</a>
+<a href="@PageUrl("/Dashboard/Habits")">Вода, сон и привычки <admin-icon name="water" />
+</a>
+<a href="@PageUrl("/Dashboard/Achievements")">Достижения и личные рекорды <admin-icon name="trophy" /></a>
+@if (isTrainer) { <a asp-page="/Trainer/Clients">Мои клиенты <admin-icon name="users" />
+</a> }<p hidden data-search-empty>Ничего не найдено. Попробуйте другой запрос.</p>
+</div>
+</dialog>
+<dialog id="notifications-dialog" class="app-dialog">
+<div class="dialog-heading">
+<h2>Центр уведомлений</h2>
+<button class="icon-button" data-close aria-label="Закрыть">
+<admin-icon name="close" />
+</button>
+</div>
+<div class="empty-state">
+<admin-icon name="bell" />
+<h3>Вы всё посмотрели</h3>
+<p>Новых уведомлений пока нет.</p>
+</div>
+</dialog>
+<script src="~/js/dashboard.js" asp-append-version="true">
+</script>
+@await RenderSectionAsync("Scripts", required: false)
+<script src="~/js/dashboard-widgets.js" asp-append-version="true"></script>
+</body>
+</html>

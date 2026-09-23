@@ -1,0 +1,22 @@
+@page "/Programs/{id:int}/Assign"
+@model AssignModel
+@{ ViewData["Title"] = "Назначить программу"; }
+@if (Model.PageError is not null) { <partial name="_ProgramError" model="Model.PageError" /> }
+else
+{
+    <a class="program-back" asp-page="Details" asp-route-id="@Model.Item.Id">← @Model.Item.Name</a>
+    <header class="page-heading"><div><h1>Назначить программу</h1><p>У клиента будет собственная копия «@Model.Item.Name» на @Model.Item.Weeks недель.</p></div></header>
+    @if (Model.Clients.Count == 0) { <section class="panel empty-state"><h2>У вас пока нет клиентов</h2><p>Администратор может связать клиента с вашим профилем тренера.</p><a class="button secondary" asp-page="/Trainer/Clients">К клиентам</a></section> }
+    else
+    {
+        <form method="post" class="program-form panel" data-busy>
+            <div asp-validation-summary="All" class="program-notice error" role="alert"></div>
+            <div class="program-fields"><label asp-for="Input.ClientId">Клиент<select asp-for="Input.ClientId" required><option value="">Выберите клиента</option>@foreach (var client in Model.Clients) { <option value="@client.Id">@client.Name</option> }</select></label><label asp-for="Input.StartDate">Дата начала<input asp-for="Input.StartDate" type="date" required /></label></div>
+            <h2>Расписание клиента</h2>
+            <div class="program-fields">@{ var workouts = Model.Item.Workouts.OrderBy(w => w.Order).ToList(); }
+            @for (var i = 0; i < workouts.Count; i++) { <label for="assignment-day-@i">@workouts[i].Name<select id="assignment-day-@i" name="Input.Days[@i]" required><option value="">Выберите день</option>@for (var d = 1; d <= 7; d++) { <option value="@d" selected="@(Model.Input.Days.ElementAtOrDefault(i) == d)">@ProgramSchedule.DayNames[d-1]</option> }</select></label> }</div>
+            <p class="program-notice">После назначения можно изменить упражнения, рабочие веса и дни в копии клиента. Другие программы не изменятся.</p>
+            <button class="button primary" type="submit">Создать копию и назначить</button>
+        </form>
+    }
+}

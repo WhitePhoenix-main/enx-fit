@@ -1,0 +1,72 @@
+@model DetailsModel
+<div class="program-section-heading"><div><h2>Прогрессия</h2><p class="program-muted">Фактические результаты и нагрузка на следующую тренировку.</p></div></div>
+@if (Model.SelectedExercise is { } exercise)
+{
+    <section class="panel program-progression">
+        <form method="get" class="program-form"><input type="hidden" name="Tab" value="progression" /><label for="exercise-choice">Упражнение</label><div class="program-actions"><select id="exercise-choice" name="ExerciseId">
+        @foreach (var workout in Model.Item.Workouts.OrderBy(w => w.Order)) { <optgroup label="@workout.Name">@foreach (var e in workout.Exercises.OrderBy(e => e.Order)) { <option value="@e.Id" selected="@(e.Id == exercise.Id)">@e.Exercise.Name</option> }</optgroup> }</select><button class="button secondary">Выбрать</button></div></form>
+        <div class="program-prescription"><strong>@exercise.Exercise.Name</strong><span>@exercise.Prescription.Summary</span><span>@(exercise.Prescription.WeightKg is { } kg ? $"{kg:0.##} кг" : "Вес не задан")</span></div>
+        <h3>Последние завершённые тренировки</h3>
+        @if (Model.ExerciseHistory.Count == 0) { <p class="program-muted">Здесь появятся выполненные рабочие подходы этого упражнения. Завершите первую тренировку программы.</p> }
+        else
+        { <ul class="program-history">@foreach (var h in Model.ExerciseHistory.Take(4)) { <li><span>@h.Date.ToString("dd.MM.yyyy")</span><strong>@string.Join(" · ", h.Sets.Select(s => $"{s.Weight:0.##} × {s.Reps}"))</strong><small class="program-muted">RIR: @string.Join(" / ", h.Sets.Select(s => s.Rir?.ToString() ?? "—"))</small></li> }</ul> }
+        @if (!Model.Item.IsArchived)
+        {
+            <details><summary>Изменить нагрузку вручную</summary>
+            <form method="post" asp-page-handler="Prescription" class="program-form" data-busy>
+                <input type="hidden" name="ExerciseId" value="@exercise.Id" /><input type="hidden" name="Tab" value="progression" /><input asp-for="Revision" type="hidden" />
+                <div class="program-fields">
+                    <label asp-for="Prescription.WeightKg">Рабочий вес, кг<input asp-for="Prescription.WeightKg" type="number" min="0" max="1500" step="0.01" /></label>
+                    <label asp-for="Prescription.Sets">Подходы<input asp-for="Prescription.Sets" type="number" min="1" max="20" /></label>
+                    <label asp-for="Prescription.RepsMin">Повторения от<input asp-for="Prescription.RepsMin" type="number" min="1" max="100" /></label>
+                    <label asp-for="Prescription.RepsMax">Повторения до<input asp-for="Prescription.RepsMax" type="number" min="1" max="100" /></label>
+                    <label asp-for="Prescription.Rir">RIR<input asp-for="Prescription.Rir" type="number" min="0" max="10" /></label>
+                    <label asp-for="Prescription.Rpe">RPE<input asp-for="Prescription.Rpe" type="number" min="1" max="10" step="0.5" /></label>
+                </div>
+                <input asp-for="Prescription.RestSeconds" type="hidden" /><input asp-for="Prescription.Comment" type="hidden" /><input asp-for="Prescription.PercentOneRepMax" type="hidden" />
+                <p class="program-muted">Для смены способа нагрузки с % 1ПМ на килограммы используйте редактор программы.</p>
+                <button class="button primary">Сохранить нагрузку</button>
+            </form></details>
+        }
+    </section>
+    @if (Model.CanAnalyze)
+    {
+        <section class="panel program-insight">
+            <div class="program-section-heading"><div><p class="eyebrow">АНАЛИЗ ПРОГРЕССИИ</p><h2>Рекомендация на следующую тренировку</h2></div>
+                @if (!Model.Item.IsArchived) { <form method="post" asp-page-handler="Analyze" data-busy><input type="hidden" name="ExerciseId" value="@exercise.Id" /><button class="button secondary">Рассчитать</button></form> }
+            </div>
+            @if (Model.Recommendations.FirstOrDefault(r => r.Status == RecommendationStatus.New) is { } recommendation)
+            {
+                <h3>@(recommendation.Type == RecommendationType.PossiblePlateau ? "Возможное плато" : recommendation.Type == RecommendationType.IncreaseWeight ? "Можно повысить вес" : "Сохраните текущую нагрузку")</h3>
+                <div class="program-recommendation-value">@recommendation.CurrentValue.ToString("0.##") → @recommendation.SuggestedValue.ToString("0.##") кг</div>
+                <details open><summary>Почему и что предлагается</summary><p>@recommendation.Reason</p><p><strong>@recommendation.SuggestedChange</strong></p></details>
+                <form method="post" asp-page-handler="Recommendation" class="program-form" data-busy>
+                    <input type="hidden" name="ExerciseId" value="@exercise.Id" /><input type="hidden" name="recommendationId" value="@recommendation.Id" />
+                    <label class="confirmation"><input type="checkbox" name="confirmed" value="true" required />Подтверждаю нагрузку @recommendation.SuggestedValue.ToString("0.##") кг для следующих тренировок</label>
+                    <div class="program-actions"><button class="button primary" name="accept" value="true">Применить</button><button class="button secondary" name="accept" value="false" formnovalidate>Отклонить</button></div>
+                </form>
+            }
+            else { <p class="program-muted">@(Model.ExerciseHistory.Count == 0 ? "Пока недостаточно данных. Завершите одну тренировку с этим упражнением, затем рассчитайте рекомендацию." : "Нажмите «Рассчитать», чтобы проверить актуальные результаты. План изменится только после вашего подтверждения.")</p> }
+            @if (Model.Recommendations.Any(r => r.Status != RecommendationStatus.New))
+            { <details class="program-roadmap"><summary>История рекомендаций</summary><ul class="program-history">@foreach (var r in Model.Recommendations.Where(r => r.Status != RecommendationStatus.New)) { <li><span>@r.CreatedAtUtc.ToString("dd.MM.yyyy") · @r.SuggestedValue.ToString("0.##") кг</span><span>@(r.Status switch { RecommendationStatus.Accepted => "Принята", RecommendationStatus.Dismissed => "Отклонена", _ => "Устарела" })</span></li> }</ul></details> }
+        </section>
+        @if (Model.Access.CanUse(Feature.ProgramAutoProgression) && !Model.Item.IsArchived)
+        {
+            <details class="panel"><summary>Настроить правило прогрессии</summary>
+                <form method="post" asp-page-handler="Progression" class="program-form" data-busy>
+                    <input type="hidden" name="ExerciseId" value="@exercise.Id" /><input type="hidden" name="Tab" value="progression" />
+                    <div class="program-fields"><label asp-for="Rule.Method">Правило<select asp-for="Rule.Method"><option value="Manual">Ручная нагрузка с рекомендациями</option><option value="DoubleProgression">Верхняя граница повторений</option><option value="Rir">Повторения и целевой RIR</option></select></label>
+                    <label asp-for="Rule.StepKg">Шаг веса, кг<input asp-for="Rule.StepKg" type="number" min="0.1" max="100" step="0.1" /></label>
+                    <label asp-for="Rule.TargetRir">Целевой RIR для правила RIR<input asp-for="Rule.TargetRir" type="number" min="0" max="10" /></label></div>
+                    <p class="program-muted">Диапазон повторений берётся из плана выше. Автоматических изменений без подтверждения нет.</p><button class="button secondary">Сохранить правило</button>
+                </form>
+            </details>
+        }
+    }
+    else if (Model.ExerciseHistory.Count > 0)
+    {
+        <section class="panel program-pro-preview"><span class="pro-badge">PRO</span><h2>Анализ прогрессии</h2><p>У вас есть данные @Model.ExerciseHistory.Count завершённых тренировок с этим упражнением. Pro может определить рекомендуемый вес и проверить признаки плато по сопоставимым результатам.</p><a class="button secondary" asp-page="/Subscription">Посмотреть возможности Pro <admin-icon name="arrow" /></a></section>
+    }
+    <details class="panel program-roadmap"><summary>Анализ программы: следующие возможности</summary><p>Анализ объёма, мышечного баланса, эффективности программы и рекомендации облегчённой недели готовятся к следующим итерациям. Пока доступны фактическая история, рекомендации веса и проверка плато.</p></details>
+}
+else { <section class="panel empty-state"><h2>Сначала добавьте упражнение</h2><p>Здесь появятся его плановая нагрузка и выполненные подходы.</p><a class="button secondary" asp-page="Edit" asp-route-id="@Model.Item.Id">К редактору</a></section> }

@@ -1,0 +1,6 @@
+@model enx_fit.Services.CoachAttention
+<section class="panel coach-attention" aria-label="Клиенты, требующие внимания">
+    <div class="card-heading"><div><p class="eyebrow">СЕГОДНЯ</p><h2>Требуют внимания — @Model.Alerts.Select(a => a.ClientId).Distinct().Count() клиентов</h2><p class="muted">@Model.ActiveClients клиентов · @Model.ScheduledToday тренировок запланировано · @Model.CompletedToday завершено</p></div></div>
+    @if (Model.Alerts.Count == 0) { <p class="muted">Сигналов по назначенным программам пока нет. Здесь появятся пропуски, окончание программы и признаки плато.</p> }
+    else { <ul class="attention-list">@foreach (var alert in Model.Alerts.Take(30)) { <li><div><strong>@alert.Name</strong><p>@alert.Reason</p></div><a class="button secondary" asp-page="/Programs/Details" asp-route-id="@alert.ProgramId" asp-route-Tab="progression">Открыть</a></li> }</ul> }
+</section>

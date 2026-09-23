@@ -1,0 +1,67 @@
+@page "/Programs/Edit/{id:int?}"
+@model EditModel
+@{ ViewData["Title"] = Model.ProgramId.HasValue ? "Редактирование программы" : "Создать программу"; }
+@if (Model.PageError is not null) { <partial name="_ProgramError" model="Model.PageError" /> }
+else
+{
+    <a class="program-back" asp-page="Index">← Программы</a>
+    <header class="page-heading"><div><h1>@ViewData["Title"]</h1><p>Составьте неделю и задайте нагрузку. Все изменения сохраняются одной кнопкой.</p></div></header>
+    <form method="post" asp-page="Edit" asp-route-id="@Model.ProgramId" asp-page-handler="" class="program-form" id="program-editor" data-program-editor>
+        <input asp-for="Input.Revision" type="hidden" />
+        <div asp-validation-summary="All" class="program-notice error" role="alert"></div>
+        <section class="panel">
+            <h2>О программе</h2>
+            <div class="program-fields">
+                <label asp-for="Input.Name">Название<input asp-for="Input.Name" maxlength="160" required placeholder="Например, Upper / Lower" /></label>
+                <label asp-for="Input.Goal">Цель<input asp-for="Input.Goal" maxlength="120" required placeholder="Набор мышечной массы" /></label>
+                <label asp-for="Input.Weeks">Количество недель<input asp-for="Input.Weeks" type="number" min="1" max="52" /></label>
+                <label asp-for="Input.DaysPerWeek">Тренировок в неделю<input asp-for="Input.DaysPerWeek" type="number" min="1" max="7" /></label>
+                <label asp-for="Input.Level">Уровень<select asp-for="Input.Level"><option value="Beginner">Начинающий</option><option value="Intermediate">Средний</option><option value="Advanced">Продвинутый</option></select></label>
+            </div>
+            <label asp-for="Input.Description">Описание<textarea asp-for="Input.Description" rows="2" maxlength="2000"></textarea></label>
+        </section>
+        <div id="week-structure" class="program-section-heading"><div><h2 id="workout-editor">Тренировки и расписание</h2><p class="program-muted">Каждая тренировка повторяется в выбранный день недели. Нагрузку можно менять вручную на Free.</p></div></div>
+        @for (var i = 0; i < Model.Input.Workouts.Count; i++)
+        {
+            <section class="panel program-editor-workout" data-editor-workout>
+                <input asp-for="Input.Workouts[i].Key" type="hidden" />
+                <div class="program-section-heading"><h2>Тренировка @(i + 1)</h2><details class="program-menu"><summary class="icon-button" aria-label="Действия с тренировкой @(i + 1)">⋯</summary><div class="program-menu-items">
+                    @foreach (var action in new[] { ("up-workout", "Переместить выше"), ("down-workout", "Переместить ниже"), ("duplicate-workout", "Дублировать"), ("remove-workout", "Удалить из плана") })
+                    { <button asp-page-handler="Structure" asp-route-command="@action.Item1" asp-route-workout="@i" formnovalidate>@action.Item2</button> }
+                </div></details></div>
+                <div class="program-fields">
+                    <label asp-for="Input.Workouts[i].Name">Название<input asp-for="Input.Workouts[i].Name" maxlength="120" required /></label>
+                    <label asp-for="Input.Workouts[i].DayOfWeek">День недели<select asp-for="Input.Workouts[i].DayOfWeek"><option value="">Пока без дня</option>@for (var d = 1; d <= 7; d++) { <option value="@d">@ProgramSchedule.DayNames[d - 1]</option> }</select></label>
+                    <label asp-for="Input.Workouts[i].EstimatedMinutes">Длительность, мин<input asp-for="Input.Workouts[i].EstimatedMinutes" type="number" min="5" max="300" /></label>
+                </div>
+                @for (var j = 0; j < Model.Input.Workouts[i].Exercises.Count; j++)
+                {
+                    <fieldset class="program-editor-exercise"><legend>Упражнение @(j + 1)</legend>
+                        <div class="program-fields">
+                            <label asp-for="Input.Workouts[i].Exercises[j].ExerciseId">Упражнение<select asp-for="Input.Workouts[i].Exercises[j].ExerciseId">@foreach (var e in Model.Exercises) { <option value="@e.Id">@e.Name</option> }</select></label>
+                            <label asp-for="Input.Workouts[i].Exercises[j].Prescription.Sets">Подходы<input asp-for="Input.Workouts[i].Exercises[j].Prescription.Sets" type="number" min="1" max="20" /></label>
+                            <label asp-for="Input.Workouts[i].Exercises[j].Prescription.RepsMin">Повторения от<input asp-for="Input.Workouts[i].Exercises[j].Prescription.RepsMin" type="number" min="1" max="100" /></label>
+                            <label asp-for="Input.Workouts[i].Exercises[j].Prescription.RepsMax">Повторения до<input asp-for="Input.Workouts[i].Exercises[j].Prescription.RepsMax" type="number" min="1" max="100" /></label>
+                            <label asp-for="Input.Workouts[i].Exercises[j].Prescription.WeightKg">Рабочий вес, кг<input asp-for="Input.Workouts[i].Exercises[j].Prescription.WeightKg" type="number" min="0" max="1500" step="0.01" /></label>
+                        </div>
+                        <details><summary>Запас повторений, отдых и заметки</summary><div class="program-fields">
+                            <label asp-for="Input.Workouts[i].Exercises[j].Prescription.Rir">RIR<input asp-for="Input.Workouts[i].Exercises[j].Prescription.Rir" type="number" min="0" max="10" /></label>
+                            <label asp-for="Input.Workouts[i].Exercises[j].Prescription.Rpe">RPE<input asp-for="Input.Workouts[i].Exercises[j].Prescription.Rpe" type="number" min="1" max="10" step="0.5" /></label>
+                            <label asp-for="Input.Workouts[i].Exercises[j].Prescription.RestSeconds">Отдых, с<input asp-for="Input.Workouts[i].Exercises[j].Prescription.RestSeconds" type="number" min="0" max="1800" /></label>
+                            <label asp-for="Input.Workouts[i].Exercises[j].Prescription.PercentOneRepMax">% 1ПМ вместо веса<input asp-for="Input.Workouts[i].Exercises[j].Prescription.PercentOneRepMax" type="number" min="1" max="100" step="0.5" /></label>
+                        </div><label asp-for="Input.Workouts[i].Exercises[j].Prescription.Comment">Комментарий<input asp-for="Input.Workouts[i].Exercises[j].Prescription.Comment" maxlength="500" /></label></details>
+                        <div class="program-actions">
+                            <button class="text-button" asp-page-handler="Structure" asp-route-command="up-exercise" asp-route-workout="@i" asp-route-exercise="@j" formnovalidate aria-label="Поднять упражнение @(j + 1)">↑ Выше</button>
+                            <button class="text-button" asp-page-handler="Structure" asp-route-command="down-exercise" asp-route-workout="@i" asp-route-exercise="@j" formnovalidate aria-label="Опустить упражнение @(j + 1)">↓ Ниже</button>
+                            <button class="text-button" asp-page-handler="Structure" asp-route-command="remove-exercise" asp-route-workout="@i" asp-route-exercise="@j" formnovalidate>Убрать</button>
+                        </div>
+                    </fieldset>
+                }
+                @if (Model.Exercises.Count > 0) { <button class="button secondary" asp-page-handler="Structure" asp-route-command="add-exercise" asp-route-workout="@i" formnovalidate><admin-icon name="plus" />Добавить упражнение</button> }
+                else { <p class="program-notice">В справочнике пока нет упражнений. Администратор может добавить их в разделе «Упражнения».</p> }
+            </section>
+        }
+        <button class="button secondary" asp-page-handler="Structure" asp-route-command="add-workout" formnovalidate><admin-icon name="plus" />Добавить тренировку</button>
+        <footer class="program-editor-footer"><p class="program-muted">Изменения плана не изменяют уже записанные подходы.</p><div class="program-actions"><a class="button secondary" asp-page="Index">Отмена</a><button class="button primary" type="submit">Сохранить программу</button></div></footer>
+    </form>
+}

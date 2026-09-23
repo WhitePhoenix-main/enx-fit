@@ -1,0 +1,503 @@
+@model enx_fit.Services.DashboardWidgetViewModel
+@using System.Globalization
+@using enx_fit.Services
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var coach = dashboard.IsCoachView;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string N(decimal? value, string format = "N0") => value?.ToString(format, ru) ?? "—";
+    string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+    var today = d.TodayCheckIn;
+    var workoutsPage = dashboard.Section?.Page == "/Dashboard/Workouts";
+    var latest = Model.WidgetId == "workouts" ? (workoutsPage ? d.PeriodWorkouts : d.PeriodWorkouts.Take(4)).ToList() : [];
+    string? PageUrl(string page) => Url.Page(page, dashboard.NavigationValues);
+    var chart = Model.WidgetId == "volume" ? d.Chart.ToList() : [];
+    var chartMax = chart.Count > 0 ? Math.Max(1, chart.Max(p => p.Volume)) : 1;
+    var weightPoints = Model.WidgetId == "weight" ? d.Measurements.Where(m => m.Date >= d.Until.AddDays(-28)).ToList() : [];
+    var minWeight = weightPoints.Count > 0 ? weightPoints.Min(m => m.WeightKg) - 1 : 60;
+    var maxWeight = weightPoints.Count > 0 ? weightPoints.Max(m => m.WeightKg) + 1 : 100;
+    var weightPath = string.Join(" ", weightPoints.Select(m => $"{F(34 + (m.Date.DayNumber - d.Until.AddDays(-28).DayNumber) * 236d / 28)},{F(127 - (double)((m.WeightKg - minWeight) / (maxWeight - minWeight)) * 105)}"));
+    var next = Model.WidgetId == "next" ? d.NextWorkout : null;
+    var weekDays = new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" };
+    var monthStart = new DateOnly(d.Until.Year, d.Until.Month, 1);
+    var calendarStart = monthStart.AddDays(-((int)monthStart.DayOfWeek + 6) % 7);
+    var workoutDates = Model.WidgetId == "calendar" ? d.Completed.Select(w => w.Date).ToHashSet() : [];
+    var hasData = Model.WidgetId == "achievements" && d.Completed.Any();
+}
+@switch (Model.WidgetId)
+{
+    case "welcome":
+        <section class="panel welcome-card">
+                <div class="welcome-heading">
+        <div>
+        <p class="eyebrow coach-only">ПРОГРЕСС КЛИЕНТА</p>
+        <h1>@(coach ? d.Name : $"Привет, {d.Name}!") <span class="greeting-emoji">@(coach ? "💪" : "👋")</span>
+        </h1>
+        <p>@(coach ? "Все показатели клиента — в одном месте." : "Движение сегодня — сильный ты завтра.")</p>
+        </div>
+        <span class="live-label">
+        <i>
+        </i>@(coach ? "Под вашим руководством" : "Твой путь к лучшей форме")</span>
+        </div>
+                <div class="welcome-bottom">
+        <button class="hero-mini goal-mini" data-dialog="goal-dialog">
+        <span class="hero-icon">
+        <admin-icon name="target" />
+        </span>
+        <span class="hero-mini-copy">
+        <small>Текущая цель</small>
+        <strong>@d.Settings.GoalTitle</strong>
+        <span class="progress-track">
+        <i style="width: @d.GoalPercent%">
+        </i>
+        </span>
+        <span class="mini-foot">
+        <span>@d.ThisWeek.Count() из @d.Settings.WeeklyWorkoutGoal тренировок</span><b>@d.GoalPercent%</b>
+        </span>
+        </span>
+        </button>
+                <a class="hero-mini recovery-mini" href="@PageUrl("/Dashboard/Habits")">
+        <span class="hero-icon green">
+        <admin-icon name="moon" />
+        </span>
+        <span class="hero-mini-copy">
+        <small>Сон и восстановление</small>
+        <strong>@(today.SleepMinutes > 0 ? $"{today.SleepMinutes / 60} ч {today.SleepMinutes % 60} мин" : "Как вы спали?")</strong>
+        <span class="progress-track green-track">
+        <i style="width: @(Math.Min(100, today.SleepMinutes * 100 / 480))%">
+        </i>
+        </span>
+        <small>@(today.SleepMinutes > 0 ? "Продолжительность сна сегодня" : "Добавьте показатели дня")</small>
+        </span>
+        </a>
+                <div class="hero-quote">
+        <p>«Дисциплина сегодня<br />— результаты завтра»</p>
+        <small>— Enix Fit</small>
+        <a href="@PageUrl("/Dashboard/Plans")">Продолжай <admin-icon name="arrow" />
+        </a>
+        </div>
+        </div>
+            </section>
+        break;
+    case "weight":
+        <section class="panel weight-card" id="weight">
+        <div class="card-heading">
+        <h2>
+        <admin-icon name="bars" />Динамика веса</h2>@if (!coach) { <a asp-page="/Body/Index">Подробнее <admin-icon name="arrow" />
+        </a> } else { <span class="muted">4 недели</span> }</div>
+        <div class="weight-value">
+        <strong>@N(d.Weight, "N1") <small>кг</small>
+        </strong>
+        <span>@(d.WeightChange is null ? "Нет замеров" : $"{(d.WeightChange >= 0 ? "+" : "")}{N(d.WeightChange, "N1")} кг")<small>за 4 недели</small>
+        </span>
+        </div>
+                <svg class="weight-chart" viewBox="0 0 290 165" role="img" aria-label="График веса за 4 недели">
+        <defs>
+        <linearGradient id="weight-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#497cff" stop-opacity=".3" /><stop offset="100%" stop-color="#497cff" stop-opacity="0" />
+        </linearGradient>
+        </defs>@for (var i = 0; i < 4; i++) { var y = 22 + 35 * i; <g>
+        <line x1="34" y1="@y" x2="275" y2="@y" stroke="#253142" />
+        <text x="2" y="@(y+4)">@N(maxWeight - (maxWeight - minWeight) * i / 3)</text>
+        </g> }@if (weightPoints.Count > 0) { <polygon points="34,140 @weightPath 270,140" fill="url(#weight-fill)" />
+        <polyline points="@weightPath" fill="none" stroke="#5984ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />@foreach (var m in weightPoints) { <circle cx="@F(34 + (m.Date.DayNumber - d.Until.AddDays(-28).DayNumber) * 236d / 28)" cy="@F(127 - (double)((m.WeightKg - minWeight) / (maxWeight - minWeight)) * 105)" r="3" fill="#6895ff"><title>@m.Date.ToString("d MMM", ru): @N(m.WeightKg, "N1") кг</title>
+        </circle> } }<text x="34" y="160">@d.Until.AddDays(-28).ToString("d MMM", ru)</text>
+        <text x="133" y="160">@d.Until.AddDays(-14).ToString("d MMM", ru)</text>
+        <text x="235" y="160">@d.Until.ToString("d MMM", ru)</text>
+        </svg>
+                @if (!coach && d.Measurements.Count == 0) { <a class="empty-link" asp-page="/Body/Create">Добавить первый замер <admin-icon name="plus" />
+        </a> }
+            </section>
+        break;
+    case "records":
+        <section class="panel records-card">
+        <div class="card-heading">
+        <h2>
+        <admin-icon name="workout" />Силовые рекорды</h2>
+        <button class="text-button" data-dialog="records-dialog">Все <admin-icon name="arrow" />
+        </button>
+        </div>
+        <div class="record-list">@foreach (var record in d.Records.Take(4)) { <div class="record-row">
+        <admin-icon name="workout" />
+        <span>@record.Name</span>
+        <strong>@N(record.Weight) <small>кг</small>
+        </strong>
+        </div> }@if (!d.Records.Any()) { <div class="card-empty">
+        <span class="icon-tile">
+        <admin-icon name="trophy" />
+        </span>
+        <p>Первый рекорд впереди</p>
+        <small>Запишите рабочие подходы — лучшие результаты появятся здесь.</small>
+        </div> }</div>
+        <button class="button secondary full" data-dialog="records-dialog">Все показатели</button>
+        </section>
+        break;
+    case "goal":
+        <section class="panel goal-card" id="plan">
+        <div class="card-heading">
+        <h2>
+        <admin-icon name="calendar" />План тренировок</h2>
+        <button class="text-button" data-dialog="goal-dialog" aria-label="Изменить цель">
+        <admin-icon name="edit" />
+        </button>
+        </div>
+        <div class="donut" style="--progress: @d.GoalPercent" role="img" aria-label="Выполнение недельной цели: @d.GoalPercent%">
+        <svg viewBox="0 0 160 160" aria-hidden="true">
+        <defs>
+        <linearGradient id="goal-gradient"><stop stop-color="#69a2ff" /><stop offset="1" stop-color="#4557ff" />
+        </linearGradient>
+        </defs>
+        <circle class="donut-track" cx="80" cy="80" r="64" />
+        <circle class="donut-fill" cx="80" cy="80" r="64" pathLength="100" stroke-dasharray="@d.GoalPercent 100" />
+        </svg>
+        <div>
+        <strong>@d.GoalPercent%</strong>
+        <small>@d.ThisWeek.Count() из @d.Settings.WeeklyWorkoutGoal</small>
+        </div>
+        </div>
+        <p class="donut-caption">тренировок на этой неделе</p>
+        <div class="legend">
+        <p>
+        <span>
+        <i>
+        </i>Выполнено</span>
+        <strong>@d.ThisWeek.Count()</strong>
+        </p>
+        <p>
+        <span>
+        <i class="dim">
+        </i>Цель на неделю</span>
+        <strong>@d.Settings.WeeklyWorkoutGoal</strong>
+        </p>
+        <p>
+        <span>
+        <i class="muted-dot">
+        </i>Осталось</span>
+        <strong>@Math.Max(0, d.Settings.WeeklyWorkoutGoal - d.ThisWeek.Count())</strong>
+        </p>
+        </div>
+        </section>
+        break;
+    case "volume":
+        <section class="panel volume-card" id="progress">
+        <div class="card-heading">
+        <h2>
+        <admin-icon name="bars" />Прогресс по объёму</h2>
+        <span class="muted">@d.Days дней</span>
+        </div>
+        <div class="chart-summary">
+        <strong>@N(d.TotalVolume) <small>кг</small>
+        </strong>
+        <span class="green">@(d.VolumeChange is null ? "Ваши тренировки в цифрах" : $"{(d.VolumeChange >= 0 ? "+" : "")}{N(d.VolumeChange)}% к предыдущему периоду")</span>
+        </div>
+        <div class="volume-chart">
+        <div class="chart-axis">
+        <span>@N(chartMax / 1000, "0.#")K</span>
+        <span>@N(chartMax / 2000, "0.#")K</span>
+        <span>0</span>
+        </div>
+        <div class="chart-columns">@foreach (var point in chart) { <button class="chart-column" type="button" aria-label="@point.Date.ToString("d MMM", ru): @N(point.Volume) кг, тренировок: @point.Count">
+        <span class="chart-tooltip">@point.Date.ToString("d MMM", ru)<strong>@N(point.Volume) кг</strong>
+        <small>@point.Count тренировок</small>
+        </span>
+        <span class="column-track">
+        <i style="height: @F((double)(point.Volume / chartMax * 100))%">
+        </i>
+        </span>
+        <small>@point.Date.ToString(d.Days == 365 ? "MMM" : "dd.MM", ru)</small>
+        </button> }</div>
+        </div>@if (!d.PeriodWorkouts.Any()) { <p class="chart-empty">За этот период нет записанных рабочих подходов.</p> }</section>
+        break;
+    case "workouts":
+        <section class="panel workouts-card" id="workouts">
+        <div class="card-heading">
+        <h2>
+        <admin-icon name="menu" />@(workoutsPage ? "История тренировок" : "Последние тренировки")</h2>
+        @if (!workoutsPage) { <a href="@PageUrl("/Dashboard/Workouts")">Все тренировки <admin-icon name="arrow" /></a> }
+        </div>
+        <div class="workout-table">
+        <div class="workout-table-head">
+        <span>Дата</span>
+        <span>Название</span>
+        <span>Объём</span>
+        <span>Упражнения</span>
+        <span>Статус</span>
+        </div>@foreach (var w in latest) { <button class="workout-row" data-dialog="workout-@w.Id">
+        <time>@w.Date.ToString("d MMM, ddd", ru)</time>
+        <span class="workout-title">
+        <span class="icon-tile">
+        <admin-icon name="workout" />
+        </span>
+        <span>
+        <strong>@(w.Title ?? "Силовая тренировка")</strong>
+        <small>@w.Date.ToString("d MMM", ru) · @w.WorkoutExercises.Count упр. · @N(DashboardData.Volume(w)) кг</small>
+        </span>
+        </span>
+        <span class="desktop-cell">@N(DashboardData.Volume(w)) кг</span>
+        <span class="desktop-cell">@w.WorkoutExercises.Count упр.</span>
+        <span class="workout-done">
+        <span class="check-circle">
+        <admin-icon name="check" />
+        </span>
+        <small>Выполнено</small>
+        <admin-icon name="chevron" />
+        </span>
+        </button> }@if (latest.Count == 0) { <div class="card-empty horizontal">
+        <span class="icon-tile">
+        <admin-icon name="workout" />
+        </span>
+        <div>
+        <h3>Всё начинается с первой тренировки</h3>
+        <p>Здесь будет история занятий за выбранный период.</p>
+        </div>@if (!coach) { <a asp-page="/Workouts/Create" class="button">Добавить <admin-icon name="plus" />
+        </a> }</div> }</div>
+        </section>
+        break;
+    case "recommendations":
+        <section class="panel recommendations-card" id="recommendations">
+        <div class="card-heading">
+        <div>
+        <h2>
+        <admin-icon name="spark" />@(coach ? "Рекомендации тренера" : "Персональные рекомендации")</h2>
+        <small class="muted">На основе ваших записей и целей</small>
+        </div>@if (coach) { <button class="text-button" data-dialog="goal-dialog">Изменить <admin-icon name="edit" />
+        </button> }</div>
+        <div class="insight-grid">
+        <article class="insight">
+        <span class="insight-icon green">
+        <admin-icon name="trend" />
+        </span>
+        <div>
+        <h3>@(d.VolumeChange > 0 ? "Отличный прогресс!" : "Каждая тренировка — шаг вперёд")</h3>
+        <p>@(d.VolumeChange is not null ? $"Тренировочный объём изменился на {(d.VolumeChange >= 0 ? "+" : "")}{N(d.VolumeChange)}% по сравнению с предыдущим периодом." : "Записывайте подходы и повторения, чтобы отслеживать свой прогресс.")</p>
+        <a href="@PageUrl("/Dashboard/Analytics")">Смотреть динамику <admin-icon name="arrow" />
+        </a>
+        </div>
+        </article>
+        <article class="insight">
+        <span class="insight-icon">
+        <admin-icon name="target" />
+        </span>
+        <div>
+        <h3>@(d.GoalPercent >= 100 ? "Цель недели выполнена" : "Держите цель в фокусе")</h3>
+        <p>@(d.GoalPercent >= 100 ? "Все запланированные на неделю тренировки записаны. Отличная работа!" : $"На этой неделе осталось {Math.Max(0, d.Settings.WeeklyWorkoutGoal - d.ThisWeek.Count())} тренировок до вашей цели.")</p>
+        <button class="text-button" data-dialog="goal-dialog">Посмотреть цель <admin-icon name="arrow" />
+        </button>
+        </div>
+        </article>
+        <article class="insight trainer-insight">
+        <span class="insight-icon violet">
+        <admin-icon name="@(d.Settings.TrainerNote is null ? "moon" : "users")" />
+        </span>
+        <div>
+        <h3>@(d.Settings.TrainerNote is null ? "Слушайте своё тело" : "От вашего тренера")</h3>
+        <p>@(d.Settings.TrainerNote ?? "Отмечайте сон и повседневную активность. Так будет проще замечать изменения в самочувствии.")</p>
+        <a href="@PageUrl("/Dashboard/Habits")">К показателям дня <admin-icon name="arrow" />
+        </a>
+        </div>
+        </article>
+        </div>
+        </section>
+        break;
+    case "today":
+        <section class="panel today-card">
+        <div class="card-heading">
+        <h2>
+        <admin-icon name="calendar" />Сегодня</h2>
+        <time>@d.Today.ToString("d MMM, ddd", ru)</time>
+        </div>
+        <div class="daily-gauges">@foreach (var item in new[] { ("flame", d.Completed.Count(w => w.Date == d.Today).ToString(), "тренировок", Math.Min(100, d.Completed.Count(w => w.Date == d.Today) * 100), "blue"), ("shoe", N(today.Steps), "шагов", Math.Min(100, today.Steps * 100 / 8000), "green"), ("water", N(today.WaterMl / 1000m, "0.#") + " л", "воды", Math.Min(100, today.WaterMl * 100 / 2000), "violet") }) { <div class="gauge @item.Item5">
+        <div class="gauge-arc" style="--gauge: @item.Item4">
+        <admin-icon name="@item.Item1" />
+        </div>
+        <strong>@item.Item2</strong>
+        <small>@item.Item3</small>
+        </div> }</div>
+        <div class="daily-activity">
+        <span>Привычки дня <strong>@d.HabitsDone / 4</strong>
+        </span>
+        <div class="progress-track">
+        <i style="width: @(d.HabitsDone * 25)%">
+        </i>
+        </div>
+        </div>
+        </section>
+        break;
+    case "next":
+        <section class="panel next-card" id="next-workout">
+        <div class="card-heading">
+        <h2>
+        <admin-icon name="calendar" />@(next?.Date == d.Today ? "Сегодняшняя тренировка" : "Следующая тренировка")</h2>
+        </div>
+        <div class="next-workout-image">
+        <div>
+        <small>@(next is null ? "Время стать сильнее" : next.Date.ToString("d MMMM, dddd", ru))</small>
+        <h3>@(next?.Title ?? (coach ? "Тренировка ещё не запланирована" : "Новая тренировка"))</h3>
+        <span>
+        <admin-icon name="workout" />@(next is null ? "Ваш следующий шаг к цели" : $"{next.WorkoutExercises.Count} упражнений")</span>
+        </div>
+        </div>@if (coach) { @if (next is not null) { <button class="button full" data-dialog="workout-@next.Id">Посмотреть тренировку <admin-icon name="arrow" />
+        </button> } else { <p class="muted next-empty">План появится, когда клиент добавит тренировку.</p> } } else { <a class="button full" asp-page="@(next is null ? "/Workouts/Create" : "/Workouts/Details")" asp-route-id="@next?.Id">
+        <admin-icon name="play" />@(next is null ? "Начать тренировку" : "Перейти к тренировке")</a> }</section>
+        break;
+    case "sleep":
+        <section class="panel sleep-card" id="sleep">
+        <div class="card-heading">
+        <h2>
+        <admin-icon name="moon" />Сон и восстановление</h2>@if (!coach) { <button class="text-button" data-dialog="checkin-dialog">Записать <admin-icon name="plus" />
+        </button> }</div>
+        <div class="sleep-value">
+        <strong>@(today.SleepMinutes > 0 ? $"{today.SleepMinutes / 60} ч {today.SleepMinutes % 60} мин" : "—")</strong>
+        <small>сегодня</small>
+        </div>
+        <div class="sleep-chart" role="img" aria-label="Продолжительность сна за последние 7 дней">@for (var i = 6; i >= 0; i--) { var day = d.Today.AddDays(-i); var minutes = d.CheckIns.FirstOrDefault(c => c.Date == day)?.SleepMinutes ?? 0; <div title="@day.ToString("d MMM", ru): @(minutes > 0 ? $"{minutes / 60} ч {minutes % 60} мин" : "нет записи")">
+        <span>
+        <i style="height: @(Math.Min(100, minutes * 100 / 720))%">
+        </i>
+        </span>
+        <small>@weekDays[((int)day.DayOfWeek + 6) % 7]</small>
+        </div> }</div>
+        </section>
+        break;
+    case "habits":
+        <section class="panel habits-card" id="habits">
+        <div class="card-heading">
+        <h2>
+        <admin-icon name="activity" />Привычки</h2>
+        <span class="count-pill">@d.HabitsDone / 4</span>@if (!coach) { <button class="text-button" data-dialog="checkin-dialog" aria-label="Записать показатели дня">
+        <admin-icon name="plus" />
+        </button> }</div>
+        <div class="habit-list">@foreach (var habit in new[] { ("water", "Выпить 2 л воды", today.WaterMl >= 2000), ("shoe", "Пройти 8 000 шагов", today.Steps >= 8000), ("nutrition", "Дневник питания", today.NutritionLogged), ("activity", "Растяжка 10 минут", today.StretchingDone) }) { <div class="habit-row">
+        <span class="habit-check @(habit.Item3 ? "done" : "")" aria-label="@(habit.Item3 ? "Выполнено" : "Не выполнено")">@if (habit.Item3) { <admin-icon name="check" /> }</span>
+        <admin-icon name="@habit.Item1" />
+        <span>@habit.Item2</span>
+        </div> }</div>@if (!coach) { <button class="text-button habit-edit" data-dialog="checkin-dialog">Отметить привычки <admin-icon name="arrow" />
+        </button> }</section>
+        break;
+    case "achievements":
+        <section class="panel achievements-card" id="achievements">
+        <div class="card-heading">
+        <h2>
+        <admin-icon name="trophy" />Последние достижения</h2>
+        </div>
+        <div class="achievement">
+        <span class="medal gold">
+        <admin-icon name="@(hasData ? "flame" : "target")" />
+        </span>
+        <div>
+        <h3>@(d.Streak > 1 ? $"{d.Streak} дней подряд" : hasData ? "Первый шаг сделан" : "Всё впереди")</h3>
+        <p>@(hasData ? $"{d.Completed.Count()} тренировок записано" : "Запишите первую тренировку")</p>
+        </div>
+        </div>
+        <div class="achievement">
+        <span class="medal purple">
+        <admin-icon name="workout" />
+        </span>
+        <div>
+        <h3>@(d.Records.Any() ? "Личный рекорд" : "На пути к рекорду")</h3>
+        <p>@(d.Records.Any() ? $"{d.Records.First().Name} · {N(d.Records.First().Weight)} кг" : "Ваш лучший подход появится здесь")</p>
+        </div>
+        </div>
+        </section>
+        break;
+    case "calendar":
+        <section class="panel calendar-card">
+        <div class="card-heading">
+        <h2>
+        <admin-icon name="calendar" />Календарь</h2>
+        <a asp-page="@dashboard.CurrentPage" asp-route-clientId="@dashboard.ClientId" asp-route-days="@dashboard.Days">Сегодня</a>
+        </div>
+        <div class="calendar-month">
+        <strong>@d.Until.ToString("MMMM yyyy", ru)</strong>
+        <span>
+        <a asp-page="@dashboard.CurrentPage" asp-route-clientId="@dashboard.ClientId" asp-route-days="@dashboard.Days" asp-route-until="@monthStart.AddDays(-1).ToString("yyyy-MM-dd")" aria-label="Предыдущий месяц">
+        <admin-icon name="back" />
+        </a>@if (monthStart.AddMonths(1) <= d.Today) { <a asp-page="@dashboard.CurrentPage" asp-route-clientId="@dashboard.ClientId" asp-route-days="@dashboard.Days" asp-route-until="@(monthStart.AddMonths(2).AddDays(-1) > d.Today ? d.Today.ToString("yyyy-MM-dd") : monthStart.AddMonths(2).AddDays(-1).ToString("yyyy-MM-dd"))" aria-label="Следующий месяц">
+        <admin-icon name="arrow" />
+        </a> }</span>
+        </div>
+        <div class="calendar-grid">@foreach (var dayName in weekDays) { <small>@dayName</small> }@for (var i = 0; i < 42; i++) { var date = calendarStart.AddDays(i); <span class="calendar-day @(date.Month != monthStart.Month ? "outside" : "") @(workoutDates.Contains(date) ? "trained" : "") @(date == d.Today ? "is-today" : "")" title="@date.ToString("d MMMM", ru)@(workoutDates.Contains(date) ? " — тренировка записана" : "")">@date.Day</span> }</div>
+        <div class="calendar-legend">
+        <span>
+        <i>
+        </i>Тренировка</span>
+        <span>
+        <i>
+        </i>Сегодня</span>
+        </div>
+        </section>
+        break;
+    case "stat-volume":
+        <a class="panel stat-card stat-volume" href="@PageUrl("/Dashboard/Analytics")">
+        <span class="stat-label">
+        <span class="icon-tile">
+        <admin-icon name="workout" />
+        </span>Общий объём</span>
+        <strong>@N(d.TotalVolume) <small>кг</small>
+        </strong>
+        <span class="stat-delta green">@(d.VolumeChange is null ? "Начало вашего пути" : $"{(d.VolumeChange >= 0 ? "↑ +" : "↓ ")}{N(d.VolumeChange)}%")</span>
+        <small>за выбранный период</small>
+        <span class="mini-bars" aria-hidden="true">
+        <i>
+        </i>
+        <i>
+        </i>
+        <i>
+        </i>
+        <i>
+        </i>
+        <i>
+        </i>
+        </span>
+        </a>
+        break;
+    case "stat-workouts":
+        <a class="panel stat-card stat-workouts" href="@PageUrl("/Dashboard/Workouts")">
+        <span class="stat-label">
+        <span class="icon-tile">
+        <admin-icon name="shoe" />
+        </span>Тренировки</span>
+        <strong>@d.PeriodWorkouts.Count()</strong>
+        <span class="stat-delta green">@d.ThisWeek.Count() на этой неделе</span>
+        <small>каждая делает вас сильнее</small>
+        </a>
+        break;
+    case "stat-weight":
+        <a class="panel stat-card stat-weight" href="@PageUrl("/Dashboard/Progress")">
+        <span class="stat-label">
+        <span class="icon-tile">
+        <admin-icon name="scale" />
+        </span>Текущий вес</span>
+        <strong>@N(d.Weight, "N1") <small>кг</small>
+        </strong>
+        <span class="stat-delta">@(d.WeightChange is null ? "Добавьте первый замер" : $"{(d.WeightChange >= 0 ? "+" : "")}{N(d.WeightChange, "N1")} кг")</span>
+        <small>изменение за 4 недели</small>
+        </a>
+        break;
+    case "stat-streak":
+        <a class="panel stat-card stat-streak" href="@PageUrl("/Dashboard/Achievements")">
+        <span class="stat-label">
+        <span class="icon-tile orange">
+        <admin-icon name="flame" />
+        </span>Серия</span>
+        <strong>@d.Streak <small>дн.</small>
+        </strong>
+        <span class="stat-delta green">День за днём</span>
+        <small>тренировочные дни подряд</small>
+        </a>
+        break;
+    case "stat-goal":
+        <button class="panel stat-card stat-goal" data-dialog="goal-dialog">
+        <span class="stat-label">
+        <span class="icon-tile">
+        <admin-icon name="target" />
+        </span>Прогресс цели</span>
+        <strong>@d.GoalPercent%</strong>
+        <span class="progress-track">
+        <i style="width: @d.GoalPercent%">
+        </i>
+        </span>
+        <small>@d.ThisWeek.Count() из @d.Settings.WeeklyWorkoutGoal тренировок</small>
+        </button>
+        break;
+}

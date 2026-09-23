@@ -15,6 +15,8 @@ public class DetailsModel(
 {
     public WorkoutSession Workout { get; private set; } = null!;
 
+    public WorkoutBuilderInput? Blueprint { get; private set; }
+
     public IReadOnlyList<Exercise> AvailableExercises { get; private set; } = [];
 
     public bool IsAdministrator => currentUser.IsAdministrator;
@@ -29,6 +31,20 @@ public class DetailsModel(
 
     public async Task<IActionResult> OnGetAsync(int id) =>
         await LoadPageAsync(id);
+
+    public async Task<IActionResult> OnPostCompleteAsync(int id)
+    {
+        ModelState.Clear();
+        var result = await workoutService.CompleteAsync(id);
+        if (result == CompleteWorkoutResult.NotFound) return NotFound();
+        if (result == CompleteWorkoutResult.Empty)
+        {
+            ModelState.AddModelError("", "Запишите хотя бы один рабочий подход перед завершением.");
+            return await LoadPageAsync(id);
+        }
+        TempData["StatusMessage"] = "Тренировка завершена. Результаты сохранены в истории.";
+        return RedirectToPage(new { id });
+    }
 
     public async Task<IActionResult> OnPostAddExerciseAsync(int id)
     {
@@ -90,6 +106,8 @@ public class DetailsModel(
         }
 
         Workout = workout;
+        if (workout.BuilderConfigurationJson is not null && WorkoutBuilderInput.TryParse(workout.BuilderConfigurationJson, out var blueprint))
+            Blueprint = blueprint;
         if (IsAdministrator)
         {
             OwnerName = await userDirectory.GetDisplayNameAsync(workout.UserId);

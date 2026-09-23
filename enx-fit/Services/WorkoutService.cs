@@ -43,13 +43,29 @@ public class WorkoutService(ApplicationDbContext dbContext, CurrentUser currentU
             .OrderBy(e => e.Name)
             .ToListAsync();
 
-    public async Task<int> CreateAsync(WorkoutSessionInputModel input)
+    public async Task<int> CreateAsync(WorkoutSessionInputModel input, WorkoutBuilderInput? builder = null)
     {
         var workout = new WorkoutSession
         {
             UserId = currentUser.ResolveOwnerId(input.OwnerId)
         };
         ApplyInput(workout, input);
+        if (builder is not null)
+        {
+            workout.BuilderConfigurationJson = System.Text.Json.JsonSerializer.Serialize(builder, WorkoutBuilderInput.JsonOptions);
+            var order = 0;
+            foreach (var block in builder.Blocks)
+            foreach (var item in block.Exercises)
+            {
+                workout.WorkoutExercises.Add(new WorkoutExercise
+                {
+                    ExerciseId = item.ExerciseId, Order = ++order,
+                    Notes = block.Name, TargetSets = item.Sets.Count,
+                    TargetRepsMin = item.Sets.Min(s => s.Reps), TargetRepsMax = item.Sets.Max(s => s.Reps),
+                    TargetWeightKg = item.Sets.Max(s => s.Weight)
+                });
+            }
+        }
         dbContext.WorkoutSessions.Add(workout);
         await dbContext.SaveChangesAsync();
         return workout.Id;
@@ -67,6 +83,11 @@ public class WorkoutService(ApplicationDbContext dbContext, CurrentUser currentU
         ApplyInput(workout, input);
         if (currentUser.IsAdministrator && !string.IsNullOrWhiteSpace(input.OwnerId))
         {
+            if (workout.UserId != input.OwnerId)
+            {
+                // A transferred diary entry must not occupy the former owner's program slot.
+                workout.TrainingProgramId = null; workout.ProgramWorkoutKey = null; workout.ScheduledDate = null;
+            }
             workout.UserId = input.OwnerId;
         }
         await dbContext.SaveChangesAsync();
@@ -85,6 +106,17 @@ public class WorkoutService(ApplicationDbContext dbContext, CurrentUser currentU
         dbContext.WorkoutSessions.Remove(workout);
         await dbContext.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<CompleteWorkoutResult> CompleteAsync(int id)
+    {
+        var workout = await VisibleWorkouts().AsSplitQuery().Include(w => w.WorkoutExercises).ThenInclude(e => e.SetEntries)
+            .SingleOrDefaultAsync(w => w.Id == id);
+        if (workout is null) return CompleteWorkoutResult.NotFound;
+        if (!workout.WorkoutExercises.Any(e => e.SetEntries.Any(s => !s.IsWarmup && s.Reps > 0))) return CompleteWorkoutResult.Empty;
+        workout.CompletedAtUtc ??= DateTime.UtcNow;
+        await dbContext.SaveChangesAsync();
+        return CompleteWorkoutResult.Success;
     }
 
     public async Task<AddWorkoutExerciseResult> AddExerciseAsync(int workoutSessionId, int exerciseId)
@@ -175,3 +207,5 @@ public enum AddSetEntryResult
     Success,
     WorkoutExerciseNotFound
 }
+
+public enum CompleteWorkoutResult { Success, NotFound, Empty }

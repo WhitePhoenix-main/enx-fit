@@ -10,6 +10,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     : IdentityDbContext<ApplicationUser>(options)
 {
     public DbSet<Exercise> Exercises => Set<Exercise>();
+    public DbSet<TrainingProgram> TrainingPrograms => Set<TrainingProgram>();
+    public DbSet<AssignedProgram> AssignedPrograms => Set<AssignedProgram>();
+    public DbSet<TrainingRecommendation> TrainingRecommendations => Set<TrainingRecommendation>();
 
     public DbSet<WorkoutSession> WorkoutSessions => Set<WorkoutSession>();
 
@@ -18,19 +21,49 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<SetEntry> SetEntries => Set<SetEntry>();
 
     public DbSet<BodyMeasurement> BodyMeasurements => Set<BodyMeasurement>();
+    public DbSet<DashboardSettings> DashboardSettings => Set<DashboardSettings>();
+    public DbSet<DailyCheckIn> DailyCheckIns => Set<DailyCheckIn>();
+    public DbSet<DashboardLayoutPreference> DashboardLayoutPreferences => Set<DashboardLayoutPreference>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.ConfigureTrainingPrograms();
 
         modelBuilder.Entity<ApplicationUser>(user =>
         {
+            user.HasOne(item => item.Trainer).WithMany().HasForeignKey(item => item.TrainerId)
+                .OnDelete(DeleteBehavior.SetNull);
             user.Property(item => item.Role)
                 .HasConversion<int>()
                 .HasDefaultValue(UserRole.User)
                 .HasSentinel(UserRole.User);
             user.ToTable("AspNetUsers", table => table.HasCheckConstraint(
                 "CK_AspNetUsers_Role", "\"Role\" IN (0, 1, 3, 5, 8, 9)"));
+        });
+
+        modelBuilder.Entity<DashboardSettings>(entity =>
+        {
+            entity.HasKey(item => item.UserId);
+            entity.Property(item => item.GoalTitle).HasMaxLength(120);
+            entity.Property(item => item.TrainerNote).HasMaxLength(1000);
+            entity.HasOne<ApplicationUser>().WithOne().HasForeignKey<DashboardSettings>(item => item.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<DailyCheckIn>(entity =>
+        {
+            entity.HasKey(item => new { item.UserId, item.Date });
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(item => item.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DashboardLayoutPreference>(entity =>
+        {
+            entity.HasKey(item => new { item.UserId, item.Mode });
+            entity.Property(item => item.Mode).HasMaxLength(16);
+            entity.Property(item => item.WidgetsJson).HasMaxLength(6000);
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(item => item.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Exercise>(entity =>
@@ -43,14 +76,15 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .IsUnique();
 
             entity.HasData(
-                new Exercise { Id = 1, Name = "Bench Press" },
-                new Exercise { Id = 2, Name = "Squat" },
-                new Exercise { Id = 3, Name = "Deadlift" },
-                new Exercise { Id = 4, Name = "Pull Up" },
-                new Exercise { Id = 5, Name = "Overhead Press" },
-                new Exercise { Id = 6, Name = "Romanian Deadlift" },
-                new Exercise { Id = 7, Name = "Leg Press" },
-                new Exercise { Id = 8, Name = "Barbell Row" });
+                new Exercise { Id = 1, Name = "Bench Press", MuscleGroup = "Грудь", Equipment = "Штанга, скамья" },
+                new Exercise { Id = 2, Name = "Squat", MuscleGroup = "Квадрицепсы", Equipment = "Штанга" },
+                new Exercise { Id = 3, Name = "Deadlift", MuscleGroup = "Всё тело", Equipment = "Штанга" },
+                new Exercise { Id = 4, Name = "Pull Up", MuscleGroup = "Спина", Equipment = "Турник" },
+                new Exercise { Id = 5, Name = "Overhead Press", MuscleGroup = "Плечи", Equipment = "Штанга" },
+                new Exercise { Id = 6, Name = "Romanian Deadlift", MuscleGroup = "Задняя поверхность бедра", Equipment = "Штанга" },
+                new Exercise { Id = 7, Name = "Leg Press", MuscleGroup = "Квадрицепсы", Equipment = "Тренажёр для жима ногами" },
+                new Exercise { Id = 8, Name = "Barbell Row", MuscleGroup = "Спина", Equipment = "Штанга" });
+            entity.HasData(ExerciseCatalog.All);
         });
 
         modelBuilder.Entity<WorkoutSession>(entity =>

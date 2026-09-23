@@ -2,12 +2,13 @@
 @model enx_fit.Pages.Exercises.DetailsModel
 @{
     ViewData["Title"] = "Детали упражнения";
+    var equipmentDetails = ExercisePresentation.EquipmentDetails(Model.Exercise);
 }
 
 <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
     <div>
         <h1 class="h3 mb-1">@Model.Exercise.Name</h1>
-        <p class="text-muted mb-0">Детали упражнения</p>
+        <p class="text-muted mb-0">Группа мышц, оборудование и описание тренажёров.</p>
     </div>
     <div class="d-flex gap-2">
         @if (User.IsInRole("Administrator"))
@@ -18,17 +19,53 @@
     </div>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        <dl class="row mb-0">
-            <dt class="col-sm-3">Группа мышц</dt>
-            <dd class="col-sm-9">@Model.Exercise.MuscleGroup</dd>
-
-            <dt class="col-sm-3">Оборудование</dt>
-            <dd class="col-sm-9">@Model.Exercise.Equipment</dd>
-
-            <dt class="col-sm-3">Заметки</dt>
-            <dd class="col-sm-9 mb-0">@(string.IsNullOrWhiteSpace(Model.Exercise.Notes) ? "Нет заметок" : Model.Exercise.Notes)</dd>
-        </dl>
+<section class="card exercise-profile" aria-label="Об упражнении">
+    <div class="card-body exercise-profile-body">
+        <span class="exercise-profile-icon" aria-hidden="true"><admin-icon name="@ExercisePresentation.MuscleIcon(Model.Exercise.MuscleGroup)" /></span>
+        <div>
+            <span class="exercise-profile-caption">Группа мышц</span>
+            <strong>@Model.Exercise.MuscleGroup</strong>
+        </div>
+        <div>
+            <span class="exercise-profile-caption">Оборудование</span>
+            <strong>@Model.Exercise.Equipment</strong>
+        </div>
     </div>
-</div>
+</section>
+
+<section class="exercise-guide" aria-labelledby="exercise-guide-heading">
+    <h2 id="exercise-guide-heading">Оборудование и тренажёры</h2>
+    @if (equipmentDetails.Count == 0)
+    {
+        <p class="exercise-guide-empty">Описание для этого оборудования пока не добавлено.</p>
+    }
+    else
+    {
+        <div class="exercise-equipment-grid">
+            @foreach (var equipment in equipmentDetails)
+            {
+                <article class="exercise-equipment-card">
+                    <span class="exercise-equipment-icon" aria-hidden="true"><admin-icon name="@equipment.Icon" /></span>
+                    <div>
+                        <h3>@equipment.Name</h3>
+                        <p>@equipment.Description</p>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.Exercise.Notes))
+{
+    <section class="card exercise-notes" aria-labelledby="exercise-notes-heading">
+        <div class="card-body">
+            <h2 id="exercise-notes-heading">Заметки</h2>
+            <p>@Model.Exercise.Notes</p>
+        </div>
+    </section>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/exercises.css" asp-append-version="true" />
+}
