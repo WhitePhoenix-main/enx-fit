@@ -16,5 +16,13 @@ public class WorkoutExercise
 
     public string? Notes { get; set; }
 
+    // Immutable prescription at session start; later program edits do not rewrite history.
+    public int? TargetSets { get; set; }
+    public int? TargetRepsMin { get; set; }
+    public int? TargetRepsMax { get; set; }
+    public decimal? TargetWeightKg { get; set; }
+    public int? TargetRir { get; set; }
+    public decimal? TargetRpe { get; set; }
+
     public ICollection<SetEntry> SetEntries { get; set; } = [];
 }

@@ -1,0 +1,48 @@
+@page
+@model enx_fit.Pages.Trainer.ClientsModel
+@{ Layout = "_DashboardLayout"; ViewData["Title"] = "Мои клиенты"; ViewData["Active"] = "clients"; }
+<div class="page-heading">
+<div>
+<p class="eyebrow">КАБИНЕТ ТРЕНЕРА</p>
+<h1>Мои клиенты <span class="count-pill">@Model.Clients.Count</span>
+</h1>
+<p>Прогресс, тренировки и цели вашей команды.</p>
+</div>
+<a class="button secondary" asp-page="/Dashboard">
+<admin-icon name="activity" />Моя статистика</a>
+</div>
+<form method="get" class="client-search">
+<admin-icon name="search" />
+<input asp-for="Search" placeholder="Найти клиента по имени или email" aria-label="Поиск клиента" />
+<button class="button" type="submit">Найти</button>
+</form>
+@if (Model.Attention is { } attention) { <partial name="_CoachAttention" model="attention" /> }
+<div class="client-grid">
+@foreach (var client in Model.Clients)
+{
+    <a class="panel client-card" href="@(Model.CanManage ? Url.Page("/Trainer/Client", new { id = client.Id }) : Url.Page("/Dashboard", new { clientId = client.Id }))">
+        <span class="avatar large">@client.Name[..1].ToUpperInvariant()</span>
+<span class="client-name">@client.Name</span>
+<span class="muted">Персональные тренировки</span>
+        <div class="client-metrics">
+<div>
+<strong>@client.Workouts</strong>
+<small>тренировок</small>
+</div>
+<div>
+<strong>@(client.LastWorkout?.ToString("dd.MM") ?? "—")</strong>
+<small>последняя тренировка</small>
+</div>
+</div>
+        <span class="client-open">Открыть дэшборд <admin-icon name="arrow" />
+</span>
+    </a>
+}
+</div>
+@if (Model.Clients.Count == 0)
+{
+    <div class="panel empty-state">
+<admin-icon name="users" />
+<h2>@(string.IsNullOrWhiteSpace(Model.Search) ? "Здесь появятся ваши клиенты" : "Клиенты не найдены")</h2>
+<p>@(string.IsNullOrWhiteSpace(Model.Search) ? "Администратор может назначить вас тренером в профиле пользователя." : "Попробуйте другое имя или сбросьте поиск.")</p>@if (!string.IsNullOrWhiteSpace(Model.Search)) { <a asp-page="./Clients" class="button secondary">Сбросить поиск</a> }</div>
+}

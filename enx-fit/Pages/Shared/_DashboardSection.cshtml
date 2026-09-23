@@ -1,0 +1,37 @@
+@model enx_fit.Pages.DashboardModel
+@using enx_fit.Services
+@{ var tab = Model.Section!; }
+<partial name="_DashboardContext" model="Model" />
+<div class="page-heading">
+    <div>
+        @if (Model.IsCoachView) { <p class="eyebrow">@Model.Data.Name</p> }
+        <h1>@tab.Title</h1>
+        <p>@tab.Description</p>
+    </div>
+    @if (!Model.IsCoachView && tab.Page == "/Dashboard/Workouts")
+    {
+        <a class="button" asp-page="/Workouts/Create"><admin-icon name="plus" />Добавить тренировку</a>
+    }
+    @if (!Model.IsCoachView && tab.Page == "/Dashboard/Progress")
+    {
+        <a class="button" asp-page="/Body/Create"><admin-icon name="plus" />Добавить замер</a>
+    }
+</div>
+@if (tab.Page is "/Dashboard/Progress" or "/Dashboard/Analytics" or "/Dashboard/Achievements")
+{
+    <nav class="progress-navigation" aria-label="Разделы прогресса">
+        <a href="@Url.Page("/Dashboard/Progress", Model.NavigationValues)" aria-current="@(tab.Page == "/Dashboard/Progress" ? "page" : null)">Обзор · тело и силовые</a>
+        <a href="@Url.Page("/Dashboard/Analytics", Model.NavigationValues)" aria-current="@(tab.Page == "/Dashboard/Analytics" ? "page" : null)">Аналитика</a>
+        <a href="@Url.Page("/Dashboard/Achievements", Model.NavigationValues)" aria-current="@(tab.Page == "/Dashboard/Achievements" ? "page" : null)">Рекорды и достижения</a>
+    </nav>
+}
+<partial name="_DashboardPeriod" model="Model" />
+<div class="dashboard-grid modular-grid" data-dashboard-section="@tab.Page">
+    @foreach (var widget in tab.Widgets)
+    {
+        <div class="dashboard-widget" data-widget-id="@widget.Id" data-widget-width="@widget.Width">
+            <partial name="_DashboardWidget" model="new DashboardWidgetViewModel(Model, widget.Id)" />
+        </div>
+    }
+</div>
+<partial name="_DashboardDialogs" model="Model" />

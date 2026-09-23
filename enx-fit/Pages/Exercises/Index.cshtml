@@ -73,9 +73,19 @@ else
                 @foreach (var exercise in Model.Exercises)
                 {
                     <tr>
-                        <td class="fw-semibold">@exercise.Name</td>
+                        <td class="fw-semibold">
+                            <span class="exercise-list-name">
+                                <span class="exercise-list-icon" aria-hidden="true"><admin-icon name="@ExercisePresentation.MuscleIcon(exercise.MuscleGroup)" /></span>
+                                <span>@exercise.Name</span>
+                            </span>
+                        </td>
                         <td>@exercise.MuscleGroup</td>
-                        <td>@exercise.Equipment</td>
+                        <td>
+                            <span class="exercise-list-equipment" title="@ExercisePresentation.EquipmentDetails(exercise).FirstOrDefault()?.Description">
+                                <admin-icon name="@ExercisePresentation.EquipmentIcon(exercise)" />
+                                @exercise.Equipment
+                            </span>
+                        </td>
                         <td class="text-end text-nowrap">
                             <a class="btn btn-sm btn-outline-secondary" asp-page="./Details" asp-route-id="@exercise.Id">Подробнее</a>
                             @if (User.IsInRole("Administrator"))
@@ -89,4 +99,8 @@ else
             </tbody>
         </table>
     </div>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/exercises.css" asp-append-version="true" />
 }

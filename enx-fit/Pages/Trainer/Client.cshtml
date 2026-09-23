@@ -1,0 +1,13 @@
+@page "/Trainer/Client/{id}"
+@model enx_fit.Pages.Trainer.ClientModel
+@{ Layout = "_ProgramsLayout"; ViewData["Title"] = Model.Data.Name; var id = Model.Data.Subject.Id; }
+<a class="program-back" asp-page="/Trainer/Clients">← Мои клиенты</a>
+<header class="page-heading"><div><p class="eyebrow">КЛИЕНТ</p><h1>@Model.Data.Name</h1><p>@Model.Data.Settings.GoalTitle</p></div><a class="button secondary" asp-page="/Programs/Index">Выбрать программу</a></header>
+<nav class="program-tabs" aria-label="Разделы клиента"><a class="active" aria-current="page">Обзор</a><a asp-page="/Dashboard/Workouts" asp-route-ClientId="@id">Тренировки</a><a href="#client-programs">Программы</a><a asp-page="/Dashboard/Progress" asp-route-ClientId="@id">Прогресс и замеры</a><a asp-page="/Dashboard/Habits" asp-route-ClientId="@id">Привычки</a><a asp-page="/Dashboard/Plans" asp-route-ClientId="@id">Заметки и цель</a></nav>
+@if (Model.Attention is { } attention) { <partial name="_CoachAttention" model="attention" /> }
+<section class="panel"><dl class="program-facts"><div><dt>Цель</dt><dd>@Model.Data.Settings.GoalTitle</dd></div><div><dt>Текущий вес</dt><dd>@(Model.Data.Weight is { } kg ? $"{kg:0.##} кг" : "Нет замеров")</dd></div><div><dt>За 4 недели</dt><dd>@(Model.Data.WeightChange is { } delta ? $"{delta:+0.##;-0.##;0} кг" : "Недостаточно замеров")</dd></div><div><dt>Последняя тренировка</dt><dd>@(Model.Data.Completed.OrderByDescending(s => s.Date).FirstOrDefault()?.Date.ToString("dd.MM.yyyy") ?? "Ещё нет")</dd></div></dl></section>
+<section class="panel" id="client-programs"><h2>Программы клиента</h2>
+@if (Model.Programs.Count == 0) { <p class="program-muted">Назначенных программ пока нет. Откройте свою программу и выберите «Назначить клиенту».</p> }
+@foreach (var p in Model.Programs) { var history = Model.Data.Workouts.Where(s => s.TrainingProgramId == p.Id).ToList(); var next = enx_fit.Services.ProgramSchedule.Next(p, history); <div class="program-history"><p><a asp-page="/Programs/Details" asp-route-id="@p.Id"><strong>@p.Name →</strong></a></p><p class="program-muted">Выполнено: @enx_fit.Services.ProgramSchedule.Done(p, history) / @enx_fit.Services.ProgramSchedule.Occurrences(p).Count() · @(next is null ? "Ближайших тренировок нет" : $"Далее: {next.Workout.Name}, {next.Date:dd.MM}")</p></div> }
+</section>
+<section class="panel"><h2>Личные рекорды</h2>@if (!Model.Data.Records.Any()) { <p class="program-muted">Появятся после первых рабочих подходов.</p> } else { <ul class="program-history">@foreach (var record in Model.Data.Records.Take(5)) { <li><strong>@record.Name</strong><span>@record.Weight.ToString("0.##") кг</span></li> }</ul> }</section>

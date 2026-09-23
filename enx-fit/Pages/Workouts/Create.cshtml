@@ -1,40 +1,99 @@
 @page
 @model enx_fit.Pages.Workouts.CreateModel
+@using System.Text.Json
+@using enx_fit.ViewModels
 @{
-    ViewData["Title"] = "Добавить тренировку";
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Конструктор тренировки";
 }
-
-<div class="mb-4">
-    <h1 class="h3 mb-1">Добавить тренировку</h1>
-    <p class="text-muted mb-0">Выберите пользователя и дату, затем добавьте упражнения и подходы.</p>
-</div>
-
-<div class="card">
-    <div class="card-body">
-        <form method="post">
+@section Styles {
+    <link rel="stylesheet" href="~/css/workout-builder.css" asp-append-version="true" />
+}
+<form method="post" id="workout-builder" class="wb" data-viewer="@Model.ViewerId">
+    <input type="hidden" asp-for="BuilderJson" />
+    <nav class="wb-breadcrumb" aria-label="Хлебные крошки"><a asp-page="/Dashboard"><admin-icon name="home" /></a><span>›</span><a asp-page="/Dashboard/Workouts">Тренировки</a><span>›</span><span>Конструктор</span></nav>
+    <header class="wb-header">
+        <a class="wb-back wb-icon" asp-page="/Dashboard/Workouts" aria-label="Вернуться к тренировкам"><admin-icon name="back" /></a>
+        <div><h1>Конструктор тренировки</h1><p>Твоя цель. Твой темп. Твоя следующая сильная тренировка.</p></div>
+        <div class="wb-header-actions">
+            <button type="button" class="wb-button wb-draft" data-save-draft><admin-icon name="book" /><span>Сохранить черновик</span></button>
+            <button type="submit" class="wb-button wb-primary"><admin-icon name="check" /><span class="wb-save-long">Сохранить тренировку</span><span class="wb-save-short">Сохранить</span></button>
+        </div>
+    </header>
+    <div asp-validation-summary="All" class="wb-validation" role="alert"></div>
+    <div class="wb-notice" id="wb-draft-notice" hidden><span>Есть несохранённый черновик на этом устройстве.</span><button type="button" data-restore-draft>Восстановить</button><button type="button" data-discard-draft aria-label="Удалить черновик"><admin-icon name="close" /></button></div>
+    <noscript><p class="wb-validation">Для работы конструктора включите JavaScript в браузере.</p></noscript>
+    <div class="wb-overview">
+        <section class="wb-panel wb-info" aria-labelledby="wb-info-heading">
+            <div class="wb-heading"><h2 id="wb-info-heading">Информация о тренировке</h2><span class="wb-eyebrow">СОЗДАЙ СВОЙ ПЛАН</span></div>
+            <div class="wb-info-grid">
+                <button class="wb-cover" type="button" data-change-cover title="Сменить обложку" aria-label="Сменить обложку тренировки"><img src="~/images/landing/athlete.webp" alt="Атлет в зале" id="wb-cover-image" /><span><admin-icon name="edit" />Обложка</span></button>
+                <div class="wb-fields">
+                    <label class="wb-title-field">Название тренировки<input asp-for="Input.Title" placeholder="Например, Push Day" maxlength="160" autocomplete="off" /><span asp-validation-for="Input.Title"></span></label>
+                    <label>Цель<select id="wb-goal"><option>Набор массы</option><option>Развитие силы</option><option>Выносливость</option><option>Поддержание формы</option></select></label>
+                    <label>Уровень<select id="wb-level"><option value="beginner">Начальный</option><option value="intermediate" selected>Средний</option><option value="advanced">Продвинутый</option></select></label>
+                    <label class="wb-date-field">Дата<input asp-for="Input.Date" type="date" required /><span asp-validation-for="Input.Date"></span></label>
+                    <label>Длительность, мин<div class="wb-input-icon"><admin-icon name="clock" /><input id="wb-duration" type="number" min="5" max="360" value="60" /></div></label>
+                </div>
+            </div>
             @if (Model.IsAdministrator)
             {
-                <div class="mb-3">
-                    <label class="form-label" asp-for="Input.OwnerId"></label>
-                    <select class="form-select" asp-for="Input.OwnerId">
-                        <option value="">Выберите пользователя</option>
-                        @foreach (var user in Model.Users)
-                        {
-                            <option value="@user.Id">@user.DisplayName</option>
-                        }
-                    </select>
-                    <span class="text-danger" asp-validation-for="Input.OwnerId"></span>
-                </div>
+                <label class="wb-owner">Пользователь<select asp-for="Input.OwnerId">@foreach (var user in Model.Users) { <option value="@user.Id">@user.DisplayName</option> }</select><span asp-validation-for="Input.OwnerId"></span></label>
             }
-            <partial name="_WorkoutForm" for="Input" />
-            <div class="d-flex gap-2">
-                <button class="btn btn-primary" type="submit">Создать тренировку</button>
-                <a class="btn btn-outline-secondary" asp-page="./Index">Отмена</a>
+            <div class="wb-muscle-tags" id="wb-muscle-tags"><span>Выбери упражнения — соберём фокус тренировки</span></div>
+        </section>
+        <section class="wb-panel wb-forecast" aria-labelledby="wb-forecast-heading">
+            <div class="wb-heading"><h2 id="wb-forecast-heading">Прогноз по тренировке <span title="Ориентировочные показатели выбранного плана"><admin-icon name="info" /></span></h2><span id="wb-forecast-count">Начни с первого упражнения</span></div>
+            <div class="wb-metrics">
+                <div class="wb-metric"><admin-icon name="workout" /><span>Расчётный объём</span><strong id="wb-volume">0 <small>кг</small></strong><small id="wb-volume-change">Вес × повторения</small></div>
+                <div class="wb-metric wb-focus-metric"><admin-icon name="target" /><span>Фокус мышц</span><strong id="wb-focus">Твой выбор</strong><small>Баланс начинается с плана</small></div>
+                <div class="wb-metric wb-calories"><admin-icon name="flame" /><span>Примерные калории</span><strong id="wb-calories">— <small>ккал</small></strong><small id="wb-calories-note">Добавь упражнения</small></div>
+                <div class="wb-metric"><admin-icon name="bars" /><span>Объём нагрузки</span><strong id="wb-difficulty">—<small>/10</small></strong><div class="wb-meter"><i id="wb-difficulty-meter"></i></div><small id="wb-difficulty-note">Оценка по числу подходов</small></div>
             </div>
-        </form>
+        </section>
     </div>
-</div>
-
+    <div class="wb-workspace">
+        <section class="wb-panel wb-structure" aria-labelledby="wb-structure-heading">
+            <div class="wb-heading"><h2 id="wb-structure-heading">Структура</h2><button class="wb-button wb-small" type="button" data-add-block><admin-icon name="plus" />Добавить блок</button></div>
+            <p class="wb-hint">Раздели тренировку на этапы. Перетаскивай упражнения между блоками.</p>
+            <div id="wb-blocks"></div>
+            <div class="wb-structure-footer"><admin-icon name="info" /><span>Хороший план начинается с разминки и заканчивается восстановлением.</span></div>
+        </section>
+        <section class="wb-panel wb-editor" aria-labelledby="wb-exercises-heading">
+            <div class="wb-heading"><h2 id="wb-exercises-heading">Упражнения <span class="wb-desktop-word">в тренировке</span></h2><span class="wb-count" id="wb-exercise-count">0 упражнений</span><button class="wb-icon" type="button" data-reorder aria-label="Изменить порядок упражнений" title="Изменить порядок"><admin-icon name="menu" /></button></div>
+            <div class="wb-mobile-summary" id="wb-mobile-summary"></div>
+            <div id="wb-exercises"></div>
+            <button class="wb-add-exercise" type="button" data-open-library><admin-icon name="plus" />Добавить упражнение</button>
+        </section>
+        <section class="wb-panel wb-library" id="wb-library" aria-labelledby="wb-library-heading">
+            <div class="wb-heading"><h2 id="wb-library-heading">Библиотека упражнений</h2><span class="wb-count" id="wb-library-count"></span><button type="button" class="wb-icon wb-library-close" data-close-library aria-label="Закрыть библиотеку"><admin-icon name="close" /></button></div>
+            <div class="wb-tabs" role="group" aria-label="Раздел библиотеки"><button type="button" data-library-tab="all" class="active" aria-pressed="true">Все</button><button type="button" data-library-tab="favorites" aria-pressed="false">Избранные</button><button type="button" data-library-tab="recent" aria-pressed="false">Недавние</button></div>
+            <label class="wb-search"><admin-icon name="search" /><input type="search" id="wb-search" placeholder="Поиск упражнений…" aria-label="Поиск упражнений" autocomplete="off" /></label>
+            <div class="wb-filters" id="wb-filters" role="group" aria-label="Группа мышц"></div>
+            <label class="wb-library-target">Добавлять в<select id="wb-library-target"></select></label>
+            <div id="wb-library-list" class="wb-library-list"></div>
+            <button class="wb-block-add" type="button" data-add-block><admin-icon name="plus" />Создать блок / суперсет</button>
+            <p class="wb-library-caption"><admin-icon name="book" />Твой следующий шаг к прогрессу</p>
+        </section>
+    </div>
+    <div class="wb-insights">
+        <section class="wb-panel wb-comparison" aria-labelledby="wb-comparison-heading"><div class="wb-heading"><h2 id="wb-comparison-heading">Что изменилось <span>с прошлой тренировкой?</span></h2><admin-icon name="trend" /></div><div id="wb-comparison"></div></section>
+        <section class="wb-panel wb-records" aria-labelledby="wb-records-heading"><div class="wb-heading"><h2 id="wb-records-heading"><admin-icon name="trophy" />Личные рекорды</h2><a asp-page="/Dashboard/Achievements">Смотреть все <admin-icon name="arrow" /></a></div><div id="wb-records"></div></section>
+    </div>
+    <div class="wb-bottom">
+        <section class="wb-panel wb-settings" aria-labelledby="wb-settings-heading">
+            <h2 id="wb-settings-heading">Настройки тренировки</h2>
+            <label class="wb-switch-row"><admin-icon name="clock" /><span><strong>Автоподсчёт времени</strong><small>Учитывать подходы и время отдыха</small></span><input id="wb-auto-duration" type="checkbox" checked role="switch" /><i></i></label>
+            <label class="wb-switch-row"><admin-icon name="trophy" /><span><strong>Учитывать личные рекорды</strong><small>Сравнивать план с историей тренировок</small></span><input id="wb-show-records" type="checkbox" checked role="switch" /><i></i></label>
+            <details class="wb-notes"><summary><admin-icon name="edit" />Заметки к тренировке</summary><textarea asp-for="Input.Notes" rows="3" maxlength="1000" placeholder="На что обратить внимание сегодня?"></textarea><span asp-validation-for="Input.Notes"></span></details>
+        </section>
+        <section class="wb-panel wb-tip"><div class="wb-tip-icon"><admin-icon name="spark" /></div><div><div class="wb-heading"><h2>Маленькие шаги. Большой прогресс.</h2><span class="wb-pill">ENIX FIT</span></div><p id="wb-tip">Собери тренировку под себя: начни с основных движений, добавь вспомогательные упражнения и оставь время на восстановление.</p><span class="wb-tip-footnote">Плановые подходы попадут в статистику после записи фактических результатов.</span></div></section>
+    </div>
+    <footer class="wb-footer"><span id="wb-save-status"><admin-icon name="shield" />Твой план, готовый к следующему шагу</span><button type="button" class="wb-button wb-mobile-draft" data-save-draft><admin-icon name="book" />Черновик</button><button type="submit" class="wb-button wb-primary"><admin-icon name="check" />Сохранить тренировку</button></footer>
+    <div id="wb-live" class="wb-toast" role="status" aria-live="polite" hidden></div>
+</form>
+<dialog id="wb-block-dialog" class="wb-dialog"><form id="wb-block-form"><div class="wb-heading"><h2>Новый блок</h2><button type="button" class="wb-icon" data-close-block aria-label="Закрыть"><admin-icon name="close" /></button></div><label>Название<input id="wb-block-name" maxlength="60" required placeholder="Например, Силовой блок" /></label><label>Тип блока<select id="wb-block-kind"><option value="strength">Силовой блок</option><option value="warmup">Разминка</option><option value="superset">Суперсет</option><option value="cooldown">Заминка</option></select></label><button type="submit" class="wb-button wb-primary">Добавить блок</button></form></dialog>
+<script id="wb-data" type="application/json">@Html.Raw(JsonSerializer.Serialize(Model.BuilderData, WorkoutBuilderInput.JsonOptions))</script>
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/workout-builder.js" asp-append-version="true"></script>
 }

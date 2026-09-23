@@ -1,0 +1,39 @@
+@model enx_fit.Pages.DashboardModel
+@{ var d = Model.Data; var coach = Model.IsCoachView; }
+@if (Model.StatusMessage is not null) { <div class="status-message" role="status">
+<admin-icon name="check" />@Model.StatusMessage</div> }
+<div asp-validation-summary="All" class="validation-message" role="alert">
+</div>
+@if (coach)
+{
+    <div class="coach-context">
+<a asp-page="/Trainer/Clients">
+<admin-icon name="back" />
+<span>Мои клиенты</span>
+</a>
+<span class="context-divider">
+</span>
+<span class="coach-badge">
+<admin-icon name="shield" />Режим тренера</span>
+<form method="get">
+<label class="sr-only" for="client-switch">Выбрать клиента</label>
+<input type="hidden" name="Days" value="@Model.Days" /><input type="hidden" name="Until" value="@Model.Until?.ToString("yyyy-MM-dd")" />
+<select id="client-switch" name="ClientId" data-submit-change>@if (!Model.Clients.Any(c => c.Id == d.Subject.Id)) { <option value="@d.Subject.Id">@d.Name</option> }@foreach (var client in Model.Clients) { <option value="@client.Id" selected="@(client.Id == d.Subject.Id)">@client.Name</option> }</select><noscript>
+<button class="button">Открыть</button>
+</noscript>
+</form>
+<a class="own-dashboard" asp-page="@Model.CurrentPage" asp-route-Days="@Model.Days" asp-route-Until="@Model.Until?.ToString("yyyy-MM-dd")">Моя статистика <admin-icon name="arrow" />
+</a>
+</div>
+}
+else if (Model.IsTrainer)
+{
+    <div class="trainer-banner">
+<span>
+<admin-icon name="users" />Ваша команда <strong>@Model.Clients.Count</strong>
+</span>
+<a asp-page="/Trainer/Clients">Перейти к клиентам <admin-icon name="arrow" />
+</a>
+</div>
+}
+

@@ -1,0 +1,16 @@
+@model enx_fit.Pages.DashboardModel
+@using System.Globalization
+@{ var d = Model.Data; var ru = CultureInfo.GetCultureInfo("ru-RU"); }
+<div class="period-toolbar">
+<p>
+<admin-icon name="calendar" />
+<span>@d.Since.ToString("d MMM", ru) — @d.Until.ToString("d MMM yyyy", ru)</span>
+</p>
+<form method="get" class="period-form">
+<input type="hidden" name="ClientId" value="@Model.ClientId" />
+<label class="sr-only" for="until-date">Конец периода</label>
+<input id="until-date" type="date" name="Until" value="@d.Until.ToString("yyyy-MM-dd")" max="@d.Today.ToString("yyyy-MM-dd")" min="@d.Today.AddYears(-20).ToString("yyyy-MM-dd")" data-submit-change />
+<div class="segmented">@foreach (var period in new[] { (7, "Неделя"), (30, "Месяц"), (365, "Год") }) { <button type="submit" name="Days" value="@period.Item1" class="@(Model.Days == period.Item1 ? "selected" : "")" aria-pressed="@(Model.Days == period.Item1 ? "true" : "false")">@period.Item2</button> }</div>
+<input type="hidden" name="Days" value="@Model.Days" data-default-period />
+</form>
+</div>

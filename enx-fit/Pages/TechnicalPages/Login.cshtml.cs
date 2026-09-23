@@ -145,7 +145,7 @@ public class LoginModel(
     private async Task PrepareAsync(bool register, string? returnUrl)
     {
         IsRegister = register;
-        ReturnUrl = Url.IsLocalUrl(returnUrl) ? returnUrl! : Url.Content("~/");
+        ReturnUrl = Url.IsLocalUrl(returnUrl) ? returnUrl! : Url.Content("~/Dashboard");
         ExternalLogins = (await signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
     }
 

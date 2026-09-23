@@ -10,4 +10,8 @@ public class ApplicationUser : IdentityUser
     public ApplicationUser(string userName) : base(userName) { }
 
     public UserRole Role { get; set; } = UserRole.User;
+    public SubscriptionPlan SubscriptionPlan { get; set; } = SubscriptionPlan.Free;
+
+    public string? TrainerId { get; set; }
+    public ApplicationUser? Trainer { get; set; }
 }

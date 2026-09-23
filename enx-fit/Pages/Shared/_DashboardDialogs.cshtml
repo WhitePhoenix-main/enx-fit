@@ -1,0 +1,110 @@
+@model enx_fit.Pages.DashboardModel
+@using System.Globalization
+@using enx_fit.Services
+@{
+    var d = Model.Data;
+    var coach = Model.IsCoachView;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string N(decimal value) => value.ToString("N0", ru);
+    var next = d.NextWorkout;
+}
+<dialog id="goal-dialog" class="app-dialog">
+<div class="dialog-heading">
+<h2>@(coach ? "Цель и рекомендации клиента" : "Моя цель")</h2>
+<button class="icon-button" data-close aria-label="Закрыть">
+<admin-icon name="close" />
+</button>
+</div>
+<form method="post" asp-page-handler="Goal" class="dashboard-form">
+<input type="hidden" asp-for="ClientId" />
+<input type="hidden" asp-for="Days" />
+<input type="hidden" asp-for="Until" />
+<label asp-for="Goal.Title">Текущая цель</label>
+<input asp-for="Goal.Title" maxlength="120" required />
+<label asp-for="Goal.WeeklyWorkouts">Тренировок в неделю</label>
+<input asp-for="Goal.WeeklyWorkouts" type="number" min="1" max="14" required />
+<p class="field-help">Прогресс рассчитывается по тренировкам с записанными рабочими подходами, с понедельника по воскресенье.</p>@if (coach) { <label asp-for="Goal.TrainerNote">Рекомендация для клиента</label>
+<textarea asp-for="Goal.TrainerNote" rows="4" maxlength="1000" placeholder="На что обратить внимание на этой неделе">
+</textarea> }<button class="button full" type="submit">
+<admin-icon name="check" />Сохранить цель</button>
+</form>
+</dialog>
+@if (!coach)
+{
+<dialog id="checkin-dialog" class="app-dialog">
+<div class="dialog-heading">
+<h2>Показатели на сегодня</h2>
+<button class="icon-button" data-close aria-label="Закрыть">
+<admin-icon name="close" />
+</button>
+</div>
+<form method="post" asp-page-handler="CheckIn" class="dashboard-form">
+<input type="hidden" asp-for="Days" />
+<input type="hidden" asp-for="Until" />
+<div class="form-grid">
+<div>
+<label asp-for="CheckIn.WaterMl">Вода, мл</label>
+<input asp-for="CheckIn.WaterMl" type="number" min="0" max="15000" step="50" required />
+</div>
+<div>
+<label asp-for="CheckIn.Steps">Шаги</label>
+<input asp-for="CheckIn.Steps" type="number" min="0" max="100000" required />
+</div>
+</div>
+<label asp-for="CheckIn.SleepMinutes">Продолжительность сна, минут</label>
+<input asp-for="CheckIn.SleepMinutes" type="number" min="0" max="1440" required />
+<small class="field-help">Например, 450 минут — это 7 часов 30 минут.</small>
+<label class="checkbox-label">
+<input asp-for="CheckIn.NutritionLogged" />Заполнил дневник питания</label>
+<label class="checkbox-label">
+<input asp-for="CheckIn.StretchingDone" />Сделал растяжку 10 минут</label>
+<button class="button full" type="submit">
+<admin-icon name="check" />Сохранить показатели</button>
+</form>
+</dialog>
+}
+<dialog id="records-dialog" class="app-dialog">
+<div class="dialog-heading">
+<h2>Силовые рекорды</h2>
+<button class="icon-button" data-close aria-label="Закрыть">
+<admin-icon name="close" />
+</button>
+</div>
+<p class="field-help">Максимальный вес рабочего подхода за всё время. Разминочные подходы не учитываются.</p>@foreach (var record in d.Records) { <div class="record-row">
+<admin-icon name="workout" />
+<span>@record.Name</span>
+<strong>@N(record.Weight) кг</strong>
+</div> }@if (!d.Records.Any()) { <p class="card-empty">Пока нет рабочих подходов с весом.</p> }</dialog>
+<dialog id="workouts-dialog" class="app-dialog wide-dialog">
+<div class="dialog-heading">
+<h2>История тренировок</h2>
+<button class="icon-button" data-close aria-label="Закрыть">
+<admin-icon name="close" />
+</button>
+</div>
+<p class="field-help">@d.Since.ToString("d MMMM", ru) — @d.Until.ToString("d MMMM yyyy", ru)</p>@foreach (var w in d.PeriodWorkouts) { <button class="history-row" data-dialog="workout-@w.Id">
+<span class="icon-tile">
+<admin-icon name="workout" />
+</span>
+<span>
+<strong>@(w.Title ?? "Тренировка")</strong>
+<small>@w.Date.ToString("d MMM", ru) · @N(DashboardData.Volume(w)) кг</small>
+</span>
+<admin-icon name="chevron" />
+</button> }@if (!d.PeriodWorkouts.Any()) { <p class="card-empty">В этом периоде тренировок пока нет.</p> }</dialog>
+@foreach (var w in d.PeriodWorkouts.Concat(next is null ? [] : new[] { next }).DistinctBy(w => w.Id))
+{
+    <dialog id="workout-@w.Id" class="app-dialog wide-dialog">
+<div class="dialog-heading">
+<h2>@(w.Title ?? "Тренировка")</h2>
+<button class="icon-button" data-close aria-label="Закрыть">
+<admin-icon name="close" />
+</button>
+</div>
+<p class="field-help">@w.Date.ToString("d MMMM yyyy", ru) · Объём @N(DashboardData.Volume(w)) кг</p>@foreach (var exercise in w.WorkoutExercises.OrderBy(e => e.Order)) { <div class="exercise-detail">
+<h3>@exercise.Exercise.Name</h3>@foreach (var set in exercise.SetEntries.OrderBy(s => s.SetNumber)) { <p>
+<span>Подход @set.SetNumber @(set.IsWarmup ? "· разминка" : "")</span>
+<strong>@N(set.Weight) кг × @set.Reps</strong>
+</p> }@if (exercise.SetEntries.Count == 0) { <p class="muted">Подходы ещё не записаны</p> }</div> }@if (!string.IsNullOrWhiteSpace(w.Notes)) { <p class="workout-notes">@w.Notes</p> }@if (!coach) { <a class="button full" asp-page="/Workouts/Details" asp-route-id="@w.Id">Открыть тренировку <admin-icon name="arrow" />
+</a> }</dialog>
+}

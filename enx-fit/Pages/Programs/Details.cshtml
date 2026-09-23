@@ -1,0 +1,93 @@
+@page "/Programs/{id:int}"
+@model DetailsModel
+@{ ViewData["Title"] = Model.PageError is null ? Model.Item.Name : "Программа недоступна"; }
+@if (Model.PageError is not null) { <partial name="_ProgramError" model="Model.PageError" /> }
+else
+{
+    var p = Model.Item;
+    <a class="program-back" asp-page="Index">← Программы</a>
+    <header class="page-heading"><div><p class="eyebrow">@p.Goal</p><h1>@p.Name</h1><p>@p.Weeks недель · @p.DaysPerWeek дня в неделю · @ProgramSchedule.LevelName(p.Level)</p></div>
+        <div class="program-actions">
+        @if (!p.IsArchived && Model.IsOwner)
+        {
+            @if (!p.StartDate.HasValue) { <form method="post" asp-page-handler="Activate" data-busy><button class="button primary">Начать программу <admin-icon name="arrow" /></button></form> }
+            else if (Model.Next is not null) { <form method="post" asp-page-handler="Start" data-busy><button class="button primary">@(Model.Sessions.Any(s => s.CompletedAtUtc is null) ? "Продолжить тренировку" : "Начать следующую тренировку") <admin-icon name="arrow" /></button></form> }
+        }
+        <details class="program-menu"><summary class="icon-button" aria-label="Действия с программой">⋯</summary><div class="program-menu-items">
+            @if (!p.IsArchived) { <a asp-page="Edit" asp-route-id="@p.Id">Редактировать</a> }
+            <form method="post" asp-page-handler="Duplicate"><button>Дублировать</button></form>
+            @if (Model.Access.IsCoach && !p.IsArchived) { <a asp-page="Assign" asp-route-id="@p.Id">Назначить клиенту</a> }
+            <form method="post" asp-page-handler="Archive" asp-route-restore="@p.IsArchived"><button>@(p.IsArchived ? "Восстановить" : "Архивировать")</button></form>
+        </div></details></div>
+    </header>
+    @if (p.IsArchived) { <div class="program-notice">Программа в архиве. Восстановите её через меню, чтобы продолжить занятия.</div> }
+    @if (p.StartDate.HasValue) { <div class="program-top-progress"><span>Неделя @ProgramSchedule.CurrentWeek(p) из @p.Weeks</span><progress max="100" value="@Model.Percent" aria-label="Выполнение программы">@Model.Percent%</progress><strong>@Model.Percent%</strong></div> }
+    <nav class="program-tabs" aria-label="Разделы программы">
+        @foreach (var tab in new[] { ("overview", "Обзор"), ("schedule", "Расписание"), ("workouts", "Тренировки"), ("progression", "Прогрессия") })
+        { <a asp-route-id="@p.Id" asp-route-Tab="@tab.Item1" class="@(Model.Tab == tab.Item1 ? "active" : "")" aria-current="@(Model.Tab == tab.Item1 ? "page" : null)">@tab.Item2</a> }
+        @if (Model.Access.IsCoach) { <a asp-route-id="@p.Id" asp-route-Tab="clients" class="@(Model.Tab == "clients" ? "active" : "")" aria-current="@(Model.Tab == "clients" ? "page" : null)">Клиенты</a> }
+    </nav>
+    <div asp-validation-summary="All" class="program-notice error" role="alert"></div>
+    @if (Model.ShowUpgrade) { <partial name="_UpgradePrompt" model="@(-1)" /> }
+    @if (Model.Tab == "overview")
+    {
+        <section class="panel program-overview">
+            <dl class="program-facts"><div><dt>Цель</dt><dd>@p.Goal</dd></div><div><dt>Длительность</dt><dd>@p.Weeks недель</dd></div><div><dt>Частота</dt><dd>@p.DaysPerWeek раза / неделю</dd></div><div><dt>Текущая неделя</dt><dd>@(p.StartDate.HasValue ? $"{ProgramSchedule.CurrentWeek(p)} / {p.Weeks}" : "До старта")</dd></div><div><dt>Среднее время</dt><dd>@(p.Workouts.Count > 0 ? $"≈ {p.Workouts.Average(w => w.EstimatedMinutes):0} минут" : "—")</dd></div></dl>
+            @if (!string.IsNullOrWhiteSpace(p.Description)) { <p class="program-description">@p.Description</p> }
+            <div class="program-section-heading"><h2>Структура программы</h2><span class="program-muted">@p.Weeks недель</span></div>
+            @if (p.Blocks.Count == 0) { <p class="program-muted">Единый цикл: повторяйте недельное расписание на протяжении @p.Weeks недель. Блоки периодизации появятся здесь, когда они будут добавлены в программу.</p> }
+            else { <ol class="program-blocks">@foreach (var block in p.Blocks.OrderBy(b => b.StartWeek)) { <li><small>Недели @block.StartWeek–@block.EndWeek</small><strong>@block.Name</strong></li> }</ol> }
+        </section>
+        <div class="program-overview-bottom">
+            <section class="panel program-next"><p class="eyebrow">СЛЕДУЮЩАЯ ТРЕНИРОВКА</p>
+            @if (Model.Next is { } next)
+            { <h2>@next.Workout.Name</h2><p>@next.Workout.Exercises.Count упражнений · ≈ @next.Workout.EstimatedMinutes мин · @next.Date.ToString("dd.MM.yyyy")</p>@if (!p.IsArchived && Model.IsOwner) { <form method="post" asp-page-handler="Start" data-busy><button class="button primary">Начать тренировку <admin-icon name="arrow" /></button></form> } }
+            else { <h2>@(p.StartDate.HasValue && Model.Total > 0 ? "Расписание цикла завершено" : "Ваш следующий шаг")</h2><p>@(p.StartDate.HasValue && Model.Total > 0 ? "Ближайших тренировок больше нет. Проверьте историю выполнения или начните новый цикл через копию программы." : "Добавьте тренировки, заполните расписание и начните программу.")</p><a class="button secondary" asp-route-id="@p.Id" asp-route-Tab="workouts">К тренировкам</a> }
+            </section>
+            <section class="panel program-completion"><h2>Выполнение</h2><strong>@Model.Done <small>из @Model.Total тренировок</small></strong><progress max="100" value="@Model.Percent" aria-label="Выполнение">@Model.Percent%</progress><p>@Model.Percent% программы выполнено</p><small>Учитываются завершённые тренировки этого цикла.</small></section>
+        </div>
+    }
+    else if (Model.Tab == "schedule")
+    {
+        <section class="panel"><div class="program-section-heading"><div><h2>Ваша неделя</h2><p class="program-muted">Расписание повторяется каждую неделю программы.</p></div>@if (!p.IsArchived) { <a class="button secondary" asp-page="Edit" asp-route-id="@p.Id" asp-fragment="week-structure">Изменить дни</a> }</div>
+        <div class="program-week" data-program-schedule>
+        @for (var day = 1; day <= 7; day++)
+        { var workout = p.Workouts.FirstOrDefault(w => w.DayOfWeek == day);
+            <div class="program-day @(workout is null ? "rest-day" : "")" data-day="@day" data-workout-key="@workout?.Key"><span>@ProgramSchedule.DayNames[day - 1]</span>
+            @if (workout is null) { <strong>Отдых</strong><small>Восстановление</small> } else { <a asp-route-id="@p.Id" asp-route-Tab="workouts" asp-fragment="workout-@workout.Id"><strong>@workout.Name</strong><small>@workout.Exercises.Count упражнений · @workout.EstimatedMinutes мин</small><admin-icon name="arrow" /></a> }</div>
+        }</div>
+        @if (p.Workouts.Any(w => !w.DayOfWeek.HasValue)) { <p class="program-notice">Есть тренировки без выбранного дня. Укажите дни в редакторе программы.</p> }
+        </section>
+    }
+    else if (Model.Tab == "workouts")
+    {
+        <div class="program-section-heading"><div><h2>Тренировки программы</h2><p class="program-muted">Плановые подходы и нагрузка. Выполненные подходы сохраняются в дневнике.</p></div>@if (!p.IsArchived) { <a class="button secondary" asp-page="Edit" asp-route-id="@p.Id" asp-fragment="workout-editor"><admin-icon name="plus" />Создать тренировку</a> }</div>
+        @if (p.Workouts.Count == 0) { <section class="panel empty-state"><h2>Добавьте первую тренировку</h2><p>Соберите упражнения и задайте подходы и повторения в редакторе программы.</p></section> }
+        @foreach (var workout in p.Workouts.OrderBy(w => w.Order))
+        {
+            <details class="panel program-workout" id="workout-@workout.Id"><summary><div><h2>@workout.Name</h2><span>@workout.Exercises.Count упражнений · ≈ @workout.EstimatedMinutes мин</span></div><admin-icon name="chevron" /></summary>
+                <div class="program-exercise-list">@foreach (var e in workout.Exercises.OrderBy(e => e.Order)) { <div><strong>@e.Exercise.Name</strong><span>@e.Prescription.Summary</span><small>@(e.Prescription.WeightKg is { } kg ? $"{kg} кг · " : "")@(e.Prescription.Rir is { } rir ? $"RIR {rir}" : "") @(e.Prescription.Rpe is { } rpe ? $"RPE {rpe}" : "") @(e.Prescription.PercentOneRepMax is { } percent ? $"{percent}% 1ПМ" : "")</small>@if (e.Prescription.RestSeconds.HasValue || !string.IsNullOrWhiteSpace(e.Prescription.Comment)) { <p class="program-exercise-note">@(e.Prescription.RestSeconds is { } rest ? $"Отдых {rest} с. " : "")@e.Prescription.Comment</p> }</div> }</div>
+                @if (!p.IsArchived) { <div class="program-actions program-workout-footer"><a class="button secondary" asp-page="Edit" asp-route-id="@p.Id" asp-fragment="workout-editor">Редактировать тренировку</a><a class="text-button" asp-page="Edit" asp-route-id="@p.Id" asp-fragment="workout-editor">Добавить упражнение / изменить порядок / дублировать</a></div> }
+            </details>
+        }
+    }
+    else if (Model.Tab == "progression")
+    { <partial name="_Progression" model="Model" /> }
+    else if (Model.Tab == "clients")
+    {
+        <div class="program-section-heading"><div><h2>Клиенты программы</h2><p class="program-muted">Каждому клиенту назначается самостоятельная копия.</p></div>@if (!p.IsArchived) { <a class="button primary" asp-page="Assign" asp-route-id="@p.Id"><admin-icon name="plus" />Назначить клиенту</a> }</div>
+        @if (!Model.Access.CanUse(Feature.CoachProgramAssignment)) { <section class="panel empty-state"><h2>Назначения доступны в Coach</h2><p>Планируйте занятия клиентов и следите за выполнением программы.</p><a class="button secondary" asp-page="/Subscription">Посмотреть Coach</a></section> }
+        else if (Model.Clients.Count == 0) { <section class="panel empty-state"><admin-icon name="users" /><h2>Эта программа пока никому не назначена.</h2><p>Выберите клиента и дату начала, чтобы подготовить его программу.</p>@if (!p.IsArchived) { <a class="button secondary" asp-page="Assign" asp-route-id="@p.Id">Назначить клиенту</a> }</section> }
+        else
+        { <div class="panel program-client-table"><div class="program-client-head"><span>Клиент</span><span>Неделя</span><span>Выполнено</span><span>Последняя тренировка</span><span>Статус</span></div>
+            @foreach (var client in Model.Clients) { <a class="program-client-row" asp-page="/Trainer/Client" asp-route-id="@client.Program.OwnerId"><strong>@client.Name</strong><span data-label="Неделя">@ProgramSchedule.CurrentWeek(client.Program) / @client.Program.Weeks</span><span data-label="Выполнено">@client.Percent%</span><span data-label="Последняя тренировка">@(client.Last?.ToString("dd.MM.yyyy") ?? "Ещё нет")</span><span class="program-client-status" data-label="Статус">@client.Status</span></a> }
+        </div> }
+    }
+    @if (Model.Tab == "overview")
+    {
+        <section class="panel"><h2>История выполнения</h2>
+        @if (Model.Sessions.Count == 0) { <p class="program-muted">Начните первую тренировку — здесь появятся ваши занятия и результаты.</p> }
+        else { <ul class="program-history">@foreach (var session in Model.Sessions.OrderByDescending(s => s.Date)) { <li><span>@session.Date.ToString("dd.MM.yyyy") · @session.Title</span><span>@(session.CompletedAtUtc.HasValue ? "Завершена" : "В процессе") · @session.WorkoutExercises.Sum(e => e.SetEntries.Count(s => !s.IsWarmup)) рабочих подходов</span>@if (Model.IsOwner || User.HasMinimumRole(UserRole.Administrator)) { <a asp-page="/Workouts/Details" asp-route-id="@session.Id">Открыть →</a> }</li> }</ul> }
+        </section>
+    }
+}
