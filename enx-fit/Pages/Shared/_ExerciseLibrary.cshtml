@@ -1,0 +1,69 @@
+@model enx_fit.ViewModels.ExerciseLibraryModel
+@{
+    var selected = Model.SelectedIds.ToHashSet();
+    var recent = Model.RecentIds.ToHashSet();
+    var groups = Model.Exercises.Select(e => e.MuscleGroup).Distinct().OrderBy(g => g);
+}
+<section id="@Model.Id" class="exercise-library @(Model.ForBuilder ? "wb-panel wb-library" : "")"
+         data-exercise-library data-viewer="@Model.ViewerId" data-mode="@(Model.ForBuilder ? "builder" : "submit")"
+         aria-labelledby="@(Model.Id)-heading">
+    <header class="exercise-library-heading">
+        <h2 id="@(Model.Id)-heading">Библиотека упражнений</h2>
+        <span id="@(Model.ForBuilder ? "wb-library-count" : null)" data-library-count aria-live="polite">@Model.Exercises.Count</span>
+        @if (Model.ForBuilder)
+        {
+            <button type="button" class="exercise-library-action wb-library-close" data-close-library aria-label="Закрыть библиотеку"><admin-icon name="close" /></button>
+        }
+    </header>
+    <div class="exercise-library-tabs" role="group" aria-label="Раздел библиотеки">
+        <button type="button" data-library-tab="all" aria-pressed="true">Все</button>
+        <button type="button" data-library-tab="favorites" aria-pressed="false">Избранные</button>
+        <button type="button" data-library-tab="recent" aria-pressed="false">Недавние</button>
+    </div>
+    <label class="exercise-library-search">
+        <admin-icon name="search" />
+        <input type="search" id="@(Model.ForBuilder ? "wb-search" : Model.Id + "-search")" data-library-search
+               placeholder="Название, мышцы или оборудование…" aria-label="Поиск упражнений" autocomplete="off" />
+    </label>
+    <label class="exercise-library-group">
+        Группа мышц
+        <select data-library-group aria-label="Группа мышц">
+            <option value="">Все группы</option>
+            @foreach (var group in groups)
+            {
+                <option value="@group">@group</option>
+            }
+        </select>
+    </label>
+    @if (Model.ForBuilder)
+    {
+        <label class="wb-library-target">Добавлять в<select id="wb-library-target"></select></label>
+    }
+    <div class="exercise-library-list" data-library-list>
+        @foreach (var exercise in Model.Exercises)
+        {
+            var name = ExercisePresentation.DisplayName(exercise);
+            var isSelected = selected.Contains(exercise.Id);
+            <article class="exercise-library-item" data-exercise-id="@exercise.Id" data-name="@name" data-group="@exercise.MuscleGroup"
+                     data-search="@name @exercise.Name @exercise.MuscleGroup @exercise.Equipment" data-recent="@(recent.Contains(exercise.Id) ? "true" : "false")">
+                <span class="exercise-library-icon" data-library-icon aria-hidden="true"><admin-icon name="@ExercisePresentation.MuscleIcon(exercise.MuscleGroup)" /></span>
+                <div class="exercise-library-copy"><strong>@name</strong><small>@exercise.MuscleGroup · @exercise.Equipment</small></div>
+                <a class="exercise-library-action" asp-page="/Exercises/Details" asp-route-id="@exercise.Id" target="_blank" rel="noopener"
+                   aria-label="Оборудование и описание: @name (новая вкладка)" title="Оборудование и описание"><admin-icon name="info" /></a>
+                <button type="button" class="exercise-library-action" data-library-favorite aria-pressed="false" aria-label="В избранное: @name"><admin-icon name="star" /></button>
+                <button type="@(Model.ForBuilder ? "button" : "submit")" class="exercise-library-action exercise-library-add" data-library-add
+                        name="AddExercise.ExerciseId" value="@exercise.Id" disabled="@(isSelected ? "disabled" : null)" aria-label="@(isSelected ? "Добавлено" : "Добавить"): @name"
+                        title="@(isSelected ? "Уже в тренировке" : "Добавить упражнение")">
+                    <span data-add-icon hidden="@(isSelected ? "hidden" : null)"><admin-icon name="plus" /></span>
+                    <span data-selected-icon hidden="@(!isSelected ? "hidden" : null)"><admin-icon name="check" /></span>
+                </button>
+            </article>
+        }
+    </div>
+    <p class="exercise-library-empty" data-library-empty hidden="@(Model.Exercises.Count > 0)">Упражнений не найдено. Измените группу или поисковый запрос.</p>
+    <p class="exercise-library-status" data-library-status role="status" hidden></p>
+    @if (Model.ForBuilder)
+    {
+        <button class="wb-block-add" type="button" data-add-block><admin-icon name="plus" />Создать блок / суперсет</button>
+    }
+</section>

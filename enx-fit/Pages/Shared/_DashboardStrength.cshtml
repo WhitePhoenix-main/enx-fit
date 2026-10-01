@@ -1,0 +1,39 @@
+@model enx_fit.Pages.DashboardModel
+@using System.Globalization
+@using enx_fit.Extensions
+@{
+    var series = Model.Data.StrengthFor(Model.NextGoalExercise?.ExerciseId) ?? Model.Data.Strength;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    var weeks = Model.ChartWeeks;
+    var start = Model.Data.Until.AddDays(1 - weeks * 7);
+    var points = series?.Points.Where(p => p.Date >= start).ToList() ?? [];
+    string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+    var minimum = points.Count == 0 ? 0 : Math.Max(0, Math.Floor((points.Min(p => p.Weight) - 10) / 10) * 10);
+    var maximum = points.Count == 0 ? 30 : Math.Max(minimum + 30, Math.Ceiling((points.Max(p => p.Weight) + 5) / 10) * 10);
+    var chartStart = points.Count > 1 ? points[0].Date : start;
+    var chartEnd = points.Count > 1 ? points[^1].Date : Model.Data.Until;
+    var chartDays = Math.Max(1, chartEnd.DayNumber - chartStart.DayNumber);
+    var tickCount = Math.Min(6, chartDays + 1);
+    double X(DateOnly date) => 60 + (date.DayNumber - chartStart.DayNumber) * 505d / chartDays;
+    double Y(decimal weight) => 110 - (double)((weight - minimum) / (maximum - minimum)) * 100;
+    var path = string.Join(" ", points.Select(p => $"{F(X(p.Date))},{F(Y(p.Weight))}"));
+}
+<section class="panel strength-card">
+    <div class="card-heading"><h2><admin-icon name="bars" /><span>@(series is null ? "Рабочий вес" : ExercisePresentation.DisplayName(series.Exercise))<span class="strength-heading-note"> · рабочий вес, кг</span></span></h2><details class="chart-period"><summary>@weeks @(weeks == 2 || weeks == 4 ? "недели" : "недель") <admin-icon name="chevron" /></summary><div>@foreach (var period in new[] { 2, 4, 6 }) { <a asp-page="/Dashboard" asp-route-ClientId="@Model.ClientId" asp-route-ChartWeeks="@period" asp-route-Until="@Model.Until?.ToString("yyyy-MM-dd")">@period @(period == 6 ? "недель" : "недели")</a> }</div></details></div>
+    @if (series is not null && points.Count > 0)
+    {
+        <svg class="strength-chart" viewBox="0 0 610 145" preserveAspectRatio="none" role="img" aria-label="@ExercisePresentation.DisplayName(series.Exercise): рабочий вес за @weeks недель">
+            <defs><linearGradient id="strength-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4b72ff" stop-opacity=".17" /><stop offset="100%" stop-color="#4b72ff" stop-opacity="0" /></linearGradient></defs>
+            @for (var i = 0; i < 4; i++) { var value = minimum + (maximum - minimum) * i / 3; <g><line x1="26" y1="@F(Y(value))" x2="607" y2="@F(Y(value))" /><text x="0" y="@F(Y(value) + 4)">@value.ToString("0.#", ru)</text></g> }
+            <line x1="26" y1="10" x2="26" y2="110" /><line x1="607" y1="10" x2="607" y2="110" />
+            @for (var i = 0; i < tickCount; i++) { var date = chartStart.AddDays((int)Math.Round(chartDays * i / (double)(tickCount - 1))); <g><line x1="@F(X(date))" y1="10" x2="@F(X(date))" y2="110" /><text x="@F(X(date))" y="135" text-anchor="middle">@date.ToString("dd.MM")</text></g> }
+            <polygon points="@F(X(points[0].Date)),110 @path @F(X(points[^1].Date)),110" fill="url(#strength-fill)" />
+            <polyline points="@path" fill="none" stroke="#5377ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            @foreach (var point in points) { <g><circle cx="@F(X(point.Date))" cy="@F(Y(point.Weight))" r="4" fill="#6485ff"><title>@point.Date.ToString("d MMMM", ru) · @point.Weight.ToString("0.##", ru) кг</title></circle>@if (points.Count <= 8) { <g><text class="chart-point-value" x="@F(X(point.Date))" y="@F(Y(point.Weight) - 12)" text-anchor="middle">@point.Weight.ToString("0.##", ru)</text></g> }</g> }
+        </svg>
+    }
+    else
+    {
+        <div class="card-empty"><admin-icon name="trend" /><h3>Каждый подход — точка прогресса</h3><p>Запишите рабочие подходы с весом. Здесь появятся ваши фактические результаты.</p></div>
+    }
+</section>

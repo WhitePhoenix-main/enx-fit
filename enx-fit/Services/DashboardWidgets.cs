@@ -11,20 +11,21 @@ public static class DashboardWidgets
     public const string WelcomeId = "welcome";
 
     public static readonly IReadOnlyList<DashboardWidgetDefinition> Catalog = [
-        new("welcome", "Приветствие и цель", "target", "Ваша цель и восстановление"),
+        new("welcome", "Приветствие и цель", "target", "Приветствие, дата и текущая цель"),
         new("stat-volume", "Общий объём", "workout", "Краткий показатель нагрузки"),
         new("stat-workouts", "Количество тренировок", "shoe", "Занятия за выбранный период"),
         new("stat-weight", "Текущий вес", "scale", "Последний замер и изменение веса"),
         new("stat-streak", "Серия тренировок", "flame", "Тренировочные дни подряд"),
-        new("stat-goal", "Процент цели", "target", "Краткий прогресс за неделю"),
+        new("stat-goal", "Новые рекорды", "trophy", "Новые максимумы за 30 дней"),
         new("weight", "Динамика веса", "bars", "График замеров за четыре недели"),
         new("records", "Силовые рекорды", "workout", "Лучшие рабочие подходы"),
+        new("strength", "Рабочий вес", "trend", "Результаты упражнения за последние шесть недель"),
         new("goal", "План тренировок", "calendar", "Недельная цель и её выполнение"),
         new("volume", "Прогресс по объёму", "bars", "График тренировочной нагрузки"),
         new("workouts", "Последние тренировки", "menu", "История занятий и детали подходов"),
-        new("recommendations", "Рекомендации", "spark", "Подсказки и заметка тренера"),
+        new("recommendations", "Следующая цель", "target", "Предложение нагрузки, план и заметка тренера"),
         new("today", "Показатели дня", "calendar", "Тренировки, шаги и вода"),
-        new("next", "Ближайшая тренировка", "workout", "Следующее занятие в плане"),
+        new("next", "Начать тренировку", "workout", "Быстрый старт или продолжение занятия"),
         new("sleep", "Сон и восстановление", "moon", "Продолжительность сна за неделю"),
         new("habits", "Привычки", "activity", "Ежедневные отметки"),
         new("achievements", "Достижения", "trophy", "Серии и личные рекорды"),
@@ -40,18 +41,9 @@ public static class DashboardWidgets
 
     public static List<DashboardWidgetPlacement> Defaults(bool coach)
     {
-        var order = coach
-            ? new[] { "welcome", "stat-volume", "stat-workouts", "stat-weight", "stat-streak", "stat-goal", "volume", "goal", "records", "next", "workouts", "calendar", "recommendations", "weight", "today", "sleep", "habits", "achievements" }
-            : new[] { "welcome", "today", "weight", "records", "goal", "next", "workouts", "sleep", "recommendations", "habits", "volume", "achievements", "calendar", "stat-weight", "stat-streak", "stat-volume", "stat-workouts", "stat-goal" };
-        return order.Select(id => new DashboardWidgetPlacement(id, coach || !id.StartsWith("stat-"), id switch
-        {
-            "welcome" => coach ? "full" : "wide",
-            "workouts" => coach ? "medium" : "wide",
-            "volume" => "medium",
-            "recommendations" => "wide",
-            _ when id.StartsWith("stat-") => "auto",
-            _ => "compact"
-        })).ToList();
+        var order = new[] { "welcome", "next", "goal", "recommendations", "workouts", "stat-workouts", "stat-goal", "stat-volume", "strength", "stat-weight", "habits", "records", "weight", "today", "sleep", "volume", "achievements", "calendar", "stat-streak" };
+        return order.Select(id => new DashboardWidgetPlacement(id,
+            id is not ("records" or "weight" or "today" or "sleep" or "volume" or "achievements" or "calendar" or "stat-streak"), "auto")).ToList();
     }
 
     public static bool IsValid(IReadOnlyList<DashboardWidgetPlacement>? widgets) =>

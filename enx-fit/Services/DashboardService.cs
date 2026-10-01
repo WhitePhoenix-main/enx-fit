@@ -31,9 +31,11 @@ public sealed class DashboardService(ApplicationDbContext db, CurrentUser curren
         return await users.OrderBy(user => user.UserName).Select(user => new ClientSummary(
             user.Id, user.UserName ?? user.Email ?? "Клиент",
             db.WorkoutSessions.Count(workout => workout.UserId == user.Id && workout.Date <= today &&
-                workout.WorkoutExercises.Any(exercise => exercise.SetEntries.Any(set => !set.IsWarmup && set.Reps > 0))),
+                ((workout.StartedAtUtc == null && workout.TrainingProgramId == null) || workout.CompletedAtUtc != null) &&
+                workout.WorkoutExercises.Any(exercise => exercise.SetEntries.Any(set => set.IsCompleted && !set.IsWarmup && set.Reps > 0))),
             db.WorkoutSessions.Where(workout => workout.UserId == user.Id && workout.Date <= today &&
-                workout.WorkoutExercises.Any(exercise => exercise.SetEntries.Any(set => !set.IsWarmup && set.Reps > 0)))
+                ((workout.StartedAtUtc == null && workout.TrainingProgramId == null) || workout.CompletedAtUtc != null) &&
+                workout.WorkoutExercises.Any(exercise => exercise.SetEntries.Any(set => set.IsCompleted && !set.IsWarmup && set.Reps > 0)))
                 .Select(workout => (DateOnly?)workout.Date).Max())).ToListAsync();
     }
 
@@ -57,6 +59,8 @@ public sealed class DashboardService(ApplicationDbContext db, CurrentUser curren
 }
 
 public sealed record ClientSummary(string Id, string Name, int Workouts, DateOnly? LastWorkout);
+public sealed record DashboardStrengthPoint(DateOnly Date, decimal Weight);
+public sealed record DashboardStrengthSeries(Exercise Exercise, IReadOnlyList<DashboardStrengthPoint> Points);
 
 public sealed class DashboardData
 {
@@ -71,15 +75,19 @@ public sealed class DashboardData
     public DateOnly Since => Until.AddDays(1 - Days);
     public string Name => (Subject.UserName ?? Subject.Email)?.Split('@')[0] is { Length: > 0 } name ? name : "Спортсмен";
     public string Initial => Name[..1].ToUpperInvariant();
-    public static IEnumerable<SetEntry> WorkingSets(WorkoutSession w) => w.WorkoutExercises.SelectMany(e => e.SetEntries).Where(s => !s.IsWarmup && s.Reps > 0);
+    public static IEnumerable<SetEntry> WorkingSets(WorkoutSession w) => w.WorkoutExercises.SelectMany(e => e.SetEntries).Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0);
     public static decimal Volume(WorkoutSession w) => WorkingSets(w).Sum(s => s.Weight * s.Reps);
     public IEnumerable<WorkoutSession> Completed => Workouts.Where(w => w.Date <= Today &&
-        (!w.TrainingProgramId.HasValue || w.CompletedAtUtc.HasValue) && WorkingSets(w).Any());
+        ((!w.StartedAtUtc.HasValue && !w.TrainingProgramId.HasValue) || w.CompletedAtUtc.HasValue) && WorkingSets(w).Any());
     public IEnumerable<WorkoutSession> PeriodWorkouts => Completed.Where(w => w.Date >= Since && w.Date <= Until);
     public decimal TotalVolume => PeriodWorkouts.Sum(Volume);
     public decimal PreviousVolume => Completed.Where(w => w.Date >= Since.AddDays(-Days) && w.Date < Since).Sum(Volume);
     public decimal? VolumeChange => PreviousVolume > 0 ? Math.Round((TotalVolume / PreviousVolume - 1) * 100) : null;
     public decimal? Weight => Measurements.LastOrDefault()?.WeightKg;
+    public int NewRecords => Completed.SelectMany(w => w.WorkoutExercises.Select(e => new { w.Date, e.ExerciseId,
+            Weight = e.SetEntries.Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0).Select(s => s.Weight).DefaultIfEmpty().Max() }))
+        .GroupBy(e => e.ExerciseId).Count(g => g.Where(e => e.Date >= Today.AddDays(-29)).Select(e => e.Weight).DefaultIfEmpty().Max() >
+            g.Where(e => e.Date < Today.AddDays(-29)).Select(e => e.Weight).DefaultIfEmpty().Max());
     public decimal? WeightChange
     {
         get
@@ -90,7 +98,7 @@ public sealed class DashboardData
     }
     public IEnumerable<WorkoutSession> ThisWeek => Completed.Where(w => w.Date >= Today.AddDays(-((int)Today.DayOfWeek + 6) % 7));
     public int GoalPercent => Math.Min(100, (int)Math.Round(ThisWeek.Count() * 100d / Settings.WeeklyWorkoutGoal));
-    public WorkoutSession? NextWorkout => Workouts.Where(w => w.Date >= Today && !WorkingSets(w).Any()).OrderBy(w => w.Date).ThenBy(w => w.Id).FirstOrDefault();
+    public WorkoutSession? NextWorkout => Workouts.Where(w => w.Date >= Today && w.StartedAtUtc == null && w.CompletedAtUtc == null && !WorkingSets(w).Any()).OrderBy(w => w.Date).ThenBy(w => w.Id).FirstOrDefault();
     public DailyCheckIn TodayCheckIn => CheckIns.FirstOrDefault(c => c.Date == Today) ?? new DailyCheckIn { UserId = Subject.Id, Date = Today };
     public int HabitsDone => (TodayCheckIn.WaterMl >= 2000 ? 1 : 0) + (TodayCheckIn.Steps >= 8000 ? 1 : 0) + (TodayCheckIn.NutritionLogged ? 1 : 0) + (TodayCheckIn.StretchingDone ? 1 : 0);
     public int Streak
@@ -104,9 +112,33 @@ public sealed class DashboardData
             return count;
         }
     }
-    public IEnumerable<(string Name, decimal Weight)> Records => Completed.SelectMany(w => w.WorkoutExercises)
-        .Where(e => e.SetEntries.Any(s => !s.IsWarmup && s.Reps > 0 && s.Weight > 0))
-        .GroupBy(e => e.Exercise.Name).Select(g => (Name: g.Key, Weight: g.SelectMany(e => e.SetEntries).Where(s => !s.IsWarmup && s.Reps > 0).Max(s => s.Weight)))
+    // Observed working weights only: no warmups, unfinished sessions or projected values.
+    public DashboardStrengthSeries? Strength => StrengthFor(null);
+    public DashboardStrengthSeries? StrengthFor(int? exerciseId)
+    {
+        var sessions = Completed.Where(w => w.Date >= Until.AddDays(-41) && w.Date <= Until)
+            .OrderByDescending(w => w.Date).ThenByDescending(w => w.Id).ToList();
+        var exercise = sessions.SelectMany(w => w.WorkoutExercises.OrderBy(e => e.Order))
+            .FirstOrDefault(e => (!exerciseId.HasValue || e.ExerciseId == exerciseId) && e.SetEntries.Any(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0 && s.Weight > 0));
+        if (exercise is null) return null;
+        var points = sessions.SelectMany(w => w.WorkoutExercises.Where(e => e.ExerciseId == exercise.ExerciseId)
+                .SelectMany(e => e.SetEntries.Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0 && s.Weight > 0)
+                    .Select(s => new { w.Date, s.Weight })))
+            .GroupBy(s => s.Date).OrderBy(g => g.Key)
+            .Select(g => new DashboardStrengthPoint(g.Key, g.Max(s => s.Weight))).ToList();
+        return new(exercise.Exercise, points);
+    }
+    public IEnumerable<(string Name, decimal Weight, decimal? Gain)> Records => Completed
+        .SelectMany(w => w.WorkoutExercises.Select(e => new { w.Date, Exercise = e }))
+        .Where(x => x.Exercise.SetEntries.Any(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0 && s.Weight > 0))
+        .GroupBy(x => x.Exercise.ExerciseId).Select(g =>
+        {
+            var best = g.SelectMany(x => x.Exercise.SetEntries).Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0).Max(s => s.Weight);
+            var prior = g.Where(x => x.Date < Today.AddDays(-29)).SelectMany(x => x.Exercise.SetEntries)
+                .Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0).Select(s => s.Weight).DefaultIfEmpty().Max();
+            return (Name: enx_fit.Extensions.ExercisePresentation.DisplayName(g.First().Exercise.Exercise),
+                Weight: best, Gain: prior > 0 && best > prior ? (decimal?)(best - prior) : null);
+        })
         .OrderByDescending(r => r.Weight);
     public IEnumerable<(DateOnly Date, decimal Volume, int Count)> Chart
     {

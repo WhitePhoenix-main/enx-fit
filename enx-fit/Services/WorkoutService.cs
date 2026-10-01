@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace enx_fit.Services;
 
-public class WorkoutService(ApplicationDbContext dbContext, CurrentUser currentUser)
+public partial class WorkoutService(ApplicationDbContext dbContext, CurrentUser currentUser)
 {
     public async Task<IReadOnlyList<WorkoutSession>> GetAllAsync(string? ownerId = null)
     {
@@ -34,14 +34,6 @@ public class WorkoutService(ApplicationDbContext dbContext, CurrentUser currentU
             .Include(w => w.WorkoutExercises)
                 .ThenInclude(w => w.SetEntries)
             .SingleOrDefaultAsync(w => w.Id == id);
-
-    public async Task<IReadOnlyList<Exercise>> GetExercisesAsync(int workoutSessionId) =>
-        await dbContext.Exercises
-            .AsNoTracking()
-            .Where(e => VisibleWorkouts().Any(workout => workout.Id == workoutSessionId))
-            .Where(e => !e.WorkoutExercises.Any(w => w.WorkoutSessionId == workoutSessionId))
-            .OrderBy(e => e.Name)
-            .ToListAsync();
 
     public async Task<int> CreateAsync(WorkoutSessionInputModel input, WorkoutBuilderInput? builder = null)
     {
@@ -113,7 +105,9 @@ public class WorkoutService(ApplicationDbContext dbContext, CurrentUser currentU
         var workout = await VisibleWorkouts().AsSplitQuery().Include(w => w.WorkoutExercises).ThenInclude(e => e.SetEntries)
             .SingleOrDefaultAsync(w => w.Id == id);
         if (workout is null) return CompleteWorkoutResult.NotFound;
-        if (!workout.WorkoutExercises.Any(e => e.SetEntries.Any(s => !s.IsWarmup && s.Reps > 0))) return CompleteWorkoutResult.Empty;
+        if (!workout.WorkoutExercises.Any(e => e.SetEntries.Any(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0))) return CompleteWorkoutResult.Empty;
+        if (workout.CompletedAtUtc is null && workout.SourceStructureJson is not null)
+            workout.TemplateDecisionPending = workout.SourceStructureJson != Structure(workout);
         workout.CompletedAtUtc ??= DateTime.UtcNow;
         await dbContext.SaveChangesAsync();
         return CompleteWorkoutResult.Success;
@@ -121,6 +115,8 @@ public class WorkoutService(ApplicationDbContext dbContext, CurrentUser currentU
 
     public async Task<AddWorkoutExerciseResult> AddExerciseAsync(int workoutSessionId, int exerciseId)
     {
+        if (await VisibleWorkouts().AnyAsync(w => w.Id == workoutSessionId && w.StartedAtUtc != null && w.CompletedAtUtc != null))
+            return AddWorkoutExerciseResult.WorkoutNotFound;
         if (!await VisibleWorkouts().AnyAsync(w => w.Id == workoutSessionId))
         {
             return AddWorkoutExerciseResult.WorkoutNotFound;
@@ -155,6 +151,8 @@ public class WorkoutService(ApplicationDbContext dbContext, CurrentUser currentU
 
     public async Task<AddSetEntryResult> AddSetAsync(int workoutSessionId, AddSetEntryInputModel input)
     {
+        if (await VisibleWorkouts().AnyAsync(w => w.Id == workoutSessionId && w.StartedAtUtc != null && w.CompletedAtUtc != null))
+            return AddSetEntryResult.WorkoutExerciseNotFound;
         var workoutExerciseExists = await dbContext.WorkoutExercises
             .AnyAsync(w =>
                 w.Id == input.WorkoutExerciseId &&

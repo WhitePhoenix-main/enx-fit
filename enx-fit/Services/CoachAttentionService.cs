@@ -43,9 +43,9 @@ public sealed class CoachAttentionService(ApplicationDbContext db, CurrentUser u
             {
                 var performances = history.Where(s => s.CompletedAtUtc.HasValue && s.Date <= today && s.ProgramWorkoutKey == workout.Key)
                     .OrderByDescending(s => s.Date).ThenByDescending(s => s.Id)
-                    .SelectMany(s => s.WorkoutExercises.Where(e => e.ExerciseId == exercise.ExerciseId && e.SetEntries.Any(x => !x.IsWarmup && x.Reps > 0))
+                    .SelectMany(s => s.WorkoutExercises.Where(e => e.ExerciseId == exercise.ExerciseId && e.SetEntries.Any(x => x.IsCompleted && !x.IsWarmup && x.Reps > 0))
                         .Select(e => new ExercisePerformance(s.Id, s.Date,
-                            e.SetEntries.Where(x => !x.IsWarmup && x.Reps > 0).OrderBy(x => x.SetNumber).Select(x => new PerformedSet(x.SetNumber, x.Weight, x.Reps, x.Rir)).ToList(),
+                            e.SetEntries.Where(x => x.IsCompleted && !x.IsWarmup && x.Reps > 0).OrderBy(x => x.SetNumber).Select(x => new PerformedSet(x.SetNumber, x.Weight, x.Reps, x.Rir)).ToList(),
                             e.TargetSets, e.TargetRepsMin, e.TargetRepsMax, e.TargetRir, e.TargetRpe))).Take(4).ToList();
                 if (plateau.Analyze(exercise, performances) is not null) Add($"{exercise.Exercise.Name}: возможное плато в последних 4 сопоставимых тренировках.");
                 if (performances.Count == 4 && performances[0].Date >= today.AddDays(-21) && performances.All(h =>

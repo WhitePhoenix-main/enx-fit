@@ -1,0 +1,47 @@
+.exercise-library {
+    --el-ink: #283746; --el-muted: #68768b; --el-border: #dce4ee;
+    --el-paper: #fff; --el-card: #f5f8fc; --el-blue: #2863c5; --el-active: #e8f0ff;
+    padding: 18px; border: 1px solid var(--el-border); border-radius: 9px;
+    background: var(--el-paper); color: var(--el-ink); min-width: 0;
+}
+.wb .exercise-library {
+    --el-ink: #e9effd; --el-muted: #a9bddb; --el-border: #314159;
+    --el-paper: #111c29; --el-card: #19293c; --el-blue: #91b9ff; --el-active: #294374;
+    padding: 15px;
+}
+.exercise-library [hidden] { display: none !important; }
+.exercise-library svg { width: 19px; height: 19px; flex-shrink: 0; vertical-align: middle; }
+.exercise-library button, .exercise-library input, .exercise-library select { font: inherit; }
+.exercise-library-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.exercise-library-heading h2 { font-size: 16px; margin: 0; flex: 1; }
+.exercise-library-heading > span { font-size: 12px; color: var(--el-muted); }
+.exercise-library-tabs { display: flex; gap: 5px; margin-bottom: 10px; }
+.exercise-library-tabs button { flex: 1; padding: 8px 4px; border: 1px solid var(--el-border); border-radius: 6px; background: var(--el-card); color: var(--el-muted); font-size: 12px; cursor: pointer; }
+.exercise-library-tabs [aria-pressed="true"] { background: var(--el-active); color: var(--el-ink); border-color: var(--el-blue); }
+.exercise-library-search { position: relative; display: block !important; margin-bottom: 10px; }
+.exercise-library-search > svg { position: absolute; left: 10px; top: 11px; width: 16px; height: 16px; color: var(--el-muted); }
+.exercise-library .exercise-library-search input { width: 100%; box-sizing: border-box; padding: 9px 10px 9px 33px !important; background: var(--el-card); color: var(--el-ink); border: 1px solid var(--el-border); border-radius: 6px; font-size: 12px; }
+.exercise-library-group { display: flex !important; align-items: center; justify-content: space-between; gap: 8px; color: var(--el-muted); font-size: 12px; margin-bottom: 12px; }
+.exercise-library .exercise-library-group select { width: auto; max-width: 65%; padding: 6px; font-size: 12px; background: var(--el-card); color: var(--el-ink); border: 1px solid var(--el-border); border-radius: 6px; }
+.exercise-library-list { max-height: 445px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--el-border) transparent; }
+.exercise-library-item { display: flex; align-items: center; gap: 8px; padding: 9px; margin-bottom: 7px; border: 1px solid var(--el-border); border-radius: 7px; background: var(--el-card); }
+.exercise-library-icon { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 7px; color: var(--el-blue); background: var(--el-active); }
+.exercise-library-icon svg { width: 26px; height: 26px; }
+.exercise-library-copy { min-width: 0; flex: 1; }
+.exercise-library-copy strong { display: block; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+.exercise-library-copy small { display: block; color: var(--el-muted); font-size: 11px; line-height: 1.45; margin-top: 3px; }
+.exercise-library .exercise-library-action { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex-shrink: 0; padding: 4px; border: 1px solid var(--el-border); border-radius: 6px; color: var(--el-blue); background: transparent; cursor: pointer; text-decoration: none; }
+.exercise-library-action:hover { background: var(--el-active) !important; }
+.exercise-library-action[aria-pressed="true"] { color: #c9911f; }
+.exercise-library-action[aria-pressed="true"] svg { fill: currentColor; }
+.exercise-library .exercise-library-add:disabled { color: #299d78; cursor: default; opacity: 1; }
+.exercise-library-empty, .exercise-library-status { font-size: 12px; color: var(--el-muted); padding: 14px 0; margin: 0; }
+.exercise-library button:focus-visible, .exercise-library a:focus-visible, .exercise-library input:focus-visible, .exercise-library select:focus-visible { outline: 2px solid var(--el-blue); outline-offset: 2px; }
+.wb .exercise-library-copy strong { font-size: 11px; }
+.wb .exercise-library-copy small { font-size: 10px; }
+@media (max-width: 420px) {
+    .exercise-library { padding: 12px; }
+    .exercise-library-item { gap: 5px; padding: 7px; }
+    .exercise-library-icon { width: 31px; height: 35px; }
+    .exercise-library .exercise-library-action { width: 28px; }
+}

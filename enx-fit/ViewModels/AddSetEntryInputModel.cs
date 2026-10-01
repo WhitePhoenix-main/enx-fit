@@ -12,6 +12,7 @@ public class AddSetEntryInputModel
     public int SetNumber { get; set; } = 1;
 
     [Range(typeof(decimal), "0", "10000")]
+    [Microsoft.AspNetCore.Mvc.ModelBinder(BinderType = typeof(WorkoutWeightBinder))]
     public decimal Weight { get; set; }
 
     [Range(0, 1000)]

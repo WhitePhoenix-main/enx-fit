@@ -5,6 +5,7 @@
     var dashboard = Model.Dashboard;
     var d = dashboard.Data;
     var coach = dashboard.IsCoachView;
+    var home = dashboard.CurrentPage == "/Dashboard";
     var ru = CultureInfo.GetCultureInfo("ru-RU");
     string N(decimal? value, string format = "N0") => value?.ToString(format, ru) ?? "—";
     string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
@@ -28,57 +29,11 @@
 @switch (Model.WidgetId)
 {
     case "welcome":
-        <section class="panel welcome-card">
-                <div class="welcome-heading">
-        <div>
-        <p class="eyebrow coach-only">ПРОГРЕСС КЛИЕНТА</p>
-        <h1>@(coach ? d.Name : $"Привет, {d.Name}!") <span class="greeting-emoji">@(coach ? "💪" : "👋")</span>
-        </h1>
-        <p>@(coach ? "Все показатели клиента — в одном месте." : "Движение сегодня — сильный ты завтра.")</p>
-        </div>
-        <span class="live-label">
-        <i>
-        </i>@(coach ? "Под вашим руководством" : "Твой путь к лучшей форме")</span>
-        </div>
-                <div class="welcome-bottom">
-        <button class="hero-mini goal-mini" data-dialog="goal-dialog">
-        <span class="hero-icon">
-        <admin-icon name="target" />
-        </span>
-        <span class="hero-mini-copy">
-        <small>Текущая цель</small>
-        <strong>@d.Settings.GoalTitle</strong>
-        <span class="progress-track">
-        <i style="width: @d.GoalPercent%">
-        </i>
-        </span>
-        <span class="mini-foot">
-        <span>@d.ThisWeek.Count() из @d.Settings.WeeklyWorkoutGoal тренировок</span><b>@d.GoalPercent%</b>
-        </span>
-        </span>
-        </button>
-                <a class="hero-mini recovery-mini" href="@PageUrl("/Dashboard/Habits")">
-        <span class="hero-icon green">
-        <admin-icon name="moon" />
-        </span>
-        <span class="hero-mini-copy">
-        <small>Сон и восстановление</small>
-        <strong>@(today.SleepMinutes > 0 ? $"{today.SleepMinutes / 60} ч {today.SleepMinutes % 60} мин" : "Как вы спали?")</strong>
-        <span class="progress-track green-track">
-        <i style="width: @(Math.Min(100, today.SleepMinutes * 100 / 480))%">
-        </i>
-        </span>
-        <small>@(today.SleepMinutes > 0 ? "Продолжительность сна сегодня" : "Добавьте показатели дня")</small>
-        </span>
-        </a>
-                <div class="hero-quote">
-        <p>«Дисциплина сегодня<br />— результаты завтра»</p>
-        <small>— Enix Fit</small>
-        <a href="@PageUrl("/Dashboard/Plans")">Продолжай <admin-icon name="arrow" />
-        </a>
-        </div>
-        </div>
-            </section>
+        <section class="panel welcome-card compact-welcome">
+            <h1>@(coach ? d.Name : $"Привет, {d.Name}!")</h1>
+            <p><time datetime="@d.Today.ToString("yyyy-MM-dd")">@d.Today.ToString("d MMMM, dddd", ru)</time></p>
+            <button class="text-button welcome-goal" data-dialog="goal-dialog"><admin-icon name="target" />@d.Settings.GoalTitle <admin-icon name="edit" /></button>
+        </section>
         break;
     case "weight":
         <section class="panel weight-card" id="weight">
@@ -114,14 +69,15 @@
         <div class="card-heading">
         <h2>
         <admin-icon name="workout" />Силовые рекорды</h2>
-        <button class="text-button" data-dialog="records-dialog">Все <admin-icon name="arrow" />
+        <button class="text-button" data-dialog="records-dialog">Все показатели <admin-icon name="arrow" />
         </button>
         </div>
-        <div class="record-list">@foreach (var record in d.Records.Take(4)) { <div class="record-row">
+        <div class="record-list">@foreach (var record in d.Records.Take(3)) { <div class="record-row">
         <admin-icon name="workout" />
         <span>@record.Name</span>
         <strong>@N(record.Weight) <small>кг</small>
         </strong>
+        @if (record.Gain is { } gain) { <small class="record-gain" title="Изменение рекорда за последние 30 дней">↑ +@N(gain, "0.#") кг</small> }
         </div> }@if (!d.Records.Any()) { <div class="card-empty">
         <span class="icon-tile">
         <admin-icon name="trophy" />
@@ -133,49 +89,24 @@
         </section>
         break;
     case "goal":
-        <section class="panel goal-card" id="plan">
-        <div class="card-heading">
-        <h2>
-        <admin-icon name="calendar" />План тренировок</h2>
-        <button class="text-button" data-dialog="goal-dialog" aria-label="Изменить цель">
-        <admin-icon name="edit" />
-        </button>
-        </div>
-        <div class="donut" style="--progress: @d.GoalPercent" role="img" aria-label="Выполнение недельной цели: @d.GoalPercent%">
-        <svg viewBox="0 0 160 160" aria-hidden="true">
-        <defs>
-        <linearGradient id="goal-gradient"><stop stop-color="#69a2ff" /><stop offset="1" stop-color="#4557ff" />
-        </linearGradient>
-        </defs>
-        <circle class="donut-track" cx="80" cy="80" r="64" />
-        <circle class="donut-fill" cx="80" cy="80" r="64" pathLength="100" stroke-dasharray="@d.GoalPercent 100" />
-        </svg>
-        <div>
-        <strong>@d.GoalPercent%</strong>
-        <small>@d.ThisWeek.Count() из @d.Settings.WeeklyWorkoutGoal</small>
-        </div>
-        </div>
-        <p class="donut-caption">тренировок на этой неделе</p>
-        <div class="legend">
-        <p>
-        <span>
-        <i>
-        </i>Выполнено</span>
-        <strong>@d.ThisWeek.Count()</strong>
-        </p>
-        <p>
-        <span>
-        <i class="dim">
-        </i>Цель на неделю</span>
-        <strong>@d.Settings.WeeklyWorkoutGoal</strong>
-        </p>
-        <p>
-        <span>
-        <i class="muted-dot">
-        </i>Осталось</span>
-        <strong>@Math.Max(0, d.Settings.WeeklyWorkoutGoal - d.ThisWeek.Count())</strong>
-        </p>
-        </div>
+        <section class="panel goal-card week-card" id="plan">
+            <div class="card-heading"><h2><admin-icon name="calendar" />План недели</h2><button class="text-button week-completion" data-dialog="goal-dialog">@d.Completed.Count(w => w.Date >= d.Today.AddDays(-((int)d.Today.DayOfWeek + 6) % 7 + dashboard.WeekOffset * 7) && w.Date < d.Today.AddDays(-((int)d.Today.DayOfWeek + 6) % 7 + (dashboard.WeekOffset + 1) * 7)) / @d.Settings.WeeklyWorkoutGoal <span>выполнено</span></button><nav class="week-navigation" aria-label="Выбор недели"><a asp-page="/Dashboard" asp-route-ClientId="@dashboard.ClientId" asp-route-WeekOffset="@(dashboard.WeekOffset - 1)" aria-label="Предыдущая неделя"><admin-icon name="chevron" /></a><a asp-page="/Dashboard" asp-route-ClientId="@dashboard.ClientId" asp-route-WeekOffset="@(dashboard.WeekOffset + 1)" aria-label="Следующая неделя"><admin-icon name="chevron" /></a></nav></div>
+            <div class="week-strip">
+                @for (var i = 0; i < 7; i++)
+                {
+                    var date = d.Today.AddDays(-((int)d.Today.DayOfWeek + 6) % 7 + i + dashboard.WeekOffset * 7);
+                    var done = d.Completed.FirstOrDefault(w => w.Date == date);
+                    var planned = d.Workouts.FirstOrDefault(w => w.Date == date && w.CompletedAtUtc == null && w.StartedAtUtc == null && !DashboardData.WorkingSets(w).Any());
+                    var scheduled = dashboard.ActiveProgram is { } program ? ProgramSchedule.Occurrences(program).FirstOrDefault(o => o.Date == date) : null;
+                    var state = done is not null ? "done" : planned is not null || scheduled is not null ? "planned" : "rest";
+                    var dayTitle = done?.Title ?? planned?.Title ?? scheduled?.Workout.Name ?? "Отдых";
+                    var pastRest = state == "rest" && date < d.Today;
+                    <a href="@PageUrl("/Dashboard/Plans")" class="week-day @state @(pastRest ? "past-rest" : "") @(date == d.Today ? "is-today" : "")" aria-label="@date.ToString("d MMMM", ru): @(done is not null ? "выполнено" : state == "planned" ? "запланировано" : "отдых")">
+                        <span>@weekDays[i]</span><time datetime="@date.ToString("yyyy-MM-dd")">@date.ToString("dd.MM")</time><span class="week-marker">@if (done is not null || pastRest) { <admin-icon name="check" /> } else if (state == "planned") { <admin-icon name="@(dayTitle.Contains("Кардио", StringComparison.OrdinalIgnoreCase) ? "shoe" : "workout")" /> } else { <admin-icon name="coffee" /> }</span><small>@dayTitle.Split('—')[0].Trim()</small>
+                    </a>
+                }
+            </div>
+            <div class="week-legend"><span><i class="done"></i>выполнено</span><span><i class="today"></i>сегодня</span><span><i></i>запланировано</span><span>— отдых</span></div>
         </section>
         break;
     case "volume":
@@ -209,6 +140,9 @@
         </div>@if (!d.PeriodWorkouts.Any()) { <p class="chart-empty">За этот период нет записанных рабочих подходов.</p> }</section>
         break;
     case "workouts":
+        @if (home) { <partial name="_DashboardReferenceWidget" model="Model" /> }
+        else
+        {
         <section class="panel workouts-card" id="workouts">
         <div class="card-heading">
         <h2>
@@ -252,93 +186,37 @@
         </div>@if (!coach) { <a asp-page="/Workouts/Create" class="button">Добавить <admin-icon name="plus" />
         </a> }</div> }</div>
         </section>
+        }
         break;
     case "recommendations":
+        @if (home) { <partial name="_DashboardReferenceWidget" model="Model" /> }
+        else
+        {
         <section class="panel recommendations-card" id="recommendations">
-        <div class="card-heading">
-        <div>
-        <h2>
-        <admin-icon name="spark" />@(coach ? "Рекомендации тренера" : "Персональные рекомендации")</h2>
-        <small class="muted">На основе ваших записей и целей</small>
-        </div>@if (coach) { <button class="text-button" data-dialog="goal-dialog">Изменить <admin-icon name="edit" />
-        </button> }</div>
-        <div class="insight-grid">
-        <article class="insight">
-        <span class="insight-icon green">
-        <admin-icon name="trend" />
-        </span>
-        <div>
-        <h3>@(d.VolumeChange > 0 ? "Отличный прогресс!" : "Каждая тренировка — шаг вперёд")</h3>
-        <p>@(d.VolumeChange is not null ? $"Тренировочный объём изменился на {(d.VolumeChange >= 0 ? "+" : "")}{N(d.VolumeChange)}% по сравнению с предыдущим периодом." : "Записывайте подходы и повторения, чтобы отслеживать свой прогресс.")</p>
-        <a href="@PageUrl("/Dashboard/Analytics")">Смотреть динамику <admin-icon name="arrow" />
-        </a>
-        </div>
-        </article>
-        <article class="insight">
-        <span class="insight-icon">
-        <admin-icon name="target" />
-        </span>
-        <div>
-        <h3>@(d.GoalPercent >= 100 ? "Цель недели выполнена" : "Держите цель в фокусе")</h3>
-        <p>@(d.GoalPercent >= 100 ? "Все запланированные на неделю тренировки записаны. Отличная работа!" : $"На этой неделе осталось {Math.Max(0, d.Settings.WeeklyWorkoutGoal - d.ThisWeek.Count())} тренировок до вашей цели.")</p>
-        <button class="text-button" data-dialog="goal-dialog">Посмотреть цель <admin-icon name="arrow" />
-        </button>
-        </div>
-        </article>
-        <article class="insight trainer-insight">
-        <span class="insight-icon violet">
-        <admin-icon name="@(d.Settings.TrainerNote is null ? "moon" : "users")" />
-        </span>
-        <div>
-        <h3>@(d.Settings.TrainerNote is null ? "Слушайте своё тело" : "От вашего тренера")</h3>
-        <p>@(d.Settings.TrainerNote ?? "Отмечайте сон и повседневную активность. Так будет проще замечать изменения в самочувствии.")</p>
-        <a href="@PageUrl("/Dashboard/Habits")">К показателям дня <admin-icon name="arrow" />
-        </a>
-        </div>
-        </article>
-        </div>
+            <div class="card-heading"><h2><admin-icon name="spark" />Инсайты</h2><a href="@PageUrl("/Dashboard/Analytics")">Все <admin-icon name="arrow" /></a></div>
+            <div class="insight-grid">
+                <article class="insight"><span class="insight-icon"><admin-icon name="target" /></span><div><h3>@(d.GoalPercent >= 100 ? "Недельная цель выполнена" : $"До недельной цели осталось {Math.Max(0, d.Settings.WeeklyWorkoutGoal - d.ThisWeek.Count())} тренировок")</h3><p>Выполнено @d.GoalPercent% от цели: @d.Settings.WeeklyWorkoutGoal занятий.</p><button class="text-button" data-dialog="goal-dialog">Настроить цель</button></div></article>
+                @if (d.VolumeChange is { } change) { <article class="insight"><span class="insight-icon green"><admin-icon name="trend" /></span><div><h3>Объём тренировок: @(change >= 0 ? "+" : "")@N(change)%</h3><p>По сравнению с предыдущими @d.Days днями. Учитываются выполненные рабочие подходы.</p></div></article> }
+                @if (!string.IsNullOrWhiteSpace(d.Settings.TrainerNote)) { <article class="insight"><span class="insight-icon"><admin-icon name="users" /></span><div><h3>От вашего тренера</h3><p>@d.Settings.TrainerNote</p></div></article> }
+                else if (d.VolumeChange is null) { <p class="insight-empty">Запишите тренировки за два периода, чтобы сравнить нагрузку.</p> }
+                @if (coach) { <button class="text-button" data-dialog="goal-dialog">Изменить рекомендацию</button> }
+            </div>
         </section>
+        }
+        break;
+    case "strength":
+        <partial name="_DashboardStrength" model="dashboard" />
         break;
     case "today":
-        <section class="panel today-card">
-        <div class="card-heading">
-        <h2>
-        <admin-icon name="calendar" />Сегодня</h2>
-        <time>@d.Today.ToString("d MMM, ddd", ru)</time>
-        </div>
-        <div class="daily-gauges">@foreach (var item in new[] { ("flame", d.Completed.Count(w => w.Date == d.Today).ToString(), "тренировок", Math.Min(100, d.Completed.Count(w => w.Date == d.Today) * 100), "blue"), ("shoe", N(today.Steps), "шагов", Math.Min(100, today.Steps * 100 / 8000), "green"), ("water", N(today.WaterMl / 1000m, "0.#") + " л", "воды", Math.Min(100, today.WaterMl * 100 / 2000), "violet") }) { <div class="gauge @item.Item5">
-        <div class="gauge-arc" style="--gauge: @item.Item4">
-        <admin-icon name="@item.Item1" />
-        </div>
-        <strong>@item.Item2</strong>
-        <small>@item.Item3</small>
-        </div> }</div>
-        <div class="daily-activity">
-        <span>Привычки дня <strong>@d.HabitsDone / 4</strong>
-        </span>
-        <div class="progress-track">
-        <i style="width: @(d.HabitsDone * 25)%">
-        </i>
-        </div>
-        </div>
+        <section class="panel today-card compact-today" aria-label="Показатели дня">
+            @foreach (var item in new[] { ("shoe", today.Steps > 0 ? N(today.Steps) : "—", "шагов сегодня", Math.Min(100, today.Steps * 100 / 8000), "green"), ("water", today.WaterMl > 0 ? N(today.WaterMl / 1000m, "0.#") + " л" : "—", "воды", Math.Min(100, today.WaterMl * 100 / 2000), "blue"), ("moon", today.SleepMinutes > 0 ? $"{today.SleepMinutes / 60} ч {today.SleepMinutes % 60} мин" : "—", "сон", Math.Min(100, today.SleepMinutes * 100 / 480), "blue"), ("flame", d.Streak.ToString() + " дн.", "подряд", Math.Min(100, d.Streak * 100 / 7), "orange") })
+            {
+                <a class="day-metric @item.Item5" href="@PageUrl("/Dashboard/Habits")"><admin-icon name="@item.Item1" /><span><strong>@item.Item2</strong><small>@item.Item3</small></span><span class="metric-ring" style="--ring:@item.Item4" aria-hidden="true"></span></a>
+            }
         </section>
         break;
     case "next":
-        <section class="panel next-card" id="next-workout">
-        <div class="card-heading">
-        <h2>
-        <admin-icon name="calendar" />@(next?.Date == d.Today ? "Сегодняшняя тренировка" : "Следующая тренировка")</h2>
-        </div>
-        <div class="next-workout-image">
-        <div>
-        <small>@(next is null ? "Время стать сильнее" : next.Date.ToString("d MMMM, dddd", ru))</small>
-        <h3>@(next?.Title ?? (coach ? "Тренировка ещё не запланирована" : "Новая тренировка"))</h3>
-        <span>
-        <admin-icon name="workout" />@(next is null ? "Ваш следующий шаг к цели" : $"{next.WorkoutExercises.Count} упражнений")</span>
-        </div>
-        </div>@if (coach) { @if (next is not null) { <button class="button full" data-dialog="workout-@next.Id">Посмотреть тренировку <admin-icon name="arrow" />
-        </button> } else { <p class="muted next-empty">План появится, когда клиент добавит тренировку.</p> } } else { <a class="button full" asp-page="@(next is null ? "/Workouts/Create" : "/Workouts/Details")" asp-route-id="@next?.Id">
-        <admin-icon name="play" />@(next is null ? "Начать тренировку" : "Перейти к тренировке")</a> }</section>
+        <partial name="_WorkoutStart" model="dashboard" />
         break;
     case "sleep":
         <section class="panel sleep-card" id="sleep">
@@ -360,6 +238,9 @@
         </section>
         break;
     case "habits":
+        @if (home) { <partial name="_DashboardReferenceWidget" model="Model" /> }
+        else
+        {
         <section class="panel habits-card" id="habits">
         <div class="card-heading">
         <h2>
@@ -373,6 +254,7 @@
         <span>@habit.Item2</span>
         </div> }</div>@if (!coach) { <button class="text-button habit-edit" data-dialog="checkin-dialog">Отметить привычки <admin-icon name="arrow" />
         </button> }</section>
+        }
         break;
     case "achievements":
         <section class="panel achievements-card" id="achievements">
@@ -428,41 +310,32 @@
         </section>
         break;
     case "stat-volume":
-        <a class="panel stat-card stat-volume" href="@PageUrl("/Dashboard/Analytics")">
-        <span class="stat-label">
-        <span class="icon-tile">
-        <admin-icon name="workout" />
-        </span>Общий объём</span>
-        <strong>@N(d.TotalVolume) <small>кг</small>
-        </strong>
-        <span class="stat-delta green">@(d.VolumeChange is null ? "Начало вашего пути" : $"{(d.VolumeChange >= 0 ? "↑ +" : "↓ ")}{N(d.VolumeChange)}%")</span>
-        <small>за выбранный период</small>
-        <span class="mini-bars" aria-hidden="true">
-        <i>
-        </i>
-        <i>
-        </i>
-        <i>
-        </i>
-        <i>
-        </i>
-        <i>
-        </i>
-        </span>
-        </a>
+        @if (home)
+        {
+            <a class="panel reference-stat consistency-stat" href="@PageUrl("/Dashboard/Plans")"><admin-icon name="calendar" /><div><span>Регулярность</span><p><strong>@d.ThisWeek.Count() / @d.Settings.WeeklyWorkoutGoal</strong><small>на этой неделе</small></p></div><admin-icon name="chevron" /></a>
+        }
+        else
+        {
+        <a class="panel stat-card stat-volume" href="@PageUrl("/Dashboard/Analytics")"><span class="stat-label"><admin-icon name="bars" />Объём</span><strong>@(d.VolumeChange is { } delta ? $"{(delta >= 0 ? "+" : "")}{N(delta)}%" : "—")</strong><small>к предыдущим @d.Days дням</small><span class="mini-bars" aria-hidden="true">@foreach (var point in d.Chart) { <i style="height:@F((double)(point.Volume / Math.Max(1, d.Chart.Max(p => p.Volume)) * 45))px"></i> }</span></a>
+        }
         break;
     case "stat-workouts":
-        <a class="panel stat-card stat-workouts" href="@PageUrl("/Dashboard/Workouts")">
-        <span class="stat-label">
-        <span class="icon-tile">
-        <admin-icon name="shoe" />
-        </span>Тренировки</span>
-        <strong>@d.PeriodWorkouts.Count()</strong>
-        <span class="stat-delta green">@d.ThisWeek.Count() на этой неделе</span>
-        <small>каждая делает вас сильнее</small>
-        </a>
+        @if (home)
+        {
+            var monthly = d.Completed.Count(w => w.Date >= d.Today.AddDays(-29));
+            var previousMonth = d.Completed.Count(w => w.Date >= d.Today.AddDays(-59) && w.Date < d.Today.AddDays(-29));
+            var change = previousMonth > 0 ? (int?)Math.Round((monthly - previousMonth) * 100d / previousMonth) : null;
+            <a class="panel reference-stat" href="@PageUrl("/Dashboard/Workouts")"><admin-icon name="bars" /><div><strong>@monthly</strong><span>тренировок за месяц</span></div>@if (change.HasValue) { <span class="stat-change @(change < 0 ? "negative" : "")"><admin-icon name="trend" />@(change >= 0 ? "+" : "")@change%</span> }</a>
+        }
+        else
+        {
+        <a class="panel stat-card stat-workouts" href="@PageUrl("/Dashboard/Workouts")"><span class="stat-label"><admin-icon name="workout" />Тренировки</span><strong>@d.ThisWeek.Count() <small>/ @d.Settings.WeeklyWorkoutGoal</small></strong><small>на этой неделе</small><span class="weekly-segments" aria-hidden="true">@for (var i = 0; i < d.Settings.WeeklyWorkoutGoal; i++) { <i class="@(i < d.ThisWeek.Count() ? "done" : "")"></i> }</span></a>
+        }
         break;
     case "stat-weight":
+        @if (home) { <partial name="_DashboardReferenceWidget" model="Model" /> }
+        else
+        {
         <a class="panel stat-card stat-weight" href="@PageUrl("/Dashboard/Progress")">
         <span class="stat-label">
         <span class="icon-tile">
@@ -473,6 +346,7 @@
         <span class="stat-delta">@(d.WeightChange is null ? "Добавьте первый замер" : $"{(d.WeightChange >= 0 ? "+" : "")}{N(d.WeightChange, "N1")} кг")</span>
         <small>изменение за 4 недели</small>
         </a>
+        }
         break;
     case "stat-streak":
         <a class="panel stat-card stat-streak" href="@PageUrl("/Dashboard/Achievements")">
@@ -487,17 +361,13 @@
         </a>
         break;
     case "stat-goal":
-        <button class="panel stat-card stat-goal" data-dialog="goal-dialog">
-        <span class="stat-label">
-        <span class="icon-tile">
-        <admin-icon name="target" />
-        </span>Прогресс цели</span>
-        <strong>@d.GoalPercent%</strong>
-        <span class="progress-track">
-        <i style="width: @d.GoalPercent%">
-        </i>
-        </span>
-        <small>@d.ThisWeek.Count() из @d.Settings.WeeklyWorkoutGoal тренировок</small>
-        </button>
+        @if (home)
+        {
+            <a class="panel reference-stat" href="@PageUrl("/Dashboard/Achievements")"><admin-icon name="trophy" /><div><strong>@d.Records.Count()</strong><span>личных рекорда</span></div>@if (d.NewRecords > 0) { <span class="stat-change"><admin-icon name="trend" />+@d.NewRecords</span> }</a>
+        }
+        else
+        {
+        <a class="panel stat-card stat-goal" href="@PageUrl("/Dashboard/Achievements")"><span class="stat-label"><admin-icon name="trophy" />Рекорды</span><strong>@d.NewRecords <small>новых</small></strong><small>за последние 30 дней</small><span class="record-kpi-link"><admin-icon name="arrow" /></span></a>
+        }
         break;
 }

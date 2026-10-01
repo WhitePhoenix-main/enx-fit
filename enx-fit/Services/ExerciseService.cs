@@ -1,4 +1,5 @@
 using enx_fit.Data;
+using enx_fit.Extensions;
 using enx_fit.Models;
 using enx_fit.ViewModels;
 using Microsoft.EntityFrameworkCore;
@@ -16,10 +17,17 @@ public class ExerciseService(ApplicationDbContext dbContext)
             query = query.Where(e => e.MuscleGroup == muscleGroup);
         }
 
-        return await query
-            .OrderBy(e => e.Name)
-            .ToListAsync();
+        var exercises = await query.ToListAsync();
+        return exercises.OrderBy(ExercisePresentation.DisplayName,
+            StringComparer.Create(System.Globalization.CultureInfo.GetCultureInfo("ru-RU"), true)).ToList();
     }
+
+    public async Task<IReadOnlyList<int>> GetRecentIdsAsync(string ownerId) =>
+        await dbContext.WorkoutSessions.AsNoTracking()
+            .Where(w => w.UserId == ownerId && w.CompletedAtUtc != null)
+            .OrderByDescending(w => w.Date).ThenByDescending(w => w.Id).Take(5)
+            .SelectMany(w => w.WorkoutExercises.Select(e => e.ExerciseId))
+            .Distinct().ToListAsync();
 
     public async Task<IReadOnlyList<string>> GetMuscleGroupsAsync() =>
         await dbContext.Exercises

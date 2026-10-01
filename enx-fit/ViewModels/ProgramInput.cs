@@ -52,7 +52,7 @@ public sealed class ProgramWorkoutInput : IValidatableObject
 
 public sealed class ProgramExerciseInput : IValidatableObject
 {
-    [Range(1, int.MaxValue)] public int ExerciseId { get; set; }
+    [DeniedValues(0, ErrorMessage = "Выберите упражнение.")] public int ExerciseId { get; set; }
     public ExercisePrescription Prescription { get; set; } = new();
     public IEnumerable<ValidationResult> Validate(ValidationContext context)
     {

@@ -1,0 +1,26 @@
+@model enx_fit.Pages.DashboardModel
+@if (!Model.IsCoachView)
+{
+<dialog class="app-dialog quick-dialog" id="quick-workout-dialog" aria-labelledby="quick-title">
+    <div class="dialog-heading"><h2 id="quick-title">Начать тренировку</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><admin-icon name="close" /></button></div>
+    <div class="quick-options">
+        <form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="empty" /><button class="quick-option"><admin-icon name="plus" /><span><strong>Пустая тренировка</strong><small>Начните с чистого листа и добавляйте упражнения по ходу занятия</small></span><admin-icon name="arrow" /></button></form>
+        <button class="quick-option" type="button" data-dialog="template-start-dialog"><admin-icon name="layers" /><span><strong>Из шаблона</strong><small>Загрузите готовый шаблон и изменяйте его во время тренировки</small></span><admin-icon name="arrow" /></button>
+        <form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="previous" /><button class="quick-option" disabled="@(!Model.Data.Completed.Any())"><admin-icon name="history" /><span><strong>Повторить последнюю</strong><small>Возьмите последнюю завершённую тренировку как основу</small></span><admin-icon name="arrow" /></button></form>
+        @if (Model.Data.NextWorkout?.Date == Model.Data.Today || Model.NextProgramWorkout?.Date == Model.Data.Today)
+        {
+            var planned = Model.Data.NextWorkout?.Date == Model.Data.Today ? Model.Data.NextWorkout : null;
+            <form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="@(planned is not null ? "planned" : "program")" /><input type="hidden" name="plannedId" value="@planned?.Id" /><input type="hidden" name="programId" value="@Model.ActiveProgram?.Id" /><button class="quick-option"><admin-icon name="calendar" /><span><strong>По плану</strong><small>@(planned?.Title ?? Model.NextProgramWorkout?.Workout.Name)</small></span><admin-icon name="arrow" /></button></form>
+        }
+    </div>
+</dialog>
+<dialog class="app-dialog quick-dialog" id="template-start-dialog" aria-labelledby="template-start-title">
+    <div class="dialog-heading"><h2 id="template-start-title">Загрузить шаблон</h2><button class="icon-button" data-close aria-label="Закрыть"><admin-icon name="close" /></button></div>
+    <p class="muted">Тренировки из ваших программ и готовых шаблонов. Изменения занятия не затронут оригинал.</p>
+    <div class="quick-options">@foreach (var template in Model.Templates)
+    {
+        <form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="template" /><input type="hidden" name="templateId" value="@template.Id" /><button class="quick-option"><admin-icon name="workout" /><span><strong>@template.Name</strong><small>@template.ProgramName · @template.Exercises упражнений</small></span><admin-icon name="arrow" /></button></form>
+    }</div>
+    @if (Model.Templates.Count == 0) { <p class="muted">Шаблонов пока нет. Добавьте тренировку в программу.</p><a class="button secondary" asp-page="/Programs/Index">Мои программы</a> }
+</dialog>
+}

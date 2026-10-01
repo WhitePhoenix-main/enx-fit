@@ -345,6 +345,9 @@ namespace enx_fit.Migrations
                     b.Property<int>("SleepMinutes")
                         .HasColumnType("integer");
 
+                    b.Property<int>("ReadingMinutes")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Steps")
                         .HasColumnType("integer");
 
@@ -3222,6 +3225,11 @@ namespace enx_fit.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("IsCompleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<bool>("IsWarmup")
                         .HasColumnType("boolean");
 
@@ -3548,6 +3556,21 @@ namespace enx_fit.Migrations
                     b.Property<DateOnly?>("ScheduledDate")
                         .HasColumnType("date");
 
+                    b.Property<Guid?>("SourceProgramRevision")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("SourceProgramWorkoutId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SourceStructureJson")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("StartedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("TemplateDecisionPending")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Title")
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
@@ -3565,6 +3588,10 @@ namespace enx_fit.Migrations
 
                     b.HasIndex("TrainingProgramId", "ProgramWorkoutKey", "ScheduledDate")
                         .IsUnique();
+
+                    b.HasIndex(new[] { "UserId" }, "IX_WorkoutSessions_OneActivePerUser")
+                        .IsUnique()
+                        .HasFilter("\"StartedAtUtc\" IS NOT NULL AND \"CompletedAtUtc\" IS NULL AND \"UserId\" IS NOT NULL");
 
                     b.ToTable("WorkoutSessions");
                 });

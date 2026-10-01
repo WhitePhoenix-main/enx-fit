@@ -11,15 +11,61 @@ namespace enx_fit.Pages.Workouts;
 public class DetailsModel(
     WorkoutService workoutService,
     CurrentUser currentUser,
-    UserDirectoryService userDirectory) : PageModel
+    UserDirectoryService userDirectory,
+    ExerciseService exerciseService) : PageModel
 {
     public WorkoutSession Workout { get; private set; } = null!;
 
     public WorkoutBuilderInput? Blueprint { get; private set; }
 
-    public IReadOnlyList<Exercise> AvailableExercises { get; private set; } = [];
+    public ExerciseLibraryModel Library { get; private set; } = null!;
 
     public bool IsAdministrator => currentUser.IsAdministrator;
+    public List<WorkoutTemplateOption> Templates { get; private set; } = [];
+    public bool CanUpdateTemplate { get; private set; }
+    [BindProperty] public int ExerciseEntryId { get; set; }
+
+    public Task<IActionResult> OnPostLoadTemplateAsync(int id, int templateId) => MutateAsync(id, () => workoutService.LoadTemplateAsync(id, templateId));
+    public Task<IActionResult> OnPostExerciseAsync(int id, string action) => MutateAsync(id, () => workoutService.ChangeExerciseAsync(id, ExerciseEntryId, action));
+    public Task<IActionResult> OnPostTemplateDecisionAsync(int id, string choice, string? templateName) => MutateAsync(id, () => workoutService.DecideTemplateAsync(id, choice, templateName));
+    public Task<IActionResult> OnPostStartAsync(int id) => MutateAsync(id, async () =>
+    {
+        var active = await workoutService.StartAsync("planned", plannedId: id);
+        if (active != id) TempData["ActiveWorkoutId"] = active;
+    });
+
+    public async Task<IActionResult> OnPostSetAsync(int id, int setId, bool completed, bool remove)
+    {
+        ValidateOnly(nameof(AddSet));
+        var ajax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+        if (!remove && (!ModelState.IsValid || !TryValidateModel(AddSet, nameof(AddSet))))
+            return ajax ? BadRequest(new { error = "Проверьте вес, повторения и RIR." }) : await LoadPageAsync(id);
+        try
+        {
+            await workoutService.ChangeSetAsync(id, setId, AddSet, completed, remove);
+            return ajax ? new JsonResult(new { saved = true }) : RedirectToPage(new { id });
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (InvalidOperationException ex)
+        {
+            if (ajax) return BadRequest(new { error = ex.Message });
+            ModelState.AddModelError("", ex.Message);
+            return await LoadPageAsync(id);
+        }
+    }
+
+    private async Task<IActionResult> MutateAsync(int id, Func<Task> action)
+    {
+        ModelState.Clear();
+        try
+        {
+            await action();
+            if (TempData["ActiveWorkoutId"] is int active) return RedirectToPage(new { id = active });
+            return RedirectToPage(new { id });
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (InvalidOperationException ex) { ModelState.AddModelError("", ex.Message); return await LoadPageAsync(id); }
+    }
 
     public string OwnerName { get; private set; } = string.Empty;
 
@@ -48,12 +94,10 @@ public class DetailsModel(
 
     public async Task<IActionResult> OnPostAddExerciseAsync(int id)
     {
-        ModelState.Clear();
-
-        if (!TryValidateModel(AddExercise, nameof(AddExercise)))
-        {
-            return await LoadPageAsync(id);
-        }
+        ValidateOnly(nameof(AddExercise));
+        if (!ModelState.IsValid || !TryValidateModel(AddExercise, nameof(AddExercise))) return await LoadPageAsync(id);
+        if (ExerciseEntryId != 0)
+            return await MutateAsync(id, () => workoutService.ChangeExerciseAsync(id, ExerciseEntryId, "replace", AddExercise.ExerciseId));
 
         var result = await workoutService.AddExerciseAsync(id, AddExercise.ExerciseId);
 
@@ -80,9 +124,9 @@ public class DetailsModel(
 
     public async Task<IActionResult> OnPostAddSetAsync(int id)
     {
-        ModelState.Clear();
+        ValidateOnly(nameof(AddSet));
 
-        if (!TryValidateModel(AddSet, nameof(AddSet)))
+        if (!ModelState.IsValid || !TryValidateModel(AddSet, nameof(AddSet)))
         {
             return await LoadPageAsync(id);
         }
@@ -96,6 +140,12 @@ public class DetailsModel(
         return RedirectToPage(new { id });
     }
 
+    private void ValidateOnly(string prefix)
+    {
+        foreach (var key in ModelState.Keys.Where(k => !k.StartsWith(prefix + ".", StringComparison.Ordinal)).ToArray())
+            ModelState.Remove(key);
+    }
+
     private async Task<IActionResult> LoadPageAsync(int id)
     {
         var workout = await workoutService.FindAsync(id);
@@ -106,13 +156,22 @@ public class DetailsModel(
         }
 
         Workout = workout;
+        Templates = await workoutService.TemplatesAsync();
+        CanUpdateTemplate = await workoutService.CanUpdateTemplateAsync(workout);
+        Response.Headers.CacheControl = "no-cache, no-store";
         if (workout.BuilderConfigurationJson is not null && WorkoutBuilderInput.TryParse(workout.BuilderConfigurationJson, out var blueprint))
             Blueprint = blueprint;
         if (IsAdministrator)
         {
             OwnerName = await userDirectory.GetDisplayNameAsync(workout.UserId);
         }
-        AvailableExercises = await workoutService.GetExercisesAsync(id);
+        Library = new ExerciseLibraryModel
+        {
+            Id = "workout-library", ViewerId = currentUser.Id,
+            Exercises = await exerciseService.GetAllAsync(null),
+            SelectedIds = workout.WorkoutExercises.Select(e => e.ExerciseId).ToArray(),
+            RecentIds = await exerciseService.GetRecentIdsAsync(workout.UserId ?? string.Empty)
+        };
         return Page();
     }
 }

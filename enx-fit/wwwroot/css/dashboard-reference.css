@@ -1,0 +1,317 @@
+/* Rebuilt home screen. Reference canvas: 1547 × 1017, sidebar: 245px.
+   Photographs are lossless windows into the supplied reference, never UI screenshots. */
+@font-face {
+  font-family:"Enix Reference"; font-style:normal; font-weight:400; font-display:swap;
+  src:url('../wiseowl/assets/vendor/fonts/font-17.woff2') format('woff2');
+  unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;
+}
+@font-face {
+  font-family:"Enix Reference"; font-style:normal; font-weight:400; font-display:swap;
+  src:url('../wiseowl/assets/vendor/fonts/font-18.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2190-2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+.dashboard-home {
+  --bg:#09131e; --panel:#101c29; --line:#203244; --muted:#adc3e6;
+  --blue:#557aff; --green:#6be5b2; --text:#f3f5fc;
+  margin:0; min-width:320px; color:var(--text); font:14px/1.4 "Enix Reference",Arial,sans-serif;
+  background:radial-gradient(ellipse at 62% 39%,#0e192430,transparent 70%),#09131e;
+  -webkit-font-smoothing:antialiased;
+}
+.dashboard-home :is(h1,h2,h3,p,dl,dd) { margin:0; }
+.dashboard-home :where(button,input,select,textarea) { font:inherit; }
+.dashboard-home button { color:inherit; }
+.dashboard-home :is(button,a) { -webkit-tap-highlight-color:transparent; }
+.dashboard-home button:disabled { cursor:default; }
+.dashboard-home [hidden] { display:none!important; }
+.ef-sidebar { position:fixed; inset:0 auto 0 0; z-index:30; width:245px; display:flex; flex-direction:column; padding:25px 12px 45px; border-right:1px solid #1b2a3a; background:linear-gradient(110deg,#0e1925,#0b1722); }
+.ef-brand { display:flex; align-items:center; gap:14px; font-family:Fit Sans,Arial,sans-serif; font-size:23px; font-weight:750; line-height:34px; letter-spacing:-.6px; white-space:nowrap; }
+.ef-sidebar>.ef-brand { margin:0 21px 38px; }
+.ef-brand-mark { display:flex; align-items:flex-end; gap:4px; height:33px; transform:skewY(-15deg); }
+.ef-brand-mark i { display:block; width:8px; height:18px; border-radius:4px; background:linear-gradient(150deg,#9bb9ff,#5079ff 55%,#4942de); box-shadow:inset 1px 1px 1px #ffffff44; }
+.ef-brand-mark i:nth-child(2) { height:26px; }
+.ef-brand-mark i:nth-child(3) { height:33px; }
+.ef-navigation { display:flex; flex:1; flex-direction:column; gap:6px; }
+.ef-nav-item { position:relative; display:flex; align-items:center; gap:24px; min-height:56px; padding:12px 21px; border-radius:11px; color:#b4caed; font-size:16px; line-height:22px; }
+.ef-nav-item>svg { width:25px; height:25px; color:#a0b6da; }
+.ef-nav-item:hover { background:#172943; color:#fff; }
+.ef-nav-item.active { background:linear-gradient(110deg,#1c2d51,#182849); color:#f5f7ff; font-weight:500; }
+.ef-nav-item.active::before { content:""; position:absolute; width:3px; left:0; top:9px; bottom:9px; border-radius:2px; background:#6285ff; }
+.ef-nav-item.active>svg { fill:#5579ff; stroke:#5579ff; color:#5579ff; }
+.ef-habits-link { margin-top:auto; }
+.ef-sidebar-bottom { display:flex; flex-direction:column; gap:6px; padding-top:24px; margin-top:24px; border-top:1px solid #243449; }
+.ef-app { margin-left:245px; }
+.ef-topbar { display:flex; align-items:center; justify-content:space-between; height:71px; margin:0 24px 0 28px; border-bottom:1px solid #172637; }
+.ef-search { display:flex; align-items:center; gap:13px; width:602px; max-width:49%; height:44px; padding:0 15px; border:1px solid #25374d; border-radius:10px; color:#8297b3!important; background:linear-gradient(110deg,#101d2c,#121f30); text-align:left; font-size:15px!important; }
+.ef-search svg { width:21px; height:21px; }
+.ef-topbar-actions { display:flex; align-items:center; gap:19px; }
+.ef-notification { display:grid; place-items:center; width:48px; height:43px; padding:0 20px 0 0; border-right:1px solid #1a283a; color:#bdd1f1!important; }
+.ef-notification svg { width:25px; height:25px; }
+.ef-account { position:relative; }
+.ef-account>summary { display:flex; align-items:center; gap:12px; list-style:none; cursor:pointer; }
+.ef-account summary strong { max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:600; }
+.ef-account summary>svg { width:13px; height:13px; margin:0; transform:rotate(90deg); color:#adc6ed; }
+.ef-avatar { width:42px; height:42px; flex-shrink:0; border-radius:50%; background:url('../images/dashboard/reference-art.png') -1341px -14px / 1547px 1017px no-repeat; }
+.ef-plan { color:#7192ff; border:1px solid #35559f; border-radius:7px; padding:3px 9px; font-size:13px; line-height:17px; box-shadow:inset 0 0 8px #426bff20; }
+.ef-mobile-brand,.ef-bottom-nav { display:none; }
+.dashboard-home #main-content.ef-main { width:auto; max-width:1800px; margin:auto; padding:15px 17px 14px 24px; }
+.ef-grid { display:flex; flex-wrap:wrap; align-items:stretch; gap:13px; }
+.ef-widget { flex:1 1 calc((100% - 26px)/3); display:flex; flex-direction:column; min-width:0; max-width:100%; position:relative; container-type:normal; border-radius:12px; }
+.ef-widget>*:last-child { flex:1; width:100%; }
+.ef-widget[data-widget-width="auto"][data-widget-id="welcome"] { flex-basis:100%; }
+.ef-widget[data-widget-width="auto"][data-widget-id="next"] { flex-basis:calc((100% - 14px)*.551); margin-right:1px; }
+.ef-widget[data-widget-width="auto"][data-widget-id="goal"] { flex-basis:calc((100% - 14px)*.449); }
+.ef-widget[data-widget-width="auto"][data-widget-id="recommendations"] { flex-basis:calc((100% - 13px)*.587); }
+.ef-widget[data-widget-width="auto"][data-widget-id="workouts"] { flex-basis:calc((100% - 13px)*.413); }
+.ef-widget[data-widget-width="auto"][data-widget-id="stat-workouts"] { flex-basis:calc((100% - 26px)*.29636); }
+.ef-widget[data-widget-width="auto"][data-widget-id="stat-goal"] { flex-basis:calc((100% - 26px)*.28583); }
+.ef-widget[data-widget-width="auto"][data-widget-id="stat-volume"] { flex-basis:calc((100% - 26px)*.41781); }
+.ef-widget[data-widget-width="auto"][data-widget-id="strength"] { flex-basis:calc((100% - 26px)*.528); }
+.ef-widget[data-widget-width="auto"][data-widget-id="stat-weight"] { flex-basis:calc((100% - 26px)*.242); }
+.ef-widget[data-widget-width="auto"][data-widget-id="habits"] { flex-basis:calc((100% - 26px)*.23); }
+.ef-widget[data-widget-width="compact"] { flex-basis:calc((100% - 39px)/4); }
+.ef-widget[data-widget-width="medium"] { flex-basis:calc((100% - 13px)/2); }
+.ef-widget[data-widget-width="wide"] { flex-basis:calc((100% - 13px)*.75); }
+.ef-widget[data-widget-width="full"] { flex-basis:100%; }
+.ef-card { position:relative; padding:20px 23px; border:1px solid var(--line); border-radius:12px; background:radial-gradient(ellipse at 40% 100%,#15253555,transparent 70%),linear-gradient(110deg,#0f1b28,#101c29); box-shadow:inset 0 0 28px #00000008; }
+.ef-card-heading { display:flex; align-items:center; gap:10px; min-height:30px; }
+.ef-card-heading h2 { display:flex; align-items:center; gap:12px; flex-shrink:0; font-size:18px; font-weight:700; line-height:24px; letter-spacing:0; }
+.ef-card-heading h2>svg { width:25px; height:25px; color:#a9c4ed; }
+.ef-chevron { display:grid; place-items:center; margin-left:auto; color:#abc2e6; }
+.ef-chevron>svg { width:20px; height:20px; }
+.ef-primary { display:inline-flex; align-items:center; justify-content:center; gap:14px; min-height:40px; padding:0 26px; border:1px solid #6c89ff; border-radius:9px; color:#fff!important; font-family:Fit Sans,Arial,sans-serif; font-size:16px; font-weight:600; background:linear-gradient(115deg,#4165ff,#3d5ef7); box-shadow:inset 0 1px 1px #9aaaff30; transition:filter .15s; }
+.ef-primary:hover { filter:brightness(1.1); }
+.ef-link { display:inline-flex; align-items:center; gap:8px; color:#648bff!important; font-size:14px; }
+.ef-link>svg { width:18px; height:18px; }
+.ef-welcome { min-height:66px; padding:0 5px; }
+.ef-welcome h1 { font-size:34px; font-weight:700; line-height:41px; letter-spacing:0; overflow-wrap:normal; }
+.ef-welcome p { font-size:19px; line-height:25px; color:#b0c9ec; }
+.ef-workout { overflow:hidden; isolation:isolate; min-height:265px; padding:23px 26px 0; border-color:#3f5bc5; background:radial-gradient(ellipse at 55% -20%,#3257e3,transparent 72%),linear-gradient(180deg,#223da4,#112763 70%,#10235b); }
+.ef-workout-photo { position:absolute; z-index:-1; top:0; right:0; width:319px; height:211px; background:url('../images/dashboard/reference-art.png') -636px -166px / 1547px 1017px no-repeat; mask-image:linear-gradient(to right,transparent,#000 25%),linear-gradient(to bottom,#000 85%,transparent); mask-composite:intersect; pointer-events:none; }
+.ef-eyebrow { display:flex; align-items:center; gap:12px; font-size:16px; line-height:21px; margin-bottom:10px!important; }
+.ef-eyebrow>svg { width:19px; height:19px; }
+.ef-workout h2 { font-family:Fit Sans,Arial,sans-serif; font-size:38px; line-height:46px; font-weight:700; letter-spacing:-.2px; margin-bottom:5px; }
+.ef-workout-description { font-size:18px; line-height:25px; color:#adc5fa; margin-bottom:14px!important; }
+.ef-primary.ef-start { min-width:312px; height:54px; border-radius:13px; font-size:20px; }
+.ef-start>svg { width:28px; height:28px; }
+.ef-workout-shortcuts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:center; height:51px; margin-top:14px; border-top:1px solid #7596ed40; }
+.ef-workout-shortcuts button { display:flex; align-items:center; justify-content:center; gap:14px; padding:0 4px; min-height:32px; width:100%; color:#afc7f8; font-size:14px; white-space:nowrap; }
+.ef-workout-shortcuts>button:first-child { justify-content:flex-start; }
+.ef-workout-shortcuts>button+button,.ef-workout-shortcuts>form { border-left:1px solid #6481d510; }
+.ef-workout-shortcuts svg { width:22px; height:22px; color:#a0bbf3; }
+.ef-week { min-height:265px; padding:21px 15px 26px; }
+.ef-week .ef-card-heading { min-height:24px; margin:0 4px 21px; }
+.ef-week .ef-card-heading h2>svg { width:21px; height:21px; }
+.ef-week-completion { display:flex; gap:5px; padding:0; align-items:center; margin-left:auto; font-size:16px!important; color:var(--green)!important; white-space:nowrap; }
+.ef-week-completion>span { font-size:14px; }
+.ef-week-navigation { display:flex; gap:8px; margin-left:6px; }
+.ef-week-navigation a { display:grid; place-items:center; width:18px; height:24px; color:#abc0e3; }
+.ef-week-navigation svg { width:16px; height:16px; }
+.ef-week-navigation a:first-child svg { transform:rotate(180deg); }
+.ef-week-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:7px; }
+.ef-day { display:flex; flex-direction:column; align-items:center; gap:3px; min-height:166px; padding:15px 4px 12px; border:1px solid #233346; border-radius:9px; font-size:14px; text-align:center; background:linear-gradient(120deg,#101b2850,#121e2d70); }
+.ef-day time { color:#adc4e9; font-size:12px; line-height:20px; }
+.ef-day>span:first-child { line-height:17px; }
+.ef-day-icon { display:grid; place-items:center; width:28px; height:28px; margin:13px 0 8px; color:#a9c3ee; }
+.ef-day-icon>svg { width:27px; height:27px; }
+.ef-day.is-complete .ef-day-icon { background:linear-gradient(135deg,#8befc9,#60ddac); color:#0b4333; border-radius:50%; }
+.ef-day.is-complete .ef-day-icon>svg { width:20px; height:20px; stroke-width:2.5; }
+.ef-day small { min-height:36px; max-width:56px; color:#b1c8e9; font-size:14px; line-height:18px; }
+.ef-day.is-today { background:linear-gradient(110deg,#1e2d50,#19233f); border-color:#5c7cff; box-shadow:inset 0 0 0 1px #526cff20; }
+.ef-day.is-today .ef-day-icon { color:#577aff; }
+.ef-day.is-today small { color:#f3f6ff; font-weight:500; }
+.ef-goal,.ef-last-workout { min-height:209px; padding:18px 23px 12px; }
+.ef-goal { padding-right:18px; }
+.ef-goal .ef-card-heading,.ef-last-workout .ef-card-heading { margin-bottom:12px; }
+.ef-proposal { margin-left:auto; padding:6px 11px; border:1px solid #82691e; border-radius:9px; background:linear-gradient(110deg,#7e691b30,#ab841826); color:#ffd14a; font-family:Fit Sans,Arial,sans-serif; font-size:12px; font-weight:500; white-space:nowrap; }
+.ef-more { display:grid; place-items:center; margin-left:auto; padding:0; color:#a7c2eb!important; }
+.ef-proposal+.ef-more { margin-left:10px; }
+.ef-more svg { width:22px; height:22px; }
+.ef-goal-content,.ef-last-content { display:flex; align-items:flex-start; gap:25px; }
+.ef-photo { display:block; flex-shrink:0; border:1px solid #2e3d4c; border-radius:11px; background-image:url('../images/dashboard/reference-art.png'); background-repeat:no-repeat; background-size:1547px 1017px; }
+.ef-bench-photo { width:143px; height:120px; background-position:-294px -506px; }
+.ef-dumbbell-photo { width:112px; height:104px; background-position:-1038px -505px; }
+.ef-goal-content h3,.ef-last-content h3 { font-size:20px; font-weight:700; line-height:26px; margin:2px 0 1px; }
+.ef-goal-weight { font-size:31px; line-height:39px; font-weight:700; margin-bottom:4px!important; }
+.ef-goal-weight>span { padding:0 6px; color:#a2bade; font-weight:400; }
+.ef-goal-weight>strong { color:#547bff; font-weight:700; }
+.ef-goal-reason { color:#b1c4e2; font-size:14px; line-height:21px; }
+.ef-goal-actions { display:flex; justify-content:flex-end; align-items:center; gap:20px; min-height:40px; margin:-27px 0 0 166px; }
+.ef-goal-actions>.ef-primary { min-width:155px; padding:0 18px; }
+.ef-why { position:relative; color:#adc3e6; font-size:14px; }
+.ef-why>summary { display:flex; align-items:center; gap:10px; min-height:40px; cursor:pointer; list-style:none; }
+.ef-why svg { width:19px; height:19px; }
+.ef-why[open]>p { position:absolute; z-index:40; right:0; top:38px; width:280px; padding:16px; background:#152639; border:1px solid #3e5371; border-radius:9px; box-shadow:0 10px 28px #0008; }
+.ef-last-content { gap:20px; }
+.ef-last-copy { flex:1; min-width:0; }
+.ef-last-content h3 { margin:1px 0 6px; }
+.ef-last-content time { font-size:16px; font-weight:400; white-space:nowrap; color:#afc4e5; }
+.ef-last-content p { font-size:14px; line-height:21px; color:#b1c4e2; }
+.ef-last-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:14px 0 0 -4px; }
+.ef-saved { display:inline-flex; align-items:center; gap:8px; padding:5px 10px; border:1px solid #20483e; border-radius:20px; background:#103c302d; color:var(--green); font-size:14px; line-height:22px; white-space:nowrap; }
+.ef-saved>svg { width:17px; height:17px; padding:2px; border-radius:50%; color:#164235; background:var(--green); stroke-width:2.5; }
+.ef-last-actions .text-button { font-size:14px; min-height:24px; padding:3px 0; gap:8px; color:#648bff; }
+.ef-last-actions .text-button>svg { width:18px; height:18px; }
+.ef-stat { min-height:76px; display:flex; align-items:center; gap:20px; padding:11px 26px; }
+.ef-stat>svg { width:28px; height:28px; }
+.ef-stat>div { display:flex; flex-direction:column; gap:1px; }
+.ef-stat strong { font-size:27px; font-weight:700; line-height:31px; }
+.ef-stat span { color:#afc5e7; font-size:14px; line-height:20px; }
+.ef-stat .ef-stat-change { display:flex; align-items:center; gap:8px; margin-left:auto; color:var(--green); white-space:nowrap; }
+.ef-stat-change svg { width:18px; height:18px; }
+.ef-stat-change.negative { color:#e9b56b; }
+.ef-consistency { gap:25px; }
+.ef-consistency p { display:flex; align-items:center; gap:12px; }
+.ef-consistency p small { padding-left:12px; border-left:1px solid var(--line); font-size:14px; color:var(--muted); }
+.ef-consistency>svg:last-child { width:17px; height:17px; color:#abc1e3; margin-left:auto; }
+.ef-strength,.ef-body,.ef-habits { min-height:209px; padding:12px 21px 13px; }
+.ef-strength .ef-card-heading,.ef-body .ef-card-heading,.ef-habits .ef-card-heading { margin-bottom:7px; min-height:33px; }
+.ef-strength .ef-card-heading h2,.ef-body .ef-card-heading h2,.ef-habits .ef-card-heading h2 { font-size:16px; gap:12px; }
+.ef-strength .ef-card-heading h2>svg,.ef-body .ef-card-heading h2>svg,.ef-habits .ef-card-heading h2>svg { width:22px; height:22px; }
+.ef-heading-note { color:var(--muted); font-weight:400; }
+.ef-chart-period { position:relative; margin-left:auto; flex-shrink:0; color:#bfd5f7; font-size:12px; }
+.ef-chart-period>summary { display:flex; align-items:center; gap:12px; height:35px; border:1px solid #31455f; border-radius:8px; padding:0 12px; cursor:pointer; list-style:none; }
+.ef-chart-period summary>svg { width:14px; height:14px; transform:rotate(90deg); }
+.ef-chart-period>div { position:absolute; z-index:40; top:39px; right:0; min-width:110px; padding:5px; background:#152639; border:1px solid #31455f; border-radius:8px; }
+.ef-chart-period a { display:block; padding:9px; border-radius:5px; }
+.ef-chart-period a:hover { background:#233954; }
+.ef-strength { padding-bottom:10px; }
+.ef-strength .ef-card-heading { margin-bottom:4px; }
+.ef-strength-chart { display:block; width:100%; height:145px; max-height:none; }
+.ef-strength-chart line { stroke:#243748; stroke-width:1; }
+.ef-strength-chart text { fill:#b2caee; font:12px "Enix Reference",Arial,sans-serif; }
+.ef-strength-chart .chart-point-value { fill:#e5edfd; }
+.ef-empty-chart { display:flex; align-items:center; justify-content:center; gap:14px; min-height:140px; color:var(--muted); }
+.ef-body,.ef-habits { padding-inline:18px; }
+.ef-measurements>div { display:grid; grid-template-columns:1fr 76px 46px; align-items:center; gap:6px; min-height:35px; border-top:1px solid #203042; font-size:14px; }
+.ef-measurements dt { color:#abc3e8; white-space:nowrap; }
+.ef-measurements dd { white-space:nowrap; }
+.ef-measurement-change { display:flex; align-items:center; gap:7px; color:#a1b9de; }
+.ef-measurement-change svg { width:15px; height:15px; }
+.ef-measurement-change.decreased { color:var(--green); }
+.ef-body-footer { display:flex; justify-content:space-between; gap:8px; padding-top:14px; border-top:1px solid #203042; color:#aec3e6; font-size:12px; }
+.ef-body-footer a { color:#6190ff; font-size:14px; }
+.ef-habit { display:flex; align-items:center; gap:14px; width:100%; height:34px; padding:0; font-size:14px; text-align:left; }
+.ef-habit>svg { width:15px; height:15px; margin-left:-8px; color:#aec6ea; }
+.ef-habit-check { display:grid; place-items:center; width:22px; height:22px; border-radius:50%; border:2px solid #8da7cc; flex-shrink:0; }
+.ef-habit-check.is-complete { border:0; background:linear-gradient(135deg,#85efc5,#61dfae); color:#0c4434; }
+.ef-habit-check>svg { width:17px; height:17px; stroke-width:2.5; }
+.ef-habit-name { flex:1; color:#adc3e4; white-space:nowrap; }
+.ef-habit-value { color:#adc3e4; white-space:nowrap; }
+.ef-habit:disabled { opacity:1; }
+.ef-footer { display:flex; justify-content:center; margin-top:12px; }
+.ef-customize { display:flex; align-items:center; gap:10px; min-height:28px; padding:4px 10px; color:#9cb2d3!important; font-size:14px; }
+.ef-customize svg { width:20px; height:20px; }
+.ef-resume { display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px solid #385ba1; border-radius:10px; background:#16284a; padding:12px 18px; margin-bottom:13px; }
+.dashboard-home .validation-summary-valid { display:none; }
+.dashboard-home .app-dialog { font-size:14px; }
+.dashboard-home .is-layout-editing .ef-card { height:auto; }
+.is-layout-editing .ef-widget { outline:1px dashed #5073af; outline-offset:3px; }
+.is-layout-editing .ef-widget>.ef-card { border-top-left-radius:0; border-top-right-radius:0; }
+.is-layout-editing .ef-goal-actions { margin-top:12px; }
+.dashboard-home .widget-editbar[hidden]+.ef-card { border-radius:12px; }
+@media (max-width:1399px) and (min-width:1024px) {
+  .ef-sidebar { width:210px; padding-inline:10px; }
+  .ef-app { margin-left:210px; }
+  .ef-sidebar>.ef-brand { margin-inline:15px; }
+  .ef-nav-item { gap:19px; padding-inline:17px; }
+  .dashboard-home #main-content.ef-main { padding-inline:18px; }
+  .ef-workout h2 { font-size:32px; }
+  .ef-workout-description { font-size:16px; }
+  .ef-week .ef-card-heading h2 { font-size:16px; gap:8px; }
+  .ef-week-completion>span { display:none; }
+  .ef-day small { font-size:12px; }
+  .ef-goal { padding-inline:18px; }
+  .ef-proposal { padding-inline:7px; font-size:10px; }
+  .ef-goal-content { gap:16px; }
+  .ef-bench-photo { width:105px; background-position:-315px -506px; }
+  .ef-goal-actions { margin-left:121px; }
+  .ef-last-content { gap:13px; }
+  .ef-dumbbell-photo { width:82px; }
+  .ef-last-content time { font-size:13px; }
+  .ef-last-actions { flex-wrap:wrap; gap:4px; margin-top:8px; }
+  .ef-last-actions .text-button,.ef-saved { font-size:12px; }
+  .ef-stat { padding-inline:19px; gap:16px; }
+  .ef-widget[data-widget-width="auto"][data-widget-id="strength"] { flex-basis:100%; }
+  .ef-widget[data-widget-width="auto"]:is([data-widget-id="stat-weight"],[data-widget-id="habits"]) { flex-basis:calc((100% - 13px)/2); }
+}
+@media (max-width:1023px) {
+  .ef-sidebar { display:none; }
+  .ef-app { margin-left:0; }
+  .ef-topbar { height:66px; margin-inline:20px; gap:14px; }
+  .ef-mobile-brand { display:flex; font-size:23px; gap:11px; }
+  .ef-search { margin-left:auto; width:44px; max-width:none; padding:0; justify-content:center; }
+  .ef-search>span { display:none; }
+  .dashboard-home #main-content.ef-main { padding:18px 20px 100px; }
+  .ef-widget[data-widget-width="auto"] { flex-basis:calc((100% - 13px)/2); }
+  .ef-widget[data-widget-width="auto"]:is([data-widget-id="welcome"],[data-widget-id="next"],[data-widget-id="goal"],[data-widget-id="recommendations"],[data-widget-id="workouts"],[data-widget-id="strength"]) { flex-basis:100%; margin-right:0; }
+  .ef-widget[data-widget-width="auto"]:is([data-widget-id="stat-workouts"],[data-widget-id="stat-goal"],[data-widget-id="stat-volume"]) { flex-basis:calc((100% - 26px)/3); }
+  .ef-stat { padding-inline:15px; gap:12px; }
+  .ef-stat .ef-stat-change { display:none; }
+  .ef-consistency p { flex-wrap:wrap; gap:6px; }
+  .ef-consistency p small { padding:0; border:0; }
+  .ef-bottom-nav { position:fixed; z-index:50; inset:auto 0 0; display:flex; justify-content:space-around; padding:10px 6px calc(10px + env(safe-area-inset-bottom)); border-top:1px solid #293b52; background:#101b29f5; backdrop-filter:blur(12px); }
+  .ef-bottom-nav>a,.ef-bottom-nav>button { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:5px; min-width:55px; color:#a0b7d9; font-size:10px; }
+  .ef-bottom-nav .active { color:#6285ff; }
+  .ef-bottom-nav svg { width:22px; height:22px; }
+}
+@media (max-width:599px) {
+  .ef-topbar { margin-inline:14px; gap:10px; }
+  .ef-topbar-actions { gap:8px; }
+  .ef-notification,.ef-account summary>strong,.ef-account summary>.ef-plan,.ef-account summary>svg { display:none; }
+  .dashboard-home #main-content.ef-main { padding:16px 12px 100px; }
+  .ef-welcome { min-height:64px; padding-inline:3px; }
+  .ef-welcome h1 { font-size:27px; line-height:35px; }
+  .ef-welcome p { font-size:16px; }
+  .ef-widget[data-widget-width="auto"][data-widget-id] { flex-basis:100%; }
+  .ef-widget[data-widget-width="auto"]:is([data-widget-id="stat-workouts"],[data-widget-id="stat-goal"]) { flex-basis:calc((100% - 13px)/2); }
+  .ef-widget[data-widget-width="auto"][data-widget-id="stat-volume"] { flex-basis:100%; }
+  .ef-workout { min-height:272px; padding:21px 18px 0; }
+  .ef-workout-photo { opacity:.65; }
+  .ef-workout h2 { font-size:29px; line-height:36px; }
+  .ef-workout-description { font-size:15px; }
+  .ef-eyebrow { font-size:14px; }
+  .ef-primary.ef-start { width:100%; min-width:0; font-size:18px; }
+  .ef-workout-shortcuts { height:62px; }
+  .ef-workout-shortcuts button { flex-direction:column; gap:4px; min-height:56px; font-size:11px; }
+  .ef-workout-shortcuts>button:first-child { justify-content:center; }
+  .ef-workout-shortcuts svg { width:20px; height:20px; }
+  .ef-week { padding:17px 10px 19px; min-height:235px; }
+  .ef-week .ef-card-heading { gap:7px; margin:0 3px 16px; }
+  .ef-card-heading h2 { font-size:16px; gap:8px; }
+  .ef-week-completion { font-size:14px!important; }
+  .ef-week-completion>span { display:none; }
+  .ef-week-navigation { gap:2px; margin:0; }
+  .ef-week-days { gap:4px; }
+  .ef-day { min-height:150px; padding:11px 2px; font-size:12px; }
+  .ef-day time { font-size:10px; }
+  .ef-day small { font-size:10px; line-height:15px; }
+  .ef-day-icon { width:25px; height:25px; margin:10px 0 7px; }
+  .ef-goal,.ef-last-workout { padding:15px; min-height:0; }
+  .ef-goal .ef-card-heading { flex-wrap:wrap; gap:8px; }
+  .ef-proposal { order:3; margin:0; padding:4px 7px; font-size:10px; }
+  .ef-more { margin-left:auto; }
+  .ef-goal-content,.ef-last-content { gap:14px; }
+  .ef-bench-photo { width:91px; height:114px; background-position:-318px -507px; }
+  .ef-dumbbell-photo { width:80px; height:102px; }
+  .ef-goal-content h3,.ef-last-content h3 { font-size:18px; line-height:23px; }
+  .ef-goal-weight { font-size:27px; line-height:34px; }
+  .ef-goal-reason { font-size:12px; }
+  .ef-goal-actions { margin:10px 0 0; gap:12px; }
+  .ef-goal-actions>.ef-primary { min-width:145px; min-height:44px; }
+  .ef-last-content time { display:block; margin-top:3px; font-size:13px; }
+  .ef-last-content p { font-size:12px; }
+  .ef-last-actions { flex-wrap:wrap; gap:7px; margin-top:8px; }
+  .ef-last-actions .text-button,.ef-saved { font-size:12px; }
+  .ef-stat { min-height:80px; padding:12px; gap:12px; }
+  .ef-stat>svg { width:23px; height:23px; }
+  .ef-stat span { font-size:12px; line-height:16px; }
+  .ef-stat strong { font-size:26px; }
+  .ef-strength,.ef-body,.ef-habits { min-height:205px; padding:14px; }
+  .ef-strength .ef-card-heading { gap:8px; }
+  .ef-heading-note { display:none; }
+  .ef-chart-period>summary { padding:0 8px; gap:7px; }
+  .ef-strength-chart { height:auto; }
+  .ef-strength { min-height:0; }
+  .ef-resume { flex-wrap:wrap; }
+}
+@media (prefers-reduced-motion:reduce) { .dashboard-home * { scroll-behavior:auto; transition:none; } }

@@ -191,6 +191,8 @@ public sealed partial class TrainingProgramService(ApplicationDbContext db, Curr
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
         var p = await EditableAsync(id);
         Require(p.OwnerId == currentUser.Id, ProgramFailure.Forbidden);
+        var active = await db.WorkoutSessions.FirstOrDefaultAsync(s => s.UserId == currentUser.Id && s.CompletedAtUtc == null && (s.StartedAtUtc != null || s.TrainingProgramId != null));
+        if (active is not null) return active.Id;
         var sessions = await SessionsAsync(p);
         var ongoing = sessions.FirstOrDefault(s => s.CompletedAtUtc is null);
         if (ongoing is not null) return ongoing.Id;
@@ -199,7 +201,7 @@ public sealed partial class TrainingProgramService(ApplicationDbContext db, Curr
         Require(next!.Workout.Exercises.Count > 0, ProgramFailure.Invalid, "Сначала добавьте упражнения в тренировку.");
         var session = new WorkoutSession
         {
-            UserId = currentUser.Id, Title = next.Workout.Name, TrainingProgramId = id,
+            UserId = currentUser.Id, Title = next.Workout.Name, TrainingProgramId = id, StartedAtUtc = DateTime.UtcNow,
             ProgramWorkoutKey = next.Workout.Key, ScheduledDate = next.Date,
             WorkoutExercises = next.Workout.Exercises.OrderBy(e => e.Order).Select(e => new WorkoutExercise
             {
@@ -212,7 +214,17 @@ public sealed partial class TrainingProgramService(ApplicationDbContext db, Curr
                     (e.Prescription.RestSeconds is { } rest ? $" · отдых {rest} с" : "") + " " + e.Prescription.Comment
             }).ToList()
         };
-        db.Add(session); await db.SaveChangesAsync(); await transaction.CommitAsync(); return session.Id;
+        db.Add(session);
+        try { await db.SaveChangesAsync(); await transaction.CommitAsync(); return session.Id; }
+        catch (Exception ex) when (ex is DbUpdateException or System.Data.Common.DbException)
+        {
+            await transaction.RollbackAsync();
+            db.ChangeTracker.Clear();
+            var existing = await db.WorkoutSessions.AsNoTracking().FirstOrDefaultAsync(s =>
+                s.UserId == currentUser.Id && s.StartedAtUtc != null && s.CompletedAtUtc == null);
+            if (existing is not null) return existing.Id;
+            throw new ProgramOperationException(ProgramFailure.Conflict, "Повторите запуск тренировки.");
+        }
     }
 
     private static TrainingProgram CopyProgram(TrainingProgram p, string ownerId) => new()

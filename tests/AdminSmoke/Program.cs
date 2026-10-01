@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using enx_fit.Areas.Identity.Data;
 using enx_fit.Data;
+using enx_fit.Extensions;
 using enx_fit.Models;
 using enx_fit.Security;
 using enx_fit.Services;
@@ -29,6 +30,7 @@ await using var dataConnection = new SqliteConnection("Data Source=:memory:");
 await dataConnection.OpenAsync();
 builder.Services.AddDbContext<ApplicationDbContext>(o => o.UseSqlite(dataConnection));
 builder.Services.AddDefaultIdentity<ApplicationUser>().AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.ConfigureApplicationCookie(options => options.LoginPath = "/TechnicalPages/Login");
 builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
 builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(AppContext.BaseDirectory, "test-keys")));
 builder.Services.AddUserRoleAuthorization();
@@ -39,6 +41,8 @@ builder.Services.AddScoped<RegistrationService>();
 builder.Services.AddScoped<WorkoutService>();
 builder.Services.AddScoped<ExerciseService>();
 builder.Services.AddScoped<BodyMeasurementService>();
+builder.Services.AddScoped<DashboardService>();
+builder.Services.AddTrainingPrograms(builder.Configuration);
 builder.Services.AddRazorPages()
     .AddApplicationPart(typeof(AdminSmoke.Pages.RoleChecks.TrainerModel).Assembly);
 await using var app = builder.Build();
@@ -76,6 +80,13 @@ await using (var scope = app.Services.CreateAsyncScope())
     await db.SaveChangesAsync();
 }
 await app.StartAsync();
+await AuthChecks.RunAsync(app.Services, new Uri(baseUrl));
+await DashboardChecks.RunAsync(app.Services, new Uri(baseUrl));
+await DashboardLayoutChecks.RunAsync(app.Services, new Uri(baseUrl));
+await DashboardNavigationChecks.RunAsync(new Uri(baseUrl));
+await ProgramChecks.RunAsync(app.Services, new Uri(baseUrl));
+await WorkoutBuilderChecks.RunAsync(app.Services, new Uri(baseUrl));
+await QuickWorkoutChecks.RunAsync(app.Services, new Uri(baseUrl));
 using var adminClient = Client();
 using var memberClient = Client();
 using var anonymous = Client();
@@ -90,7 +101,7 @@ try
     foreach (var path in new[] { "/Exercises/Create", "/Exercises/Edit/1", "/Exercises/Delete/1" })
     {
         Check(Denied(await memberClient.GetAsync(path)), $"Member cannot open exercise mutation page: {path}");
-        var form = await Post(memberClient, path, new() { ["Input.Name"] = "Unauthorized exercise", ["Id"] = "1" }, "/Identity/Account/Login");
+        var form = await Post(memberClient, path, new() { ["Input.Name"] = "Unauthorized exercise", ["Id"] = "1" }, "/TechnicalPages/Login?handler=Login");
         Check(Denied(form), $"Member cannot POST exercise mutation: {path}");
     }
     Check((await memberClient.GetAsync("/Admin/Users")).Headers.Location?.ToString().Contains("AccessDenied") == true, "Member cannot access admin pages");
@@ -168,6 +179,15 @@ try
         Check(!await users.IsInRoleAsync((await users.FindByEmailAsync("updated@example.test"))!, AppRoles.Administrator), "Removed role persisted");
     }
     await Page(adminClient, "/Workouts"); await Page(adminClient, "/Exercises"); await Page(adminClient, "/Exercises/Create");
+    var machineDetail = await Page(adminClient, "/Exercises/Details/-1006");
+    Check(WebUtility.HtmlDecode(machineDetail).Contains("Тренажёр для жима от груди") && machineDetail.Contains("exercise-equipment-icon"),
+        "Exercise details include a machine description and icon");
+    await using (var scope = app.Services.CreateAsyncScope())
+    {
+        var catalog = await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Exercises.AsNoTracking().ToListAsync();
+        Check(catalog.Count >= 310 && catalog.All(exercise => ExercisePresentation.EquipmentDetails(exercise).Count > 0),
+            "Every seeded exercise has an equipment description");
+    }
     await Page(adminClient, "/Exercises/Edit/1"); await Page(adminClient, "/Exercises/Delete/1"); await Page(adminClient, "/Body"); await Page(adminClient, "/Body/Create");
     await Page(adminClient, "/Body/Edit/1"); await Page(adminClient, "/Body/Delete/1");
     var memberWorkouts = await Page(memberClient, "/Workouts");
@@ -203,7 +223,7 @@ try
     Check(Denied(await anonymous.GetAsync("/RoleChecks/Guest")), "Guest enum still requires an authenticated account");
     await SetRole(memberId, UserRole.User);
     using var registeredClient = Client();
-    var registration = await Post(registeredClient, "/Identity/Account/Register", new() { ["Input.Email"] = "registration@example.test", ["Input.Password"] = password, ["Input.ConfirmPassword"] = password, ["Input.Role"] = "9", ["Role"] = "9" });
+    var registration = await Post(registeredClient, "/TechnicalPages/Login?handler=Register", new() { ["Input.Email"] = "registration@example.test", ["Input.Password"] = password, ["Input.ConfirmPassword"] = password, ["Input.Role"] = "9", ["Role"] = "9" });
     Check(registration.StatusCode == HttpStatusCode.Redirect, "Public registration works with ApplicationUser");
     await using (var scope = app.Services.CreateAsyncScope())
     {
@@ -225,6 +245,7 @@ try
         }
     }
     Console.WriteLine($"PASS: {checks} integration checks.");
+    if (args.Contains("--reference-preview")) await DashboardReferencePreview.SeedAsync(app.Services);
     if (args.Contains("--serve")) { Console.WriteLine($"Test preview: {baseUrl}/Admin (admin@example.test / TestOnly!2026). In-memory test data only."); await app.WaitForShutdownAsync(); }
 }
 finally { await app.StopAsync(); }
@@ -252,6 +273,6 @@ async Task<HttpResponseMessage> Post(HttpClient client, string url, Dictionary<s
 }
 async Task Login(HttpClient client, string email)
 {
-    var response = await Post(client, "/Identity/Account/Login", new() { ["Input.Email"] = email, ["Input.Password"] = password });
+    var response = await Post(client, "/TechnicalPages/Login?handler=Login", new() { ["Input.Email"] = email, ["Input.Password"] = password });
     Check(response.StatusCode == HttpStatusCode.Redirect, "Identity login: " + email);
 }

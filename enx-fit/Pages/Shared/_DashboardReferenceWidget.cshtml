@@ -1,0 +1,187 @@
+@model enx_fit.Services.DashboardWidgetViewModel
+@using System.Globalization
+@using enx_fit.Extensions
+@using enx_fit.Services
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var reference = dashboard.Reference;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string N(decimal value) => value.ToString("0.##", ru);
+    string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+    string? PageUrl(string page) => Url.Page(page, dashboard.NavigationValues);
+}
+@switch (Model.WidgetId)
+{
+    case "welcome":
+        <section class="ef-welcome">
+            <h1>@(reference ? "Привет, Алексей!" : dashboard.IsCoachView ? d.Name : $"Привет, {d.Name}!")</h1>
+            <p><time datetime="@(reference ? "2026-10-01" : d.Today.ToString("yyyy-MM-dd"))">@(reference ? "1 октября, четверг" : d.Today.ToString("d MMMM, dddd", ru))</time></p>
+        </section>
+        break;
+    case "next":
+        var active = dashboard.ActiveWorkout;
+        var planned = d.NextWorkout?.Date == d.Today ? d.NextWorkout : null;
+        var program = dashboard.NextProgramWorkout?.Date == d.Today ? dashboard.NextProgramWorkout : null;
+        var previous = d.Completed.FirstOrDefault();
+        var title = active?.Title ?? planned?.Title ?? program?.Workout.Name ?? "Начать тренировку";
+        if (reference) title = "Верх тела — сила";
+        var count = active?.WorkoutExercises.Count ?? planned?.WorkoutExercises.Count ?? program?.Workout.Exercises.Count;
+        var word = count % 100 is >= 11 and <= 14 || count % 10 is 0 or >= 5 ? "упражнений" : count % 10 == 1 ? "упражнение" : "упражнения";
+        <section class="ef-card ef-workout" id="next-workout">
+            <div class="ef-workout-photo" aria-hidden="true"></div>
+            <p class="ef-eyebrow"><reference-icon name="calendar" />@(reference ? "Сегодня по программе" : active is not null ? "Тренировка продолжается" : planned is not null || program is not null ? "Сегодня по программе" : "В вашем темпе")</p>
+            <h2>@title</h2>
+            <p class="ef-workout-description">@if (reference) { <span>4 упражнения · Неделя 3 из 6</span> } else { @if (count is not null) { <span>@count @word</span> } else { <span>Добавляйте упражнения по ходу занятия</span> }@if (dashboard.ActiveProgram is { StartDate: { } startDate } currentProgram) { <span> · Неделя @Math.Clamp((d.Today.DayNumber - startDate.DayNumber) / 7 + 1, 1, currentProgram.Weeks) из @currentProgram.Weeks</span> } }</p>
+            @if (reference)
+            {
+                <button class="ef-primary ef-start" type="button" data-dialog="quick-workout-dialog"><reference-icon name="play" />Начать тренировку</button>
+            }
+            else if (dashboard.IsCoachView)
+            {
+                <a class="ef-primary ef-start" href="@PageUrl("/Dashboard/Plans")"><reference-icon name="calendar" />План тренировок</a>
+            }
+            else if (active is not null)
+            {
+                <a class="ef-primary ef-start" asp-page="/Workouts/Details" asp-route-id="@active.Id"><reference-icon name="play" />Продолжить тренировку</a>
+            }
+            else if (planned is not null || program is not null)
+            {
+                <form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="@(planned is not null ? "planned" : "program")" /><input type="hidden" name="plannedId" value="@planned?.Id" /><input type="hidden" name="programId" value="@dashboard.ActiveProgram?.Id" /><button class="ef-primary ef-start" type="submit"><reference-icon name="play" />Начать тренировку</button></form>
+            }
+            else
+            {
+                <button class="ef-primary ef-start" type="button" data-dialog="quick-workout-dialog"><reference-icon name="play" />@(dashboard.ShowOnboarding ? "Начать первую тренировку" : "Начать тренировку")</button>
+            }
+            @if (reference || !dashboard.IsCoachView && active is null)
+            {
+                <div class="ef-workout-shortcuts"><button type="button" data-dialog="quick-workout-dialog"><reference-icon name="bolt" />Быстрая тренировка</button><button type="button" data-dialog="template-start-dialog"><reference-icon name="document" />Из шаблона</button><form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="previous" /><button type="@(reference ? "button" : "submit")" data-dialog="@(reference ? "quick-workout-dialog" : null)" disabled="@(!reference && previous is null)" title="@(previous?.Title ?? "Появится после первого занятия")"><reference-icon name="repeat" />Повторить</button></form></div>
+            }
+        </section>
+        break;
+    case "goal":
+        var monday = d.Today.AddDays(-((int)d.Today.DayOfWeek + 6) % 7 + dashboard.WeekOffset * 7);
+        if (reference) monday = new DateOnly(2026, 9, 28).AddDays(dashboard.WeekOffset * 7);
+        var days = new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" };
+        var completedThisWeek = reference ? 2 : d.Completed.Count(w => w.Date >= monday && w.Date < monday.AddDays(7));
+        var weeklyTarget = reference ? 3 : d.Settings.WeeklyWorkoutGoal;
+        <section class="ef-card ef-week" id="plan">
+            <header class="ef-card-heading"><h2><reference-icon name="calendar" />План недели</h2><button class="ef-week-completion" type="button" data-dialog="goal-dialog">@completedThisWeek / @weeklyTarget <span>выполнено</span></button><nav class="ef-week-navigation" aria-label="Выбор недели"><a asp-page="/Dashboard" asp-route-ClientId="@dashboard.ClientId" asp-route-WeekOffset="@(dashboard.WeekOffset - 1)" aria-label="Предыдущая неделя"><reference-icon name="chevron" /></a><a asp-page="/Dashboard" asp-route-ClientId="@dashboard.ClientId" asp-route-WeekOffset="@(dashboard.WeekOffset + 1)" aria-label="Следующая неделя"><reference-icon name="chevron" /></a></nav></header>
+            <div class="ef-week-days">
+                @for (var i = 0; i < 7; i++)
+                {
+                    var date = monday.AddDays(i);
+                    var done = d.Completed.FirstOrDefault(w => w.Date == date);
+                    var scheduledWorkout = d.Workouts.FirstOrDefault(w => w.Date == date && w.CompletedAtUtc == null && w.StartedAtUtc == null && !DashboardData.WorkingSets(w).Any());
+                    var scheduledProgram = dashboard.ActiveProgram is { } training ? ProgramSchedule.Occurrences(training).FirstOrDefault(o => o.Date == date) : null;
+                    var dayTitle = reference ? new[] { "Верх тела", "Ноги и кор", "Отдых", "Верх тела", "Ноги и кор", "Кардио", "Отдых" }[i] : (done?.Title ?? scheduledWorkout?.Title ?? scheduledProgram?.Workout.Name ?? "Отдых").Split('—')[0].Trim();
+                    var completed = reference ? i < 3 : done is not null || dayTitle == "Отдых" && date < d.Today;
+                    var icon = completed ? "check" : dayTitle == "Отдых" ? "coffee" : dayTitle.Contains("Кардио", StringComparison.OrdinalIgnoreCase) ? "shoe" : "workout";
+                    <a class="ef-day @(completed ? "is-complete" : "") @((reference ? i == 3 : date == d.Today) ? "is-today" : "")" href="@PageUrl("/Dashboard/Plans")" aria-label="@date.ToString("d MMMM", ru): @dayTitle"><span>@days[i]</span><time datetime="@date.ToString("yyyy-MM-dd")">@date.ToString("dd.MM")</time><span class="ef-day-icon"><reference-icon name="@icon" /></span><small>@dayTitle</small></a>
+                }
+            </div>
+        </section>
+        break;
+    case "recommendations":
+        var exercise = dashboard.NextGoalExercise;
+        var proposal = dashboard.NextRecommendation;
+        <section class="ef-card ef-goal" id="recommendations">
+            <header class="ef-card-heading"><h2><reference-icon name="target" />Следующая цель</h2>@if (reference || proposal is not null) { <span class="ef-proposal">Предложение · ожидает подтверждения</span> }<button class="ef-more" type="button" data-dialog="goal-dialog" aria-label="Настроить цель"><reference-icon name="more" /></button></header>
+            @if (reference)
+            {
+                <div class="ef-goal-content"><span class="ef-photo ef-bench-photo" role="img" aria-label="Штанга для жима лёжа"></span><div><h3>Жим лёжа</h3><p class="ef-goal-weight">60 <span>→</span><strong>62,5 кг</strong></p><p class="ef-goal-reason">Два полных занятия в верхней границе диапазона.</p></div></div>
+                <div class="ef-goal-actions"><details class="ef-why"><summary><reference-icon name="info" />Почему?</summary><p>Два полных занятия в верхней границе диапазона. Следующий шаг — увеличить рабочий вес на 2,5 кг.</p></details><button class="ef-primary" type="button" data-dialog="goal-dialog">Подтвердить</button></div>
+            }
+            else if (exercise is not null && dashboard.ActiveProgram is { } goalProgram)
+            {
+                <div class="ef-goal-content"><span class="ef-photo ef-bench-photo" role="img" aria-label="Штанга для жима лёжа"></span><div><h3>@ExercisePresentation.DisplayName(exercise.Exercise)</h3>@if (proposal is not null) { <p class="ef-goal-weight">@N(proposal.CurrentValue) <span>→</span> <strong>@N(proposal.SuggestedValue) кг</strong></p><p class="ef-goal-reason">@proposal.SuggestedChange</p> } else { <p class="ef-goal-weight">@exercise.Prescription.Summary @if (exercise.Prescription.WeightKg is { } weight) { <strong>· @N(weight) кг</strong> }</p><p class="ef-goal-reason">@goalProgram.Name</p> }</div></div>
+                <div class="ef-goal-actions">@if (proposal is not null) { <details class="ef-why"><summary><reference-icon name="info" />Почему?</summary><p>@proposal.Reason</p></details><a class="ef-primary" asp-page="/Programs/Details" asp-route-id="@goalProgram.Id" asp-route-Tab="progression" asp-route-ExerciseId="@exercise.Id">Подтвердить</a> } else { <a class="ef-link" asp-page="/Programs/Details" asp-route-id="@goalProgram.Id" asp-route-Tab="workouts">Открыть программу <reference-icon name="arrow" /></a> }</div>
+            }
+            else
+            {
+                <div class="ef-goal-content"><span class="ef-photo ef-bench-photo" aria-hidden="true"></span><div><h3>Сохраняйте свой ритм</h3><p class="ef-goal-weight">@d.ThisWeek.Count() <span>/</span> <strong>@d.Settings.WeeklyWorkoutGoal тренировок</strong></p><p class="ef-goal-reason">@d.Settings.GoalTitle</p></div></div><div class="ef-goal-actions"><button class="ef-link" type="button" data-dialog="goal-dialog">Настроить цель <reference-icon name="arrow" /></button></div>
+            }
+            @if (!string.IsNullOrWhiteSpace(d.Settings.TrainerNote)) { <p class="trainer-note"><reference-icon name="users" />@d.Settings.TrainerNote</p> }
+        </section>
+        break;
+    case "workouts":
+        var last = d.Completed.FirstOrDefault();
+        <section class="ef-card ef-last-workout" id="workouts">
+            <header class="ef-card-heading"><h2><reference-icon name="clock" />Последняя тренировка</h2><a class="ef-chevron" href="@PageUrl("/Dashboard/Workouts")" aria-label="Вся история тренировок"><reference-icon name="chevron" /></a></header>
+            @if (reference)
+            {
+                <div class="ef-last-content"><span class="ef-photo ef-dumbbell-photo" role="img" aria-label="Гантели в тренажёрном зале"></span><div class="ef-last-copy"><h3>Ноги и кор <time datetime="2026-09-30">· 30 сентября</time></h3><p>12 рабочих подходов</p><div class="ef-last-actions"><span class="ef-saved"><reference-icon name="check" />Сохранена</span><a class="text-button" href="@PageUrl("/Dashboard/Workouts")">Посмотреть детали <reference-icon name="arrow" /></a></div></div></div>
+            }
+            else if (last is not null)
+            {
+                <div class="ef-last-content"><span class="ef-photo ef-dumbbell-photo" role="img" aria-label="Гантели в тренажёрном зале"></span><div class="ef-last-copy"><h3>@last.Title <time datetime="@last.Date.ToString("yyyy-MM-dd")">· @last.Date.ToString("d MMMM", ru)</time></h3><p>@DashboardData.WorkingSets(last).Count() рабочих подходов</p><div class="ef-last-actions"><span class="ef-saved"><reference-icon name="check" />Сохранена</span><button class="text-button" data-dialog="workout-@last.Id">Посмотреть детали <reference-icon name="arrow" /></button></div></div></div>
+            }
+            else
+            {
+                <div class="ef-last-content"><span class="ef-photo ef-dumbbell-photo" aria-hidden="true"></span><div class="ef-last-copy"><h3>Первая тренировка впереди</h3><p>Здесь появятся результаты занятия.</p></div></div>
+            }
+        </section>
+        break;
+    case "stat-workouts":
+        var monthly = d.Completed.Count(w => w.Date >= d.Today.AddDays(-29));
+        var previousMonth = d.Completed.Count(w => w.Date >= d.Today.AddDays(-59) && w.Date < d.Today.AddDays(-29));
+        var change = previousMonth > 0 ? (int?)Math.Round((monthly - previousMonth) * 100d / previousMonth) : null;
+        if (reference) { monthly = 8; change = 33; }
+        <a class="ef-card ef-stat" href="@PageUrl("/Dashboard/Workouts")"><reference-icon name="bars" /><div><strong>@monthly</strong><span>тренировок за месяц</span></div>@if (change.HasValue) { <span class="ef-stat-change @(change < 0 ? "negative" : "")"><svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18 18 6M9 6h9v9" /></svg>@(change >= 0 ? "+" : "")@change%</span> }</a>
+        break;
+    case "stat-goal":
+        <a class="ef-card ef-stat" href="@PageUrl("/Dashboard/Achievements")"><reference-icon name="trophy" /><div><strong>@(reference ? 3 : d.Records.Count())</strong><span>личных рекорда</span></div>@if (reference || d.NewRecords > 0) { <span class="ef-stat-change"><svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18 18 6M9 6h9v9" /></svg>+@(reference ? 1 : d.NewRecords)</span> }</a>
+        break;
+    case "stat-volume":
+        <a class="ef-card ef-stat ef-consistency" href="@PageUrl("/Dashboard/Plans")"><reference-icon name="calendar" /><div><span>Регулярность</span><p><strong>@(reference ? 2 : d.ThisWeek.Count()) / @(reference ? 3 : d.Settings.WeeklyWorkoutGoal)</strong><small>на этой неделе</small></p></div><reference-icon name="chevron" /></a>
+        break;
+    case "strength":
+        var series = d.StrengthFor(dashboard.NextGoalExercise?.ExerciseId) ?? d.Strength;
+        var weeks = dashboard.ChartWeeks;
+        var start = d.Until.AddDays(1 - weeks * 7);
+        var points = series?.Points.Where(p => p.Date >= start).Select(p => (p.Date, p.Weight)).ToList() ?? [];
+        if (reference) points = [(new(2026, 8, 20), 55m), (new(2026, 9, 3), 55m), (new(2026, 9, 10), 57.5m), (new(2026, 9, 17), 57.5m), (new(2026, 9, 24), 60m), (new(2026, 10, 1), 60m)];
+        var minimum = points.Count == 0 ? 0 : Math.Max(0, Math.Floor((points.Min(p => p.Weight) - 10) / 10) * 10);
+        var maximum = points.Count == 0 ? 30 : Math.Max(minimum + 30, Math.Ceiling((points.Max(p => p.Weight) + 5) / 10) * 10);
+        double X(int index) => reference ? new double[] { 62, 157, 260, 360, 461, 557 }[index] : points.Count < 2 ? 308 : 62 + (points[index].Date.DayNumber - points[0].Date.DayNumber) * 495d / Math.Max(1, points[^1].Date.DayNumber - points[0].Date.DayNumber);
+        double Y(decimal weight) => 110 - (double)((weight - minimum) / (maximum - minimum)) * 100;
+        var path = string.Join(" ", points.Select((p, i) => $"{F(X(i))},{F(Y(p.Weight))}"));
+        <section class="ef-card ef-strength">
+            <header class="ef-card-heading"><h2><reference-icon name="bars" /><span>@(reference ? "Жим лёжа" : series is null ? "Рабочий вес" : ExercisePresentation.DisplayName(series.Exercise))<span class="ef-heading-note"> · рабочий вес, кг</span></span></h2><details class="ef-chart-period"><summary>@weeks @(weeks == 6 ? "недель" : "недели") <reference-icon name="chevron" /></summary><div>@foreach (var period in new[] { 2, 4, 6 }) { <a asp-page="/Dashboard" asp-route-ClientId="@dashboard.ClientId" asp-route-ChartWeeks="@period" asp-route-Until="@dashboard.Until?.ToString("yyyy-MM-dd")">@period @(period == 6 ? "недель" : "недели")</a> }</div></details></header>
+            @if ((reference || series is not null) && points.Count > 0)
+            {
+                <svg class="ef-strength-chart strength-chart" viewBox="0 0 610 145" preserveAspectRatio="none" role="img" aria-label="@(reference ? "Жим лёжа" : ExercisePresentation.DisplayName(series!.Exercise)): рабочий вес за @weeks недель">
+                    <defs><linearGradient id="reference-chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4b72ff" stop-opacity=".17" /><stop offset="100%" stop-color="#4b72ff" stop-opacity="0" /></linearGradient></defs>
+                    @for (var i = 0; i < 4; i++) { var value = minimum + (maximum - minimum) * i / 3; <g><line x1="26" y1="@F(Y(value))" x2="607" y2="@F(Y(value))" /><text x="0" y="@F(Y(value) + 4)">@value.ToString("0.#", ru)</text></g> }
+                    <line x1="26" y1="10" x2="26" y2="110" /><line x1="607" y1="10" x2="607" y2="110" />
+                    @for (var i = 0; i < Math.Min(6, points.Count); i++) { var index = (int)Math.Round(i * (points.Count - 1d) / Math.Max(1, Math.Min(6, points.Count) - 1)); <g><line x1="@F(X(index))" y1="10" x2="@F(X(index))" y2="110" /><text x="@F(X(index))" y="135" text-anchor="middle">@points[index].Date.ToString("dd.MM")</text></g> }
+                    <polygon points="@F(X(0)),110 @path @F(X(points.Count - 1)),110" fill="url(#reference-chart-fill)" /><polyline points="@path" fill="none" stroke="#5377ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    @for (var i = 0; i < points.Count; i++) { var point = points[i]; <g><circle cx="@F(X(i))" cy="@F(Y(point.Weight))" r="4" fill="#6485ff"><title>@point.Date.ToString("d MMMM", ru) · @N(point.Weight) кг</title></circle>@if (points.Count <= 8) { <g><text class="chart-point-value" x="@F(X(i))" y="@F(Y(point.Weight) - 12)" text-anchor="middle">@N(point.Weight)</text></g> }</g> }
+                </svg>
+            }
+            else { <div class="ef-empty-chart"><reference-icon name="trend" /><p>Запишите рабочие подходы — здесь появится ваш прогресс.</p></div> }
+        </section>
+        break;
+    case "stat-weight":
+        var latest = d.Measurements.LastOrDefault();
+        var prior = d.Measurements.SkipLast(1).LastOrDefault();
+        var measurements = reference ? new[] { ("Вес", (decimal?)78.2m, (decimal?)78.2m, "кг"), ("Обхват талии", (decimal?)82m, (decimal?)83m, "см"), ("Обхват груди", (decimal?)101m, (decimal?)101m, "см") } : new[] { ("Вес", latest?.WeightKg, prior?.WeightKg, "кг"), ("Обхват талии", latest?.WaistCm, prior?.WaistCm, "см"), ("Обхват груди", latest?.ChestCm, prior?.ChestCm, "см") };
+        <section class="ef-card ef-body">
+            <header class="ef-card-heading"><h2><reference-icon name="scale" />Параметры тела</h2><a class="ef-chevron" href="@PageUrl("/Dashboard/Progress")" aria-label="Все параметры тела"><reference-icon name="chevron" /></a></header>
+            <dl class="ef-measurements">@foreach (var row in measurements) { var delta = row.Item2 - row.Item3; <div><dt>@row.Item1</dt><dd>@(row.Item2.HasValue ? N(row.Item2.Value) + " " + row.Item4 : "—")</dd><dd class="ef-measurement-change @(delta < 0 ? "decreased" : "")">@if (delta.HasValue && delta != 0) { <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 10 4 4 10-10M5 18h7" /></svg><span>@(delta > 0 ? "+" : "")@N(delta.Value)</span> } else { <span>—</span> }</dd></div> }</dl>
+            <div class="ef-body-footer"><span>@(reference ? "Обновлено 28 сентября" : latest is null ? "Замеров пока нет" : $"Обновлено {latest.Date.ToString("d MMMM", ru)}")</span>@if (!dashboard.IsCoachView) { <a asp-page="/Body/Create">Изменить</a> }</div>
+        </section>
+        break;
+    case "habits":
+        var today = d.TodayCheckIn;
+        var habits = new[] { ("Сон 7–9 часов", today.SleepMinutes is >= 420 and <= 540, today.SleepMinutes > 0 ? $"{today.SleepMinutes / 60} ч {today.SleepMinutes % 60} мин" : "—"), ("Вода", today.WaterMl >= 2000, $"{today.WaterMl / 250} / 8"), ("Растяжка", today.StretchingDone, today.StretchingDone ? "10 мин" : "0 / 10 мин"), ("Чтение", today.ReadingMinutes >= 20, $"{today.ReadingMinutes} / 20 мин") };
+        if (reference) habits = [("Сон 7–9 часов", true, "7 ч 30 мин"), ("Вода", false, "4 / 8"), ("Растяжка", true, "10 мин"), ("Чтение", false, "0 / 20 мин")];
+        <section class="ef-card ef-habits" id="habits">
+            <header class="ef-card-heading"><h2><reference-icon name="check-circle" />Привычки</h2><a class="ef-chevron" href="@PageUrl("/Dashboard/Habits")" aria-label="Все привычки"><reference-icon name="chevron" /></a></header>
+            <div class="ef-habit-list">@foreach (var habit in habits) { <button class="ef-habit" type="button" data-dialog="@(dashboard.IsCoachView ? null : "checkin-dialog")" disabled="@dashboard.IsCoachView" aria-label="@habit.Item1: @habit.Item3, @(habit.Item2 ? "выполнено" : "не выполнено")"><span class="ef-habit-check @(habit.Item2 ? "is-complete" : "")">@if (habit.Item2) { <reference-icon name="check" /> }</span><span class="ef-habit-name">@habit.Item1</span><span class="ef-habit-value">@habit.Item3</span><reference-icon name="chevron" /></button> }</div>
+        </section>
+        break;
+    default:
+        <partial name="_DashboardWidget" model="Model" />
+        break;
+}

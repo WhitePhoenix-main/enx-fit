@@ -17,6 +17,7 @@ public class SetEntry
     public int? Rir { get; set; }
 
     public bool IsWarmup { get; set; }
+    public bool IsCompleted { get; set; } = true;
 
     public string? Notes { get; set; }
 }

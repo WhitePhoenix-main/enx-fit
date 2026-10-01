@@ -4,6 +4,7 @@ using enx_fit.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using enx_fit.Data;
+using enx_fit.Extensions;
 using enx_fit.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,6 +29,7 @@ public class CreateModel(
     public string? BuilderJson { get; set; }
     public string ViewerId => currentUser.Id;
     public object BuilderData { get; private set; } = new { };
+    public ExerciseLibraryModel Library { get; private set; } = null!;
 
     public async Task<IActionResult> OnGetAsync(string? userId)
     {
@@ -94,20 +96,24 @@ public class CreateModel(
         var last = history.FirstOrDefault();
         var weight = await db.BodyMeasurements.AsNoTracking().Where(b => b.UserId == owner)
             .OrderByDescending(b => b.Date).Select(b => (decimal?)b.WeightKg).FirstOrDefaultAsync();
+        Library = new ExerciseLibraryModel
+        {
+            Id = "wb-library", ViewerId = currentUser.Id, Exercises = exercises, ForBuilder = true,
+            RecentIds = history.Take(5).SelectMany(w => w.WorkoutExercises).Select(e => e.ExerciseId).Distinct().ToArray()
+        };
         BuilderData = new
         {
-            exercises = exercises.Select(e => new { e.Id, e.Name, e.MuscleGroup, e.Equipment }),
-            recentIds = history.Take(5).SelectMany(w => w.WorkoutExercises).Select(e => e.ExerciseId).Distinct(),
+            exercises = exercises.Select(e => new { e.Id, Name = ExercisePresentation.DisplayName(e), OriginalName = e.Name, e.MuscleGroup, e.Equipment }),
             records = history.SelectMany(w => w.WorkoutExercises).GroupBy(e => e.ExerciseId).Select(g => new
             {
                 exerciseId = g.Key,
-                weight = g.SelectMany(e => e.SetEntries).Where(s => !s.IsWarmup).Select(s => s.Weight).DefaultIfEmpty().Max()
+                weight = g.SelectMany(e => e.SetEntries).Where(s => s.IsCompleted && !s.IsWarmup).Select(s => s.Weight).DefaultIfEmpty().Max()
             }),
             previous = last is null ? null : new
             {
                 title = last.Title, exercises = last.WorkoutExercises.Count,
-                sets = last.WorkoutExercises.Sum(e => e.SetEntries.Count(s => !s.IsWarmup)),
-                volume = last.WorkoutExercises.Sum(e => e.SetEntries.Where(s => !s.IsWarmup).Sum(s => s.Weight * s.Reps))
+                sets = last.WorkoutExercises.Sum(e => e.SetEntries.Count(s => s.IsCompleted && !s.IsWarmup)),
+                volume = last.WorkoutExercises.Sum(e => e.SetEntries.Where(s => s.IsCompleted && !s.IsWarmup).Sum(s => s.Weight * s.Reps))
             },
             bodyWeight = weight, ownerId = owner,
             hasErrors = !ModelState.IsValid

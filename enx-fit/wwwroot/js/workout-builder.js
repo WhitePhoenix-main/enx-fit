@@ -36,8 +36,9 @@
         'Leg Press': ['Жим ногами', 'Ноги', 'Тренажёр'], 'Barbell Row': ['Тяга штанги в наклоне', 'Спина', 'Штанга']
     };
     const catalog = data.exercises.map(e => {
-        const labels = catalogLabels[e.name];
-        return { ...e, originalName: e.name, name: labels?.[0] || e.name, muscleGroup: e.muscleGroup || labels?.[1] || 'Другое', equipment: e.equipment || labels?.[2] || '' };
+        const originalName = e.originalName || e.name;
+        const labels = catalogLabels[originalName];
+        return { ...e, originalName, name: e.name || labels?.[0] || originalName, muscleGroup: e.muscleGroup || labels?.[1] || 'Другое', equipment: e.equipment || labels?.[2] || '' };
     });
     const byId = new Map(catalog.map(e => [e.id, e]));
     const muscleIcons = {Грудь:'chest',Спина:'back',Поясница:'back',Трапеции:'back',Плечи:'shoulders',Ноги:'legs',Квадрицепсы:'legs','Задняя поверхность бедра':'legs',Ягодицы:'legs',Икры:'legs','Приводящие мышцы бедра':'legs','Отводящие мышцы бедра':'legs',Пресс:'core','Косые мышцы живота':'core','Мышцы кора':'core',Кардио:'bars'};
@@ -52,6 +53,7 @@
     let state = { goal:'Набор массы', level:'intermediate', durationMinutes:60, cover:'athlete', autoDuration:true, showRecords:true,
         blocks:[{name:'Разминка',kind:'warmup',exercises:[]},{name:'Силовой блок',kind:'strength',exercises:[]},{name:'Заминка',kind:'cooldown',exercises:[]}] };
     let activeBlock = 1, tab = 'all', group = '', reorder = false, dirty = false, saving = false, dragId = null, lastLibraryTrigger;
+    let exerciseLibrary;
     const collapsed = new Set();
     let toastTimer;
     function toast(message) { $('wb-live').textContent = message; $('wb-live').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('wb-live').hidden = true; }, 4200); }
@@ -107,6 +109,10 @@
         }).join('')}</section>`).join('');
     }
     function renderLibrary() {
+        if (exerciseLibrary) {
+            exerciseLibrary.setSelected(all().map(e => e.exerciseId));
+            return;
+        }
         const query = $('wb-search').value.trim().toLocaleLowerCase('ru');
         const items = catalog.filter(e => (!group || e.muscleGroup === group) && (tab !== 'favorites' || favorites.has(e.id)) && (tab !== 'recent' || data.recentIds.includes(e.id)) && `${e.name} ${e.originalName} ${e.muscleGroup} ${e.equipment}`.toLocaleLowerCase('ru').includes(query));
         $('wb-library-count').textContent = String(items.length);
@@ -286,7 +292,11 @@
         } catch { toast('Связь прервалась. Сохрани черновик и проверь список тренировок перед повторной отправкой.'); }
         saving = false; buttons.forEach(b => { b.disabled = false; });
     });
-    $('wb-filters').innerHTML = ['',...new Set(catalog.map(e => e.muscleGroup))].map(g => `<button type="button" data-group-filter data-group="${escape(g)}" class="${g ? '' : 'active'}" aria-pressed="${!g}">${escape(g || 'Все группы')}</button>`).join('');
+    const libraryRoot = $('wb-library');
+    if (window.ExerciseLibrary && libraryRoot) {
+        exerciseLibrary = new window.ExerciseLibrary(libraryRoot);
+        libraryRoot.addEventListener('exercise-selected', event => addExercise(Number(event.detail?.id)));
+    }
     $('wb-draft-notice').hidden = !read(key) || data.hasErrors;
     syncControls(); render();
 })();

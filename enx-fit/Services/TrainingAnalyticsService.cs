@@ -131,7 +131,7 @@ public class TrainingAnalyticsService
         IsValidSet(set);
 
     private static bool IsValidSet(SetEntry set) =>
-        set.Weight > 0 &&
+        set.IsCompleted && set.Weight > 0 &&
         set.Reps > 0;
 }
 

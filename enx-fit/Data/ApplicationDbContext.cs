@@ -93,6 +93,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasMaxLength(450);
 
             entity.HasIndex(w => w.UserId);
+            entity.HasIndex(w => w.UserId, "IX_WorkoutSessions_OneActivePerUser").IsUnique()
+                .HasFilter("\"StartedAtUtc\" IS NOT NULL AND \"CompletedAtUtc\" IS NULL AND \"UserId\" IS NOT NULL");
 
             entity.HasOne<ApplicationUser>()
                 .WithMany()
@@ -123,6 +125,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasForeignKey(s => s.WorkoutExerciseId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<SetEntry>().Property(s => s.IsCompleted).HasDefaultValue(true).HasSentinel(true);
 
         /*modelBuilder.Entity<SetEntry>(entity =>
         {

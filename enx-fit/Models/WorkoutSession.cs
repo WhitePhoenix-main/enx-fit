@@ -7,6 +7,11 @@ public class WorkoutSession
     public Guid? ProgramWorkoutKey { get; set; }
     public DateOnly? ScheduledDate { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
+    public DateTime? StartedAtUtc { get; set; }
+    public int? SourceProgramWorkoutId { get; set; }
+    public Guid? SourceProgramRevision { get; set; }
+    public string? SourceStructureJson { get; set; }
+    public bool TemplateDecisionPending { get; set; }
 
     public string? UserId { get; set; }
 

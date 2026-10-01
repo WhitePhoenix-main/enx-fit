@@ -30,9 +30,9 @@ public sealed class ProgramTrainingDataService(ApplicationDbContext db, Training
                 e.WorkoutSession.ProgramWorkoutKey == workout!.Key && e.ExerciseId == exercise.ExerciseId &&
                 e.WorkoutSession.CompletedAtUtc != null && e.WorkoutSession.Date <= today)
             .OrderByDescending(e => e.WorkoutSession.Date).ThenByDescending(e => e.WorkoutSessionId).Take(12).ToListAsync();
-        return rows.Where(e => e.SetEntries.Any(s => !s.IsWarmup && s.Reps > 0))
+        return rows.Where(e => e.SetEntries.Any(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0))
             .Select(e => new ExercisePerformance(e.WorkoutSessionId, e.WorkoutSession.Date,
-                e.SetEntries.Where(s => !s.IsWarmup && s.Reps > 0).OrderBy(s => s.SetNumber).ThenBy(s => s.Id)
+                e.SetEntries.Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0).OrderBy(s => s.SetNumber).ThenBy(s => s.Id)
                     .Select(s => new PerformedSet(s.SetNumber, s.Weight, s.Reps, s.Rir)).ToList(),
                 e.TargetSets, e.TargetRepsMin, e.TargetRepsMax, e.TargetRir, e.TargetRpe)).ToList();
     }

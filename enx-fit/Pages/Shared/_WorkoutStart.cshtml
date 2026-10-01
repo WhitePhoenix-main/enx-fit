@@ -1,0 +1,52 @@
+@model enx_fit.Pages.DashboardModel
+@{
+    var active = Model.ActiveWorkout;
+    var planned = Model.Data.NextWorkout?.Date == Model.Data.Today ? Model.Data.NextWorkout : null;
+    var program = Model.NextProgramWorkout?.Date == Model.Data.Today ? Model.NextProgramWorkout : null;
+    var previous = Model.Data.Completed.FirstOrDefault();
+}
+@if (Model.CurrentPage == "/Dashboard")
+{
+    <partial name="_DashboardReferenceWidget" model='new enx_fit.Services.DashboardWidgetViewModel(Model, "next")' />
+}
+else
+{
+<section class="panel start-card" id="next-workout">
+    <div class="start-heading"><span class="start-icon"><admin-icon name="workout" /></span><div>
+        <h2>@(active is null ? "Начать тренировку" : "Тренировка продолжается")</h2>
+        <p>@(active?.Title ?? (planned is not null || program is not null ? $"Сегодня по плану: {planned?.Title ?? program?.Workout.Name}" : "Ваш темп. Ваш план. Начните с любого упражнения."))</p>
+    </div></div>
+    @if (Model.IsCoachView)
+    {
+        <p class="muted">@(Model.Data.NextWorkout is { } next ? $"Следующая: {next.Title} · {next.Date:dd.MM}" : "Клиент пока не запланировал тренировку.")</p>
+        @if (Model.Data.NextWorkout is { } coachNext) { <button class="button secondary" data-dialog="workout-@coachNext.Id">Посмотреть тренировку</button> }
+    }
+    else if (active is not null)
+    {
+        <p class="active-session-meta"><span class="live-dot"></span><span data-session-clock="@DateTime.SpecifyKind(active.StartedAtUtc ?? active.CreatedAtUtc, DateTimeKind.Utc).ToString("O")">@((int)(DateTime.UtcNow - (active.StartedAtUtc ?? active.CreatedAtUtc)).TotalMinutes) мин</span> · @active.WorkoutExercises.Count упражнений · сохранено</p>
+        <a class="button full" asp-page="/Workouts/Details" asp-route-id="@active.Id"><admin-icon name="play" />Продолжить тренировку <admin-icon name="arrow" /></a>
+    }
+    else
+    {
+        <div class="start-actions"><div class="start-primary">
+            @if (planned is not null || program is not null)
+            {
+                <form method="post" asp-page="/Dashboard" asp-page-handler="Start">
+                    <input type="hidden" name="source" value="@(planned is not null ? "planned" : "program")" />
+                    <input type="hidden" name="plannedId" value="@planned?.Id" /><input type="hidden" name="programId" value="@Model.ActiveProgram?.Id" />
+                    <button class="button full"><admin-icon name="play" />Начать по плану <admin-icon name="arrow" /></button>
+                </form>
+            }
+            else { <button class="button full" data-dialog="quick-workout-dialog"><admin-icon name="play" />Начать тренировку <admin-icon name="arrow" /></button> }
+            <div class="start-secondary"><button class="button secondary" data-dialog="quick-workout-dialog"><admin-icon name="activity" />Быстрая тренировка</button><button class="button secondary" data-dialog="template-start-dialog">Загрузить шаблон <admin-icon name="chevron" /></button></div>
+        </div>
+        <form method="post" asp-page="/Dashboard" asp-page-handler="Start" class="repeat-workout"><input type="hidden" name="source" value="previous" />
+            <button type="submit" disabled="@(previous is null)"><span><admin-icon name="history" />Повторить последнюю</span><strong>@(previous?.Title ?? "Пока нет завершённых тренировок")</strong><small>@(previous is null ? "Появится после первого занятия" : $"{previous.Date:dd.MM} · {previous.WorkoutExercises.Count} упражнений")</small></button>
+        </form></div>
+        <p class="start-tip"><admin-icon name="info" />Без шаблона — просто записывайте упражнения и подходы по ходу занятия.</p>
+        @if (planned is not null || program is not null) { <button class="text-button" data-dialog="quick-workout-dialog">Другой вариант <admin-icon name="arrow" /></button> }
+    }
+    @if (Model.ActiveProgram is { } p) { <a class="start-program" asp-page="/Programs/Details" asp-route-id="@p.Id">@p.Name · Открыть программу <admin-icon name="arrow" /></a> }
+    @if (Model.CanAnalyzePrograms && Model.ActiveProgram is { } analyticalProgram) { <a class="start-program" asp-page="/Programs/Details" asp-route-id="@analyticalProgram.Id" asp-route-Tab="progression">На что обратить внимание <admin-icon name="arrow" /></a> }
+</section>
+}
