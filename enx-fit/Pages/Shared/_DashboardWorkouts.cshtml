@@ -1,0 +1,123 @@
+@model enx_fit.Pages.DashboardModel
+@using enx_fit.Services
+@using enx_fit.ViewModels
+@{
+    var d = Model.Data;
+    var overview = new DashboardWorkoutsViewModel(Model);
+    var ru = DashboardWorkoutsViewModel.Russian;
+    var reference = Model.Reference;
+    var today = reference ? new DateOnly(2026, 10, 2) : d.Today;
+    var active = Model.ActiveWorkout;
+    var planned = d.NextWorkout;
+    var program = Model.NextProgramWorkout;
+    var nextDate = planned?.Date ?? program?.Date;
+    var nextTitle = reference ? "Ноги и кор" : active?.Title ?? planned?.Title ?? program?.Workout.Name ?? "Начать тренировку";
+    var count = active?.WorkoutExercises.Count ?? planned?.WorkoutExercises.Count ?? program?.Workout.Exercises.Count;
+    var previous = d.Completed.FirstOrDefault();
+    string N(decimal value) => DashboardWorkoutsViewModel.Number(value);
+    string? PageUrl(int? days = null, DateOnly? month = null, int? selected = null, DateOnly? date = null, bool clearDate = false) => Url.Page("/Dashboard/Workouts", new {
+        ClientId = Model.IsCoachView ? d.Subject.Id : null, Days = days ?? Model.Days,
+        Until = Model.Until?.ToString("yyyy-MM-dd"), Reference = reference ? (bool?)true : null,
+        Month = (month ?? overview.Month).ToString("yyyy-MM-dd"), Model.Search, Model.WorkoutProgram,
+        SelectedWorkout = selected, WorkoutDate = (clearDate ? null : date ?? Model.WorkoutDate)?.ToString("yyyy-MM-dd")
+    });
+}
+<partial name="_DashboardContext" model="Model" />
+<div class="ew-heading">
+    <div class="ew-heading-copy"><h1>Тренировки</h1><p>История занятий и ближайшая тренировка</p></div>
+    <div class="ew-heading-actions">
+        <div class="ef-card ew-metric ew-monthly"><reference-icon name="bars" /><div><strong>@overview.MonthlyWorkouts</strong><span>тренировок за 30 дней</span></div></div>
+        <div class="ef-card ew-metric"><reference-icon name="trophy" /><div><strong>@overview.MonthlySets</strong><span>рабочих подходов</span></div></div>
+        <div class="ef-card ew-metric"><reference-icon name="calendar" /><div><strong>@overview.WeeklyWorkouts / @overview.WeeklyTarget</strong><span>на этой неделе</span></div></div>
+        @if (!Model.IsCoachView)
+        {
+            @if (active is not null && !reference) { <a class="ef-primary ew-start-top" asp-page="/Workouts/Details" asp-route-id="@active.Id"><reference-icon name="play" />Продолжить</a> }
+            else { <button class="ef-primary ew-start-top" type="button" data-dialog="quick-workout-dialog"><reference-icon name="play" />Начать тренировку</button> }
+        }
+    </div>
+</div>
+<div class="ew-top-grid">
+    <section class="ef-card ef-workout ew-next" id="next-workout" data-widget-id="next">
+        <div class="ew-hero-photo" aria-hidden="true"></div>
+        <p class="ef-eyebrow"><reference-icon name="calendar" />@(reference ? "Сегодня по программе" : active is not null ? "Тренировка продолжается" : nextDate == d.Today ? "Сегодня по программе" : nextDate is not null ? $"Ближайшая тренировка · {nextDate.Value.ToString("d MMMM", ru)}" : "В вашем темпе")</p>
+        <h2>@nextTitle</h2>
+        <p class="ef-workout-description">
+            @if (reference) { <span>4 упражнения · Неделя 3 из 6</span> }
+            else {
+                <span>@(count is null ? "Добавляйте упражнения по ходу занятия" : DashboardWorkoutsViewModel.ExerciseCount(count.Value))</span>
+                @if (Model.ActiveProgram is { StartDate: { } start } p) { <span> · Неделя @Math.Clamp((d.Today.DayNumber - start.DayNumber) / 7 + 1, 1, p.Weeks) из @p.Weeks</span> }
+            }
+        </p>
+        @if (Model.IsCoachView) { <a class="ef-primary ef-start" href="@Url.Page("/Dashboard/Plans", Model.NavigationValues)"><reference-icon name="calendar" />План тренировок</a> }
+        else if (active is not null && !reference) { <a class="ef-primary ef-start" asp-page="/Workouts/Details" asp-route-id="@active.Id"><reference-icon name="play" />Продолжить тренировку</a> }
+        else if (!reference && nextDate == d.Today) {
+            <form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="@(planned is not null ? "planned" : "program")" /><input type="hidden" name="plannedId" value="@planned?.Id" /><input type="hidden" name="programId" value="@Model.ActiveProgram?.Id" /><button class="ef-primary ef-start" type="submit"><reference-icon name="play" />Начать по плану</button></form>
+        }
+        else if (!reference && nextDate is not null) {
+            @if (planned is not null) { <a class="ef-primary ef-start" asp-page="/Workouts/Details" asp-route-id="@planned.Id"><reference-icon name="calendar" />Открыть план</a> }
+            else { <a class="ef-primary ef-start" asp-page="/Programs/Details" asp-route-id="@Model.ActiveProgram?.Id"><reference-icon name="calendar" />Открыть план</a> }
+        }
+        else { <button class="ef-primary ef-start" type="button" data-dialog="quick-workout-dialog"><reference-icon name="play" />@(reference ? "Начать по плану" : "Начать тренировку")</button> }
+        @if (!Model.IsCoachView) {
+            <div class="ef-workout-shortcuts"><button type="button" data-dialog="quick-workout-dialog"><reference-icon name="bolt" />Быстрая тренировка</button><button type="button" data-dialog="template-start-dialog"><reference-icon name="document" />Из шаблона</button><form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="previous" /><button type="@(reference ? "button" : "submit")" data-dialog="@(reference ? "quick-workout-dialog" : null)" disabled="@(!reference && previous is null)"><reference-icon name="repeat" />Повторить</button></form></div>
+        }
+    </section>
+    <section class="ef-card ew-calendar" aria-labelledby="ew-calendar-title" data-widget-id="calendar">
+        <header class="ef-card-heading"><h2 id="ew-calendar-title"><reference-icon name="calendar" />Календарь тренировок</h2><span class="ew-month">@ru.TextInfo.ToTitleCase(overview.Month.ToString("MMMM yyyy", ru))</span><nav class="ef-week-navigation" aria-label="Выбор месяца"><a href="@PageUrl(month: overview.Month.AddMonths(-1))" aria-label="Предыдущий месяц"><reference-icon name="chevron" /></a><a href="@PageUrl(month: overview.Month.AddMonths(1))" aria-label="Следующий месяц"><reference-icon name="chevron" /></a></nav></header>
+        <div class="ew-calendar-grid">
+            @foreach (var day in new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" }) { <span class="ew-weekday">@day</span> }
+            @foreach (var day in overview.Calendar) {
+                var selectedDay = Model.WorkoutDate ?? today;
+                var showMarker = day.Status != "none" || reference && day.Date.Month == 10 && new[] { 4, 5, 7, 9, 14, 15 }.Contains(day.Date.Day);
+                var label = $"{day.Date.ToString("d MMMM", ru)}: {(day.Status == "completed" ? "Выполнена" : day.Status == "planned" ? "Запланирована" : "Нет тренировки")}";
+                var destination = !reference && day.Status == "planned" && day.PlannedWorkoutId is { } planId ? Url.Page("/Workouts/Details", new { id = planId })
+                    : !reference && day.Status == "planned" && day.ProgramId is { } programId ? Url.Page("/Programs/Details", new { id = programId, Tab = "workouts" })
+                    : PageUrl(selected: day.WorkoutId, date: day.Date);
+                <a class="ew-calendar-day @(day.Date.Month != overview.Month.Month ? "outside" : "") @(day.Date == selectedDay ? "is-selected" : "")" href="@destination" aria-label="@label" aria-current="@(day.Date == selectedDay ? "date" : null)" title="@day.Title"><time datetime="@day.Date.ToString("yyyy-MM-dd")">@day.Date.Day</time><i class="ew-marker @day.Status @(!showMarker ? "no-marker" : "")" aria-hidden="true"></i></a>
+            }
+        </div>
+        <div class="ew-calendar-legend"><span><i class="ew-marker completed"></i>Выполнена</span><span><i class="ew-marker planned"></i>Запланирована</span><span><i class="ew-marker none"></i>Нет тренировки</span></div>
+    </section>
+</div>
+<div class="ew-bottom-grid">
+    <section class="ef-card ew-history" id="workouts" data-widget-id="workouts" aria-labelledby="ew-history-title">
+        <header class="ef-card-heading"><h2 id="ew-history-title"><reference-icon name="calendar" />История тренировок</h2><nav class="ew-period" aria-label="Период истории">@foreach (var (days, title) in new[] { (7, "Неделя"), (30, "Месяц"), (365, "Год") }) { <a class="@(Model.Days == days ? "active" : "")" href="@PageUrl(days: days, clearDate: true)" aria-current="@(Model.Days == days ? "true" : null)">@title</a> }</nav></header>
+        <form method="get" class="ew-filters" role="search" aria-label="Поиск тренировок" data-workout-filters>
+            @if (Model.IsCoachView) { <input type="hidden" name="ClientId" value="@d.Subject.Id" /> }
+            @if (reference) { <input type="hidden" name="Reference" value="true" /> }
+            <input type="hidden" name="Days" value="@Model.Days" /><input type="hidden" name="Until" value="@Model.Until?.ToString("yyyy-MM-dd")" /><input type="hidden" name="Month" value="@overview.Month.ToString("yyyy-MM-dd")" />
+            <label class="ew-search"><reference-icon name="search" /><input type="search" name="Search" value="@Model.Search" placeholder="Поиск тренировок" aria-label="Поиск тренировок" maxlength="120" /></label>
+            <label class="ew-program-filter"><span class="sr-only">Программа</span><select name="WorkoutProgram" aria-label="Программа"><option value="">Все программы</option>@foreach (var p in overview.Programs) { <option value="@p.Value" selected="@(Model.WorkoutProgram == p.Value)">@p.Name</option> }</select><reference-icon name="chevron" /></label><noscript><button class="ef-primary" type="submit">Найти</button></noscript>
+        </form>
+        @if (Model.WorkoutDate is { } date) { <p class="ew-date-filter">@date.ToString("d MMMM yyyy", ru)<a href="@PageUrl(clearDate: true)">Вся история <reference-icon name="close" /></a></p> }
+        <div class="ew-table" role="table" aria-label="История тренировок">
+            <div class="ew-table-head ew-table-grid" role="row"><span role="columnheader">Дата</span><span role="columnheader">Тренировка</span><span role="columnheader">Упражнения</span><span role="columnheader">Рабочие<br />подходы</span><span role="columnheader">Объём</span><span role="columnheader">Статус</span><span aria-hidden="true"></span></div>
+            @foreach (var w in overview.History) {
+                <a class="ew-history-row ew-table-grid @(w.Id == overview.Selected?.Id ? "is-selected" : "")" data-workout-row data-workout-id="@w.Id" href="@PageUrl(selected: w.Id)" aria-label="@w.Title, @w.Date.ToString("d MMMM", ru), посмотреть состав" aria-current="@(w.Id == overview.Selected?.Id ? "true" : null)">
+                    <time datetime="@w.Date.ToString("yyyy-MM-dd")"><strong>@w.Date.Day</strong><span>@w.Date.ToString("MMMM", ru)</span></time>
+                    <span class="ew-workout-name"><span class="ew-thumbnail ew-photo-@w.Photo" aria-hidden="true"></span><strong>@w.Title</strong></span>
+                    <span class="ew-exercise-count"><span class="ew-mobile-label">Упражнения: </span>@w.Exercises</span><span class="ew-set-count"><span class="ew-mobile-label">Подходы: </span>@w.Sets</span><span class="ew-volume">@N(w.Volume) кг</span>
+                    <span class="ef-saved"><reference-icon name="check" />Сохранена</span><reference-icon name="chevron" />
+                </a>
+            }
+        </div>
+        @if (overview.History.Count == 0) { <div class="ew-empty"><reference-icon name="workout" /><h3>@(string.IsNullOrEmpty(Model.Search) && string.IsNullOrEmpty(Model.WorkoutProgram) && Model.WorkoutDate is null ? "Тренировок пока нет" : "Тренировки не найдены")</h3><p>@(Model.WorkoutDate is null ? "Выберите другой период или начните новое занятие." : "В этот день нет завершённых тренировок.")</p></div> }
+    </section>
+    <section class="ef-card ew-detail" aria-labelledby="ew-detail-title" data-workout-detail>
+        @if (overview.Selected is { } selected) {
+            <header class="ef-card-heading"><h2 id="ew-detail-title"><reference-icon name="clock" />@selected.Title · @selected.Date.ToString("d MMMM", ru)</h2><span class="ef-saved"><reference-icon name="check" />Сохранена</span></header>
+            <p class="ew-detail-summary">@DashboardWorkoutsViewModel.ExerciseCount(selected.Exercises) · @DashboardWorkoutsViewModel.SetCount(selected.Sets) · @N(selected.Volume) кг</p>
+            <div class="ew-exercises">
+                @foreach (var e in selected.Preview) {
+                    <a class="ew-exercise" href="@(reference ? "#reference-workout-dialog" : Url.Page("/Workouts/Details", new { id = selected.Id }) + "#exercise-" + e.Id)" data-dialog="@(reference ? "reference-workout-dialog" : null)"><span class="ew-exercise-photo ew-photo-@e.Photo" aria-hidden="true"></span><span><strong>@e.Name</strong><small>@e.Summary</small></span><reference-icon name="chevron" /></a>
+                }
+            </div>
+            @if (reference) { <button class="ew-details-link" type="button" data-dialog="reference-workout-dialog"><reference-icon name="document" />Посмотреть детали<reference-icon name="chevron" /></button> }
+            else { <a class="ew-details-link" asp-page="/Workouts/Details" asp-route-id="@selected.Id"><reference-icon name="document" />Посмотреть детали<reference-icon name="chevron" /></a> }
+        }
+        else { <div class="ew-empty"><reference-icon name="clock" /><h2 id="ew-detail-title">Состав тренировки</h2><p>Выберите занятие из истории, чтобы посмотреть упражнения и подходы.</p></div> }
+    </section>
+</div>
+@if (reference && overview.Selected is { } preview) {
+    <dialog id="reference-workout-dialog" class="app-dialog" aria-labelledby="reference-workout-title"><div class="dialog-heading"><h2 id="reference-workout-title">@preview.Title · @preview.Date.ToString("d MMMM", ru)</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p class="ew-preview-summary">@DashboardWorkoutsViewModel.ExerciseCount(preview.Exercises) · @DashboardWorkoutsViewModel.SetCount(preview.Sets) · @N(preview.Volume) кг</p><div class="ew-exercises">@foreach (var e in preview.Preview) { <div class="ew-exercise"><span class="ew-exercise-photo ew-photo-@e.Photo" aria-hidden="true"></span><span><strong>@e.Name</strong><small>@e.Summary</small></span></div> }</div></dialog>
+}

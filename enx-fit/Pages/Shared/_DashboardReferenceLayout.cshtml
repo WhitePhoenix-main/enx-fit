@@ -7,6 +7,8 @@
     if (dashboard?.Reference == true) viewer = "Алексей";
     string? PageUrl(string page) => Url.Page(page, dashboard?.NavigationValues);
     var trainer = dashboard?.Reference != true && (User.GetUserRole() == UserRole.Trainer || User.HasMinimumRole(UserRole.Administrator));
+    var activePage = ViewContext.RouteData.Values["page"] as string;
+    bool IsActive(string page) => string.Equals(activePage, page, StringComparison.OrdinalIgnoreCase);
 }
 <!DOCTYPE html>
 <html lang="ru">
@@ -20,14 +22,15 @@
     <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/dashboard-widgets.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/dashboard-reference.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="fitness-app dashboard-home @(dashboard?.IsCoachView == true ? "coach-mode" : "personal-mode")">
+<body class="fitness-app dashboard-home @(IsActive("/Dashboard/Workouts") ? "ef-workouts-page" : "") @(dashboard?.IsCoachView == true ? "coach-mode" : "personal-mode")">
 <a class="skip-link" href="#main-content">Перейти к содержимому</a>
 <aside class="ef-sidebar">
     <a class="ef-brand" asp-page="/Dashboard"><span class="ef-brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>Enix Fit</span></a>
     <nav class="ef-navigation" aria-label="Основная навигация">
-        <a class="ef-nav-item active" href="@PageUrl("/Dashboard")" aria-current="page"><reference-icon name="home" />Главная</a>
-        <a class="ef-nav-item" href="@PageUrl("/Dashboard/Workouts")"><reference-icon name="workout" />Тренировки</a>
+        <a class="ef-nav-item @(IsActive("/Dashboard") ? "active" : "")" href="@PageUrl("/Dashboard")" aria-current="@(IsActive("/Dashboard") ? "page" : null)"><reference-icon name="@(IsActive("/Dashboard") ? "home" : "home-outline")" />Главная</a>
+        <a class="ef-nav-item @(IsActive("/Dashboard/Workouts") ? "active" : "")" href="@PageUrl("/Dashboard/Workouts")" aria-current="@(IsActive("/Dashboard/Workouts") ? "page" : null)"><reference-icon name="workout" />Тренировки</a>
         <a class="ef-nav-item" href="@PageUrl("/Programs/Index")"><reference-icon name="calendar" />Программы</a>
         <a class="ef-nav-item" href="@PageUrl("/Dashboard/Progress")"><reference-icon name="bars" />Прогресс</a>
         <a class="ef-nav-item" asp-page="/Exercises/Index"><reference-icon name="book" />Библиотека</a>
@@ -53,8 +56,8 @@
     <main id="main-content" class="ef-main" tabindex="-1">@RenderBody()</main>
 </div>
 <nav class="ef-bottom-nav" aria-label="Мобильная навигация">
-    <a class="active" href="@PageUrl("/Dashboard")" aria-current="page"><reference-icon name="home" /><span>Главная</span></a>
-    <a href="@PageUrl("/Dashboard/Workouts")"><reference-icon name="workout" /><span>Тренировки</span></a>
+    <a class="@(IsActive("/Dashboard") ? "active" : "")" href="@PageUrl("/Dashboard")" aria-current="@(IsActive("/Dashboard") ? "page" : null)"><reference-icon name="@(IsActive("/Dashboard") ? "home" : "home-outline")" /><span>Главная</span></a>
+    <a class="@(IsActive("/Dashboard/Workouts") ? "active" : "")" href="@PageUrl("/Dashboard/Workouts")" aria-current="@(IsActive("/Dashboard/Workouts") ? "page" : null)"><reference-icon name="workout" /><span>Тренировки</span></a>
     <a href="@PageUrl("/Programs/Index")"><reference-icon name="calendar" /><span>Программы</span></a>
     <a href="@PageUrl("/Dashboard/Progress")"><reference-icon name="bars" /><span>Прогресс</span></a>
     <button type="button" data-dialog="navigation-dialog"><reference-icon name="menu" /><span>Ещё</span></button>

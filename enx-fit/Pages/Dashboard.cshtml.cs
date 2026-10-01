@@ -22,6 +22,12 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
     [BindProperty(SupportsGet = true)] public int ChartWeeks { get; set; } = 6;
     // An explicit visual snapshot reproduces the reference content without altering user records.
     [BindProperty(SupportsGet = true)] public bool Reference { get; set; }
+    [BindProperty(SupportsGet = true)] public DateOnly? Month { get; set; }
+    [BindProperty(SupportsGet = true), StringLength(120)] public string? Search { get; set; }
+    [BindProperty(SupportsGet = true)] public string? WorkoutProgram { get; set; }
+    [BindProperty(SupportsGet = true)] public int? SelectedWorkout { get; set; }
+    [BindProperty(SupportsGet = true)] public DateOnly? WorkoutDate { get; set; }
+    public IReadOnlyList<TrainingProgram> WorkoutPrograms { get; private set; } = [];
     [BindProperty] public GoalInput Goal { get; set; } = new();
     [BindProperty] public CheckInInput CheckIn { get; set; } = new();
     public DashboardData Data { get; private set; } = null!;
@@ -55,7 +61,7 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
     public List<DashboardWidgetPlacement> Widgets { get; private set; } = [];
     public string CurrentPage => PageContext.ActionDescriptor.ViewEnginePath;
     public DashboardSection? Section => DashboardSections.Find(CurrentPage);
-    public object NavigationValues => new { ClientId = IsCoachView ? Data.Subject.Id : null, Days, Until = Until?.ToString("yyyy-MM-dd") };
+    public object NavigationValues => new { ClientId = IsCoachView ? Data.Subject.Id : null, Days, Until = Until?.ToString("yyyy-MM-dd"), Reference = Reference ? (bool?)true : null };
     public bool IsCoachView => Data.Subject.Id != currentUser.Id;
     public bool IsTrainer => currentUser.HasMinimumRole(UserRole.Trainer);
     [TempData] public string? StatusMessage { get; set; }
@@ -126,12 +132,28 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
     {
         var subject = await dashboard.GetSubjectAsync(ClientId);
         if (subject is null) return false;
+        if (CurrentPage == "/Dashboard/Workouts" && !Request.Query.ContainsKey("Days")) Days = 30;
         Days = Days is 7 or 30 or 365 ? Days : 7;
         WeekOffset = Math.Clamp(WeekOffset, -52, 52);
         ChartWeeks = ChartWeeks is 2 or 4 or 6 ? ChartWeeks : 6;
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         Until = Until is null || Until > today || Until < today.AddYears(-20) ? today : Until;
         Data = await dashboard.LoadAsync(subject, Days, Until.Value);
+        if (CurrentPage == "/Dashboard/Workouts")
+        {
+            Search = Search?.Trim();
+            if (Search?.Length > 120) Search = Search[..120];
+            if (WorkoutProgram != "standalone" && !int.TryParse(WorkoutProgram, out _)) WorkoutProgram = null;
+            var calendarDate = Month ?? (Reference ? new DateOnly(2026, 10, 2) : Until.Value);
+            if (calendarDate.Year < today.Year - 20 || calendarDate.Year > today.Year + 5) calendarDate = today;
+            Month = new(calendarDate.Year, calendarDate.Month, 1);
+            WorkoutPrograms = await db.TrainingPrograms.AsNoTracking().AsSplitQuery()
+                .Where(p => p.OwnerId == subject.Id && !p.IsTemplate)
+                .Include(p => p.Workouts).ThenInclude(w => w.Exercises).ThenInclude(e => e.Exercise)
+                .OrderBy(p => p.Name).ToListAsync();
+            ActiveProgram = WorkoutPrograms.FirstOrDefault(p => !p.IsArchived && p.StartDate.HasValue && p.StartDate.Value.AddDays(p.Weeks * 7) > today);
+            if (ActiveProgram is not null) NextProgramWorkout = ProgramSchedule.Next(ActiveProgram, Data.Workouts.Where(w => w.TrainingProgramId == ActiveProgram.Id).ToList());
+        }
         if (!IsCoachView)
         {
             ActiveWorkout = await workouts.ActiveAsync();

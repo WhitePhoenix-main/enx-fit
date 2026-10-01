@@ -10,6 +10,7 @@ public sealed class DashboardReferenceIconTagHelper : TagHelper
     private static readonly IReadOnlyDictionary<string, string> Paths = new Dictionary<string, string>
     {
         ["home"] = "<path d='m2 10 10-9 10 9-2 1v10h-6v-7h-4v7H4V11Z' fill='currentColor' stroke='none'/>",
+        ["home-outline"] = "<path d='m2 10 10-9 10 9M4 9v12h5v-7h6v7h5V9'/>",
         ["workout"] = "<path d='M2 12h20' stroke-width='1.5'/><rect x='2' y='8' width='2.5' height='8' rx='.7' fill='currentColor' stroke='none'/><rect x='6' y='4' width='3.5' height='16' rx='1' fill='currentColor' stroke='none'/><rect x='14.5' y='4' width='3.5' height='16' rx='1' fill='currentColor' stroke='none'/><rect x='19.5' y='8' width='2.5' height='8' rx='.7' fill='currentColor' stroke='none'/>",
         ["calendar"] = "<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M7 2v5m10-5v5M3 10h18m-12 5 2 2 4-4'/>",
         ["bars"] = "<rect x='3' y='15' width='3.2' height='7' rx='1.3' fill='currentColor' stroke='none'/><rect x='10.4' y='9' width='3.2' height='13' rx='1.3' fill='currentColor' stroke='none'/><rect x='17.8' y='2' width='3.2' height='20' rx='1.3' fill='currentColor' stroke='none'/>",
