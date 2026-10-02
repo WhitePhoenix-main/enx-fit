@@ -13,6 +13,13 @@ public sealed class DashboardReferenceIconTagHelper : TagHelper
         ["home-outline"] = "<path d='m2 10 10-9 10 9M4 9v12h5v-7h6v7h5V9'/>",
         ["workout"] = "<path d='M2 12h20' stroke-width='1.5'/><rect x='2' y='8' width='2.5' height='8' rx='.7' fill='currentColor' stroke='none'/><rect x='6' y='4' width='3.5' height='16' rx='1' fill='currentColor' stroke='none'/><rect x='14.5' y='4' width='3.5' height='16' rx='1' fill='currentColor' stroke='none'/><rect x='19.5' y='8' width='2.5' height='8' rx='.7' fill='currentColor' stroke='none'/>",
         ["calendar"] = "<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M7 2v5m10-5v5M3 10h18m-12 5 2 2 4-4'/>",
+        ["calendar-filled"] = "<rect x='3' y='5' width='18' height='17' rx='2' fill='currentColor' stroke='none'/><path d='M7 2v5m10-5v5' fill='none'/><path d='M5 10h14m-10 5 2 2 4-4' stroke='#173154' fill='none'/>",
+        ["plus-circle"] = "<circle cx='12' cy='12' r='10'/><path d='M12 7v10M7 12h10'/>",
+        ["plus"] = "<path d='M12 3v18M3 12h18'/>",
+        ["body-scale"] = "<rect x='2' y='2' width='20' height='20' rx='3'/><path d='M8 3v3a4 4 0 0 0 8 0V3M12 3v4'/>",
+        ["up-right"] = "<path d='M5 19 19 5M7 5h12v12'/>",
+        ["down-right"] = "<path d='m5 5 14 14M7 19h12V7'/>",
+        ["pencil"] = "<path d='m15 3 6 6-12 12H3v-6ZM12 6l6 6M3 15l6 6'/>",
         ["bars"] = "<rect x='3' y='15' width='3.2' height='7' rx='1.3' fill='currentColor' stroke='none'/><rect x='10.4' y='9' width='3.2' height='13' rx='1.3' fill='currentColor' stroke='none'/><rect x='17.8' y='2' width='3.2' height='20' rx='1.3' fill='currentColor' stroke='none'/>",
         ["book"] = "<path d='M12 5v16M3 3h5a4 4 0 0 1 4 2 4 4 0 0 1 4-2h5v16h-5a4 4 0 0 0-4 2 4 4 0 0 0-4-2H3Z'/>",
         ["check-circle"] = "<circle cx='12' cy='12' r='10'/><path d='m7 12 3 3 6-7'/>",
@@ -39,6 +46,14 @@ public sealed class DashboardReferenceIconTagHelper : TagHelper
         ["menu"] = "<path d='M4 6h16M4 12h16M4 18h16'/>",
         ["close"] = "<path d='m5 5 14 14M5 19 19 5'/>",
         ["trend"] = "<path d='m3 17 6-6 4 4 8-10m-6 0h6v6'/>"
+        , ["sliders"] = "<path d='M2 5h7m4 0h9M2 12h13m4 0h3M2 19h3m4 0h13'/><circle cx='11' cy='5' r='2'/><circle cx='17' cy='12' r='2'/><circle cx='7' cy='19' r='2'/>"
+        , ["star"] = "<path d='m12 2 3 6.4 7 .9-5 5 .9 7-5.9-3.3L6.1 21l.9-6.7-5-5 7-.9Z'/>"
+        , ["archive"] = "<path d='M3 7h18v14H3Zm-1-5h20v5H2Zm7 9h6'/>"
+        , ["shield"] = "<path d='m12 2 9 4v7c0 5-9 9-9 9S3 18 3 13V6Zm0 3v14'/>"
+        , ["globe"] = "<circle cx='12' cy='12' r='10'/><ellipse cx='12' cy='12' rx='4' ry='10'/><path d='M3 8h18M3 16h18'/>"
+        , ["crown"] = "<path d='m3 6 5 5 4-8 4 8 5-5-2 12H5Zm2 15h14'/><circle cx='3' cy='5' r='1'/><circle cx='12' cy='2' r='1'/><circle cx='21' cy='5' r='1'/>"
+        , ["download"] = "<path d='M12 2v14m-6-6 6 6 6-6M3 16v6h18v-6'/>"
+        , ["card"] = "<rect x='2' y='4' width='20' height='16' rx='2'/><path d='M2 9h20M6 15h4'/>"
     };
 
     public override void Process(TagHelperContext context, TagHelperOutput output)

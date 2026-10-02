@@ -1,0 +1,39 @@
+@model enx_fit.Pages.DashboardModel
+@using enx_fit.Services
+@using enx_fit.ViewModels
+@{
+    var d = Model.Data;
+    var reference = Model.Reference;
+    var ru = DashboardWorkoutsViewModel.Russian;
+    var today = reference ? new DateOnly(2026, 10, 1) : d.Today;
+    var monday = today.AddDays(-((int)today.DayOfWeek + 6) % 7);
+    var active = Model.ActiveWorkout;
+    var planned = d.NextWorkout?.Date == d.Today ? d.NextWorkout : null;
+    var next = Model.NextProgramWorkout?.Date == d.Today ? Model.NextProgramWorkout : null;
+    var title = reference ? "Верх тела" : active?.Title ?? planned?.Title ?? next?.Workout.Name ?? "В вашем темпе";
+    var count = active?.WorkoutExercises.Count ?? planned?.WorkoutExercises.Count ?? next?.Workout.Exercises.Count;
+    var last = d.Completed.FirstOrDefault();
+    var goal = Model.NextRecommendation;
+    string N(decimal? value) => value?.ToString("0.##", ru) ?? "—";
+    string? PageUrl(string page) => Url.Page(page, Model.NavigationValues);
+}
+<div class="ef-mobile-screen em-home">
+    <header class="em-greeting"><h1>@(reference ? "Привет, Алексей!" : Model.IsCoachView ? d.Name : $"Привет, {d.Name}!")</h1><p>@ru.TextInfo.ToTitleCase(today.ToString("dddd, d MMMM", ru))</p></header>
+    <section class="em-today">
+        <div class="em-today-heading"><reference-icon name="workout" /><div><h2>@(active is null || reference ? "Сегодня: " : "Продолжается: ")@title</h2><p>@(reference ? "4 упражнения · Неделя 3" : count.HasValue ? DashboardWorkoutsViewModel.ExerciseCount(count.Value) : "Добавляйте упражнения по ходу")</p></div><reference-icon name="chevron" /></div>
+        @if (Model.IsCoachView) { <a class="em-primary em-today-start" href="@PageUrl("/Dashboard/Plans")">План тренировок</a> }
+        else if (!reference && active is not null) { <a class="em-primary em-today-start" asp-page="/Workouts/Details" asp-route-id="@active.Id">Продолжить тренировку</a> }
+        else if (!reference && (planned is not null || next is not null)) { <form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="@(planned is not null ? "planned" : "program")"/><input type="hidden" name="plannedId" value="@planned?.Id"/><input type="hidden" name="programId" value="@Model.ActiveProgram?.Id"/><button class="em-primary em-today-start" type="submit">Начать тренировку</button></form> }
+        else { <button class="em-primary em-today-start" type="button" data-dialog="quick-workout-dialog">Начать тренировку</button> }
+        @if (!Model.IsCoachView) { <button class="em-today-quick" type="button" data-dialog="quick-workout-dialog"><reference-icon name="bolt" />Быстрая тренировка</button> }
+    </section>
+    <nav class="em-home-week" aria-label="План недели">
+        @for (var i = 0; i < 7; i++) { var date = monday.AddDays(i); var done = reference ? i is 0 or 2 : d.Completed.Any(w => w.Date == date); <a href="@PageUrl("/Dashboard/Plans")" aria-label="@date.ToString("d MMMM", ru)" aria-current="@(date == today ? "date" : null)"><span>@(new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" }[i])</span><strong class="@(done ? "is-done" : date == today ? "is-today" : "")">@if (done) { <reference-icon name="check" /> } else if (date >= today) { @date.Day } else { <span class="em-day-dot"></span> }</strong></a> }
+    </nav>
+    <section class="em-card em-home-goal"><h2><reference-icon name="target" />Следующая цель</h2><reference-photo class="em-home-bench" image="overview" window="288 543 72 55" alt="Скамья для жима лёжа"/>
+        <p>@(reference ? "Жим лёжа" : Model.NextGoalExercise is { } exercise ? ExercisePresentation.DisplayName(exercise.Exercise) : d.Settings.GoalTitle)</p>
+        <strong>@(reference ? "60 → 62,5 кг" : goal is not null ? $"{N(goal.CurrentValue)} → {N(goal.SuggestedValue)} кг" : $"{d.ThisWeek.Count()} / {d.Settings.WeeklyWorkoutGoal} тренировок")</strong>
+        <footer>@if (reference || goal is not null) { <span class="em-pending"><reference-icon name="clock" />Нужно подтверждение</span> }<a class="em-outline" href="@PageUrl("/Dashboard/Progress")">Посмотреть<reference-icon name="chevron" /></a></footer>
+    </section>
+    <a class="em-card em-home-last" href="@PageUrl("/Dashboard/Workouts")"><h2><reference-icon name="repeat" />Последняя тренировка</h2><p>@(reference ? "29 сентября, вторник" : last?.Date.ToString("d MMMM, dddd", ru) ?? "Первая тренировка впереди")</p><div><strong>@(reference ? "Низ тела" : last?.Title ?? "Начните сегодня")</strong>@if (reference || last is not null) { <span class="em-saved">Выполнена</span> }<reference-icon name="chevron" /></div><small>@(reference ? "4 упражнения · 1 ч 05 мин" : last is null ? "Результаты появятся после занятия" : DashboardWorkoutsViewModel.ExerciseCount(last.WorkoutExercises.Count))</small></a>
+</div>

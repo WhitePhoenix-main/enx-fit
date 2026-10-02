@@ -22,6 +22,8 @@
         SelectedWorkout = selected, WorkoutDate = (clearDate ? null : date ?? Model.WorkoutDate)?.ToString("yyyy-MM-dd")
     });
 }
+<partial name="_MobileWorkouts" model="Model" />
+<div class="ef-desktop-screen">
 <partial name="_DashboardContext" model="Model" />
 <div class="ew-heading">
     <div class="ew-heading-copy"><h1>Тренировки</h1><p>История занятий и ближайшая тренировка</p></div>
@@ -117,6 +119,7 @@
         }
         else { <div class="ew-empty"><reference-icon name="clock" /><h2 id="ew-detail-title">Состав тренировки</h2><p>Выберите занятие из истории, чтобы посмотреть упражнения и подходы.</p></div> }
     </section>
+</div>
 </div>
 @if (reference && overview.Selected is { } preview) {
     <dialog id="reference-workout-dialog" class="app-dialog" aria-labelledby="reference-workout-title"><div class="dialog-heading"><h2 id="reference-workout-title">@preview.Title · @preview.Date.ToString("d MMMM", ru)</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p class="ew-preview-summary">@DashboardWorkoutsViewModel.ExerciseCount(preview.Exercises) · @DashboardWorkoutsViewModel.SetCount(preview.Sets) · @N(preview.Volume) кг</p><div class="ew-exercises">@foreach (var e in preview.Preview) { <div class="ew-exercise"><span class="ew-exercise-photo ew-photo-@e.Photo" aria-hidden="true"></span><span><strong>@e.Name</strong><small>@e.Summary</small></span></div> }</div></dialog>

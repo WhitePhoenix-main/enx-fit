@@ -6,6 +6,8 @@
     ViewData["Title"] = Model.IsCoachView ? $"{Model.Data.Name} — дэшборд клиента" : "Мой дэшборд";
     var placements = Model.Reference ? DashboardWidgets.Defaults(false) : Model.Widgets;
 }
+<partial name="_MobileHome" model="Model" />
+<div class="ef-desktop-screen">
 @if (!Model.Reference) { <partial name="_DashboardContext" model="Model" /> }
 @if (!Model.Reference && Model.ActiveWorkout is { } active)
 {
@@ -42,6 +44,7 @@
 <div class="panel empty-dashboard" data-layout-empty hidden="@placements.Any(w => w.Visible)"><h2>Добавьте карточки на дэшборд</h2><button type="button" class="button" data-layout-edit>Добавить блоки</button></div>
 <div hidden data-layout-token>@Html.AntiForgeryToken()</div>
 <script type="application/json" id="dashboard-layout-data">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new { widgets = placements, defaults = DashboardWidgets.Defaults(Model.IsCoachView), pinnedWidgetId = DashboardWidgets.WelcomeId }, DashboardWidgets.JsonOptions))</script>
+</div>
 <partial name="_DashboardDialogs" model="Model" />
 <partial name="_QuickWorkoutDialogs" model="Model" />
 @section Scripts { <script src="~/js/active-workout.js" asp-append-version="true"></script> }

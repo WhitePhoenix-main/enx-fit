@@ -6,11 +6,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace enx_fit.Pages.Programs;
 
-public sealed class IndexModel(TrainingProgramService programs) : ProgramPageModel(programs)
+public sealed class IndexModel(TrainingProgramService programs, CurrentUser currentUser) : ProgramPageModel(programs)
 {
     [BindProperty(SupportsGet = true)] public string? Tab { get; set; } = "mine";
     [BindProperty(SupportsGet = true)] public string? Category { get; set; }
     [BindProperty(SupportsGet = true)] public bool Archived { get; set; }
+    [BindProperty(SupportsGet = true)] public bool Reference { get; set; }
+    [BindProperty(SupportsGet = true)] public int WeekOffset { get; set; }
+    [BindProperty(SupportsGet = true)] public ProgramLevel? Level { get; set; }
+    [BindProperty(SupportsGet = true)] public bool All { get; set; }
+    public string ViewerId => currentUser.Id;
     public int OwnCount { get; private set; }
     public List<TrainingProgram> Items { get; private set; } = [];
     public Dictionary<int, List<WorkoutSession>> Sessions { get; } = [];
@@ -23,6 +28,9 @@ public sealed class IndexModel(TrainingProgramService programs) : ProgramPageMod
     private async Task LoadAsync()
     {
         await LoadAccessAsync();
+        ViewData["Reference"] = Reference;
+        WeekOffset = Math.Clamp(WeekOffset, -52, 52);
+        if (Level is { } level && !Enum.IsDefined(level)) Level = null;
         if (Tab is not ("mine" or "templates" or "assigned")) Tab = "mine";
         OwnCount = await Programs.OwnCountAsync();
         if (Tab == "assigned" && !Access.CanUse(Feature.CoachProgramAssignment))
@@ -31,6 +39,7 @@ public sealed class IndexModel(TrainingProgramService programs) : ProgramPageMod
             return;
         }
         Items = await Programs.ListAsync(Tab, Archived, Category);
+        if (Tab == "templates" && Level is { } filter) Items = Items.Where(p => p.Level == filter).ToList();
         foreach (var p in Items.Where(p => p.StartDate.HasValue)) Sessions[p.Id] = await Programs.SessionsAsync(p);
     }
     public async Task<IActionResult> OnPostDuplicateAsync(int id)
@@ -44,6 +53,13 @@ public sealed class IndexModel(TrainingProgramService programs) : ProgramPageMod
     {
         await LoadAccessAsync();
         try { await Programs.ArchiveAsync(id, restore); TempData["StatusMessage"] = restore ? "Программа восстановлена." : "Программа перемещена в архив."; return RedirectToPage(new { Tab, Archived }); }
+        catch (ProgramOperationException e) { await LoadAsync(); return Error(e); }
+        catch (DbUpdateException e) { SaveError(e); await LoadAsync(); return Page(); }
+    }
+    public async Task<IActionResult> OnPostStartAsync(int id)
+    {
+        await LoadAccessAsync();
+        try { return RedirectToPage("/Workouts/Details", new { id = await Programs.StartNextAsync(id) }); }
         catch (ProgramOperationException e) { await LoadAsync(); return Error(e); }
         catch (DbUpdateException e) { SaveError(e); await LoadAsync(); return Page(); }
     }

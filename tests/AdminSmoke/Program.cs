@@ -84,6 +84,7 @@ await AuthChecks.RunAsync(app.Services, new Uri(baseUrl));
 await DashboardChecks.RunAsync(app.Services, new Uri(baseUrl));
 await DashboardLayoutChecks.RunAsync(app.Services, new Uri(baseUrl));
 await DashboardNavigationChecks.RunAsync(new Uri(baseUrl));
+await ProgressChecks.RunAsync(app.Services, new Uri(baseUrl));
 await ProgramChecks.RunAsync(app.Services, new Uri(baseUrl));
 await WorkoutBuilderChecks.RunAsync(app.Services, new Uri(baseUrl));
 await QuickWorkoutChecks.RunAsync(app.Services, new Uri(baseUrl));

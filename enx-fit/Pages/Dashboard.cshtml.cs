@@ -20,6 +20,9 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
     [BindProperty(SupportsGet = true)] public DateOnly? Until { get; set; }
     [BindProperty(SupportsGet = true)] public int WeekOffset { get; set; }
     [BindProperty(SupportsGet = true)] public int ChartWeeks { get; set; } = 6;
+    [BindProperty(SupportsGet = true)] public int ProgressWeeks { get; set; } = 6;
+    [BindProperty(SupportsGet = true)] public int? ProgressExercise { get; set; }
+    [BindProperty(SupportsGet = true)] public string? ProgressTab { get; set; } = "overview";
     // An explicit visual snapshot reproduces the reference content without altering user records.
     [BindProperty(SupportsGet = true)] public bool Reference { get; set; }
     [BindProperty(SupportsGet = true)] public DateOnly? Month { get; set; }
@@ -136,8 +139,11 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
         Days = Days is 7 or 30 or 365 ? Days : 7;
         WeekOffset = Math.Clamp(WeekOffset, -52, 52);
         ChartWeeks = ChartWeeks is 2 or 4 or 6 ? ChartWeeks : 6;
+        ProgressWeeks = ProgressWeeks is 2 or 4 or 6 or 12 ? ProgressWeeks : 6;
+        ProgressTab = ProgressTab is "overview" or "analytics" or "records" ? ProgressTab : "overview";
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        Until = Until is null || Until > today || Until < today.AddYears(-20) ? today : Until;
+        var latestDate = Reference && CurrentPage == "/Dashboard/Progress" ? new DateOnly(2026, 10, 2) : today;
+        Until = Until is null || Until > latestDate || Until < today.AddYears(-20) ? latestDate : Until;
         Data = await dashboard.LoadAsync(subject, Days, Until.Value);
         if (CurrentPage == "/Dashboard/Workouts")
         {
@@ -160,9 +166,9 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
             Templates = await workouts.TemplatesAsync();
         }
         Clients = await dashboard.GetClientsAsync();
-        if (CurrentPage == "/Dashboard")
+        if (CurrentPage is "/Dashboard" or "/Dashboard/Progress")
         {
-            if (!IsCoachView && await features.CanUseAsync(Feature.CoachClientAlerts)) Attention = await attention.LoadAsync();
+            if (CurrentPage == "/Dashboard" && !IsCoachView && await features.CanUseAsync(Feature.CoachClientAlerts)) Attention = await attention.LoadAsync();
             if (!IsCoachView)
             {
                 ActiveProgram = (await programs.ListAsync("mine")).FirstOrDefault(p => p.StartDate.HasValue && p.StartDate.Value.AddDays(p.Weeks * 7) > today);

@@ -1,1 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#080d11"/><g fill="#4386ff"><rect x="5" y="15" width="6" height="12" rx="2"/><rect x="13" y="9" width="6" height="17" rx="2"/><rect x="21" y="4" width="6" height="21" rx="2"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 30">
+  <defs>
+    <linearGradient id="enix-blue" x1="0" y1="0" x2="0.35" y2="1">
+      <stop stop-color="#779aff"/>
+      <stop offset="0.55" stop-color="#4a70ff"/>
+      <stop offset="1" stop-color="#3152ff"/>
+    </linearGradient>
+  </defs>
+  <g fill="url(#enix-blue)">
+    <rect y="16" width="7" height="14" rx="3.5"/>
+    <rect x="10" y="8" width="7" height="22" rx="3.5"/>
+    <rect x="20" width="7" height="30" rx="3.5"/>
+  </g>
+</svg>

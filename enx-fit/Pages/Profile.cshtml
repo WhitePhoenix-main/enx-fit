@@ -1,0 +1,19 @@
+@page
+@model enx_fit.Pages.ProfileModel
+@inject enx_fit.Security.IFeatureAccessService FeatureAccess
+@{
+    Layout = "_DashboardReferenceLayout";
+    ViewData["Title"] = "Профиль";
+    var access = await FeatureAccess.GetAsync();
+    var plan = Model.Reference ? "Pro" : access.Plan.ToString();
+}
+<div class="em-profile">
+    <header class="em-profile-person"><reference-photo image="overview" window="1262 183 88 88" alt="Фото профиля"/><div><h1>@(Model.Reference ? "Алексей Иванов" : Model.Viewer.UserName?.Split('@')[0]) <span>@plan</span></h1><p>@(Model.Reference ? "athlete@enixfit.ru" : Model.Viewer.Email)</p></div></header>
+    <section class="em-card em-settings-group"><a asp-area="Identity" asp-page="/Account/Manage/Index"><reference-icon name="user"/><span>Профиль</span><reference-icon name="chevron"/></a><a asp-area="Identity" asp-page="/Account/Manage/TwoFactorAuthentication"><reference-icon name="shield"/><span>Безопасность</span><reference-icon name="chevron"/></a></section>
+    <section class="em-card em-settings-group"><button type="button" data-dialog="profile-timezone"><reference-icon name="globe"/><span>Часовой пояс</span><small data-current-timezone="@Model.Reference.ToString().ToLowerInvariant()">Иркутск (UTC+8)</small><reference-icon name="chevron"/></button><a asp-page="/Subscription"><reference-icon name="crown"/><span>Подписка</span><small>@(Model.Reference ? "Доступ до 1 ноября" : plan)</small><reference-icon name="chevron"/></a><button class="em-trainer-row" type="button" data-dialog="profile-trainer"><reference-icon name="users"/><span>Мой тренер</span>@if (Model.Reference) { <span class="em-trainer-info"><reference-photo image="overview" window="1411 551 35 37"/><span>Анна Смирнова<small>Подтверждает нагрузку</small></span></span> } else { <small>@(Model.TrainerName ?? "Не назначен")</small> }<reference-icon name="chevron"/></button></section>
+    <section class="em-card em-settings-group"><button type="button" data-dialog="profile-export"><reference-icon name="download"/><span>Экспорт данных</span><small>CSV / JSON</small><reference-icon name="chevron"/></button></section>
+    <section class="em-card em-settings-group"><a asp-page="/Subscription"><reference-icon name="card"/><span>Управлять подпиской</span><reference-icon name="chevron"/></a></section>
+</div>
+<dialog id="profile-export" class="app-dialog"><div class="dialog-heading"><h2>Экспорт тренировок</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close"/></button></div><p>Скачать упражнения и записанные подходы вашего аккаунта.</p><div class="em-export-actions"><a class="em-primary" asp-page-handler="Export" asp-route-format="csv">Скачать CSV</a><a class="em-outline" asp-page-handler="Export" asp-route-format="json">Скачать JSON</a></div></dialog>
+<dialog id="profile-timezone" class="app-dialog"><div class="dialog-heading"><h2>Часовой пояс</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close"/></button></div><p>@(Model.Reference ? "Иркутск (UTC+8)" : "Используется часовой пояс вашего устройства.")</p></dialog>
+<dialog id="profile-trainer" class="app-dialog"><div class="dialog-heading"><h2>Мой тренер</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close"/></button></div><p>@(Model.Reference ? "Анна Смирнова · Подтверждает нагрузку" : Model.TrainerName ?? "Персональный тренер пока не назначен.")</p></dialog>

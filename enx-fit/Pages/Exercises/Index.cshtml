@@ -1,106 +1,29 @@
 @page
 @model enx_fit.Pages.Exercises.IndexModel
+@using System.Security.Claims
 @{
-    ViewData["Title"] = "Упражнения";
+    Layout = "_DashboardReferenceLayout";
+    ViewData["Title"] = "Библиотека";
+    IReadOnlyList<enx_fit.Models.Exercise> exercises = Model.Reference ? new List<enx_fit.Models.Exercise> {
+        new() { Id = -1, Name = "Жим лёжа", MuscleGroup = "Грудные мышцы", Equipment = "Штанга, скамья" },
+        new() { Id = -2, Name = "Приседания со штангой", MuscleGroup = "Ноги, ягодицы", Equipment = "Штанга, силовая рама" },
+        new() { Id = -3, Name = "Становая тяга", MuscleGroup = "Спина, ноги", Equipment = "Штанга, помост" },
+        new() { Id = -4, Name = "Тяга верхнего блока", MuscleGroup = "Спина", Equipment = "Блочный тренажёр" }
+    } : Model.Exercises;
+    string Photo(string name) => name.Contains("присед", StringComparison.OrdinalIgnoreCase) || name.Contains("squat", StringComparison.OrdinalIgnoreCase) ? "117 801 203 162" : name.Contains("верхнего", StringComparison.OrdinalIgnoreCase) || name.Contains("pulldown", StringComparison.OrdinalIgnoreCase) ? "117 1216 203 161" : name.Contains("тяга", StringComparison.OrdinalIgnoreCase) || name.Contains("deadlift", StringComparison.OrdinalIgnoreCase) ? "117 1005 203 164" : "117 593 203 161";
 }
-
-<div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
-    <div>
-        <h1 class="h3 mb-1">Упражнения</h1>
-        <p class="text-muted mb-0">Библиотека упражнений для составления тренировок.</p>
-    </div>
-    @if (User.IsInRole("Administrator"))
-    {
-        <a class="btn btn-primary" asp-page="./Create">Добавить упражнение</a>
-    }
-</div>
-
-@if (TempData["StatusMessage"] is string statusMessage)
-{
-    <div class="alert alert-success" role="alert">@statusMessage</div>
-}
-
-<form method="get" class="row g-2 align-items-end mb-4">
-    <div class="col-sm-6 col-md-4">
-        <label class="form-label" asp-for="SelectedMuscleGroup">Группа мышц</label>
-        <select class="form-select" asp-for="SelectedMuscleGroup">
-            <option value="">Все группы мышц</option>
-            @foreach (var muscleGroup in Model.MuscleGroups)
-            {
-                <option value="@muscleGroup">@muscleGroup</option>
-            }
-        </select>
-    </div>
-    <div class="col-auto">
-        <button class="btn btn-outline-primary" type="submit">Применить фильтр</button>
-    </div>
-    @if (!string.IsNullOrWhiteSpace(Model.SelectedMuscleGroup))
-    {
-        <div class="col-auto">
-            <a class="btn btn-link" asp-page="./Index">Сбросить</a>
-        </div>
-    }
-</form>
-
-@if (Model.Exercises.Count == 0)
-{
-    <div class="border rounded-3 p-5 text-center bg-body-tertiary">
-        <h2 class="h5">Упражнения не найдены</h2>
-        <p class="text-muted mb-4">
-            @(string.IsNullOrWhiteSpace(Model.SelectedMuscleGroup)
-                ? "Добавьте первое упражнение для составления тренировок."
-                : "Выберите другую группу мышц или добавьте упражнение.")
-        </p>
-        @if (User.IsInRole("Administrator"))
-        {
-            <a class="btn btn-primary" asp-page="./Create">Добавить упражнение</a>
+@if (TempData["StatusMessage"] is string status) { <p class="program-notice" role="status">@status</p> }
+<div class="em-library" data-exercise-library data-library-owner="@User.FindFirstValue(ClaimTypes.NameIdentifier)" data-library-reference="@Model.Reference.ToString().ToLowerInvariant()">
+    <header class="em-page-heading"><h1>Библиотека</h1>@if (!Model.Reference && User.HasMinimumRole(UserRole.Administrator)) { <a class="em-outline em-library-create" asp-page="./Create">Добавить упражнение</a> }</header>
+    <label class="em-library-search"><reference-icon name="search"/><input type="search" placeholder="Название или мышцы..." aria-label="Поиск упражнений" data-library-search/></label>
+    <div class="em-library-tabs" role="tablist" aria-label="Разделы библиотеки"><button class="active" type="button" role="tab" aria-selected="true" data-library-tab="all">Все</button><button type="button" role="tab" aria-selected="false" data-library-tab="favorites">Избранные</button><button type="button" role="tab" aria-selected="false" data-library-tab="recent">Недавние</button></div>
+    <div class="em-library-tools"><label class="em-group-select"><reference-icon name="sliders"/><select aria-label="Группа мышц" data-library-group><option value="">Все группы</option>@foreach (var group in exercises.Select(e => e.MuscleGroup).Distinct()) { <option value="@group" selected="@(group == Model.SelectedMuscleGroup)">@group</option> }</select><reference-icon name="chevron"/></label><span data-library-count>@(Model.Reference ? "24 упражнения" : exercises.Count + " упражнений")</span></div>
+    <div class="em-library-list">
+        @foreach (var e in exercises) { var name = ExercisePresentation.DisplayName(e);
+            <article class="em-card em-exercise-card" data-library-id="@e.Id" data-library-text="@name @e.MuscleGroup" data-library-muscle="@e.MuscleGroup" data-library-recent="@Model.RecentIds.Contains(e.Id).ToString().ToLowerInvariant()"><reference-photo class="em-exercise-photo" image="library" window="@Photo(name)" alt="@name"/><div><h2>@name</h2><p>@e.MuscleGroup</p><p>@e.Equipment</p></div><button class="em-favorite" type="button" aria-label="Добавить в избранное: @name" aria-pressed="false" data-library-favorite><reference-icon name="star"/></button><a class="em-exercise-open" href="@(Model.Reference ? "#mobile-exercise-" + e.Id : Url.Page("./Details", new { id = e.Id }))" data-dialog="@(Model.Reference ? "mobile-exercise-" + e.Id : null)" aria-label="Подробнее: @name"><reference-icon name="chevron"/></a></article>
         }
     </div>
-}
-else
-{
-    <div class="table-responsive border rounded-3">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th scope="col">Название</th>
-                    <th scope="col">Группа мышц</th>
-                    <th scope="col">Оборудование</th>
-                    <th scope="col" class="text-end">Действия</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var exercise in Model.Exercises)
-                {
-                    <tr>
-                        <td class="fw-semibold">
-                            <span class="exercise-list-name">
-                                <span class="exercise-list-icon" aria-hidden="true"><admin-icon name="@ExercisePresentation.MuscleIcon(exercise.MuscleGroup)" /></span>
-                                <span>@ExercisePresentation.DisplayName(exercise)</span>
-                            </span>
-                        </td>
-                        <td>@exercise.MuscleGroup</td>
-                        <td>
-                            <span class="exercise-list-equipment" title="@ExercisePresentation.EquipmentDetails(exercise).FirstOrDefault()?.Description">
-                                <admin-icon name="@ExercisePresentation.EquipmentIcon(exercise)" />
-                                @exercise.Equipment
-                            </span>
-                        </td>
-                        <td class="text-end text-nowrap">
-                            <a class="btn btn-sm btn-outline-secondary" asp-page="./Details" asp-route-id="@exercise.Id">Подробнее</a>
-                            @if (User.IsInRole("Administrator"))
-                            {
-                                <a class="btn btn-sm btn-outline-primary" asp-page="./Edit" asp-route-id="@exercise.Id">Изменить</a>
-                                <a class="btn btn-sm btn-outline-danger" asp-page="./Delete" asp-route-id="@exercise.Id">Удалить</a>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
-
-@section Styles {
-    <link rel="stylesheet" href="~/css/exercises.css" asp-append-version="true" />
-}
+    <div class="em-card em-empty" hidden data-library-empty><reference-icon name="search"/><h2>Упражнения не найдены</h2><p>Измените запрос или выберите другую группу.</p></div>
+    <p class="em-card em-library-hint"><reference-icon name="info"/><span>Откройте упражнение, чтобы посмотреть оборудование.</span></p>
+</div>
+@if (Model.Reference) { @foreach (var e in exercises) { <dialog id="mobile-exercise-@e.Id" class="app-dialog"><div class="dialog-heading"><h2>@e.Name</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close"/></button></div><reference-photo class="em-exercise-preview" image="library" window="@Photo(e.Name)" alt="@e.Name"/><p>@e.MuscleGroup</p><p>Оборудование: @e.Equipment</p><button class="em-outline" type="button" data-close>Закрыть</button></dialog> } }

@@ -8,7 +8,7 @@
   };
   document.addEventListener('click', event => {
     const trigger = event.target.closest('[data-dialog]');
-    if (trigger) openDialog(trigger.dataset.dialog);
+    if (trigger) { if (trigger.tagName === 'A') event.preventDefault(); openDialog(trigger.dataset.dialog); }
     const close = event.target.closest('[data-close]');
     if (close) close.closest('dialog').close();
     if (event.target instanceof HTMLDialogElement) {
