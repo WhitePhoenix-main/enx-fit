@@ -47,7 +47,16 @@
         feedback.hidden = false; feedback.querySelector('[data-record-feedback-text]').textContent = text;
         feedback.querySelector('[data-record-undo]').hidden = !canUndo;
     }
+    function syncResults() {
+        // Autofill and browser restoration may update values without firing input.
+        for (const input of list.querySelectorAll('[data-set-field]')) {
+            const exercise = exercises[Number(input.closest('[data-index]').dataset.index)];
+            const set = exercise.sets[Number(input.closest('[data-set-index]').dataset.setIndex)];
+            set[input.dataset.setField] = input.type === 'checkbox' ? input.checked : input.value;
+        }
+    }
     function save() {
+        syncResults();
         const fields = Object.fromEntries(['Title','Date','DurationMinutes','Notes','ClientRequestId'].map(name => [name,field(name).value]));
         dirty = true;
         try {
@@ -101,6 +110,7 @@
         select(selectedId); summary();
     }
     function change(action, text) {
+        syncResults();
         undo = {exercises:structuredClone(exercises), selectedId, sourceNote, title:field('Title').value, requestId:field('ClientRequestId').value};
         action(); version++; render(); save(); message(text,true);
     }
@@ -109,15 +119,15 @@
         ({exercises,selectedId,sourceNote} = undo); field('Title').value = undo.title; field('ClientRequestId').value = undo.requestId; undo = null;
         version++; render(); save(); message('Изменение отменено.');
     });
-    form.addEventListener('input', event => {
+    const updateInput = event => {
         const input = event.target;
         if (input.dataset.setField) {
-            const exercise = exercises[Number(input.closest('[data-index]').dataset.index)];
-            exercise.sets[Number(input.closest('[data-set-index]').dataset.setIndex)][input.dataset.setField] = input.type==='checkbox'?input.checked:input.value;
             input.setCustomValidity('');
         }
-        undo = null; feedback.hidden = true; version++; summary(); save();
-    });
+        undo = null; feedback.hidden = true; version++; save(); summary();
+    };
+    form.addEventListener('input', updateInput);
+    form.addEventListener('change', updateInput);
     outline.addEventListener('click', event => {
         const button = event.target.closest('[data-record-select]');
         if (button) { select(button.dataset.recordSelect); save(); if (mobile.matches) root.querySelector('[data-record-outline-host]').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'}); }
@@ -193,6 +203,7 @@
         input.focus(); input.reportValidity();
     };
     function validate() {
+        syncResults();
         for (const input of list.querySelectorAll('[data-set-field="weight"]'))
             input.setCustomValidity(input.value.trim()!=='' && Number.isFinite(number(input.value)) && number(input.value)>=0 && number(input.value)<=10000 ? '' : 'Введите вес от 0 до 10000 кг. Для собственного веса укажите 0.');
         const invalid = [...form.querySelectorAll('input:invalid,textarea:invalid')].find(input => !input.matches('[data-batch-weight],[data-batch-reps]'));

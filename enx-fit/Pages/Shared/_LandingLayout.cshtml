@@ -1,35 +1,49 @@
+@using enx_fit.Services
+@{
+    var title = ViewData["Title"]?.ToString() ?? "Тренируйся осознанно";
+    var description = ViewData["Description"]?.ToString() ?? "Enix Fit — программы, выполнение тренировок, таймер отдыха и прогресс на телефоне и компьютере. Бесплатный дневник, история и личные рекорды.";
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
+    var signedIn = User.Identity?.IsAuthenticated == true;
+}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#080d11" />
-    <meta name="description" content="Enix Fit — программы, выполнение тренировок, таймер отдыха и прогресс на телефоне и компьютере. Бесплатный дневник, история и личные рекорды." />
-    <title>Enix Fit — тренируйся осознанно</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#09131e" />
+    <meta name="description" content="@description" />
+    <title>@title — Enix Fit</title>
     <partial name="_AppIcons" />
     <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/landing-motion.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/landing-story.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/public-pages.css" asp-append-version="true" />
 </head>
-<body class="enix-landing landing-story">
+<body class="enix-landing landing-story @(currentPage == "/Index" ? "public-home-page" : "public-inner-page")">
     <div class="page-atmosphere" aria-hidden="true"></div>
     <a class="skip-link" href="#main-content">Перейти к содержимому</a>
-    <partial name="_LandingIcons" />
-    <partial name="_LandingHeader" />
+    <partial name="_LandingIcons" /><partial name="_LandingHeader" />
     <main id="main-content" tabindex="-1">@RenderBody()</main>
     <footer class="landing-footer wrap">
         <a class="brand" asp-page="/Index" aria-label="Enix Fit — главная"><partial name="_LandingBrand" /></a>
         <nav aria-label="Ссылки в подвале">
-            <a href="#mobile">На телефоне</a><a href="#pricing">Тарифы</a><a href="#faq">Вопросы</a>
-            <a href="#how-it-works">Как начать</a>
-            @if (User.Identity?.IsAuthenticated == true)
+            <a href="@(Url.Page("/Index") + "#mobile")">На телефоне</a><a asp-page="/Pricing">Тарифы</a>
+            <a asp-page="/Faq">Вопросы</a><a asp-page="/About">О проекте</a><a asp-page="/Contact">Контакты</a>
+            @if (signedIn)
             { <a asp-page="/Dashboard">Открыть приложение</a> }
             else
-            { <a asp-page="/TechnicalPages/Login" asp-page-handler="Login">Войти</a> }
+            { <a asp-page="/TechnicalPages/Login" asp-page-handler="Login" asp-route-returnUrl="@Url.Page("/Dashboard")">Войти</a> }
         </nav>
         <small>© 2026 Enix Fit. Все права защищены.</small>
     </footer>
+    <nav class="public-mobile-dock" aria-label="Навигация на телефоне">
+        <a asp-page="/Index" aria-current="@(currentPage == "/Index" ? "page" : null)"><svg class="icon"><use href="#i-grid" /></svg><span>Обзор</span></a>
+        <a asp-page="/Service" aria-current="@(currentPage == "/Service" ? "page" : null)"><svg class="icon"><use href="#i-dumbbell" /></svg><span>Возможности</span></a>
+        <a asp-page="/Faq" aria-current="@(currentPage == "/Faq" ? "page" : null)"><svg class="icon"><use href="#i-question" /></svg><span>Вопросы</span></a>
+        <a class="public-dock-start" href="@PublicPageLinks.Open(Url, User, "/Dashboard")"><svg class="icon"><use href="#i-arrow" /></svg><span>@(signedIn ? "Открыть" : "Начать")</span></a>
+    </nav>
     <script src="~/js/landing.js" asp-append-version="true" defer></script>
     <script src="~/js/landing-motion.js" asp-append-version="true" defer></script>
+    <script src="~/js/public-pages.js" asp-append-version="true" defer></script>
 </body>
 </html>

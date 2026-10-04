@@ -1,24 +1,33 @@
+@using enx_fit.Services
+@{
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
+    string Section(string id) => Url.Page("/Index") + "#" + id;
+}
 <header class="landing-header wrap">
-    <a class="brand" asp-page="/Index" aria-label="Enix Fit — главная">
-        <partial name="_LandingBrand" />
-    </a>
-    <button class="menu-toggle" type="button" aria-label="Открыть меню" aria-controls="landing-nav" aria-expanded="false"><svg class="icon"><use href="#i-menu" /></svg></button>
-    <nav class="landing-nav" id="landing-nav" aria-label="Основная навигация">
-        <a href="#mobile">На телефоне</a>
-        <a href="#planner">Программы</a>
-        <a href="#analytics">Прогресс</a>
-        <a href="#pricing">Тарифы</a>
+    <a class="brand" asp-page="/Index" aria-label="Enix Fit — главная"><partial name="_LandingBrand" /></a>
+    <nav class="landing-nav landing-desktop-nav" aria-label="Основная навигация">
+        <a asp-page="/Service" aria-current="@(currentPage == "/Service" ? "page" : null)">Возможности</a>
+        <a href="@Section("planner")">Программы</a>
+        <a href="@Section("analytics")">Прогресс</a>
+        <a asp-page="/Pricing" aria-current="@(currentPage == "/Pricing" ? "page" : null)">Тарифы</a>
     </nav>
     <div class="header-actions">
-        @if (User.Identity?.IsAuthenticated == true)
-        {
-            <a class="header-login" asp-page="/Dashboard">Мой кабинет</a>
-            <a class="button button-primary" asp-page="/Dashboard/Workouts">К тренировкам</a>
-        }
-        else
-        {
-            <a class="header-login" asp-page="/TechnicalPages/Login" asp-page-handler="Login">Войти</a>
-            <a class="button button-primary" asp-page="/TechnicalPages/Login" asp-page-handler="Register">Начать бесплатно</a>
-        }
+        @if (!signedIn)
+        { <a class="header-login" asp-page="/TechnicalPages/Login" asp-page-handler="Login" asp-route-returnUrl="@Url.Page("/Dashboard")">Войти</a> }
+        <a class="button button-primary" href="@PublicPageLinks.Open(Url, User, "/Dashboard")">@(signedIn ? "Открыть приложение" : "Начать бесплатно")</a>
     </div>
+    <details class="landing-menu" data-public-menu>
+        <summary class="menu-toggle" aria-label="Меню сайта"><span>Ещё</span><svg class="icon"><use href="#i-menu" /></svg></summary>
+        <nav class="landing-menu-nav" aria-label="Все страницы">
+            <a asp-page="/Index" aria-current="@(currentPage == "/Index" ? "page" : null)">Главная</a>
+            <a asp-page="/Service" aria-current="@(currentPage == "/Service" ? "page" : null)">Возможности</a>
+            <a href="@Section("planner")">Программы</a><a href="@Section("analytics")">Прогресс</a>
+            <a asp-page="/Pricing" aria-current="@(currentPage == "/Pricing" ? "page" : null)">Тарифы</a>
+            <a asp-page="/About" aria-current="@(currentPage == "/About" ? "page" : null)">О проекте</a>
+            <a asp-page="/Faq" aria-current="@(currentPage == "/Faq" ? "page" : null)">Вопросы</a>
+            <a asp-page="/Contact" aria-current="@(currentPage == "/Contact" ? "page" : null)">Контакты</a>
+            <a class="public-menu-start" href="@PublicPageLinks.Open(Url, User, "/Dashboard")">@(signedIn ? "Открыть приложение" : "Начать бесплатно") <svg class="icon"><use href="#i-arrow" /></svg></a>
+        </nav>
+    </details>
 </header>

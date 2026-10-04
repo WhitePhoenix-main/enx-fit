@@ -1,25 +1,16 @@
 @page "{id:int}"
 @model enx_fit.Pages.Body.DeleteModel
-@{
-    ViewData["Title"] = "Удалить замер";
-}
-
-<div class="mb-4">
-    <h1 class="h3 mb-1">Удалить замер</h1>
-    <p class="text-muted mb-0">Проверьте замер перед удалением.</p>
+@using enx_fit.Pages.Body
+@{ ViewData["Title"] = "Удалить замер"; }
+@section Styles { <link rel="stylesheet" href="~/css/body-workspace.css" asp-append-version="true" /> }
+<div class="body-workspace body-form-workspace">
+    <header class="body-heading"><div><a class="body-back" asp-page="./Edit" asp-route-id="@Model.Measurement.Id">← К замеру</a><h1>Удалить замер?</h1><p>Проверьте запись перед удалением.</p></div></header>
+    <section class="body-panel body-delete-panel">
+        <p class="body-eyebrow">@Model.Measurement.Date.ToString("dd.MM.yyyy")</p><h2>@IndexModel.Number(Model.Measurement.WeightKg) <small>кг</small></h2>
+        <p class="body-muted">Рост @IndexModel.Number(Model.Measurement.HeightCm) см</p>
+        <partial name="_BodyRecordDetails" model="Model.Measurement" />
+        <p class="body-delete-note">Восстановить удалённую запись будет невозможно.</p>
+        <form method="post" data-body-form><input type="hidden" asp-for="Measurement.Id" /><p class="body-feedback" data-body-feedback role="status"></p><div class="body-actions"><button class="body-button danger" type="submit" data-body-save>Удалить замер</button><a class="body-text-link" asp-page="./Edit" asp-route-id="@Model.Measurement.Id">Отмена</a></div></form>
+    </section>
 </div>
-
-<div class="card border-danger">
-    <div class="card-body">
-        <h2 class="h5">@Model.Measurement.Date.ToString("yyyy-MM-dd")</h2>
-        <p class="text-muted mb-2">@Model.Measurement.WeightKg kg &middot; BMI @Model.Measurement.Bmi</p>
-        <p>Восстановить удалённую запись будет невозможно.</p>
-        <form method="post">
-            <input type="hidden" asp-for="Measurement.Id" />
-            <div class="d-flex gap-2">
-                <button class="btn btn-danger" type="submit">Удалить замер</button>
-                <a class="btn btn-outline-secondary" asp-page="./Index">Отмена</a>
-            </div>
-        </form>
-    </div>
-</div>
+@section Scripts { <script src="~/js/body-workspace.js" asp-append-version="true"></script> }

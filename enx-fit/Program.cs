@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using enx_fit.Extensions;
 using enx_fit.Data;
 using enx_fit.Services;
 using enx_fit.Areas.Identity.Data;
@@ -137,6 +138,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UsePublicPageErrors();
 app.UseStaticFiles();
 app.UseRouting();
 

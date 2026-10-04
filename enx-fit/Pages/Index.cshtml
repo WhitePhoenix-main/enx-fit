@@ -3,7 +3,7 @@
 @{
     Layout = "_LandingLayout";
     var signedIn = User.Identity?.IsAuthenticated == true;
-    var startUrl = signedIn ? Url.Page("/Dashboard") : Url.Page("/TechnicalPages/Login", "Register");
+    var startUrl = enx_fit.Services.PublicPageLinks.Open(Url, User, "/Dashboard");
     var startLabel = signedIn ? "Открыть приложение" : "Начать бесплатно";
     var programsPreview = AssetVersions.AddFileVersionToPath(Request.PathBase, Url.Content("~/images/landing/product/programs-mobile.jpg"));
     var progressPreview = AssetVersions.AddFileVersionToPath(Request.PathBase, Url.Content("~/images/landing/product/progress-mobile.jpg"));
@@ -46,6 +46,7 @@
             <li><span class="step-number">3</span><div><h3>Запиши результат</h3><p>Сохрани подходы<br />и возвращайся к своей истории.</p></div></li>
         </ol>
     </div>
+    <div class="wrap"><partial name="_PublicStartChoices" /></div>
 </section>
 
 <section class="mobile-showcase section-band" id="mobile" aria-labelledby="mobile-title">
@@ -64,10 +65,7 @@
                 else
                 { <a class="button button-outline" href="#planner">Как выбрать программу <svg class="icon"><use href="#i-arrow" /></svg></a> }
             </div>
-            <figure class="mobile-preview" data-reveal>
-                <div class="mobile-preview-frame"><img src="~/images/landing/product/workout-mobile.jpg" asp-append-version="true" width="390" height="844" loading="lazy" decoding="async" alt="Экран занятия: жим лёжа 60 кг на 10 повторений, первый подход выполнен, отдых 1 минута 30 секунд." /></div>
-                <figcaption>Мобильная тренировка · пример данных</figcaption>
-            </figure>
+            <partial name="_PublicProductPreview" />
         </div>
         <div class="integration-cards device-benefits">
             <article class="integration-card panel"><svg class="integration-logo"><use href="#i-phone" /></svg><b>В зале</b><span>Тренировка на телефоне</span></article>
@@ -122,33 +120,14 @@
 <section class="pricing section-band" id="pricing" aria-labelledby="pricing-title">
     <div class="wrap section-grid">
         <div class="section-copy"><p class="eyebrow">Тарифы</p><h2 id="pricing-title">Начни с Free.<br />Выбирай по задачам.</h2><p>Дневник, программы и история доступны бесплатно. Pro помогает выбирать нагрузку, Coach — работать с клиентами.</p><p class="pricing-availability">Онлайн-оплата пока недоступна. Доступ Pro и Coach назначается администратором.</p></div>
-        <div class="pricing-cards">
-            <article class="price-card price-card-free panel"><span class="popular-badge">Для старта</span><h3>Athlete Free</h3><p class="price">0 ₽</p><ul><li>Программы без лимита и шаблоны</li><li>Расписание и запись тренировок</li><li>История, рекорды и базовая динамика</li></ul><a class="button button-primary" href="@startUrl">@startLabel</a></article>
-            <article class="price-card price-card-pro panel"><h3>Athlete Pro</h3><p class="price">399 ₽<small> /мес</small></p><ul><li>Все возможности Free</li><li>Рекомендации рабочего веса</li><li>Сигналы возможного плато</li><li>Изменения после подтверждения</li></ul>
-                @if (signedIn)
-                { <a class="button button-outline" asp-page="/Subscription">Посмотреть мой доступ</a> }
-                else
-                { <details class="tier-details"><summary>Подробнее о Pro</summary><p>Рекомендации учитывают завершённые тренировки и объясняют причину. Ты сам подтверждаешь изменение веса в программе.</p></details> }
-            </article>
-            <article class="price-card panel"><h3>Coach</h3><p class="price"><small>от </small>1 990 ₽<small> /мес</small></p><p class="price-caption">Для тренеров</p><ul><li>Программы назначенных клиентов</li><li>Изменение нагрузки</li><li>Сигналы, требующие внимания</li></ul>
-                @if (signedIn)
-                { <a class="button button-outline" asp-page="/Subscription">Посмотреть мой доступ</a> }
-                else
-                { <details class="tier-details"><summary>Подробнее о Coach</summary><p>Работа с назначенными клиентами: программы, нагрузка и сигналы по занятиям. Нужны доступ Coach и роль тренера.</p></details> }
-            </article>
-        </div>
+        <partial name="_PublicPlans" />
     </div>
 </section>
 
 <section class="landing-faq section-band" id="faq" aria-labelledby="faq-title">
     <div class="wrap story-grid">
         <div class="section-copy"><p class="eyebrow">Перед стартом</p><h2 id="faq-title">Осталось<br />пару вопросов?</h2><p>Начни так, как удобно тебе. План и история будут под рукой.</p></div>
-        <div class="faq-items">
-            <details id="faq-install"><summary>Нужно устанавливать приложение?</summary><p>Enix Fit работает в браузере на телефоне и компьютере. На телефоне можно добавить сайт на главный экран через меню браузера.</p></details>
-            <details id="faq-start"><summary>Можно начать без программы?</summary><p>Да. Начни свободную тренировку и добавляй упражнения по ходу. Если занятие уже прошло, внеси его вручную. Удачную тренировку можно сохранить как шаблон.</p></details>
-            <details id="faq-free"><summary>Что входит в бесплатный план?</summary><p>Свои программы без лимита, готовые шаблоны, расписание, запись подходов, таймер отдыха, история, личные рекорды и базовая динамика результатов.</p></details>
-            <details id="faq-access"><summary>Как получить Pro или Coach?</summary><p>Онлайн-оплата пока недоступна. Эти планы назначает администратор. Coach дополнительно требует роль тренера. Текущий доступ можно посмотреть в своём аккаунте.</p></details>
-        </div>
+        <partial name="_PublicFaq" model="enx_fit.ViewModels.PublicFaq.All.Take(4).ToArray()" />
     </div>
 </section>
 

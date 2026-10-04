@@ -1,6 +1,6 @@
 @model enx_fit.ViewModels.MobileAppNavigationViewModel
 @inject enx_fit.Services.WorkoutService Workouts
-@if (!Model.Reference && Model.Dashboard?.IsCoachView != true && Model.Page != "/Dashboard" && !Model.Page.StartsWith("/Workouts/Details"))
+@if (!Model.Reference && Model.Client is null && !Model.Page.StartsWith("/Trainer/") && Model.Page != "/Dashboard" && !Model.Page.StartsWith("/Workouts/Details"))
 {
     var active = Model.Dashboard?.ActiveWorkout ?? await Workouts.ActiveAsync();
     if (active is not null)

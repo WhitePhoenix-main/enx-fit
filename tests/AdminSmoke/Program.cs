@@ -55,6 +55,7 @@ builder.Services.AddTrainingPrograms(builder.Configuration);
 builder.Services.AddRazorPages()
     .AddApplicationPart(typeof(AdminSmoke.Pages.RoleChecks.TrainerModel).Assembly);
 await using var app = builder.Build();
+app.UsePublicPageErrors();
 app.UseStaticFiles();
 app.UseRouting();
 // Browser recovery tests can reject writes while keeping the in-memory diary and page reads alive.
@@ -72,6 +73,7 @@ app.MapPost("/__tests/auth-mail/{enabled:bool}", (bool enabled) => {
     previewAccountEmail.Messages.Clear(); return Results.Ok();
 });
 app.MapGet("/__tests/auth-mail", () => Results.Json(previewAccountEmail.Messages.LastOrDefault()));
+app.MapGet("/__tests/public-forbidden", () => Results.StatusCode(403));
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
@@ -104,6 +106,20 @@ await using (var scope = app.Services.CreateAsyncScope())
     await db.SaveChangesAsync();
 }
 await app.StartAsync();
+if (args.Contains("--workout-record-checks"))
+{
+    try
+    {
+        await WorkoutExecutionChecks.RunAsync(app.Services, new Uri(baseUrl));
+        if (args.Contains("--serve"))
+        {
+            Console.WriteLine($"Test preview: {baseUrl}/Workouts/Record (execution@example.test / TestOnly!2026). In-memory test data only.");
+            await app.WaitForShutdownAsync();
+        }
+    }
+    finally { await app.StopAsync(); }
+    return;
+}
 await AuthChecks.RunAsync(app.Services, new Uri(baseUrl));
 await AuthJourneyChecks.RunAsync(app.Services, new Uri(baseUrl));
 await DashboardChecks.RunAsync(app.Services, new Uri(baseUrl));
@@ -117,6 +133,9 @@ await QuickWorkoutChecks.RunAsync(app.Services, new Uri(baseUrl));
 await WorkoutExecutionChecks.RunAsync(app.Services, new Uri(baseUrl));
 await TrainingSetupChecks.RunAsync(app.Services, new Uri(baseUrl));
 await ProfileSettingsChecks.RunAsync(app.Services, new Uri(baseUrl));
+await BodySubscriptionChecks.RunAsync(app.Services, new Uri(baseUrl));
+await PublicPageChecks.RunAsync(app.Services, new Uri(baseUrl));
+await CoachWorkspaceChecks.RunAsync(app.Services, new Uri(baseUrl));
 using var adminClient = Client();
 using var memberClient = Client();
 using var anonymous = Client();

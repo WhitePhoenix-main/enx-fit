@@ -11,7 +11,7 @@
 <div class="programs-page program-builder">
 @if (Model.PageError is not null) { <partial name="_ProgramError" model="Model.PageError" /> }
 else {
-    <a class="program-back" asp-page="Index">← Программы</a>
+    @if (ViewData["CoachContext"] is enx_fit.ViewModels.CoachContextViewModel clientContext) { <a class="program-back" asp-page="/Trainer/Client" asp-route-id="@clientContext.Id" asp-fragment="client-programs">← Программы клиента</a> } else { <a class="program-back" asp-page="Index">← Программы</a> }
     <header class="plan-heading"><span class="plan-kicker">ВАШ ПЛАН</span><h1>@ViewData["Title"]</h1><p>Задайте цель, соберите тренировки и выберите дни недели.</p></header>
     <form method="post" asp-page="Edit" asp-route-id="@Model.ProgramId" asp-page-handler="" class="program-form" id="program-editor" data-program-editor data-unsaved="@Model.HasUnsavedChanges.ToString().ToLowerInvariant()">
         <input asp-for="Input.Revision" type="hidden" />

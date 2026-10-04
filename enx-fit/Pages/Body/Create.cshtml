@@ -1,40 +1,19 @@
 @page
 @model enx_fit.Pages.Body.CreateModel
-@{
-    ViewData["Title"] = "Добавить замер";
-}
-
-<div class="mb-4">
-    <h1 class="h3 mb-1">Добавить замер</h1>
-    <p class="text-muted mb-0">Выберите пользователя и заполните показатели тела.</p>
-</div>
-
-<div class="card">
-    <div class="card-body">
-        <form method="post">
-            @if (Model.IsAdministrator)
-            {
-                <div class="mb-3">
-                    <label class="form-label" asp-for="Input.OwnerId"></label>
-                    <select class="form-select" asp-for="Input.OwnerId">
-                        <option value="">Выберите пользователя</option>
-                        @foreach (var user in Model.Users)
-                        {
-                            <option value="@user.Id">@user.DisplayName</option>
-                        }
-                    </select>
-                    <span class="text-danger" asp-validation-for="Input.OwnerId"></span>
-                </div>
+@{ ViewData["Title"] = "Добавить замер"; ViewData["BodyToday"] = Model.Today.ToString("yyyy-MM-dd"); }
+@section Styles { <link rel="stylesheet" href="~/css/body-workspace.css" asp-append-version="true" /> }
+<div class="body-workspace body-form-workspace">
+    <header class="body-heading"><div><a class="body-back" asp-page="./Index" asp-route-UserId="@(Model.IsAdministrator ? Model.Input.OwnerId : null)">← Замеры тела</a><p class="body-eyebrow">Новая запись</p><h1>Добавить замер</h1><p>Три основных поля. Остальное — по желанию.</p></div></header>
+    <section class="body-panel body-form-panel">
+        <form method="post" data-body-form>
+            @if (Model.IsAdministrator) {
+                <div class="body-field"><label asp-for="Input.OwnerId"></label><select asp-for="Input.OwnerId" required><option value="">Выберите пользователя</option>@foreach (var user in Model.Users) { <option value="@user.Id">@user.DisplayName</option> }</select><span asp-validation-for="Input.OwnerId"></span></div>
             }
             <partial name="_BodyMeasurementForm" for="Input" />
-            <div class="d-flex gap-2">
-                <button class="btn btn-primary" type="submit">Добавить замер</button>
-                <a class="btn btn-outline-secondary" asp-page="./Index">Отмена</a>
-            </div>
+            <p class="body-feedback" data-body-feedback role="status"></p>
+            <div class="body-actions"><button class="body-button" type="submit" data-body-save>Добавить замер</button><a class="body-text-link" asp-page="./Index" asp-route-UserId="@(Model.IsAdministrator ? Model.Input.OwnerId : null)">Отмена</a></div>
         </form>
-    </div>
+    </section>
+    <p class="body-muted body-save-hint">Запись появится в истории после сохранения.</p>
 </div>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+@section Scripts { <script src="~/js/body-workspace.js" asp-append-version="true"></script> }

@@ -1,6 +1,6 @@
 @model enx_fit.ViewModels.MobileAppNavigationViewModel
 @{
-    string? PageUrl(string page) => Url.Page(page, page == "/Profile" ? new Microsoft.AspNetCore.Routing.RouteValueDictionary { ["area"] = "", ["Reference"] = Model.Reference ? true : null } : Model.RouteValues);
+    string? PageUrl(string page) => Model.PageUrl(Url, page);
 }
 @if (Model.Reference)
 {

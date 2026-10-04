@@ -107,19 +107,8 @@
     });
     card.addEventListener('pointerleave', () => { cancelAnimationFrame(frame); frame = 0; });
   });
-  const header = document.querySelector('.landing-header');
-  let scrollFrame = 0;
-  const updateHeader = () => {
-    header.classList.toggle('is-scrolled', scrollY > 40);
-    heroBounds = undefined;
-    scrollFrame = 0;
-  };
-  window.addEventListener('scroll', () => {
-    if (!scrollFrame) scrollFrame = requestAnimationFrame(updateHeader);
-  }, { passive: true });
-  updateHeader();
-
-  const navigationLinks = Array.from(document.querySelectorAll('.landing-nav a[href^="#"]'));
+  window.addEventListener('scroll', () => { heroBounds = undefined; }, { passive: true });
+  const navigationLinks = Array.from(document.querySelectorAll(".landing-nav a")).filter(link => link.pathname === location.pathname && link.hash);
   const sections = new IntersectionObserver(entries => {
     entries.forEach(entry => {
       if (!entry.isIntersecting) return;
@@ -134,13 +123,6 @@
     hero.classList.toggle('is-motion-visible', entries[0].isIntersecting);
   }, { threshold: .05 });
   heroVisibility.observe(hero);
-
-  const openLinkedAnswer = () => {
-    const target = document.getElementById(location.hash.slice(1));
-    if (target?.matches('.faq-items details')) target.open = true;
-  };
-  window.addEventListener('hashchange', openLinkedAnswer);
-  openLinkedAnswer();
 
   const finishMotion = () => {
     animations.forEach(animation => animation.cancel());

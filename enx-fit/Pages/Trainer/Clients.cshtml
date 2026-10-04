@@ -1,48 +1,37 @@
 @page
 @model enx_fit.Pages.Trainer.ClientsModel
-@{ Layout = "_DashboardLayout"; ViewData["Title"] = "Мои клиенты"; ViewData["Active"] = "clients"; }
-<div class="page-heading">
-<div>
-<p class="eyebrow">КАБИНЕТ ТРЕНЕРА</p>
-<h1>Мои клиенты <span class="count-pill">@Model.Clients.Count</span>
-</h1>
-<p>Прогресс, тренировки и цели вашей команды.</p>
+@{ Layout = "_DashboardReferenceLayout"; ViewData["Title"] = "Мои клиенты"; }
+<div class="coach-workspace coach-directory">
+    <header class="coach-page-heading"><div><p class="eyebrow">Кабинет тренера</p><h1>Мои клиенты <span class="coach-count">@Model.Total</span></h1><p>Выберите человека, чтобы посмотреть результаты и подготовить следующий шаг.</p></div><a class="button secondary" asp-page="/Dashboard">Личные тренировки <reference-icon name="arrow" /></a></header>
+    @if (Model.Attention is { } attention)
+    {
+        <div class="coach-today-summary" aria-label="Сегодня у найденных клиентов"><div><small>Занятий сегодня по плану</small><strong>@attention.ScheduledToday</strong></div><div><small>Уже завершено</small><strong>@attention.CompletedToday <span>из @attention.ScheduledToday</span></strong></div><div><small>Клиентов с сигналами</small><strong>@Model.AttentionIds.Count</strong></div><p>@attention.Today.ToString("dd.MM.yyyy") · по назначенным программам найденных клиентов</p></div>
+        <partial name="_CoachAttention" model="attention" />
+    }
+    else
+    { <div class="coach-access-note"><reference-icon name="users" /><p>Доступен просмотр статистики назначенных клиентов. Управление программами и сигналы внимания требуют Coach.</p><a asp-page="/Subscription">Мой доступ →</a></div> }
+    <form method="get" class="coach-directory-filters">
+        <label class="coach-search-field" asp-for="Search">Имя или email<input asp-for="Search" type="search" maxlength="100" placeholder="Найти клиента" /></label>
+        <label asp-for="Scope">Показать<select asp-for="Scope"><option value="all">Все клиенты</option>@if (Model.CanAlerts) { <option value="attention">С сигналами</option> }<option value="empty">Без записанных тренировок</option></select></label>
+        <label asp-for="Sort">Порядок<select asp-for="Sort"><option value="attention">Сигналы сначала</option><option value="name">По имени</option><option value="recent">По последней тренировке</option></select></label>
+        <button class="button primary" type="submit">Показать</button>
+    </form>
+    <div class="coach-directory-result"><p>Показано @Model.Clients.Count из @Model.Found найденных</p>@if (!string.IsNullOrEmpty(Model.Search) || Model.Scope != "all" || Model.Sort != "attention") { <a asp-page="./Clients">Сбросить фильтры</a> }</div>
+    @if (Model.Clients.Count > 0)
+    {
+        <div class="coach-client-list" aria-label="Назначенные клиенты">
+        @foreach (var client in Model.Clients)
+        {
+            var needsAttention = Model.AttentionIds.Contains(client.Id);
+            var initial = string.IsNullOrWhiteSpace(client.Name) ? "К" : client.Name[..1].ToUpperInvariant();
+            <a class="coach-client-row" data-client-row="@client.Id" href="@(Model.CanManage ? Url.Page("/Trainer/Client", new { id = client.Id, DirectorySearch = Model.Search, DirectoryScope = Model.Scope, DirectorySort = Model.Sort }) : Url.Page("/Dashboard", new { ClientId = client.Id }))">
+                <span class="coach-client-avatar" aria-hidden="true">@initial</span><span class="coach-client-name"><strong>@client.Name</strong><small>@(needsAttention ? "Есть сигналы внимания" : client.LastWorkout is null ? "Результаты ещё не записаны" : "История тренировок доступна")</small></span>
+                <span class="coach-row-metric"><strong>@client.Workouts</strong><small>завершённых занятий</small></span><span class="coach-row-metric"><strong>@(client.LastWorkout?.ToString("dd.MM.yyyy") ?? "—")</strong><small>последняя тренировка</small></span>
+                <span class="coach-row-open">@(Model.CanManage ? "Открыть клиента" : "Статистика") <reference-icon name="arrow" /></span>
+            </a>
+        }
+        </div>
+    }
+    else
+    { <div class="coach-empty"><reference-icon name="users" /><h2>@(Model.Total == 0 ? "Здесь появятся ваши клиенты" : "По этим фильтрам клиентов нет")</h2><p>@(Model.Total == 0 ? "Администратор может назначить вас тренером в профиле пользователя." : "Измените имя или условия поиска, чтобы увидеть других назначенных клиентов.")</p>@if (Model.Total > 0) { <a class="button secondary" asp-page="./Clients">Показать всех клиентов</a> }</div> }
 </div>
-<a class="button secondary" asp-page="/Dashboard">
-<admin-icon name="activity" />Моя статистика</a>
-</div>
-<form method="get" class="client-search">
-<admin-icon name="search" />
-<input asp-for="Search" placeholder="Найти клиента по имени или email" aria-label="Поиск клиента" />
-<button class="button" type="submit">Найти</button>
-</form>
-@if (Model.Attention is { } attention) { <partial name="_CoachAttention" model="attention" /> }
-<div class="client-grid">
-@foreach (var client in Model.Clients)
-{
-    <a class="panel client-card" href="@(Model.CanManage ? Url.Page("/Trainer/Client", new { id = client.Id }) : Url.Page("/Dashboard", new { clientId = client.Id }))">
-        <span class="avatar large">@client.Name[..1].ToUpperInvariant()</span>
-<span class="client-name">@client.Name</span>
-<span class="muted">Персональные тренировки</span>
-        <div class="client-metrics">
-<div>
-<strong>@client.Workouts</strong>
-<small>тренировок</small>
-</div>
-<div>
-<strong>@(client.LastWorkout?.ToString("dd.MM") ?? "—")</strong>
-<small>последняя тренировка</small>
-</div>
-</div>
-        <span class="client-open">Открыть дэшборд <admin-icon name="arrow" />
-</span>
-    </a>
-}
-</div>
-@if (Model.Clients.Count == 0)
-{
-    <div class="panel empty-state">
-<admin-icon name="users" />
-<h2>@(string.IsNullOrWhiteSpace(Model.Search) ? "Здесь появятся ваши клиенты" : "Клиенты не найдены")</h2>
-<p>@(string.IsNullOrWhiteSpace(Model.Search) ? "Администратор может назначить вас тренером в профиле пользователя." : "Попробуйте другое имя или сбросьте поиск.")</p>@if (!string.IsNullOrWhiteSpace(Model.Search)) { <a asp-page="./Clients" class="button secondary">Сбросить поиск</a> }</div>
-}

@@ -8,7 +8,6 @@
     var dashboard = ViewData["Dashboard"] as enx_fit.Pages.DashboardModel;
     var goalTitle = dashboard?.Data.Settings.GoalTitle ?? await LayoutDb.DashboardSettings.AsNoTracking()
         .Where(s => s.UserId == Viewer.Id).Select(s => s.GoalTitle).SingleOrDefaultAsync() ?? "Тренироваться регулярно";
-    var clientId = dashboard?.IsCoachView == true ? dashboard.Data.Subject.Id : null;
     var activePage = ViewContext.RouteData.Values["page"] as string;
     bool IsActive(string page) => page == "/Dashboard/Progress"
         ? activePage is "/Dashboard/Progress" or "/Dashboard/Analytics" or "/Dashboard/Achievements"
@@ -20,12 +19,15 @@
     var navigation = DashboardSections.All.Where(tab => tab.Page is not ("/Dashboard/Analytics" or "/Dashboard/Achievements")).Select(tab => tab.Page == "/Dashboard/Plans"
         ? tab with { Page = "/Programs/Index", Title = "Программы", Icon = "calendar" } : tab)
         .OrderBy(tab => tab.Page switch { "/Dashboard/Workouts" => 0, "/Programs/Index" => 1, "/Dashboard/Progress" => 2, "/Dashboard/Habits" => 3, _ => 4 }).ToList();
-    string? PageUrl(string page) => Url.Page(page, dashboard?.NavigationValues);
-    var dashboardUrl = PageUrl("/Dashboard");
+
+
     var viewer = User.Identity?.Name?.Split('@')[0] is { Length: > 0 } name ? name : "Спортсмен";
     var isTrainer = User.GetUserRole() == UserRole.Trainer || User.HasMinimumRole(UserRole.Administrator);
     var clientsActive = IsActive("/Trainer/Clients");
     var mobileNavigation = enx_fit.ViewModels.MobileAppNavigationViewModel.Create(ViewData, User, activePage);
+    var clientId = mobileNavigation.Client?.Id;
+    string? PageUrl(string page) => mobileNavigation.PageUrl(Url, page);
+    var dashboardUrl = PageUrl("/Dashboard");
 }
 <!DOCTYPE html>
 <html lang="ru">
@@ -44,6 +46,7 @@
     <link rel="stylesheet" href="~/css/workout-shared.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
     <link rel="stylesheet" href="~/css/mobile-shell.css" asp-append-version="true" />
+    @if (isTrainer) { <link rel="stylesheet" href="~/css/coach-workspace.css" asp-append-version="true" /> }
 </head>
 <body class="fitness-app em-app-shell @(clientId is not null ? "coach-mode" : "personal-mode") @(activePage == "/Dashboard" ? "dashboard-home" : "")">
 <a class="skip-link" href="#main-content">Перейти к содержимому</a>
@@ -130,7 +133,7 @@
 </details>
         </div>
     </header>
-    <main id="main-content" tabindex="-1">@RenderBody()</main>
+    <main id="main-content" tabindex="-1"><partial name="_CoachContext" model="mobileNavigation" />@RenderBody()</main>
 </div>
 <nav class="bottom-nav em-tablet-nav" aria-label="Навигация на планшете">
     <a class="@(IsActive("/Dashboard") ? "active" : "")" href="@dashboardUrl" aria-current="@(IsActive("/Dashboard") ? "page" : null)"><admin-icon name="home" /><span>Главная</span></a>
@@ -170,7 +173,7 @@
 </a>
 <a href="@PageUrl("/Dashboard/Progress")">Прогресс, вес и замеры тела <admin-icon name="scale" />
 </a>
-<a asp-page="/Programs/Index">Программы тренировок <admin-icon name="calendar" />
+<a href="@PageUrl("/Programs/Index")">Программы тренировок <admin-icon name="calendar" />
 </a>
 <a asp-page="/Exercises/Index">Библиотека упражнений <admin-icon name="book" /></a>
 <a href="@PageUrl("/Dashboard/Habits")">Вода, сон и привычки <admin-icon name="water" />

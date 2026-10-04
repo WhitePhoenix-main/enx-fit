@@ -19,11 +19,13 @@ public class EditModel(
     public BodyMeasurementInputModel Input { get; set; } = new();
 
     public bool IsAdministrator => currentUser.IsAdministrator;
+    public DateOnly Today => currentUser.LocalToday;
 
     public IReadOnlyList<UserOption> Users { get; private set; } = [];
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
+        if (Request.Query.ContainsKey("ClientId")) return NotFound();
         var measurement = await measurementService.FindAsync(id);
 
         if (measurement is null)
@@ -39,6 +41,9 @@ public class EditModel(
 
     public async Task<IActionResult> OnPostAsync()
     {
+        if (Request.Query.ContainsKey("ClientId")) return NotFound();
+        if (await measurementService.FindAsync(Id) is null) return NotFound();
+        BodyFormValidation.Validate(Input, ModelState, Today);
         if (!await OwnerIsValidAsync() || !ModelState.IsValid)
         {
             await LoadUsersAsync();
@@ -51,7 +56,7 @@ public class EditModel(
         }
 
         TempData["StatusMessage"] = "Замер обновлён.";
-        return RedirectToPage("./Index");
+        return RedirectToPage("./Index", new { UserId = IsAdministrator ? Input.OwnerId : null });
     }
 
     private async Task<bool> OwnerIsValidAsync()
