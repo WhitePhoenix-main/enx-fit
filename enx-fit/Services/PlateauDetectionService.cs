@@ -4,18 +4,18 @@ namespace enx_fit.Services;
 
 public interface IPlateauDetectionService
 {
-    TrainingInsight? Analyze(ProgramWorkoutExercise exercise, IReadOnlyList<ExercisePerformance> history);
+    TrainingInsight? Analyze(ProgramWorkoutExercise exercise, IReadOnlyList<ExercisePerformance> history, DateOnly? today = null);
 }
 
 public sealed class PlateauDetectionService : IPlateauDetectionService
 {
-    public TrainingInsight? Analyze(ProgramWorkoutExercise exercise, IReadOnlyList<ExercisePerformance> history)
+    public TrainingInsight? Analyze(ProgramWorkoutExercise exercise, IReadOnlyList<ExercisePerformance> history, DateOnly? today = null)
     {
         var recent = history.Take(4).ToList();
         var target = exercise.Prescription;
         if (recent.Count < 4 || target.WeightKg is not > 0 || target.PercentOneRepMax.HasValue ||
             recent.Any(p => !ProgramTrainingDataService.Comparable(p, target)) ||
-            recent[0].Date < DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-21)) return null;
+            recent[0].Date < (today ?? DateOnly.FromDateTime(DateTime.UtcNow)).AddDays(-21)) return null;
         var days = recent[0].Date.DayNumber - recent[^1].Date.DayNumber;
         if (days < 14 || recent.Max(p => p.EstimatedMax) > recent.Min(p => p.EstimatedMax) * 1.01m ||
             recent[0].TotalReps > recent[^1].TotalReps || recent[0].Sets.All(s => s.Reps >= target.RepsMax)) return null;

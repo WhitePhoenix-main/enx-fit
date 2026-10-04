@@ -16,18 +16,26 @@ public class CreateModel(
     public BodyMeasurementInputModel Input { get; set; } = new();
 
     public bool IsAdministrator => currentUser.IsAdministrator;
+    public DateOnly Today => currentUser.LocalToday;
 
     public IReadOnlyList<UserOption> Users { get; private set; } = [];
 
-    public async Task<IActionResult> OnGetAsync()
+    public async Task<IActionResult> OnGetAsync(string? ownerId = null)
     {
-        Input.OwnerId = currentUser.Id;
+        if (Request.Query.ContainsKey("ClientId")) return NotFound();
+        Input.OwnerId = IsAdministrator && !string.IsNullOrWhiteSpace(ownerId) ? ownerId : currentUser.Id;
+        if (IsAdministrator && !await userDirectory.ExistsAsync(Input.OwnerId)) return NotFound();
+        Input.Date = Today;
+        var latest = (await measurementService.GetAllAsync(Input.OwnerId)).FirstOrDefault(m => m.Date <= Today);
+        Input.HeightCm = latest?.HeightCm ?? 0;
         await LoadUsersAsync();
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
+        if (Request.Query.ContainsKey("ClientId")) return NotFound();
+        BodyFormValidation.Validate(Input, ModelState, Today);
         if (!await OwnerIsValidAsync() || !ModelState.IsValid)
         {
             await LoadUsersAsync();
@@ -36,7 +44,7 @@ public class CreateModel(
 
         await measurementService.CreateAsync(Input);
         TempData["StatusMessage"] = "Замер добавлен.";
-        return RedirectToPage("./Index");
+        return RedirectToPage("./Index", new { UserId = IsAdministrator ? Input.OwnerId : null });
     }
 
     private async Task<bool> OwnerIsValidAsync()

@@ -8,7 +8,7 @@
 else
 {
     var p = Model.Item;
-    <a class="program-back" asp-page="Index">← Программы</a>
+    @if (ViewData["CoachContext"] is enx_fit.ViewModels.CoachContextViewModel clientContext) { <a class="program-back" asp-page="/Trainer/Client" asp-route-id="@clientContext.Id" asp-fragment="client-programs">← Программы клиента</a> } else { <a class="program-back" asp-page="Index">← Программы</a> }
     <header class="page-heading"><div><p class="eyebrow">@p.Goal</p><h1>@p.Name</h1><p>@p.Weeks недель · @p.DaysPerWeek дня в неделю · @ProgramSchedule.LevelName(p.Level)</p></div>
         <div class="program-actions">
         @if (!p.IsArchived && Model.IsOwner)

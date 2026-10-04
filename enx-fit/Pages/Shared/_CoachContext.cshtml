@@ -1,0 +1,36 @@
+@model enx_fit.ViewModels.MobileAppNavigationViewModel
+@inject enx_fit.Security.IFeatureAccessService CoachFeatures
+@if (Model.IsTrainer)
+{
+    var client = Model.Client;
+    var workspace = client is not null || Model.Page.StartsWith("/Trainer/", StringComparison.OrdinalIgnoreCase);
+    <nav class="coach-mode-switch" aria-label="Режим работы">
+        <a asp-area="" asp-page="/Dashboard" aria-current="@(!workspace ? "page" : null)"><reference-icon name="user" />Личный</a>
+        <a asp-area="" asp-page="/Trainer/Clients" aria-current="@(workspace ? "page" : null)"><reference-icon name="users" />Клиенты</a>
+    </nav>
+    @if (client is not null)
+    {
+        var access = await CoachFeatures.GetAsync();
+        var switchPage = Model.Dashboard is not null ? Model.Page : "/Trainer/Clients";
+        var clientParameter = Model.Dashboard is not null ? "ClientId" : "OpenClientId";
+        var personalPage = Model.Dashboard is not null ? Model.Page : "/Dashboard";
+        <section class="coach-context coach-client-context" aria-label="Выбранный клиент" data-coach-client="@client.Id">
+            <div class="coach-context-identity"><span class="coach-context-label">Режим тренера · клиент</span><a href="@(access.CanUse(enx_fit.Security.Feature.CoachClientManagement) ? Url.Page("/Trainer/Client", new { id = client.Id, area = "" }) : Url.Page("/Dashboard", new { ClientId = client.Id, area = "" }))">@client.Name</a></div>
+            <details class="coach-client-picker"><summary>Сменить клиента <reference-icon name="chevron" /></summary>
+                <form method="get" action="@Url.Page(switchPage, new { area = "" })">
+                    @if (Model.Dashboard is not null)
+                    {
+                        @foreach (var key in new[] { "Days", "Until", "ChartWeeks", "ProgressWeeks", "ProgressTab", "ProgressMetric", "Month", "Search", "WorkoutProgram", "WeekOffset" })
+                        { @if (Context.Request.Query.TryGetValue(key, out var value)) { <input type="hidden" name="@key" value="@value" /> } }
+                    }
+                    <label for="coach-client-select">Клиент</label><select id="coach-client-select" name="@clientParameter">
+                    @if (!client.Clients.Any(c => c.Id == client.Id)) { <option value="@client.Id" selected>@client.Name</option> }
+                    @foreach (var item in client.Clients) { <option value="@item.Id" selected="@(item.Id == client.Id)">@item.Name</option> }
+                    </select><button class="button secondary" type="submit">Открыть клиента</button>
+                </form>
+            </details>
+            <a class="coach-context-back" asp-area="" asp-page="/Trainer/Clients">Все клиенты <reference-icon name="users" /></a>
+            <a class="coach-context-personal" href="@Url.Page(personalPage, new { area = "", Days = Model.Dashboard?.Days, Until = Model.Dashboard?.Until?.ToString("yyyy-MM-dd") })">Мой режим <reference-icon name="arrow" /></a>
+        </section>
+    }
+}

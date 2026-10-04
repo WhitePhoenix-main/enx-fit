@@ -15,14 +15,15 @@ public sealed class RecordWorkoutInput
 
 public sealed class RecordedExercise
 {
-    [Range(1, int.MaxValue)] public int ExerciseId { get; set; }
-    [Required, MinLength(1), MaxLength(20)] public List<RecordedSet> Sets { get; set; } = [];
+    [Range(1, int.MaxValue, ErrorMessage = "Выберите упражнение из библиотеки.")] public int ExerciseId { get; set; }
+    [Required(ErrorMessage = "Укажите подходы."), MinLength(1, ErrorMessage = "Укажите хотя бы один подход."), MaxLength(20, ErrorMessage = "В упражнении может быть не более 20 подходов.")]
+    public List<RecordedSet> Sets { get; set; } = [];
 }
 public sealed class RecordedSet
 {
-    [Range(typeof(decimal), "0", "10000")] public decimal Weight { get; set; }
-    [Range(1, 1000)] public int Reps { get; set; } = 10;
-    [Range(0, 10)] public int? Rir { get; set; }
+    [Range(typeof(decimal), "0", "10000", ErrorMessage = "Укажите вес от 0 до 10000 кг.")] public decimal Weight { get; set; }
+    [Range(1, 1000, ErrorMessage = "Укажите повторения от 1 до 1000.")] public int Reps { get; set; } = 10;
+    [Range(0, 10, ErrorMessage = "Укажите RIR от 0 до 10 или оставьте поле пустым.")] public int? Rir { get; set; }
     public bool IsWarmup { get; set; }
-    [StringLength(500)] public string? Notes { get; set; }
+    [StringLength(500, ErrorMessage = "Заметка к подходу должна быть не длиннее 500 символов.")] public string? Notes { get; set; }
 }

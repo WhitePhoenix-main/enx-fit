@@ -46,6 +46,7 @@ public sealed class DetailsModel(TrainingProgramService programs, CurrentUser us
         var item = await Programs.FindAsync(id);
         if (item is null || item.IsTemplate) { Error(new(ProgramFailure.NotFound)); return; }
         Item = item; Sessions = await Programs.SessionsAsync(Item);
+        await SetClientContextAsync(Item);
         if (Tab == "progression" && SelectedExercise is { } selected)
         {
             ExerciseHistory = await data.HistoryAsync(id, selected.Id);

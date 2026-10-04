@@ -33,6 +33,7 @@ public sealed class EditModel(TrainingProgramService programs) : ProgramPageMode
             var program = await Programs.FindAsync(id.Value);
             if (program is null) { Error(new(ProgramFailure.NotFound)); return false; }
             if (program.IsTemplate || program.IsArchived) { Error(new(ProgramFailure.Forbidden)); return false; }
+            await SetClientContextAsync(program);
         }
         Exercises = await Programs.ExercisesAsync();
         return true;

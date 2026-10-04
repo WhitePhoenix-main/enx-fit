@@ -7,14 +7,16 @@
     var access = await FeatureAccess.GetAsync();
     var viewer = User.Identity?.Name?.Split('@')[0] is { Length: > 0 } name ? name : "Спортсмен";
     if (reference) viewer = "Алексей";
-    string? PageUrl(string page) => Url.Page(page, page == "/Profile" ? new Microsoft.AspNetCore.Routing.RouteValueDictionary { ["area"] = "", ["Reference"] = reference ? true : null } : new Microsoft.AspNetCore.Routing.RouteValueDictionary(dashboard?.NavigationValues ?? (reference ? new { Reference = true } : null)) { ["area"] = "" });
     var trainer = !reference && (User.GetUserRole() == UserRole.Trainer || User.HasMinimumRole(UserRole.Administrator));
     var activePage = ViewContext.RouteData.Values["page"] as string;
     bool IsActive(string page) => string.Equals(activePage, page, StringComparison.OrdinalIgnoreCase);
     var settingsActive = string.Equals(ViewContext.RouteData.Values["area"] as string, "Identity", StringComparison.OrdinalIgnoreCase) && activePage?.StartsWith("/Account/Manage/", StringComparison.OrdinalIgnoreCase) == true;
     var mobileNavigation = enx_fit.ViewModels.MobileAppNavigationViewModel.Create(ViewData, User, activePage);
+    string? PageUrl(string page) => mobileNavigation.PageUrl(Url, page);
+    var clientsActive = activePage?.StartsWith("/Trainer/", StringComparison.OrdinalIgnoreCase) == true;
     var workoutsActive = mobileNavigation.IsActive("workouts");
     var programsActive = mobileNavigation.IsActive("programs");
+    var progressActive = mobileNavigation.IsActive("progress");
 }
 <!DOCTYPE html>
 <html lang="ru">
@@ -34,8 +36,9 @@
         <link rel="stylesheet" href="~/css/mobile-reference.css" asp-append-version="true" />
     }
     <link rel="stylesheet" href="~/css/mobile-shell.css" asp-append-version="true" />
+    @if (trainer) { <link rel="stylesheet" href="~/css/coach-workspace.css" asp-append-version="true" /> }
 </head>
-<body class="fitness-app dashboard-home em-app-shell @(IsActive("/Dashboard") ? "em-home-page" : "") @(IsActive("/Dashboard/Workouts") ? "ef-workouts-page" : "") @(IsActive("/Programs/Index") ? "ef-programs-page" : "") @(IsActive("/Dashboard/Progress") ? "ef-progress-page" : "") @(IsActive("/Exercises/Index") ? "em-library-page" : "") @(IsActive("/Profile") ? "em-profile-page" : "") @(reference ? "em-reference" : "") @(dashboard?.IsCoachView == true ? "coach-mode" : "personal-mode")">
+<body class="fitness-app dashboard-home em-app-shell @(IsActive("/Dashboard") ? "em-home-page" : "") @(IsActive("/Dashboard/Workouts") ? "ef-workouts-page" : "") @(IsActive("/Programs/Index") ? "ef-programs-page" : "") @(IsActive("/Dashboard/Progress") ? "ef-progress-page" : "") @(IsActive("/Exercises/Index") ? "em-library-page" : "") @(IsActive("/Profile") ? "em-profile-page" : "") @(reference ? "em-reference" : "") @(mobileNavigation.Client is not null ? "coach-mode" : "personal-mode")">
 <a class="skip-link" href="#main-content">Перейти к содержимому</a>
 <aside class="ef-sidebar">
     <a class="ef-brand" asp-area="" asp-page="/Dashboard"><span class="ef-brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>Enix Fit</span></a>
@@ -43,9 +46,9 @@
         <a class="ef-nav-item @(IsActive("/Dashboard") ? "active" : "")" href="@PageUrl("/Dashboard")" aria-current="@(IsActive("/Dashboard") ? "page" : null)"><reference-icon name="@(IsActive("/Dashboard") ? "home" : "home-outline")" />Главная</a>
         <a class="ef-nav-item @(workoutsActive ? "active" : "")" href="@PageUrl("/Dashboard/Workouts")" aria-current="@(workoutsActive ? "page" : null)"><reference-icon name="workout" />Тренировки</a>
         <a class="ef-nav-item @(programsActive ? "active" : "")" href="@PageUrl("/Programs/Index")" aria-current="@(programsActive ? "page" : null)"><reference-icon name="@(programsActive ? "calendar-filled" : "calendar")" />Программы</a>
-        <a class="ef-nav-item @(IsActive("/Dashboard/Progress") ? "active" : "")" href="@PageUrl("/Dashboard/Progress")" aria-current="@(IsActive("/Dashboard/Progress") ? "page" : null)"><reference-icon name="bars" />Прогресс</a>
+        <a class="ef-nav-item @(progressActive ? "active" : "")" href="@PageUrl("/Dashboard/Progress")" aria-current="@(progressActive ? "page" : null)"><reference-icon name="bars" />Прогресс</a>
         <a class="ef-nav-item @(IsActive("/Exercises/Index") ? "active" : "")" href="@PageUrl("/Exercises/Index")" aria-current="@(IsActive("/Exercises/Index") ? "page" : null)"><reference-icon name="book" />Библиотека</a>
-        @if (trainer) { <a class="ef-nav-item" asp-area="" asp-page="/Trainer/Clients"><reference-icon name="users" />Мои клиенты</a> }
+        @if (trainer) { <a class="ef-nav-item @(clientsActive ? "active" : "")" asp-area="" asp-page="/Trainer/Clients" aria-current="@(clientsActive ? "page" : null)"><reference-icon name="users" />Мои клиенты</a> }
         <a class="ef-nav-item ef-habits-link" href="@PageUrl("/Dashboard/Habits")"><reference-icon name="check-circle" />Привычки</a>
     </nav>
     <nav class="ef-sidebar-bottom" aria-label="Профиль и настройки">
@@ -64,7 +67,7 @@
             </details>
         </div>
     </header>
-    <main id="main-content" class="ef-main" tabindex="-1">@RenderBody()</main>
+    <main id="main-content" class="ef-main" tabindex="-1"><partial name="_CoachContext" model="mobileNavigation" />@RenderBody()</main>
 </div>
 <dialog id="navigation-dialog" class="app-dialog">
     <div class="dialog-heading"><h2>Разделы</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>

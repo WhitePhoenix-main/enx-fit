@@ -1,11 +1,34 @@
 @page
 @model enx_fit.Pages.SubscriptionModel
-@{ Layout = "_ProgramsLayout"; ViewData["Title"] = "Возможности Enix Fit"; }
-<header class="page-heading"><div><h1>Тренировки, данные, решения</h1><p>Ваш текущий план: @Model.Access.Plan. Бесплатный дневник остаётся полноценным.</p></div></header>
-<div class="program-tier-grid">
-    <section class="panel"><p class="eyebrow">ATHLETE FREE</p><h2>Управляйте тренировками</h2><p>Программы без лимита, все шаблоны, расписание, ручная нагрузка, дневник, история, рекорды и базовая динамика.</p></section>
-    <section class="panel"><p class="eyebrow">ATHLETE PRO</p><h2>Выбирайте следующую нагрузку</h2><p>Рекомендации веса и обнаружение возможного плато по завершённым тренировкам. Каждая рекомендация объясняет причину; изменения применяются после подтверждения.</p></section>
-    <section class="panel"><p class="eyebrow">COACH</p><h2>Контролируйте клиентов</h2><p>Назначайте независимые копии программ своим клиентам, меняйте их нагрузку и просматривайте сигналы, требующие внимания.</p></section>
+@using enx_fit.Security
+@{
+    Layout = "_DashboardReferenceLayout"; ViewData["Title"] = "План и возможности";
+    var pro = Model.Access.CanUse(Feature.ProgressionRecommendations);
+    var plateau = Model.Access.CanUse(Feature.AnalyticsPlateauDetection);
+    var coach = Model.Access.CanUse(Feature.CoachClientManagement);
+}
+@section Styles { <link rel="stylesheet" href="~/css/body-workspace.css" asp-append-version="true" /> }
+<div class="body-workspace subscription-workspace" data-current-plan="@Model.Access.Plan">
+    <header class="body-heading"><div><a class="body-back" asp-page="/Profile">← Профиль</a><p class="body-eyebrow">Enix Fit · возможности</p><h1>Ваш план — @Model.Access.Plan</h1><p>Полноценный дневник доступен на любом плане.</p></div><span class="subscription-plan-badge">Текущий план · @Model.Access.Plan</span></header>
+    <section class="body-panel subscription-access"><div><reference-icon name="check-circle" /><h2>Уже доступно вам</h2></div>
+        <ul><li>Тренировки, история и замеры тела</li><li>Все шаблоны, программы без лимита и расписание</li><li>Ручной выбор веса и повторений</li>@if (pro) { <li data-feature="recommendations">Рекомендации следующей нагрузки с объяснением</li> }@if (plateau) { <li data-feature="plateau">Сигналы возможного плато</li> }@if (coach) { <li data-feature="clients">Клиенты, назначение программ и сигналы внимания</li> }</ul>
+        @if (coach) { <a class="body-button" asp-page="/Trainer/Clients">Открыть клиентов →</a> } else if (pro) { <a class="body-button" asp-page="/Programs/Index">Открыть программы →</a> } else { <a class="body-button" asp-page="/Dashboard/Workouts">Открыть дневник →</a> }
+        @if (Model.Access.Plan == SubscriptionPlan.Coach && !coach) { <p class="body-status">Для тренерского режима нужна роль тренера. Сейчас доступны возможности для ваших тренировок.</p> }
+    </section>
+    <header class="subscription-compare-heading"><h2>Сравнить возможности</h2><p>Выберите план, чтобы узнать больше.</p></header>
+    <div class="subscription-plans">
+        @foreach (var plan in Enum.GetValues<SubscriptionPlan>()) {
+            var current = Model.Access.Plan == plan;
+            <details class="body-panel subscription-plan @(current ? "is-current" : "")" open="@current" data-plan="@plan"><summary><span class="subscription-plan-top"><span>@(plan == SubscriptionPlan.Coach ? "Coach" : $"Athlete {plan}")</span>@if (current) { <small>Ваш план</small> }<reference-icon name="chevron" /></span><strong>@(plan switch { SubscriptionPlan.Pro => "Выбирайте нагрузку увереннее", SubscriptionPlan.Coach => "Ведите своих клиентов", _ => "Тренируйтесь в своём темпе" })</strong></summary>
+                <div class="subscription-plan-content">
+                    @if (plan == SubscriptionPlan.Free) { <p>Дневник для старта и регулярных тренировок.</p><ul><li>Запись тренировки и выполнение на телефоне</li><li>Шаблоны, свои программы и календарь</li><li>История, рекорды, графики и замеры</li><li>Нагрузка под вашим контролем</li></ul> }
+                    else if (plan == SubscriptionPlan.Pro) { <p>Всё из Free и помощь при выборе следующей нагрузки.</p><ul><li>Рекомендации по завершённым тренировкам</li><li>Объяснение предлагаемого веса</li><li>Обнаружение возможного плато</li><li>Применение изменений после подтверждения</li></ul> }
+                    else { <p>Возможности Pro и работа тренера с клиентами.</p><ul><li>Назначение независимых копий программ</li><li>Просмотр тренировок своих клиентов</li><li>Изменение нагрузки в их программах</li><li>Сигналы, требующие внимания</li></ul><p class="body-muted">Тренерские функции требуют плана Coach и роли тренера.</p> }
+                </div>
+            </details>
+        }
+    </div>
+    <section class="body-panel subscription-billing"><reference-icon name="card" /><div><h2>Как изменить план</h2><p>Онлайн-оплата пока не подключена. План назначает администратор. Уточнить доступ можно через <a class="body-text-link" asp-page="/Contact">страницу контактов</a>.</p></div></section>
+    <details class="body-panel subscription-roadmap"><summary>В разработке <reference-icon name="chevron" /></summary><p>Анализ мышечного баланса, эффективности программ и рекомендации разгрузки. AI Insights пока не подключены. Эти функции ещё недоступны.</p></details>
 </div>
-<section class="panel"><h2>Доступ к планам</h2><p>Платёжная система пока не подключена. План назначается администратором в профиле пользователя; Coach также требует роль тренера.</p><a class="button secondary" asp-page="/Programs/Index">К программам</a></section>
-<details class="panel program-roadmap"><summary>Что появится в следующих итерациях</summary><p>Анализ мышечного баланса, объёма, эффективности программы, рекомендации deload и долгосрочные выводы. AI Insights пока не подключены.</p></details>
+@section Scripts { <script src="~/js/body-workspace.js" asp-append-version="true"></script> }

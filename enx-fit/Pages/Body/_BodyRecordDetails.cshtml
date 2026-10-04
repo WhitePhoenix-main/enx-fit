@@ -1,0 +1,12 @@
+@model enx_fit.Models.BodyMeasurement
+@using enx_fit.Pages.Body
+<dl class="body-record-values">
+    @if (Model.BodyFatPercent.HasValue) { <div><dt>Жир</dt><dd>@IndexModel.Number(Model.BodyFatPercent.Value)%</dd></div> }
+    @if (Model.WaistCm.HasValue) { <div><dt>Талия</dt><dd>@IndexModel.Number(Model.WaistCm.Value) см</dd></div> }
+    @if (Model.ChestCm.HasValue) { <div><dt>Грудь</dt><dd>@IndexModel.Number(Model.ChestCm.Value) см</dd></div> }
+    @if (Model.HipCm.HasValue) { <div><dt>Ягодицы</dt><dd>@IndexModel.Number(Model.HipCm.Value) см</dd></div> }
+    @if (Model.ArmCm.HasValue) { <div><dt>Рука</dt><dd>@IndexModel.Number(Model.ArmCm.Value) см</dd></div> }
+    @if (Model.ThighCm.HasValue) { <div><dt>Бедро</dt><dd>@IndexModel.Number(Model.ThighCm.Value) см</dd></div> }
+</dl>
+@if (!string.IsNullOrWhiteSpace(Model.Notes)) { <p class="body-note">@Model.Notes</p> }
+@if (!Model.BodyFatPercent.HasValue && !Model.WaistCm.HasValue && !Model.ChestCm.HasValue && !Model.HipCm.HasValue && !Model.ArmCm.HasValue && !Model.ThighCm.HasValue && string.IsNullOrWhiteSpace(Model.Notes)) { <p class="body-muted">Дополнительных показателей нет.</p> }

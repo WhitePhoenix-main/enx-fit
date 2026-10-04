@@ -1,123 +1,57 @@
 @page
 @model enx_fit.Pages.Body.IndexModel
-@{
-    ViewData["Title"] = "Замеры тела";
-}
-
-<div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
-    <div>
-        <h1 class="h3 mb-1">Замеры тела</h1>
-        <p class="text-muted mb-0">Вес, состав тела и история изменений каждого пользователя.</p>
-    </div>
-    <a class="btn btn-primary" asp-page="./Create">Добавить замер</a>
+@using enx_fit.Pages.Body
+@{ ViewData["Title"] = "Замеры тела"; }
+@section Styles { <link rel="stylesheet" href="~/css/body-workspace.css" asp-append-version="true" /> }
+<div class="body-workspace">
+    <header class="body-heading">
+        <div><a class="body-back" asp-page="/Dashboard/Progress">← К прогрессу</a><p class="body-eyebrow">Личная динамика</p><h1>Замеры тела</h1><p>Записывайте изменения в своём темпе.</p></div>
+        <a class="body-button" asp-page="./Create" asp-route-ownerId="@Model.UserId"><reference-icon name="plus" />Добавить замер</a>
+    </header>
+    @if (TempData["StatusMessage"] is string status) { <p class="body-status" role="status">@status</p> }
+    @if (Model.IsAdministrator) {
+        <form method="get" class="body-owner-filter body-panel"><label asp-for="UserId">Пользователь</label><select asp-for="UserId"><option value="">Все пользователи</option>@foreach (var user in Model.Users) { <option value="@user.Id">@user.DisplayName</option> }</select><button class="body-button secondary" type="submit">Применить</button></form>
+    }
+    @if (Model.Measurements.Count == 0) {
+        <section class="body-panel body-empty"><reference-icon name="bars" /><h2>Начните с одного замера</h2><p>Достаточно даты, веса и роста. Обхваты можно добавить позже.</p><a class="body-button" asp-page="./Create" asp-route-ownerId="@Model.UserId">Записать первый замер</a></section>
+    } else {
+        @if (Model.CanShowCharts) {
+            <div class="body-overview">
+                <section class="body-panel body-latest">
+                    <p class="body-eyebrow">Последний замер</p>
+                    @if (Model.Latest is { } latest) {
+                        <h2><span>@IndexModel.Number(latest.WeightKg)</span> <small>кг</small></h2><p>@latest.Date.ToString("dd.MM.yyyy")</p>
+                        @if (Model.Previous is { } previous) { var delta = latest.WeightKg - previous.WeightKg; <p class="body-delta">@(delta > 0 ? "+" : "")@IndexModel.Number(delta) кг <small>к замеру @previous.Date.ToString("dd.MM")</small></p> }
+                        else { <p class="body-delta">Первая точка отсчёта</p> }
+                        <dl class="body-facts"><div><dt>Рост</dt><dd>@IndexModel.Number(latest.HeightCm) см</dd></div><div><dt>ИМТ <small>вес / рост²</small></dt><dd>@IndexModel.Number(latest.Bmi)</dd></div></dl>
+                        <a class="body-text-link" asp-page="./Edit" asp-route-id="@latest.Id">Изменить этот замер →</a>
+                    } else { <h2>Нет текущих замеров</h2><p>Записи с будущей датой доступны в истории.</p> }
+                </section>
+                <section class="body-panel body-trend" aria-labelledby="body-trend-title">
+                    <header><div><p class="body-eyebrow">По вашим записям</p><h2 id="body-trend-title">@Model.MetricTitle · @Model.Unit</h2></div><span class="body-count">@Model.ChartMeasurements.Count записей</span></header>
+                    <form method="get" class="body-chart-filters" data-body-filters>
+                        @if (Model.IsAdministrator) { <input type="hidden" asp-for="UserId" /> }
+                        <div><label asp-for="Metric">Показатель</label><select asp-for="Metric"><option value="weight">Вес</option><option value="waist">Талия</option><option value="chest">Грудь</option><option value="hip">Ягодицы</option></select></div>
+                        <div><label asp-for="Weeks">Период</label><select asp-for="Weeks"><option value="4">4 недели</option><option value="12">12 недель</option><option value="52">Год</option><option value="0">Вся история</option></select></div>
+                        <button type="submit" class="body-button secondary">Показать</button>
+                    </form>
+                    <partial name="_BodyTrend" model="Model" />
+                </section>
+            </div>
+        } else { <p class="body-status">Выберите пользователя, чтобы посмотреть его график и последний результат.</p> }
+        <section class="body-history" aria-labelledby="body-history-title">
+            <header><div><h2 id="body-history-title">История замеров</h2><p>Все @Model.Measurements.Count записей · новые сверху</p></div></header>
+            <div class="body-history-table body-panel"><table><thead><tr><th>Дата</th><th>Вес</th><th>Рост</th>@if (Model.IsAdministrator) { <th>Пользователь</th> }<th>Подробности</th><th><span class="body-sr-only">Действия</span></th></tr></thead><tbody>
+                @foreach (var item in Model.Measurements) {
+                    <tr data-body-record="@item.Id"><td>@item.Date.ToString("dd.MM.yyyy")</td><td><strong>@IndexModel.Number(item.WeightKg)</strong> кг</td><td>@IndexModel.Number(item.HeightCm) см</td>@if (Model.IsAdministrator) { <td>@Model.OwnerName(item.UserId)</td> }<td><details><summary>Обхваты и заметка</summary><partial name="_BodyRecordDetails" model="item" /></details></td><td><a class="body-text-link" asp-page="./Edit" asp-route-id="@item.Id">Изменить</a><a class="body-text-link body-danger-link" asp-page="./Delete" asp-route-id="@item.Id">Удалить</a></td></tr>
+                }
+            </tbody></table></div>
+            <div class="body-history-cards">
+                @foreach (var item in Model.Measurements) {
+                    <details class="body-panel body-history-record" data-body-record="@item.Id"><summary><span><time datetime="@item.Date.ToString("yyyy-MM-dd")">@item.Date.ToString("dd.MM.yyyy")</time>@if (Model.IsAdministrator) { <small>@Model.OwnerName(item.UserId)</small> }</span><strong>@IndexModel.Number(item.WeightKg) <small>кг</small></strong><reference-icon name="chevron" /></summary><div class="body-record-reveal"><p class="body-muted">Рост @IndexModel.Number(item.HeightCm) см · ИМТ @IndexModel.Number(item.Bmi)</p><partial name="_BodyRecordDetails" model="item" /><div class="body-actions"><a class="body-button secondary" asp-page="./Edit" asp-route-id="@item.Id">Изменить</a><a class="body-text-link body-danger-link" asp-page="./Delete" asp-route-id="@item.Id">Удалить</a></div></div></details>
+                }
+            </div>
+        </section>
+    }
 </div>
-
-@if (TempData["StatusMessage"] is string statusMessage)
-{
-    <div class="alert alert-success" role="alert">@statusMessage</div>
-}
-
-@if (Model.IsAdministrator)
-{
-    <form method="get" class="row g-2 align-items-end mb-4">
-        <div class="col-sm-8 col-md-5">
-            <label class="form-label" asp-for="UserId">Пользователь</label>
-            <select class="form-select" asp-for="UserId">
-                <option value="">Все пользователи</option>
-                @foreach (var user in Model.Users)
-                {
-                    <option value="@user.Id">@user.DisplayName</option>
-                }
-            </select>
-        </div>
-        <div class="col-auto">
-            <button class="btn btn-outline-primary" type="submit">Применить</button>
-        </div>
-    </form>
-}
-
-@if (Model.Measurements.Count == 0)
-{
-    <div class="border rounded-3 p-5 text-center bg-body-tertiary">
-        <h2 class="h5">Замеров пока нет</h2>
-        <p class="text-muted mb-4">Добавьте замер, чтобы отслеживать изменения веса и ИМТ.</p>
-        <a class="btn btn-primary" asp-page="./Create">Добавить замер</a>
-    </div>
-}
-else
-{
-    @if (Model.CanShowCharts)
-    {
-    <div class="row g-3 mb-4">
-        <div class="col-lg-6">
-            <section class="card h-100">
-                <div class="card-body">
-                    <h2 class="h5">Вес, кг</h2>
-                    <div class="ratio ratio-16x9">
-                        <canvas id="weight-chart"></canvas>
-                    </div>
-                </div>
-            </section>
-        </div>
-        <div class="col-lg-6">
-            <section class="card h-100">
-                <div class="card-body">
-                    <h2 class="h5">ИМТ</h2>
-                    <div class="ratio ratio-16x9">
-                        <canvas id="bmi-chart"></canvas>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </div>
-    }
-
-    <script id="body-measurement-chart-data" type="application/json">@Html.Raw(Model.ChartDataJson)</script>
-
-    <div class="table-responsive border rounded-3">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th scope="col">Дата</th>
-                    <th scope="col">Вес, кг</th>
-                    <th scope="col">Рост, см</th>
-                    <th scope="col">ИМТ</th>
-                    <th scope="col">Процент жира</th>
-                    @if (Model.IsAdministrator)
-                    {
-                        <th scope="col">Пользователь</th>
-                    }
-                    <th scope="col" class="text-end">Действия</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var measurement in Model.Measurements)
-                {
-                    <tr>
-                        <td>@measurement.Date.ToString("yyyy-MM-dd")</td>
-                        <td>@measurement.WeightKg kg</td>
-                        <td>@measurement.HeightCm cm</td>
-                        <td class="fw-semibold">@measurement.Bmi</td>
-                        <td>@(measurement.BodyFatPercent.HasValue ? $"{measurement.BodyFatPercent}%" : "-")</td>
-                        @if (Model.IsAdministrator)
-                        {
-                            <td>@Model.OwnerName(measurement.UserId)</td>
-                        }
-                        <td class="text-end text-nowrap">
-                            <a class="btn btn-sm btn-outline-primary" asp-page="./Edit" asp-route-id="@measurement.Id">Изменить</a>
-                            <a class="btn btn-sm btn-outline-danger" asp-page="./Delete" asp-route-id="@measurement.Id">Удалить</a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
-
-@section Scripts {
-    @if (Model.Measurements.Count > 0 && Model.CanShowCharts)
-    {
-        <script src="~/lib/chart.js/dist/chart.umd.min.js"></script>
-        <script src="~/js/body-measurements.js" asp-append-version="true"></script>
-    }
-}
+@section Scripts { <script src="~/js/body-workspace.js" asp-append-version="true"></script> }

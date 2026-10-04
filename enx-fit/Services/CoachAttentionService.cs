@@ -5,18 +5,25 @@ using Microsoft.EntityFrameworkCore;
 
 namespace enx_fit.Services;
 
-public sealed record ClientAttention(string ClientId, string Name, int ProgramId, string Reason);
-public sealed record CoachAttention(int ActiveClients, int ScheduledToday, int CompletedToday, IReadOnlyList<ClientAttention> Alerts);
+public enum ClientAttentionKind { Missed, Ending, Plateau, Effort }
+public sealed record ClientAttention(string ClientId, string Name, int ProgramId, string Reason,
+    ClientAttentionKind Kind = ClientAttentionKind.Missed, string? ProgramName = null);
+public sealed record CoachAttention(int ActiveClients, int ScheduledToday, int CompletedToday, IReadOnlyList<ClientAttention> Alerts, DateOnly Today = default);
 
 public sealed class CoachAttentionService(ApplicationDbContext db, CurrentUser user, IFeatureAccessService features,
     IProgramAnalysisService analysis, IPlateauDetectionService plateau)
 {
-    public async Task<CoachAttention> LoadAsync(string? clientId = null)
+    public async Task<CoachAttention> LoadAsync(string? clientId = null, string? search = null, bool assignedOnly = false)
     {
         if (!await features.CanUseAsync(Feature.CoachClientAlerts)) throw new ProgramOperationException(ProgramFailure.Forbidden);
-        var clients = await db.Users.AsNoTracking().Where(u => u.Id != user.Id &&
-            (user.IsAdministrator || u.TrainerId == user.Id) && (clientId == null || u.Id == clientId))
-            .Select(u => new { u.Id, Name = u.UserName ?? "Клиент" }).ToDictionaryAsync(u => u.Id);
+        var query = db.Users.AsNoTracking().Where(u => u.Id != user.Id &&
+            ((!assignedOnly && user.IsAdministrator) || u.TrainerId == user.Id) && (clientId == null || u.Id == clientId));
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToUpperInvariant();
+            query = query.Where(u => (u.NormalizedUserName ?? "").Contains(term) || (u.NormalizedEmail ?? "").Contains(term));
+        }
+        var clients = await query.Select(u => new { u.Id, Name = u.UserName ?? "Клиент" }).ToDictionaryAsync(u => u.Id);
         var ids = clients.Keys.ToArray();
         var programs = await db.TrainingPrograms.AsNoTracking().AsSplitQuery()
             .Include(p => p.Assignment).Include(p => p.ScheduleChanges).Include(p => p.Workouts).ThenInclude(w => w.Exercises).ThenInclude(e => e.Exercise)
@@ -25,7 +32,7 @@ public sealed class CoachAttentionService(ApplicationDbContext db, CurrentUser u
         var programIds = programs.Select(p => p.Id).ToArray();
         var sessions = await db.WorkoutSessions.AsNoTracking().AsSplitQuery().Include(s => s.WorkoutExercises).ThenInclude(e => e.SetEntries)
             .Where(s => s.TrainingProgramId.HasValue && programIds.Contains(s.TrainingProgramId.Value) && s.UserId != null && ids.Contains(s.UserId)).ToListAsync();
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = user.LocalToday;
         var alerts = new List<ClientAttention>();
         var scheduled = 0; var completed = 0;
         foreach (var p in programs)
@@ -35,9 +42,9 @@ public sealed class CoachAttentionService(ApplicationDbContext db, CurrentUser u
             var todays = ProgramSchedule.Occurrences(p).Where(o => o.Date == today).ToList();
             scheduled += todays.Count;
             completed += todays.Count(o => history.Any(s => ProgramSchedule.Matches(s, o) && s.State == WorkoutStatus.Completed));
-            void Add(string reason) => alerts.Add(new(p.OwnerId!, clients[p.OwnerId!].Name, p.Id, reason));
-            if (completion.Missed >= 2) Add($"{completion.Missed} пропущенных тренировок в программе «{p.Name}».");
-            if (completion.Ends is { } end && end >= today && end <= today.AddDays(7)) Add($"Программа «{p.Name}» заканчивается через {end.DayNumber - today.DayNumber} дней.");
+            void Add(string reason, ClientAttentionKind kind) => alerts.Add(new(p.OwnerId!, clients[p.OwnerId!].Name, p.Id, reason, kind, p.Name));
+            if (completion.Missed >= 2) Add($"В программе «{p.Name}» пропущено занятий: {completion.Missed}.", ClientAttentionKind.Missed);
+            if (completion.Ends is { } end && end >= today && end <= today.AddDays(7)) Add($"Программа «{p.Name}» заканчивается {end:dd.MM.yyyy}.", ClientAttentionKind.Ending);
             foreach (var workout in p.Workouts)
             foreach (var exercise in workout.Exercises)
             {
@@ -47,12 +54,12 @@ public sealed class CoachAttentionService(ApplicationDbContext db, CurrentUser u
                         .Select(e => new ExercisePerformance(s.Id, s.Date,
                             e.SetEntries.Where(x => x.IsCompleted && !x.IsWarmup && x.Reps > 0).OrderBy(x => x.SetNumber).Select(x => new PerformedSet(x.SetNumber, x.Weight, x.Reps, x.Rir)).ToList(),
                             e.TargetSets, e.TargetRepsMin, e.TargetRepsMax, e.TargetRir, e.TargetRpe))).Take(4).ToList();
-                if (plateau.Analyze(exercise, performances) is not null) Add($"{exercise.Exercise.Name}: возможное плато в последних 4 сопоставимых тренировках.");
+                if (plateau.Analyze(exercise, performances, today) is not null) Add($"{exercise.Exercise.Name}: возможное плато в последних 4 сопоставимых тренировках.", ClientAttentionKind.Plateau);
                 if (performances.Count == 4 && performances[0].Date >= today.AddDays(-21) && performances.All(h =>
                     h.Rir.HasValue && h.Sets.All(s => s.Rir.HasValue) && h.Sets.Average(s => s.Rir!.Value) < h.Rir.Value))
-                    Add($"{exercise.Exercise.Name}: средний RIR ниже заданного 4 тренировки подряд.");
+                    Add($"{exercise.Exercise.Name}: средний RIR ниже заданного 4 тренировки подряд.", ClientAttentionKind.Effort);
             }
         }
-        return new(clients.Count, scheduled, completed, alerts);
+        return new(clients.Count, scheduled, completed, alerts.Distinct().ToList(), today);
     }
 }

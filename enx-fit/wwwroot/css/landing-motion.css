@@ -238,11 +238,6 @@
 .motion-ready .hero.is-motion-visible .hero-visual::before { animation: product-glow 8s ease-in-out infinite; }
 .motion-paused .hero-visual::before { animation-play-state: paused !important; }
 @keyframes product-glow { 0%, 100% { opacity: .35; transform: scale(.95); } 50% { opacity: .8; transform: scale(1.04); } }
-@media (max-width: 1100px) {
-  html:not(.landing-ready) .menu-toggle { display: none; }
-  html:not(.landing-ready) .landing-header { height: auto; padding-block: 16px; }
-  html:not(.landing-ready) .landing-nav { position: static; display: flex; flex-wrap: wrap; width: 100%; padding: 12px; box-shadow: none; }
-}
 @media (max-width: 600px) {
   .phone-device { transform: scale(.86); top: 2.5rem; right: .1rem; }
   .hero .button { min-height: 44px; }

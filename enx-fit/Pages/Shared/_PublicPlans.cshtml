@@ -1,0 +1,13 @@
+@using enx_fit.Services
+@{ var signedIn = User.Identity?.IsAuthenticated == true; }
+<div class="pricing-cards">
+    <article class="price-card price-card-free panel"><span class="popular-badge">Для старта</span><h3>Athlete Free</h3><p class="price">0 ₽</p><ul><li>Программы без лимита и шаблоны</li><li>Расписание и запись тренировок</li><li>История, рекорды, графики и замеры</li></ul><a class="button button-primary" href="@PublicPageLinks.Open(Url, User, "/Dashboard")">@(signedIn ? "Открыть приложение" : "Начать бесплатно")</a></article>
+    <article class="price-card price-card-pro panel"><h3>Athlete Pro</h3><p class="price">399 ₽<small> /мес</small></p><ul><li>Все возможности Free</li><li>Рекомендации рабочего веса</li><li>Сигналы возможного плато</li><li>Изменения после подтверждения</li></ul>
+        @if (signedIn) { <a class="button button-outline" asp-page="/Subscription">Посмотреть мой доступ</a> }
+        else { <details class="tier-details"><summary>Подробнее о Pro</summary><p>Рекомендации учитывают завершённые тренировки и объясняют причину. Вы сами подтверждаете изменение веса в программе.</p></details> }
+    </article>
+    <article class="price-card panel"><h3>Coach</h3><p class="price"><small>от </small>1 990 ₽<small> /мес</small></p><p class="price-caption">Для тренеров</p><ul><li>Программы назначенных клиентов</li><li>Изменение нагрузки</li><li>Сигналы, требующие внимания</li></ul>
+        @if (signedIn) { <a class="button button-outline" asp-page="/Subscription">Посмотреть мой доступ</a> }
+        else { <details class="tier-details"><summary>Подробнее о Coach</summary><p>Работа с назначенными клиентами: программы, нагрузка и сигналы по занятиям. Нужны доступ Coach и роль тренера.</p></details> }
+    </article>
+</div>

@@ -1,0 +1,38 @@
+@model enx_fit.Pages.Body.IndexModel
+@using System.Globalization
+@using enx_fit.Pages.Body
+@if (Model.ChartMeasurements.Count == 0) {
+    <div class="body-chart-empty"><p>За этот период нет записей показателя «@Model.MetricTitle».</p><p>Выберите другой период или добавьте замер.</p></div>
+} else {
+    var points = Model.ChartMeasurements;
+    var values = points.Select(m => Model.Value(m)!.Value).ToArray();
+    var min = values.Min(); var max = values.Max();
+    var rough = Math.Max(1m, (max - min) / 3);
+    var power = (decimal)Math.Pow(10, Math.Floor(Math.Log10((double)rough)));
+    var factor = rough / power; var step = (factor <= 1 ? 1 : factor <= 2 ? 2 : factor <= 5 ? 5 : 10) * power;
+    var lower = Math.Max(0, Math.Floor(min / step) * step - step); var upper = Math.Ceiling(max / step) * step + step;
+    var span = points.Last().Date.DayNumber - points.First().Date.DayNumber;
+    double X(int i) => span == 0 ? 270 : 46 + 454d * (points[i].Date.DayNumber - points.First().Date.DayNumber) / span;
+    double Y(int i) => 164 - 134 * (double)((values[i] - lower) / (upper - lower));
+    string S(double n) => n.ToString("0.##", CultureInfo.InvariantCulture);
+    var line = string.Join(" ", Enumerable.Range(0, points.Count).Select(i => $"{S(X(i))},{S(Y(i))}"));
+    <div class="body-chart" data-body-chart>
+        <svg viewBox="0 0 540 198" role="group" aria-label="@Model.MetricTitle по сохранённым замерам; выберите запись ниже">
+            <defs><linearGradient id="body-trend-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6787ff" stop-opacity=".25" /><stop offset="100%" stop-color="#6787ff" stop-opacity="0" /></linearGradient></defs>
+            @for (var tick = lower; tick <= upper; tick += step) { var y = 164 - 134 * (double)((tick - lower) / (upper - lower)); <g><line class="body-chart-grid" x1="46" x2="500" y1="@S(y)" y2="@S(y)" /><text class="body-chart-label" x="2" y="@S(y + 4)">@IndexModel.Number(tick)</text></g> }
+            @if (points.Count > 1) { <polygon points="@line @S(X(points.Count - 1)),164 @S(X(0)),164" fill="url(#body-trend-fill)" /><polyline class="body-chart-line" points="@line" /> }
+            @for (var i = 0; i < points.Count; i++) { var item = points[i]; var selected = item.Id == Model.Selected?.Id; var edit = Url.Page("./Edit", new { id = item.Id });
+                <a href="@edit" data-body-point="@item.Id" data-body-date="@item.Date.ToString("dd.MM.yyyy")" data-body-value="@IndexModel.Number(values[i]) @Model.Unit" class="@(selected ? "is-selected" : "")" aria-label="@item.Date.ToString("dd.MM.yyyy"), @IndexModel.Number(values[i]) @Model.Unit. Изменить замер"><circle class="body-point-hit" cx="@S(X(i))" cy="@S(Y(i))" r="13" /><circle class="body-point" cx="@S(X(i))" cy="@S(Y(i))" r="4" /><title>@item.Date.ToString("dd.MM.yyyy") · @IndexModel.Number(values[i]) @Model.Unit</title></a>
+            }
+            <text class="body-chart-label" x="46" y="190">@points.First().Date.ToString("dd.MM")</text>
+            @if (points.Count > 1) { <g><text class="body-chart-label" x="500" y="190" text-anchor="end">@points.Last().Date.ToString("dd.MM")</text></g> }
+        </svg>
+        @if (points.Count == 1) { <p class="body-muted">Одна запись — первая точка отсчёта.</p> }
+        <form method="get" class="body-point-picker" data-body-point-picker>
+            @if (Model.IsAdministrator) { <input type="hidden" name="UserId" value="@Model.UserId" /> }
+            <input type="hidden" name="Metric" value="@Model.Metric" /><input type="hidden" name="Weeks" value="@Model.Weeks" />
+            <label for="body-point-select">Выбрать замер</label><select id="body-point-select" name="Point">@foreach (var item in points.Reverse()) { <option value="@item.Id" selected="@(item.Id == Model.Selected?.Id)">@item.Date.ToString("dd.MM.yyyy") · @IndexModel.Number(Model.Value(item)!.Value) @Model.Unit</option> }</select><button class="body-button secondary" type="submit">Выбрать</button>
+        </form>
+        <div class="body-selected" aria-live="polite" aria-atomic="true"><div><span data-body-selected-date>@Model.Selected!.Date.ToString("dd.MM.yyyy")</span><strong data-body-selected-value>@IndexModel.Number(Model.Value(Model.Selected)!.Value) @Model.Unit</strong></div><a data-body-selected-edit class="body-text-link" asp-page="./Edit" asp-route-id="@Model.Selected.Id">Изменить →</a></div>
+    </div>
+}

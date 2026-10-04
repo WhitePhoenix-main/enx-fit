@@ -1,13 +1,41 @@
 @page "/Trainer/Client/{id}"
 @model enx_fit.Pages.Trainer.ClientModel
-@{ Layout = "_ProgramsLayout"; ViewData["Title"] = Model.Data.Name; var id = Model.Data.Subject.Id; }
-<a class="program-back" asp-page="/Trainer/Clients">← Мои клиенты</a>
-<header class="page-heading"><div><p class="eyebrow">КЛИЕНТ</p><h1>@Model.Data.Name</h1><p>@Model.Data.Settings.GoalTitle</p></div><a class="button secondary" asp-page="/Programs/Index">Выбрать программу</a></header>
-<nav class="program-tabs" aria-label="Разделы клиента"><a class="active" aria-current="page">Обзор</a><a asp-page="/Dashboard/Workouts" asp-route-ClientId="@id">Тренировки</a><a href="#client-programs">Программы</a><a asp-page="/Dashboard/Progress" asp-route-ClientId="@id">Прогресс и замеры</a><a asp-page="/Dashboard/Habits" asp-route-ClientId="@id">Привычки</a><a asp-page="/Dashboard/Plans" asp-route-ClientId="@id">Заметки и цель</a></nav>
-@if (Model.Attention is { } attention) { <partial name="_CoachAttention" model="attention" /> }
-<section class="panel"><dl class="program-facts"><div><dt>Цель</dt><dd>@Model.Data.Settings.GoalTitle</dd></div><div><dt>Текущий вес</dt><dd>@(Model.Data.Weight is { } kg ? $"{kg:0.##} кг" : "Нет замеров")</dd></div><div><dt>За 4 недели</dt><dd>@(Model.Data.WeightChange is { } delta ? $"{delta:+0.##;-0.##;0} кг" : "Недостаточно замеров")</dd></div><div><dt>Последняя тренировка</dt><dd>@(Model.Data.Completed.OrderByDescending(s => s.Date).FirstOrDefault()?.Date.ToString("dd.MM.yyyy") ?? "Ещё нет")</dd></div></dl></section>
-<section class="panel" id="client-programs"><h2>Программы клиента</h2>
-@if (Model.Programs.Count == 0) { <p class="program-muted">Назначенных программ пока нет. Откройте свою программу и выберите «Назначить клиенту».</p> }
-@foreach (var p in Model.Programs) { var history = Model.Data.Workouts.Where(s => s.TrainingProgramId == p.Id).ToList(); var next = enx_fit.Services.ProgramSchedule.Next(p, history); <div class="program-history"><p><a asp-page="/Programs/Details" asp-route-id="@p.Id"><strong>@p.Name →</strong></a></p><p class="program-muted">Выполнено: @enx_fit.Services.ProgramSchedule.Done(p, history) / @enx_fit.Services.ProgramSchedule.Occurrences(p).Count() · @(next is null ? "Ближайших тренировок нет" : $"Далее: {next.Workout.Name}, {next.Date:dd.MM}")</p></div> }
-</section>
-<section class="panel"><h2>Личные рекорды</h2>@if (!Model.Data.Records.Any()) { <p class="program-muted">Появятся после первых рабочих подходов.</p> } else { <ul class="program-history">@foreach (var record in Model.Data.Records.Take(5)) { <li><strong>@record.Name</strong><span>@record.Weight.ToString("0.##") кг</span></li> }</ul> }</section>
+@using enx_fit.Services
+@{ Layout = "_DashboardReferenceLayout"; ViewData["Title"] = Model.Data.Name + " — клиент"; var id = Model.Data.Subject.Id; }
+<div class="coach-workspace coach-client-workspace">
+    <a class="coach-back" asp-page="/Trainer/Clients" asp-route-Search="@Model.DirectorySearch" asp-route-Scope="@Model.DirectoryScope" asp-route-Sort="@Model.DirectorySort">← Мои клиенты</a>
+    <div class="coach-client-columns">
+        <aside class="coach-client-rail"><h2>Клиенты</h2><nav aria-label="Выбрать клиента">@foreach (var client in Model.Clients) { <a asp-page="/Trainer/Client" asp-route-id="@client.Id" aria-current="@(client.Id == id ? "page" : null)"><span>@client.Name</span><small>@(client.LastWorkout?.ToString("dd.MM.yyyy") ?? "Ещё нет тренировок")</small></a> }</nav><a class="coach-text-link" asp-page="/Trainer/Clients">Поиск и фильтры →</a></aside>
+        <div class="coach-client-main">
+            <header class="coach-page-heading"><div><p class="eyebrow">Обзор клиента</p><h1>@Model.Data.Name</h1><p>@Model.Data.Settings.GoalTitle</p></div><a class="button secondary" asp-page="/Dashboard/Plans" asp-route-ClientId="@id">Цель и заметка <reference-icon name="arrow" /></a></header>
+            <nav class="coach-client-tabs" aria-label="Разделы клиента"><a class="active" aria-current="page" href="@Url.Page("/Trainer/Client", new { id })">Обзор</a><a asp-page="/Dashboard/Workouts" asp-route-ClientId="@id">Тренировки</a><a href="#client-programs">Программы</a><a asp-page="/Dashboard/Progress" asp-route-ClientId="@id">Прогресс</a><a asp-page="/Dashboard/Habits" asp-route-ClientId="@id">Привычки</a></nav>
+            <div class="coach-client-summary"><div><small>Завершённых занятий за 30 дней</small><strong>@Model.Data.PeriodWorkouts.Count()</strong></div><div><small>Последняя тренировка</small><strong>@(Model.Data.Completed.OrderByDescending(s => s.Date).FirstOrDefault()?.Date.ToString("dd.MM.yyyy") ?? "Ещё нет")</strong></div><div><small>Назначенных программ</small><strong>@Model.Programs.Count</strong></div></div>
+            @if (Model.Attention is { } attention) { <partial name="_CoachAttention" model="attention" /> }
+            <section class="coach-panel" id="client-programs"><div class="coach-section-heading"><div><p class="eyebrow">План и выполнение</p><h2>Назначенные программы</h2></div></div>
+                @if (!Model.CanAssign) { <p>Назначение программ недоступно для текущего доступа.</p> }
+                else if (Model.Programs.Count == 0) { <p>Активных назначенных программ пока нет. Выберите готовую программу или свою, чтобы создать отдельную копию для клиента.</p> }
+                @foreach (var p in Model.Programs)
+                {
+                    var history = Model.Data.Workouts.Where(s => s.TrainingProgramId == p.Id).ToList();
+                    var next = ProgramSchedule.Next(p, history, Model.Today);
+                    var total = ProgramSchedule.Occurrences(p).Count(); var done = ProgramSchedule.Done(p, history); var percent = total > 0 ? Math.Min(100, done * 100 / total) : 0;
+                    <article class="coach-program" data-client-program="@p.Id"><div class="coach-program-heading"><h3><a asp-page="/Programs/Details" asp-route-id="@p.Id">@p.Name</a></h3><span>@p.Weeks недель · @p.DaysPerWeek дня / неделю</span></div><p>@(next is null ? "Ближайших занятий этого цикла нет" : $"Далее: {next.Workout.Name} · {next.Date:dd.MM.yyyy}")</p><progress value="@percent" max="100" aria-label="@("Выполнение программы " + p.Name)">@percent%</progress><small>@done из @total занятий завершено · @percent%</small><div class="coach-program-actions"><a asp-page="/Programs/Details" asp-route-id="@p.Id" asp-route-Tab="schedule">Расписание →</a><a asp-page="/Programs/Details" asp-route-id="@p.Id" asp-route-Tab="progression">Нагрузка →</a></div></article>
+                }
+                @if (Model.CanAssign)
+                {
+                    <details class="coach-assign-picker"><summary><reference-icon name="plus" />Назначить программу</summary><div class="coach-detail-body">
+                    @if (Model.Sources.Count == 0) { <p>Сначала создайте программу с упражнениями.</p><a class="coach-text-link" asp-page="/Programs/Edit">Создать свою программу →</a> }
+                    else
+                    { <form method="get" asp-page="/Trainer/Client" asp-route-id="@id"><input type="hidden" name="handler" value="SelectProgram" /><label for="coach-source">Программа для отдельной копии</label><select id="coach-source" name="sourceId" required><option value="">Выберите программу</option>@foreach (var source in Model.Sources) { <option value="@source.Id">@source.Name · @(source.IsTemplate ? "готовая" : "моя")</option> }</select><p>На следующем шаге проверьте дату начала и дни занятий. Нагрузка в копии клиента изменяется отдельно.</p><button class="button primary" type="submit">Настроить назначение <reference-icon name="arrow" /></button></form> }
+                    </div></details>
+                }
+                @if (Model.ArchivedPrograms.Count > 0) { <details class="coach-extra"><summary>Архив программ · @Model.ArchivedPrograms.Count</summary><div class="coach-detail-body">@foreach (var p in Model.ArchivedPrograms) { <a class="coach-text-link" asp-page="/Programs/Details" asp-route-id="@p.Id">@p.Name →</a> }</div></details> }
+            </section>
+            <details class="coach-panel coach-extra"><summary>Замеры и личные рекорды <reference-icon name="chevron" /></summary><div class="coach-detail-body"><dl class="coach-facts"><div><dt>Последний вес</dt><dd>@(Model.Data.Weight is { } kg ? $"{kg:0.##} кг" : "Нет замеров")</dd></div><div><dt>Изменение за 4 недели</dt><dd>@(Model.Data.WeightChange is { } delta ? $"{delta:+0.##;-0.##;0} кг" : "Недостаточно замеров")</dd></div></dl>
+            @if (!Model.Data.Records.Any()) { <p>Рекорды появятся после первых выполненных рабочих подходов.</p> }
+            else { <ul class="coach-records">@foreach (var record in Model.Data.Records.Take(5)) { <li><strong>@record.Name</strong><span>@record.Weight.ToString("0.##") кг</span></li> }</ul> }
+            <a class="coach-text-link" asp-page="/Dashboard/Progress" asp-route-ClientId="@id">Подробный прогресс →</a></div></details>
+            @if (!string.IsNullOrWhiteSpace(Model.Data.Settings.TrainerNote)) { <details class="coach-panel coach-extra"><summary>Заметка тренера <reference-icon name="chevron" /></summary><div class="coach-detail-body"><p class="coach-note">@Model.Data.Settings.TrainerNote</p><a class="coach-text-link" asp-page="/Dashboard/Plans" asp-route-ClientId="@id">Изменить заметку →</a></div></details> }
+        </div>
+    </div>
+</div>

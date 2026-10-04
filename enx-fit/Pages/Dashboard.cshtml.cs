@@ -40,6 +40,7 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
     public TrainingProgram? ActiveProgram { get; private set; }
     public ProgramOccurrence? NextProgramWorkout { get; private set; }
     public bool CanAnalyzePrograms { get; private set; }
+    public bool CanManageClients { get; private set; }
     public TrainingRecommendation? NextRecommendation { get; private set; }
     public ProgramWorkoutExercise? NextGoalExercise { get; private set; }
     public WorkoutSession? ActiveWorkout { get; private set; }
@@ -68,7 +69,7 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
     public DashboardSection? Section => DashboardSections.Find(CurrentPage);
     public object NavigationValues => new { ClientId = IsCoachView ? Data.Subject.Id : null, Days, Until = Until?.ToString("yyyy-MM-dd"), Reference = Reference ? (bool?)true : null };
     public bool IsCoachView => Data.Subject.Id != currentUser.Id;
-    public bool IsTrainer => currentUser.HasMinimumRole(UserRole.Trainer);
+    public bool IsTrainer => currentUser.Role == UserRole.Trainer || currentUser.IsAdministrator;
     [TempData] public string? StatusMessage { get; set; }
 
     public async Task<IActionResult> OnGetAsync()
@@ -172,9 +173,10 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
             Templates = await workouts.TemplatesAsync();
         }
         Clients = await dashboard.GetClientsAsync();
+        CanManageClients = await features.CanUseAsync(Feature.CoachClientManagement);
         if (CurrentPage is "/Dashboard" or "/Dashboard/Progress")
         {
-            if (CurrentPage == "/Dashboard" && !IsCoachView && await features.CanUseAsync(Feature.CoachClientAlerts)) Attention = await attention.LoadAsync();
+            if (CurrentPage == "/Dashboard" && !IsCoachView && await features.CanUseAsync(Feature.CoachClientAlerts)) Attention = await attention.LoadAsync(assignedOnly: true);
             if (!IsCoachView)
             {
                 ActiveProgram = (await programs.ListAsync("mine")).FirstOrDefault(p => p.StartDate.HasValue && p.StartDate.Value.AddDays(p.Weeks * 7) > today);

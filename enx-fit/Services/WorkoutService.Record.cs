@@ -19,10 +19,31 @@ public partial class WorkoutService
         List<RecordedExercise>? exercises;
         try { exercises = JsonSerializer.Deserialize<List<RecordedExercise>>(input.ResultsJson, WorkoutBuilderInput.JsonOptions); }
         catch (JsonException) { throw new InvalidOperationException("Проверьте результаты подходов."); }
-        bool Valid(object value) => Validator.TryValidateObject(value, new ValidationContext(value), null, true);
-        if (exercises is null || exercises.Count is < 1 or > 40 || exercises.Any(e => e is null || !Valid(e) || e.Sets is null || e.Sets.Any(s => s is null || !Valid(s))) ||
-            exercises.Select(e => e.ExerciseId).Distinct().Count() != exercises.Count)
-            throw new InvalidOperationException("Добавьте 1–40 разных упражнений и 1–20 подходов в каждом. Проверьте вес, повторения и RIR.");
+        if (exercises is null || exercises.Count == 0) throw new InvalidOperationException("Добавьте хотя бы одно упражнение.");
+        if (exercises.Count > 40) throw new InvalidOperationException("В записи может быть не более 40 упражнений.");
+        static void ValidateResult(object value, string location)
+        {
+            List<ValidationResult> errors = [];
+            if (!Validator.TryValidateObject(value, new ValidationContext(value), errors, true))
+                throw new InvalidOperationException($"{location}: {string.Join(" ", errors.Select(e => e.ErrorMessage))}");
+        }
+        HashSet<int> seen = [];
+        for (var i = 0; i < exercises.Count; i++)
+        {
+            var exercise = exercises[i];
+            var location = $"Упражнение №{i + 1}";
+            if (exercise is null) throw new InvalidOperationException($"{location}: выберите упражнение из библиотеки.");
+            ValidateResult(exercise, location);
+            if (!seen.Add(exercise.ExerciseId))
+                throw new InvalidOperationException($"{location} повторяется. Объедините подходы этого упражнения в одной карточке.");
+            for (var n = 0; n < exercise.Sets.Count; n++)
+            {
+                var set = exercise.Sets[n];
+                var setLocation = $"{location}, подход №{n + 1}";
+                if (set is null) throw new InvalidOperationException($"{setLocation}: заполните результаты подхода.");
+                ValidateResult(set, setLocation);
+            }
+        }
         if (!exercises.Any(e => e.Sets.Any(s => !s.IsWarmup))) throw new InvalidOperationException("Добавьте хотя бы один рабочий подход.");
         var ids = exercises.Select(e => e.ExerciseId).ToArray();
         if (await dbContext.Exercises.CountAsync(e => ids.Contains(e.Id)) != ids.Length) throw new InvalidOperationException("Упражнение недоступно в библиотеке.");

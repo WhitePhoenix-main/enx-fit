@@ -1,0 +1,7 @@
+@using enx_fit.Services
+<div class="public-start-choices" id="start-options">
+    <p class="eyebrow">Как начнём?</p><h3>Выберите удобный старт</h3>
+    <a data-public-start="quick" href="@PublicPageLinks.Open(Url, User, "/Dashboard")"><svg class="icon"><use href="#i-play" /></svg><span><strong>Заниматься сейчас</strong><small>Добавляйте упражнения по ходу</small></span><svg class="icon"><use href="#i-arrow" /></svg></a>
+    <a data-public-start="template" href="@PublicPageLinks.Open(Url, User, "/Programs/Index", new { Tab = "templates" })"><svg class="icon"><use href="#i-calendar" /></svg><span><strong>Выбрать шаблон</strong><small>Посмотрите готовые программы</small></span><svg class="icon"><use href="#i-arrow" /></svg></a>
+    <a data-public-start="record" href="@PublicPageLinks.Open(Url, User, "/Workouts/Record")"><svg class="icon"><use href="#i-check" /></svg><span><strong>Записать прошедшую</strong><small>Внесите результаты после зала</small></span><svg class="icon"><use href="#i-arrow" /></svg></a>
+</div>
