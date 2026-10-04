@@ -37,7 +37,8 @@ internal static class TrainingProgramConfiguration
         model.Entity<WorkoutSession>(s =>
         {
             s.HasOne<TrainingProgram>().WithMany().HasForeignKey(x => x.TrainingProgramId).OnDelete(DeleteBehavior.SetNull);
-            s.HasIndex(x => new { x.TrainingProgramId, x.ProgramWorkoutKey, x.ScheduledDate }).IsUnique();
+            s.HasIndex(x => new { x.TrainingProgramId, x.ProgramWorkoutKey, x.ScheduledDate }).IsUnique()
+                .HasFilter($"\"Status\" <> {(int)WorkoutStatus.Cancelled}");
         });
         model.Entity<TrainingRecommendation>(r =>
         {

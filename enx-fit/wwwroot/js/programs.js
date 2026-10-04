@@ -18,7 +18,7 @@
     button.disabled = false; button.removeAttribute('aria-busy');
   }));
   const editor = document.querySelector('[data-program-editor]');
-  if (editor) {
+  if (editor && !document.querySelector('.program-builder')) {
     const key = `program-editor-scroll:${location.pathname}`;
     try { const y = sessionStorage.getItem(key); if (y) { window.scrollTo(0, Number(y)); sessionStorage.removeItem(key); } } catch {}
     editor.addEventListener('submit', event => {
@@ -27,4 +27,8 @@
       }
     });
   }
+  document.querySelectorAll('[data-template-filters]').forEach(form => {
+    form.classList.add('plan-filter-enhanced');
+    form.querySelectorAll('select,input[type="checkbox"]').forEach(control => control.addEventListener('change', () => form.requestSubmit()));
+  });
 })();

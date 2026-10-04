@@ -24,7 +24,18 @@ public sealed class TrainingProgram
     public Guid Revision { get; set; } = Guid.NewGuid();
     public List<ProgramBlock> Blocks { get; set; } = [];
     public List<ProgramWorkout> Workouts { get; set; } = [];
+    public List<ProgramScheduleChange> ScheduleChanges { get; set; } = [];
     public AssignedProgram? Assignment { get; set; }
+}
+
+// One exception to the weekly schedule; the original date remains the identity of the slot.
+public sealed class ProgramScheduleChange
+{
+    public int Id { get; set; }
+    public int TrainingProgramId { get; set; }
+    public Guid ProgramWorkoutKey { get; set; }
+    public DateOnly OriginalDate { get; set; }
+    public DateOnly Date { get; set; }
 }
 
 public sealed class ProgramBlock

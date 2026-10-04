@@ -2,9 +2,9 @@
    the supplied reference are used as sprites; the interface is native HTML. */
 .ef-workouts-page #main-content.ef-main { padding-top:17px; padding-bottom:42px; }
 .ew-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; min-height:74px; margin:0 2px 15px 4px; }
-.ew-heading-copy { flex:1; min-width:0; transform:translateY(-5px); }
+.ew-heading-copy { flex:1 1 340px; min-width:0; transform:translateY(-5px); }
 .ew-heading h1 { font-size:40px; font-weight:700; line-height:44px; letter-spacing:0; white-space:nowrap; }
-.ew-heading p { color:#bad2f0; font-size:19px; line-height:27px; white-space:nowrap; }
+.ew-heading p { color:#bad2f0; font-size:19px; line-height:27px; }
 .ew-heading-actions { display:flex; align-items:center; gap:8px; min-width:0; }
 .ew-metric { display:flex; flex:0 0 175px; align-items:center; gap:14px; height:74px; padding:10px 12px; border-radius:10px; width:175px; white-space:nowrap; }
 .ew-metric.ew-monthly { width:217px; flex-basis:217px; margin-right:2px; }
@@ -119,6 +119,9 @@
 @media (min-width:1450px) {
   .ew-heading-actions>.ew-metric:nth-child(3) { width:179px; flex-basis:179px; }
 }
+@media (min-width:1024px) {
+  .ew-heading-actions { min-width:max-content; }
+}
 @media (max-width:1449px) {
   .ew-heading { flex-wrap:wrap; }
   .ew-heading-actions { flex:1; justify-content:flex-end; }
@@ -137,6 +140,11 @@
   .ew-calendar-legend>span { gap:6px; }
 }
 @media (max-width:1399px) {
+  .ew-heading-copy,.ew-heading-actions { flex-basis:100%; }
+  .ew-heading-actions { justify-content:stretch; }
+  .ew-metric,.ew-metric.ew-monthly { flex:1; }
+  .ew-next .ef-workout-shortcuts button { font-size:13px; gap:9px; white-space:normal; }
+  .ew-next .ef-workout-shortcuts svg { width:21px; height:21px; }
   .ew-bottom-grid { grid-template-columns:minmax(0,1fr); }
   .ew-detail { min-height:0; padding-bottom:0; }
   .ew-detail .ew-exercises { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 20px; }

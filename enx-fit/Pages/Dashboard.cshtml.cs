@@ -23,6 +23,7 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
     [BindProperty(SupportsGet = true)] public int ProgressWeeks { get; set; } = 6;
     [BindProperty(SupportsGet = true)] public int? ProgressExercise { get; set; }
     [BindProperty(SupportsGet = true)] public string? ProgressTab { get; set; } = "overview";
+    [BindProperty(SupportsGet = true)] public string? ProgressMetric { get; set; } = "consistency";
     // An explicit visual snapshot reproduces the reference content without altering user records.
     [BindProperty(SupportsGet = true)] public bool Reference { get; set; }
     [BindProperty(SupportsGet = true)] public DateOnly? Month { get; set; }
@@ -44,9 +45,10 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
     public WorkoutSession? ActiveWorkout { get; private set; }
     public List<WorkoutTemplateOption> Templates { get; private set; } = [];
     public bool ShowOnboarding => !IsCoachView && ActiveWorkout is null && !Data.Completed.Any() && Data.Measurements.Count == 0;
+    public bool ShowSetupPrompt => !Reference && ShowOnboarding && Data.Settings.SetupStatus == SetupStatus.NotStarted;
     public bool UsesDefaultLayout { get; private set; }
 
-    public async Task<IActionResult> OnPostStartAsync(string source, int? templateId, int? plannedId, int? programId)
+    public async Task<IActionResult> OnPostStartAsync(string source, int? templateId, int? plannedId, int? programId, int? previousId)
     {
         if (!await LoadAsync()) return NotFound();
         if (IsCoachView) return Forbid();
@@ -54,7 +56,7 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
         {
             var id = source == "program" && programId.HasValue
                 ? await programs.StartNextAsync(programId.Value)
-                : await workouts.StartAsync(source, templateId, plannedId);
+                : await workouts.StartAsync(source, templateId, plannedId, previousId);
             return RedirectToPage("/Workouts/Details", new { id });
         }
         catch (InvalidOperationException ex) { ModelState.AddModelError("", ex.Message); }
@@ -86,6 +88,7 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
         if (settings is null) { settings = new DashboardSettings { UserId = Data.Subject.Id }; db.DashboardSettings.Add(settings); }
         settings.GoalTitle = Goal.Title.Trim();
         settings.WeeklyWorkoutGoal = Goal.WeeklyWorkouts;
+        settings.PreferencesRevision = Guid.NewGuid();
         if (IsCoachView) settings.TrainerNote = Goal.TrainerNote?.Trim();
         await db.SaveChangesAsync();
         StatusMessage = "Цель сохранена.";
@@ -138,10 +141,12 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
         if (CurrentPage == "/Dashboard/Workouts" && !Request.Query.ContainsKey("Days")) Days = 30;
         Days = Days is 7 or 30 or 365 ? Days : 7;
         WeekOffset = Math.Clamp(WeekOffset, -52, 52);
-        ChartWeeks = ChartWeeks is 2 or 4 or 6 ? ChartWeeks : 6;
         ProgressWeeks = ProgressWeeks is 2 or 4 or 6 or 12 ? ProgressWeeks : 6;
+        ChartWeeks = ChartWeeks is 2 or 4 or 6 or 12 ? ChartWeeks : 6;
+        if (!Reference && CurrentPage == "/Dashboard/Progress" && !Request.Query.ContainsKey("ChartWeeks")) ChartWeeks = ProgressWeeks;
         ProgressTab = ProgressTab is "overview" or "analytics" or "records" ? ProgressTab : "overview";
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        ProgressMetric = ProgressMetric is "consistency" or "strength" or "body" || (ProgressTab == "analytics" && ProgressMetric == "volume") ? ProgressMetric : "consistency";
+        var today = currentUser.LocalToday;
         var latestDate = Reference && CurrentPage == "/Dashboard/Progress" ? new DateOnly(2026, 10, 2) : today;
         Until = Until is null || Until > latestDate || Until < today.AddYears(-20) ? latestDate : Until;
         Data = await dashboard.LoadAsync(subject, Days, Until.Value);
@@ -155,10 +160,11 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
             Month = new(calendarDate.Year, calendarDate.Month, 1);
             WorkoutPrograms = await db.TrainingPrograms.AsNoTracking().AsSplitQuery()
                 .Where(p => p.OwnerId == subject.Id && !p.IsTemplate)
+                .Include(p => p.ScheduleChanges)
                 .Include(p => p.Workouts).ThenInclude(w => w.Exercises).ThenInclude(e => e.Exercise)
                 .OrderBy(p => p.Name).ToListAsync();
             ActiveProgram = WorkoutPrograms.FirstOrDefault(p => !p.IsArchived && p.StartDate.HasValue && p.StartDate.Value.AddDays(p.Weeks * 7) > today);
-            if (ActiveProgram is not null) NextProgramWorkout = ProgramSchedule.Next(ActiveProgram, Data.Workouts.Where(w => w.TrainingProgramId == ActiveProgram.Id).ToList());
+            if (ActiveProgram is not null) NextProgramWorkout = ProgramSchedule.Next(ActiveProgram, Data.Workouts.Where(w => w.TrainingProgramId == ActiveProgram.Id).ToList(), today);
         }
         if (!IsCoachView)
         {
@@ -172,7 +178,7 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
             if (!IsCoachView)
             {
                 ActiveProgram = (await programs.ListAsync("mine")).FirstOrDefault(p => p.StartDate.HasValue && p.StartDate.Value.AddDays(p.Weeks * 7) > today);
-                if (ActiveProgram is not null) NextProgramWorkout = ProgramSchedule.Next(ActiveProgram, await programs.SessionsAsync(ActiveProgram));
+                if (ActiveProgram is not null) NextProgramWorkout = ProgramSchedule.Next(ActiveProgram, await programs.SessionsAsync(ActiveProgram), today);
                 CanAnalyzePrograms = await features.CanUseAsync(Feature.ProgressionRecommendations);
                 if (ActiveProgram is { } activeProgram)
                 {

@@ -4,6 +4,7 @@ using System.Text.Json;
 using enx_fit.Areas.Identity.Data;
 using enx_fit.Data;
 using enx_fit.Security;
+using enx_fit.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -18,17 +19,24 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, Application
     [BindProperty(SupportsGet = true)] public bool Reference { get; set; }
     public ApplicationUser Viewer { get; private set; } = null!;
     public string? TrainerName { get; private set; }
+    public DashboardSettings? Preferences { get; private set; }
+    public bool HasPreferences => Preferences?.SetupStatus == SetupStatus.Completed;
+    public string DisplayName => Viewer.UserName?.Split('@')[0] is { Length: > 0 } name ? name : "Спортсмен";
+    public string Initial => StringInfo.GetNextTextElement(DisplayName).ToUpperInvariant();
     public async Task<IActionResult> OnGetAsync()
     {
+        if (Request.Query.ContainsKey("ClientId")) return NotFound();
         Viewer = (await users.GetUserAsync(User))!;
         if (Viewer is null) return Challenge();
         if (Viewer.TrainerId is { } trainerId) TrainerName = (await users.FindByIdAsync(trainerId))?.UserName;
+        if (!Reference) Preferences = await db.DashboardSettings.AsNoTracking().SingleOrDefaultAsync(s => s.UserId == Viewer.Id);
         ViewData["Reference"] = Reference;
         return Page();
     }
 
     public async Task<IActionResult> OnGetExportAsync(string format = "json")
     {
+        if (Request.Query.ContainsKey("ClientId")) return NotFound();
         var user = await users.GetUserAsync(User);
         if (user is null) return Challenge();
         if (format is not ("json" or "csv")) return BadRequest();

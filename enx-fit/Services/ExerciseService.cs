@@ -24,7 +24,7 @@ public class ExerciseService(ApplicationDbContext dbContext)
 
     public async Task<IReadOnlyList<int>> GetRecentIdsAsync(string ownerId) =>
         await dbContext.WorkoutSessions.AsNoTracking()
-            .Where(w => w.UserId == ownerId && w.CompletedAtUtc != null)
+            .Where(w => w.UserId == ownerId).Where(WorkoutStates.Completed)
             .OrderByDescending(w => w.Date).ThenByDescending(w => w.Id).Take(5)
             .SelectMany(w => w.WorkoutExercises.Select(e => e.ExerciseId))
             .Distinct().ToListAsync();

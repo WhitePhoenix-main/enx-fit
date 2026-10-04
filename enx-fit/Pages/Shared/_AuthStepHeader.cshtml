@@ -1,0 +1,11 @@
+@using enx_fit.Services
+@{
+    var destination = AuthPageLinks.LocalReturnUrl(Url, Context.Request.Query["returnUrl"]);
+    var backUrl = ViewData["AuthBackUrl"] as string ?? Url.Page("/TechnicalPages/Login", new { area = "", returnUrl = destination });
+}
+<section class="auth-intro auth-step-header" aria-labelledby="auth-title">
+    <a class="auth-back" href="@backUrl"><svg class="auth-icon" aria-hidden="true"><use href="#auth-chevron" /></svg>@(ViewData["AuthBackLabel"] ?? "К входу")</a>
+    <p class="auth-eyebrow">Доступ к аккаунту</p>
+    <h1 id="auth-title">@ViewData["Title"]</h1>
+    <p class="auth-description">@ViewData["AuthDescription"]</p>
+</section>

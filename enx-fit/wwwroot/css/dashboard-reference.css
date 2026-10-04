@@ -13,7 +13,7 @@
 .dashboard-home {
   --bg:#09131e; --panel:#101c29; --line:#203244; --muted:#adc3e6;
   --blue:#557aff; --green:#6be5b2; --text:#f3f5fc;
-  margin:0; min-width:320px; color:var(--text); font:14px/1.4 "Enix Reference",Arial,sans-serif;
+  margin:0; min-width:0; color:var(--text); font:14px/1.4 "Enix Reference",Arial,sans-serif;
   background:radial-gradient(ellipse at 62% 39%,#0e192430,transparent 70%),#09131e;
   -webkit-font-smoothing:antialiased;
 }

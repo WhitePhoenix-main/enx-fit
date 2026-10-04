@@ -18,6 +18,9 @@ public class SetEntry
 
     public bool IsWarmup { get; set; }
     public bool IsCompleted { get; set; } = true;
+    public bool IsSkipped { get; set; }
+    public int? RestSeconds { get; set; }
+    public DateTime? PerformedAtUtc { get; set; }
 
     public string? Notes { get; set; }
 }

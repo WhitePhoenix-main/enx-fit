@@ -46,5 +46,7 @@
 <script type="application/json" id="dashboard-layout-data">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new { widgets = placements, defaults = DashboardWidgets.Defaults(Model.IsCoachView), pinnedWidgetId = DashboardWidgets.WelcomeId }, DashboardWidgets.JsonOptions))</script>
 </div>
 <partial name="_DashboardDialogs" model="Model" />
+<partial name="_HomeDayDialogs" model="Model" />
 <partial name="_QuickWorkoutDialogs" model="Model" />
-@section Scripts { <script src="~/js/active-workout.js" asp-append-version="true"></script> }
+@section Styles { <link rel="stylesheet" href="~/css/home-interactive.css" asp-append-version="true" /> }
+@section Scripts { <script src="~/js/home-interactive.js" asp-append-version="true"></script> }

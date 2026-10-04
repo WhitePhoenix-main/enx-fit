@@ -86,15 +86,18 @@ namespace enx_fit.Areas.Identity.Pages.Account
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
-            [Required]
-            [EmailAddress]
+            [Required(ErrorMessage = "Введите email.")]
+            [EmailAddress(ErrorMessage = "Проверьте адрес электронной почты.")]
             public string Email { get; set; }
         }
-        
+
         public IActionResult OnGet() => RedirectToPage("./Login");
 
-        public IActionResult OnPost(string provider, string returnUrl = null)
+        public async Task<IActionResult> OnPostAsync(string provider, string returnUrl = null)
         {
+            returnUrl = AuthPageLinks.LocalReturnUrl(Url, returnUrl);
+            if (!(await _signInManager.GetExternalAuthenticationSchemesAsync()).Any(scheme => scheme.Name == provider))
+            { ErrorMessage = "Этот способ входа пока недоступен. Используйте email и пароль."; return RedirectToPage("./Login", new { returnUrl }); }
             // Request a redirect to the external login provider.
             var redirectUrl = Url.Page("./ExternalLogin", pageHandler: "Callback", values: new { returnUrl });
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
@@ -103,16 +106,16 @@ namespace enx_fit.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnGetCallbackAsync(string returnUrl = null, string remoteError = null)
         {
-            returnUrl = returnUrl ?? Url.Content("~/");
+            returnUrl = AuthPageLinks.LocalReturnUrl(Url, returnUrl);
             if (remoteError != null)
             {
-                ErrorMessage = $"Error from external provider: {remoteError}";
+                ErrorMessage = "Не удалось завершить вход через внешний сервис. Попробуйте снова или войдите по email.";
                 return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
             }
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
-                ErrorMessage = "Error loading external login information.";
+                ErrorMessage = "Сеанс входа через внешний сервис завершился. Начните вход заново.";
                 return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
             }
 
@@ -145,12 +148,12 @@ namespace enx_fit.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnPostConfirmationAsync(string returnUrl = null)
         {
-            returnUrl = returnUrl ?? Url.Content("~/");
+            returnUrl = AuthPageLinks.LocalReturnUrl(Url, returnUrl);
             // Get the information about the user from the external login provider
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
-                ErrorMessage = "Error loading external login information during confirmation.";
+                ErrorMessage = "Сеанс входа через внешний сервис завершился. Начните вход заново.";
                 return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
             }
 
@@ -177,13 +180,15 @@ namespace enx_fit.Areas.Identity.Pages.Account
                             values: new { area = "Identity", userId = userId, code = code },
                             protocol: Request.Scheme);
 
-                        await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                            $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                        var emailSent = await AccountEmailDelivery.TrySendAsync(_emailSender, _logger, Input.Email,
+                            "Подтвердите email в Enix Fit", $"Подтвердите аккаунт: <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>подтвердить email</a>.", HttpContext.RequestAborted);
 
                         // If account confirmation is required, we need to show the link if we don't have a real email sender
                         if (_userManager.Options.SignIn.RequireConfirmedAccount)
                         {
-                            return RedirectToPage("./RegisterConfirmation", new { Email = Input.Email });
+                            TempData["AccountConfirmationEmailSent"] = emailSent;
+                            TempData["AccountConfirmationEmailRecipient"] = Input.Email;
+                            return RedirectToPage("./RegisterConfirmation", new { Email = Input.Email, returnUrl });
                         }
 
                         await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
@@ -192,7 +197,9 @@ namespace enx_fit.Areas.Identity.Pages.Account
                 }
                 foreach (var error in result.Errors)
                 {
-                    ModelState.AddModelError(string.Empty, error.Description);
+                    ModelState.AddModelError(string.Empty, error.Code is "DuplicateEmail" or "DuplicateUserName"
+                        ? "Аккаунт с таким email уже существует. Войдите в него по email и подключите сервис в настройках."
+                        : "Не удалось создать аккаунт. Проверьте email и повторите.");
                 }
             }
 

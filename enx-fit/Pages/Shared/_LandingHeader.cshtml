@@ -4,16 +4,16 @@
     </a>
     <button class="menu-toggle" type="button" aria-label="Открыть меню" aria-controls="landing-nav" aria-expanded="false"><svg class="icon"><use href="#i-menu" /></svg></button>
     <nav class="landing-nav" id="landing-nav" aria-label="Основная навигация">
-        <a href="#features">Возможности</a>
+        <a href="#mobile">На телефоне</a>
+        <a href="#planner">Программы</a>
+        <a href="#analytics">Прогресс</a>
         <a href="#pricing">Тарифы</a>
-        <a asp-page="/Blog">Блог</a>
-        <a href="#how-it-works">Как это работает</a>
     </nav>
     <div class="header-actions">
         @if (User.Identity?.IsAuthenticated == true)
         {
             <a class="header-login" asp-page="/Dashboard">Мой кабинет</a>
-            <a class="button button-primary" asp-page="/Workouts/Create">К тренировкам</a>
+            <a class="button button-primary" asp-page="/Dashboard/Workouts">К тренировкам</a>
         }
         else
         {

@@ -21,15 +21,19 @@ namespace enx_fit.Areas.Identity.Pages.Account.Manage
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IEmailSender _emailSender;
+        private readonly ILogger<EmailModel> _logger;
+        // Identity's default placeholder completes without delivering a message.
+        public bool CanSendEmail => Services.AccountEmailDelivery.IsAvailable(_emailSender);
 
         public EmailModel(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            IEmailSender emailSender)
+            IEmailSender emailSender, ILogger<EmailModel> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
+            _logger = logger;
         }
 
         /// <summary>
@@ -68,9 +72,9 @@ namespace enx_fit.Areas.Identity.Pages.Account.Manage
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
-            [Required]
-            [EmailAddress]
-            [Display(Name = "New email")]
+            [Required(ErrorMessage = "Введите новый email.")]
+            [EmailAddress(ErrorMessage = "Проверьте адрес электронной почты.")]
+            [Display(Name = "Новый email")]
             public string NewEmail { get; set; }
         }
 
@@ -124,21 +128,20 @@ namespace enx_fit.Areas.Identity.Pages.Account.Manage
                     pageHandler: null,
                     values: new { area = "Identity", userId = userId, email = Input.NewEmail, code = code },
                     protocol: Request.Scheme);
-                await _emailSender.SendEmailAsync(
-                    Input.NewEmail,
-                    "Confirm your email",
-                    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                if (!await SendAsync(Input.NewEmail, "Подтвердите новый email Enix Fit", $"Подтвердите новый адрес: <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>перейти к подтверждению</a>."))
+                { await LoadAsync(user); return Page(); }
 
-                StatusMessage = "Confirmation link to change email sent. Please check your email.";
+                StatusMessage = "Ссылка подтверждения отправлена на новый адрес. Текущий email пока не изменён.";
                 return RedirectToPage();
             }
 
-            StatusMessage = "Your email is unchanged.";
+            StatusMessage = "Вы указали текущий адрес. Email не изменён.";
             return RedirectToPage();
         }
 
         public async Task<IActionResult> OnPostSendVerificationEmailAsync()
         {
+            ModelState.Clear();
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
@@ -160,13 +163,22 @@ namespace enx_fit.Areas.Identity.Pages.Account.Manage
                 pageHandler: null,
                 values: new { area = "Identity", userId = userId, code = code },
                 protocol: Request.Scheme);
-            await _emailSender.SendEmailAsync(
-                email,
-                "Confirm your email",
-                $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+            if (!await SendAsync(email, "Подтвердите email Enix Fit", $"Подтвердите адрес: <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>перейти к подтверждению</a>."))
+            { await LoadAsync(user); return Page(); }
 
-            StatusMessage = "Verification email sent. Please check your email.";
+            StatusMessage = "Письмо подтверждения отправлено на текущий адрес.";
             return RedirectToPage();
+        }
+        private async Task<bool> SendAsync(string email, string subject, string body)
+        {
+            if (!CanSendEmail) { ModelState.AddModelError(string.Empty, "Подтверждение почты пока недоступно. Отправка писем ещё не подключена."); return false; }
+            try { await _emailSender.SendEmailAsync(email, subject, body); return true; }
+            catch (Exception exception) when (!HttpContext.RequestAborted.IsCancellationRequested)
+            {
+                _logger.LogWarning(exception, "Account email confirmation could not be sent.");
+                ModelState.AddModelError(string.Empty, "Не удалось отправить письмо. Адрес не изменён; повторите позже.");
+                return false;
+            }
         }
     }
 }

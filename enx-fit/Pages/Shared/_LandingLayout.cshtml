@@ -4,13 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#080d11" />
-    <meta name="description" content="Enix Fit — твой тренировочный дневник, понятная аналитика и персональный план прогресса. Тренируйся осознанно. Расти быстрее." />
+    <meta name="description" content="Enix Fit — программы, выполнение тренировок, таймер отдыха и прогресс на телефоне и компьютере. Бесплатный дневник, история и личные рекорды." />
     <title>Enix Fit — тренируйся осознанно</title>
     <partial name="_AppIcons" />
     <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/landing-motion.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/landing-story.css" asp-append-version="true" />
 </head>
-<body class="enix-landing">
+<body class="enix-landing landing-story">
     <div class="page-atmosphere" aria-hidden="true"></div>
     <a class="skip-link" href="#main-content">Перейти к содержимому</a>
     <partial name="_LandingIcons" />
@@ -19,23 +20,15 @@
     <footer class="landing-footer wrap">
         <a class="brand" asp-page="/Index" aria-label="Enix Fit — главная"><partial name="_LandingBrand" /></a>
         <nav aria-label="Ссылки в подвале">
-            <a href="#features">Возможности</a><a href="#pricing">Тарифы</a><a asp-page="/Blog">Блог</a>
-            <button type="button" data-info="support">Поддержка</button>
-            <button type="button" data-info="privacy">Конфиденциальность</button>
-            <button type="button" data-info="terms">Условия использования</button>
+            <a href="#mobile">На телефоне</a><a href="#pricing">Тарифы</a><a href="#faq">Вопросы</a>
+            <a href="#how-it-works">Как начать</a>
+            @if (User.Identity?.IsAuthenticated == true)
+            { <a asp-page="/Dashboard">Открыть приложение</a> }
+            else
+            { <a asp-page="/TechnicalPages/Login" asp-page-handler="Login">Войти</a> }
         </nav>
-        <div class="social-links" aria-label="Социальные сети">
-            <button type="button" data-info="social" aria-label="YouTube"><svg class="icon"><use href="#i-youtube" /></svg></button>
-            <button type="button" data-info="social" aria-label="Instagram"><svg class="icon"><use href="#i-instagram" /></svg></button>
-            <button type="button" data-info="social" aria-label="Telegram"><svg class="icon"><use href="#i-telegram" /></svg></button>
-        </div>
         <small>© 2026 Enix Fit. Все права защищены.</small>
     </footer>
-    <dialog class="landing-dialog" id="info-dialog" aria-labelledby="info-title">
-        <button class="dialog-close" type="button" data-close-dialog aria-label="Закрыть"><svg class="icon"><use href="#i-close" /></svg></button>
-        <p class="eyebrow">Enix Fit</p><h2 id="info-title"></h2><p id="info-description"></p>
-        <a class="button button-primary" asp-page="/TechnicalPages/Login" asp-page-handler="Register">Создать аккаунт</a>
-    </dialog>
     <script src="~/js/landing.js" asp-append-version="true" defer></script>
     <script src="~/js/landing-motion.js" asp-append-version="true" defer></script>
 </body>

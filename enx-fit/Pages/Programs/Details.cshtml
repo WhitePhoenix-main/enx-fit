@@ -1,6 +1,9 @@
 @page "/Programs/{id:int}"
 @model DetailsModel
-@{ ViewData["Title"] = Model.PageError is null ? Model.Item.Name : "Программа недоступна"; }
+@using enx_fit.Models
+@{ Layout = "_DashboardReferenceLayout"; ViewData["Title"] = Model.PageError is null ? Model.Item.Name : "Программа недоступна"; }
+<div class="programs-page program-schedule-page">
+@if (TempData["StatusMessage"] is string status) { <div class="program-notice" role="status">@status</div> }
 @if (Model.PageError is not null) { <partial name="_ProgramError" model="Model.PageError" /> }
 else
 {
@@ -10,8 +13,8 @@ else
         <div class="program-actions">
         @if (!p.IsArchived && Model.IsOwner)
         {
-            @if (!p.StartDate.HasValue) { <form method="post" asp-page-handler="Activate" data-busy><button class="button primary">Начать программу <admin-icon name="arrow" /></button></form> }
-            else if (Model.Next is not null) { <form method="post" asp-page-handler="Start" data-busy><button class="button primary">@(Model.Sessions.Any(s => s.CompletedAtUtc is null) ? "Продолжить тренировку" : "Начать следующую тренировку") <admin-icon name="arrow" /></button></form> }
+            @if (!p.StartDate.HasValue) { <a class="button primary" asp-route-id="@p.Id" asp-route-Tab="schedule">Выбрать дату старта <admin-icon name="calendar" /></a> }
+            else if (Model.Next is not null) { <form method="post" asp-page-handler="Start" data-busy><button class="button primary">@(Model.Sessions.Any(s => s.IsActive) ? "Продолжить тренировку" : "Начать следующую тренировку") <admin-icon name="arrow" /></button></form> }
         }
         <details class="program-menu"><summary class="icon-button" aria-label="Действия с программой">⋯</summary><div class="program-menu-items">
             @if (!p.IsArchived) { <a asp-page="Edit" asp-route-id="@p.Id">Редактировать</a> }
@@ -49,15 +52,7 @@ else
     }
     else if (Model.Tab == "schedule")
     {
-        <section class="panel"><div class="program-section-heading"><div><h2>Ваша неделя</h2><p class="program-muted">Расписание повторяется каждую неделю программы.</p></div>@if (!p.IsArchived) { <a class="button secondary" asp-page="Edit" asp-route-id="@p.Id" asp-fragment="week-structure">Изменить дни</a> }</div>
-        <div class="program-week" data-program-schedule>
-        @for (var day = 1; day <= 7; day++)
-        { var workout = p.Workouts.FirstOrDefault(w => w.DayOfWeek == day);
-            <div class="program-day @(workout is null ? "rest-day" : "")" data-day="@day" data-workout-key="@workout?.Key"><span>@ProgramSchedule.DayNames[day - 1]</span>
-            @if (workout is null) { <strong>Отдых</strong><small>Восстановление</small> } else { <a asp-route-id="@p.Id" asp-route-Tab="workouts" asp-fragment="workout-@workout.Id"><strong>@workout.Name</strong><small>@workout.Exercises.Count упражнений · @workout.EstimatedMinutes мин</small><admin-icon name="arrow" /></a> }</div>
-        }</div>
-        @if (p.Workouts.Any(w => !w.DayOfWeek.HasValue)) { <p class="program-notice">Есть тренировки без выбранного дня. Укажите дни в редакторе программы.</p> }
-        </section>
+        <partial name="_ProgramSchedule" model="Model" />
     }
     else if (Model.Tab == "workouts")
     {
@@ -87,7 +82,10 @@ else
     {
         <section class="panel"><h2>История выполнения</h2>
         @if (Model.Sessions.Count == 0) { <p class="program-muted">Начните первую тренировку — здесь появятся ваши занятия и результаты.</p> }
-        else { <ul class="program-history">@foreach (var session in Model.Sessions.OrderByDescending(s => s.Date)) { <li><span>@session.Date.ToString("dd.MM.yyyy") · @session.Title</span><span>@(session.CompletedAtUtc.HasValue ? "Завершена" : "В процессе") · @session.WorkoutExercises.Sum(e => e.SetEntries.Count(s => !s.IsWarmup)) рабочих подходов</span>@if (Model.IsOwner || User.HasMinimumRole(UserRole.Administrator)) { <a asp-page="/Workouts/Details" asp-route-id="@session.Id">Открыть →</a> }</li> }</ul> }
+        else { <ul class="program-history">@foreach (var session in Model.Sessions.OrderByDescending(s => s.Date)) { <li><span>@session.Date.ToString("dd.MM.yyyy") · @session.Title</span><span>@(session.State == WorkoutStatus.Cancelled ? "Отменена" : session.State == WorkoutStatus.Completed ? "Завершена" : session.State == WorkoutStatus.Paused ? "На паузе" : "В процессе") · @session.WorkoutExercises.Sum(e => e.SetEntries.Count(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0)) рабочих подходов</span>@if (Model.IsOwner || User.HasMinimumRole(UserRole.Administrator)) { <a asp-page="/Workouts/Details" asp-route-id="@session.Id">Открыть →</a> }</li> }</ul> }
         </section>
     }
 }
+</div>
+@section Styles { <link rel="stylesheet" href="~/css/programs.css" asp-append-version="true" /><link rel="stylesheet" href="~/css/program-schedule.css" asp-append-version="true" /> }
+@section Scripts { <script src="~/js/programs.js" asp-append-version="true"></script><script src="~/js/program-schedule.js" asp-append-version="true"></script> }

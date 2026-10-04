@@ -2,13 +2,13 @@
 @using System.Globalization
 @using enx_fit.Extensions
 @using enx_fit.Services
+@using enx_fit.Models
 @{
     var dashboard = Model.Dashboard;
     var d = dashboard.Data;
     var reference = dashboard.Reference;
     var ru = CultureInfo.GetCultureInfo("ru-RU");
     string N(decimal value) => value.ToString("0.##", ru);
-    string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
     string? PageUrl(string page) => Url.Page(page, dashboard.NavigationValues);
 }
 @switch (Model.WidgetId)
@@ -55,8 +55,9 @@
             }
             @if (reference || !dashboard.IsCoachView && active is null)
             {
-                <div class="ef-workout-shortcuts"><button type="button" data-dialog="quick-workout-dialog"><reference-icon name="bolt" />Быстрая тренировка</button><button type="button" data-dialog="template-start-dialog"><reference-icon name="document" />Из шаблона</button><form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="previous" /><button type="@(reference ? "button" : "submit")" data-dialog="@(reference ? "quick-workout-dialog" : null)" disabled="@(!reference && previous is null)" title="@(previous?.Title ?? "Появится после первого занятия")"><reference-icon name="repeat" />Повторить</button></form></div>
+                <partial name="_HomeWorkoutChoices" model="dashboard" />
             }
+            <partial name="_TrainingSetupPrompt" model="dashboard" />
         </section>
         break;
     case "goal":
@@ -72,12 +73,12 @@
                 {
                     var date = monday.AddDays(i);
                     var done = d.Completed.FirstOrDefault(w => w.Date == date);
-                    var scheduledWorkout = d.Workouts.FirstOrDefault(w => w.Date == date && w.CompletedAtUtc == null && w.StartedAtUtc == null && !DashboardData.WorkingSets(w).Any());
+                    var scheduledWorkout = d.Workouts.FirstOrDefault(w => w.Date == date && w.State == WorkoutStatus.Planned);
                     var scheduledProgram = dashboard.ActiveProgram is { } training ? ProgramSchedule.Occurrences(training).FirstOrDefault(o => o.Date == date) : null;
                     var dayTitle = reference ? new[] { "Верх тела", "Ноги и кор", "Отдых", "Верх тела", "Ноги и кор", "Кардио", "Отдых" }[i] : (done?.Title ?? scheduledWorkout?.Title ?? scheduledProgram?.Workout.Name ?? "Отдых").Split('—')[0].Trim();
-                    var completed = reference ? i < 3 : done is not null || dayTitle == "Отдых" && date < d.Today;
+                    var completed = reference ? i < 3 : done is not null;
                     var icon = completed ? "check" : dayTitle == "Отдых" ? "coffee" : dayTitle.Contains("Кардио", StringComparison.OrdinalIgnoreCase) ? "shoe" : "workout";
-                    <a class="ef-day @(completed ? "is-complete" : "") @((reference ? i == 3 : date == d.Today) ? "is-today" : "")" href="@PageUrl("/Dashboard/Plans")" aria-label="@date.ToString("d MMMM", ru): @dayTitle"><span>@days[i]</span><time datetime="@date.ToString("yyyy-MM-dd")">@date.ToString("dd.MM")</time><span class="ef-day-icon"><reference-icon name="@icon" /></span><small>@dayTitle</small></a>
+                    <a class="ef-day @(completed ? "is-complete" : "") @((reference ? i == 3 : date == d.Today) ? "is-today" : "")" href="@PageUrl("/Dashboard/Plans")" data-dialog="home-day-@date.ToString("yyyy-MM-dd")" aria-label="@date.ToString("d MMMM", ru): @dayTitle"><span>@days[i]</span><time datetime="@date.ToString("yyyy-MM-dd")">@date.ToString("dd.MM")</time><span class="ef-day-icon"><reference-icon name="@icon" /></span><small>@dayTitle</small></a>
                 }
             </div>
         </section>
@@ -136,31 +137,7 @@
         <a class="ef-card ef-stat ef-consistency" href="@PageUrl("/Dashboard/Plans")"><reference-icon name="calendar" /><div><span>Регулярность</span><p><strong>@(reference ? 2 : d.ThisWeek.Count()) / @(reference ? 3 : d.Settings.WeeklyWorkoutGoal)</strong><small>на этой неделе</small></p></div><reference-icon name="chevron" /></a>
         break;
     case "strength":
-        var series = d.StrengthFor(dashboard.NextGoalExercise?.ExerciseId) ?? d.Strength;
-        var weeks = dashboard.ChartWeeks;
-        var start = d.Until.AddDays(1 - weeks * 7);
-        var points = series?.Points.Where(p => p.Date >= start).Select(p => (p.Date, p.Weight)).ToList() ?? [];
-        if (reference) points = [(new(2026, 8, 20), 55m), (new(2026, 9, 3), 55m), (new(2026, 9, 10), 57.5m), (new(2026, 9, 17), 57.5m), (new(2026, 9, 24), 60m), (new(2026, 10, 1), 60m)];
-        var minimum = points.Count == 0 ? 0 : Math.Max(0, Math.Floor((points.Min(p => p.Weight) - 10) / 10) * 10);
-        var maximum = points.Count == 0 ? 30 : Math.Max(minimum + 30, Math.Ceiling((points.Max(p => p.Weight) + 5) / 10) * 10);
-        double X(int index) => reference ? new double[] { 62, 157, 260, 360, 461, 557 }[index] : points.Count < 2 ? 308 : 62 + (points[index].Date.DayNumber - points[0].Date.DayNumber) * 495d / Math.Max(1, points[^1].Date.DayNumber - points[0].Date.DayNumber);
-        double Y(decimal weight) => 110 - (double)((weight - minimum) / (maximum - minimum)) * 100;
-        var path = string.Join(" ", points.Select((p, i) => $"{F(X(i))},{F(Y(p.Weight))}"));
-        <section class="ef-card ef-strength">
-            <header class="ef-card-heading"><h2><reference-icon name="bars" /><span>@(reference ? "Жим лёжа" : series is null ? "Рабочий вес" : ExercisePresentation.DisplayName(series.Exercise))<span class="ef-heading-note"> · рабочий вес, кг</span></span></h2><details class="ef-chart-period"><summary>@weeks @(weeks == 6 ? "недель" : "недели") <reference-icon name="chevron" /></summary><div>@foreach (var period in new[] { 2, 4, 6 }) { <a asp-page="/Dashboard" asp-route-ClientId="@dashboard.ClientId" asp-route-ChartWeeks="@period" asp-route-Until="@dashboard.Until?.ToString("yyyy-MM-dd")">@period @(period == 6 ? "недель" : "недели")</a> }</div></details></header>
-            @if ((reference || series is not null) && points.Count > 0)
-            {
-                <svg class="ef-strength-chart strength-chart" viewBox="0 0 610 145" preserveAspectRatio="none" role="img" aria-label="@(reference ? "Жим лёжа" : ExercisePresentation.DisplayName(series!.Exercise)): рабочий вес за @weeks недель">
-                    <defs><linearGradient id="reference-chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4b72ff" stop-opacity=".17" /><stop offset="100%" stop-color="#4b72ff" stop-opacity="0" /></linearGradient></defs>
-                    @for (var i = 0; i < 4; i++) { var value = minimum + (maximum - minimum) * i / 3; <g><line x1="26" y1="@F(Y(value))" x2="607" y2="@F(Y(value))" /><text x="0" y="@F(Y(value) + 4)">@value.ToString("0.#", ru)</text></g> }
-                    <line x1="26" y1="10" x2="26" y2="110" /><line x1="607" y1="10" x2="607" y2="110" />
-                    @for (var i = 0; i < Math.Min(6, points.Count); i++) { var index = (int)Math.Round(i * (points.Count - 1d) / Math.Max(1, Math.Min(6, points.Count) - 1)); <g><line x1="@F(X(index))" y1="10" x2="@F(X(index))" y2="110" /><text x="@F(X(index))" y="135" text-anchor="middle">@points[index].Date.ToString("dd.MM")</text></g> }
-                    <polygon points="@F(X(0)),110 @path @F(X(points.Count - 1)),110" fill="url(#reference-chart-fill)" /><polyline points="@path" fill="none" stroke="#5377ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    @for (var i = 0; i < points.Count; i++) { var point = points[i]; <g><circle cx="@F(X(i))" cy="@F(Y(point.Weight))" r="4" fill="#6485ff"><title>@point.Date.ToString("d MMMM", ru) · @N(point.Weight) кг</title></circle>@if (points.Count <= 8) { <g><text class="chart-point-value" x="@F(X(i))" y="@F(Y(point.Weight) - 12)" text-anchor="middle">@N(point.Weight)</text></g> }</g> }
-                </svg>
-            }
-            else { <div class="ef-empty-chart"><reference-icon name="trend" /><p>Запишите рабочие подходы — здесь появится ваш прогресс.</p></div> }
-        </section>
+        <partial name="_HomeProgress" model="Model" />
         break;
     case "stat-weight":
         var latest = d.Measurements.LastOrDefault();

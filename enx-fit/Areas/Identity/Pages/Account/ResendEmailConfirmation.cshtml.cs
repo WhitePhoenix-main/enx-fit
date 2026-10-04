@@ -1,13 +1,8 @@
-using enx_fit.Areas.Identity.Data;
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-#nullable disable
-
-using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
-using System.Threading.Tasks;
+using enx_fit.Areas.Identity.Data;
+using enx_fit.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -15,75 +10,36 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 
-namespace enx_fit.Areas.Identity.Pages.Account
+namespace enx_fit.Areas.Identity.Pages.Account;
+
+[AllowAnonymous]
+public class ResendEmailConfirmationModel(UserManager<ApplicationUser> users, IEmailSender sender, ILogger<ResendEmailConfirmationModel> logger) : PageModel
 {
-    [AllowAnonymous]
-    public class ResendEmailConfirmationModel : PageModel
+    [BindProperty] public InputModel Input { get; set; } = new();
+    public string ReturnUrl { get; private set; } = "/Dashboard";
+    public bool CanSendEmail => AccountEmailDelivery.IsAvailable(sender);
+    public string? StatusMessage { get; private set; }
+    public class InputModel
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IEmailSender _emailSender;
-
-        public ResendEmailConfirmationModel(UserManager<ApplicationUser> userManager, IEmailSender emailSender)
+        [Required(ErrorMessage = "Введите email.")]
+        [EmailAddress(ErrorMessage = "Проверьте адрес электронной почты.")]
+        public string Email { get; set; } = "";
+    }
+    public void OnGet(string? returnUrl = null) => ReturnUrl = AuthPageLinks.LocalReturnUrl(Url, returnUrl);
+    public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
+    {
+        ReturnUrl = AuthPageLinks.LocalReturnUrl(Url, returnUrl);
+        if (!CanSendEmail) ModelState.AddModelError(string.Empty, "Подтверждение email пока недоступно: отправка писем не подключена.");
+        if (!ModelState.IsValid) return Page();
+        var user = await users.FindByEmailAsync(Input.Email.Trim());
+        if (user is not null && !user.EmailConfirmed)
         {
-            _userManager = userManager;
-            _emailSender = emailSender;
+            var code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(await users.GenerateEmailConfirmationTokenAsync(user)));
+            var callback = Url.Page("/Account/ConfirmEmail", null, new { area = "Identity", userId = user.Id, code, returnUrl = ReturnUrl }, Request.Scheme)!;
+            await AccountEmailDelivery.TrySendAsync(sender, logger, user.Email!, "Подтвердите email в Enix Fit",
+                $"Подтвердите аккаунт: <a href='{HtmlEncoder.Default.Encode(callback)}'>подтвердить email</a>.", HttpContext.RequestAborted);
         }
-
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        [BindProperty]
-        public InputModel Input { get; set; }
-
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        public class InputModel
-        {
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Required]
-            [EmailAddress]
-            public string Email { get; set; }
-        }
-
-        public void OnGet()
-        {
-        }
-
-        public async Task<IActionResult> OnPostAsync()
-        {
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
-
-            var user = await _userManager.FindByEmailAsync(Input.Email);
-            if (user == null)
-            {
-                ModelState.AddModelError(string.Empty, "Verification email sent. Please check your email.");
-                return Page();
-            }
-
-            var userId = await _userManager.GetUserIdAsync(user);
-            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-            var callbackUrl = Url.Page(
-                "/Account/ConfirmEmail",
-                pageHandler: null,
-                values: new { userId = userId, code = code },
-                protocol: Request.Scheme);
-            await _emailSender.SendEmailAsync(
-                Input.Email,
-                "Confirm your email",
-                $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
-
-            ModelState.AddModelError(string.Empty, "Verification email sent. Please check your email.");
-            return Page();
-        }
+        StatusMessage = "Если этот адрес связан с неподтверждённым аккаунтом, проверьте почту. Для подтверждения нужна ссылка из письма.";
+        return Page();
     }
 }

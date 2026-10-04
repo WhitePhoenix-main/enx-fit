@@ -24,6 +24,8 @@ public class AddSetEntryInputModel
     [Display(Name = "Warm-up")]
     public bool IsWarmup { get; set; }
 
+    [Range(0, 1800)] public int? RestSeconds { get; set; }
+
     [StringLength(500)]
     public string? Notes { get; set; }
 }

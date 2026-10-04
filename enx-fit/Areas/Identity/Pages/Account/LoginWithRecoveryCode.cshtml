@@ -1,29 +1,16 @@
-﻿@page
+@page
 @model LoginWithRecoveryCodeModel
 @{
-    ViewData["Title"] = "Recovery code verification";
+    ViewData["Title"] = "Код восстановления";
+    ViewData["AuthDescription"] = "Используйте один из кодов, сохранённых при настройке двухэтапного входа.";
 }
-
-<h1>@ViewData["Title"]</h1>
-<hr />
-<p>
-    You have requested to log in with a recovery code. This login will not be remembered until you provide
-    an authenticator app code at log in or disable 2FA and log in again.
-</p>
-<div class="row">
-    <div class="col-md-4">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.RecoveryCode" class="form-control" autocomplete="off" placeholder="RecoveryCode" />
-                <label asp-for="Input.RecoveryCode" class="form-label"></label>
-                <span asp-validation-for="Input.RecoveryCode" class="text-danger"></span>
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-        </form>
-    </div>
-</div>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+<partial name="_AuthStepHeader" />
+<section class="auth-card auth-step-card">
+    <form method="post" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe" data-auth-form>
+        <div asp-validation-summary="ModelOnly" class="auth-errors" role="alert"></div>
+        <div class="auth-field"><label asp-for="Input.RecoveryCode">Код восстановления</label><div class="auth-input auth-code-input"><input asp-for="Input.RecoveryCode" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Введите сохранённый код" aria-describedby="code-error code-hint" required /><button class="auth-reveal" type="button" data-reveal="Input_RecoveryCode" aria-label="Показать код восстановления" aria-pressed="false" hidden><svg class="auth-icon" aria-hidden="true"><use href="#auth-eye-off" /></svg></button></div><span asp-validation-for="Input.RecoveryCode" id="code-error" class="auth-field-error"></span><p id="code-hint" class="auth-hint">Каждый код можно использовать один раз. Устройство не будет запомнено.</p></div>
+        <button type="submit" class="auth-submit"><span>Войти с кодом</span><svg class="auth-icon" aria-hidden="true"><use href="#auth-arrow" /></svg></button>
+        <p data-auth-feedback class="auth-form-feedback" role="status" aria-live="polite"></p>
+    </form>
+    <p class="auth-secondary-link"><a asp-page="./LoginWith2fa" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe">Вернуться к коду из приложения</a></p>
+</section>

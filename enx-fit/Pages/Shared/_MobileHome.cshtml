@@ -6,7 +6,7 @@
     var reference = Model.Reference;
     var ru = DashboardWorkoutsViewModel.Russian;
     var today = reference ? new DateOnly(2026, 10, 1) : d.Today;
-    var monday = today.AddDays(-((int)today.DayOfWeek + 6) % 7);
+    var monday = today.AddDays(-((int)today.DayOfWeek + 6) % 7 + Model.WeekOffset * 7);
     var active = Model.ActiveWorkout;
     var planned = d.NextWorkout?.Date == d.Today ? d.NextWorkout : null;
     var next = Model.NextProgramWorkout?.Date == d.Today ? Model.NextProgramWorkout : null;
@@ -24,12 +24,15 @@
         @if (Model.IsCoachView) { <a class="em-primary em-today-start" href="@PageUrl("/Dashboard/Plans")">План тренировок</a> }
         else if (!reference && active is not null) { <a class="em-primary em-today-start" asp-page="/Workouts/Details" asp-route-id="@active.Id">Продолжить тренировку</a> }
         else if (!reference && (planned is not null || next is not null)) { <form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="@(planned is not null ? "planned" : "program")"/><input type="hidden" name="plannedId" value="@planned?.Id"/><input type="hidden" name="programId" value="@Model.ActiveProgram?.Id"/><button class="em-primary em-today-start" type="submit">Начать тренировку</button></form> }
-        else { <button class="em-primary em-today-start" type="button" data-dialog="quick-workout-dialog">Начать тренировку</button> }
-        @if (!Model.IsCoachView) { <button class="em-today-quick" type="button" data-dialog="quick-workout-dialog"><reference-icon name="bolt" />Быстрая тренировка</button> }
+        else { <button class="em-primary em-today-start" type="button" data-dialog="quick-workout-dialog">@(Model.ShowOnboarding ? "Начать первую тренировку" : "Выбрать тренировку")</button> }
+        @if (!Model.IsCoachView && (active is not null || planned is not null || next is not null)) { <button class="em-today-quick" type="button" data-dialog="quick-workout-dialog"><reference-icon name="layers" />Другой способ тренировки</button> }
     </section>
+    @if (!Model.IsCoachView) { <partial name="_HomeWorkoutChoices" model="Model" /> }
+    <partial name="_TrainingSetupPrompt" model="Model" />
     <nav class="em-home-week" aria-label="План недели">
-        @for (var i = 0; i < 7; i++) { var date = monday.AddDays(i); var done = reference ? i is 0 or 2 : d.Completed.Any(w => w.Date == date); <a href="@PageUrl("/Dashboard/Plans")" aria-label="@date.ToString("d MMMM", ru)" aria-current="@(date == today ? "date" : null)"><span>@(new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" }[i])</span><strong class="@(done ? "is-done" : date == today ? "is-today" : "")">@if (done) { <reference-icon name="check" /> } else if (date >= today) { @date.Day } else { <span class="em-day-dot"></span> }</strong></a> }
+        @for (var i = 0; i < 7; i++) { var date = monday.AddDays(i); var done = reference ? i is 0 or 2 : d.Completed.Any(w => w.Date == date); <a href="@PageUrl("/Dashboard/Plans")" data-dialog="home-day-@date.ToString("yyyy-MM-dd")" aria-label="@date.ToString("d MMMM", ru)" aria-current="@(date == today ? "date" : null)"><span>@(new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" }[i])</span><strong class="@(done ? "is-done" : date == today ? "is-today" : "")">@if (done) { <reference-icon name="check" /> } else if (date >= today) { @date.Day } else { <span class="em-day-dot"></span> }</strong></a> }
     </nav>
+    <partial name="_HomeProgress" model="@(new enx_fit.Services.DashboardWidgetViewModel(Model, "home-progress-mobile"))" />
     <section class="em-card em-home-goal"><h2><reference-icon name="target" />Следующая цель</h2><reference-photo class="em-home-bench" image="overview" window="288 543 72 55" alt="Скамья для жима лёжа"/>
         <p>@(reference ? "Жим лёжа" : Model.NextGoalExercise is { } exercise ? ExercisePresentation.DisplayName(exercise.Exercise) : d.Settings.GoalTitle)</p>
         <strong>@(reference ? "60 → 62,5 кг" : goal is not null ? $"{N(goal.CurrentValue)} → {N(goal.SuggestedValue)} кг" : $"{d.ThisWeek.Count()} / {d.Settings.WeeklyWorkoutGoal} тренировок")</strong>

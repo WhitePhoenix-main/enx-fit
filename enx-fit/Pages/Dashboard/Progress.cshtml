@@ -3,8 +3,10 @@
 @{ Layout = "_DashboardReferenceLayout"; ViewData["Title"] = "Прогресс"; }
 @section Styles {
     <link rel="stylesheet" href="~/css/progress-reference.css" asp-append-version="true" />
+    @if (!Model.Reference) { <link rel="stylesheet" href="~/css/progress-workspace.css" asp-append-version="true" /> }
 }
-<partial name="_DashboardProgress" model="Model" />
+@if (Model.Reference) { <partial name="_DashboardProgress" model="Model" /> }
+else { <partial name="_ProgressWorkspace" model="Model" /> }
 @section Scripts {
     <script src="~/js/progress-reference.js" asp-append-version="true"></script>
 }

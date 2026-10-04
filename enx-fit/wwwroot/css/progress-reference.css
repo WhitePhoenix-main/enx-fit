@@ -34,6 +34,7 @@
 .epr-top-grid { display:grid; grid-template-columns:minmax(0,2.075fr) minmax(0,1fr); gap:13px; margin-bottom:12px; }
 .epr-top-grid.is-analytics { grid-template-columns:minmax(0,1fr); }
 .epr-strength { padding:17px 20px 14px 22px; min-height:309px; }
+.progress-point-result { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:12px; border-top:1px solid #294156; padding-top:12px; font-size:12px; color:#b5cbee; }.progress-point-result[hidden] { display:none; }.progress-point-result>a { display:flex; align-items:center; gap:7px; min-height:36px; color:#82a5ff; }.progress-point-result svg { width:16px; height:16px; }
 .epr-chart-heading { display:flex; align-items:center; gap:12px; height:38px; }
 .epr-chart-heading h2 { display:flex; align-items:center; gap:17px; min-width:0; flex:1; font-size:18px; line-height:26px; font-weight:400; white-space:nowrap; }
 .epr-chart-heading h2>svg { width:27px; height:27px; color:#9bbefa; flex-shrink:0; }

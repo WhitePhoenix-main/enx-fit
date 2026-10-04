@@ -4,6 +4,8 @@ using enx_fit.Security;
 using enx_fit.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Text.Json;
+using System.ComponentModel.DataAnnotations;
 
 namespace enx_fit.Pages.Workouts;
 
@@ -23,18 +25,56 @@ public class DetailsModel(
     public bool IsAdministrator => currentUser.IsAdministrator;
     public List<WorkoutTemplateOption> Templates { get; private set; } = [];
     public bool CanUpdateTemplate { get; private set; }
+    public WorkoutExecutionState Execution { get; private set; } = null!;
+    public string ViewerId => currentUser.Id;
     [BindProperty] public int ExerciseEntryId { get; set; }
+
+    public async Task<IActionResult> OnPostPickExercisesAsync(int id, string selectionJson, Guid? operationId, Guid? expectedRevision)
+    {
+        ModelState.Clear();
+        try
+        {
+            if (selectionJson is null || selectionJson.Length > 16000) return BadRequest(new { error = "Выберите упражнения из библиотеки." });
+            var picks = JsonSerializer.Deserialize<List<ExercisePickInput>>(selectionJson, WorkoutBuilderInput.JsonOptions);
+            if (picks is null || picks.Any(p => p is null)) return BadRequest(new { error = "Проверьте выбранные упражнения." });
+            await workoutService.PickExercisesAsync(id, picks, ExerciseEntryId, operationId, expectedRevision);
+            return await LoadPageAsync(id);
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (WorkoutConflictException ex) { return StatusCode(409, new { error = ex.Message }); }
+        catch (JsonException) { return BadRequest(new { error = "Проверьте параметры упражнений." }); }
+        catch (ValidationException) { return BadRequest(new { error = "Подходы: 1–20, повторы: 1–1000, вес: 0–2000 кг, отдых: 0–900 секунд." }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
 
     public Task<IActionResult> OnPostLoadTemplateAsync(int id, int templateId) => MutateAsync(id, () => workoutService.LoadTemplateAsync(id, templateId));
     public Task<IActionResult> OnPostExerciseAsync(int id, string action) => MutateAsync(id, () => workoutService.ChangeExerciseAsync(id, ExerciseEntryId, action));
-    public Task<IActionResult> OnPostTemplateDecisionAsync(int id, string choice, string? templateName) => MutateAsync(id, () => workoutService.DecideTemplateAsync(id, choice, templateName));
+    public Task<IActionResult> OnPostTemplateDecisionAsync(int id, string choice, string? templateName, Guid? operationId) => MutateAsync(id, async () =>
+    {
+        await workoutService.DecideTemplateAsync(id, choice, templateName, operationId);
+        TempData["StatusMessage"] = choice == "new" ? "Шаблон сохранён. Он доступен в выборе следующей тренировки." : choice == "update" ? "Шаблон обновлён." : "Результаты сохранены. Шаблон оставлен без изменений.";
+    });
     public Task<IActionResult> OnPostStartAsync(int id) => MutateAsync(id, async () =>
     {
         var active = await workoutService.StartAsync("planned", plannedId: id);
         if (active != id) TempData["ActiveWorkoutId"] = active;
     });
 
-    public async Task<IActionResult> OnPostSetAsync(int id, int setId, bool completed, bool remove)
+    public async Task<IActionResult> OnGetStateAsync(int id)
+    {
+        Response.Headers.CacheControl = "no-store";
+        try { return new JsonResult(await workoutService.ExecutionStateAsync(id)); }
+        catch (KeyNotFoundException) { return NotFound(); }
+    }
+    public async Task<IActionResult> OnPostControlAsync(int id, string action, Guid? operationId, Guid? expectedRevision, int seconds, DateTime? performedAtUtc)
+    {
+        try { return new JsonResult(await workoutService.ControlAsync(id, action, operationId, expectedRevision, seconds, performedAtUtc)); }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (WorkoutConflictException ex) { return StatusCode(409, new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
+    public async Task<IActionResult> OnPostSetAsync(int id, int setId, bool completed, bool remove,
+        Guid? operationId, Guid? expectedRevision, DateTime? performedAtUtc, bool skipped)
     {
         ValidateOnly(nameof(AddSet));
         var ajax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
@@ -42,10 +82,11 @@ public class DetailsModel(
             return ajax ? BadRequest(new { error = "Проверьте вес, повторения и RIR." }) : await LoadPageAsync(id);
         try
         {
-            await workoutService.ChangeSetAsync(id, setId, AddSet, completed, remove);
-            return ajax ? new JsonResult(new { saved = true }) : RedirectToPage(new { id });
+            var state = await workoutService.ChangeSetAsync(id, setId, AddSet, completed, remove, operationId, expectedRevision, performedAtUtc, skipped);
+            return ajax ? new JsonResult(state) : RedirectToPage(new { id });
         }
         catch (KeyNotFoundException) { return NotFound(); }
+        catch (WorkoutConflictException ex) { return StatusCode(409, new { error = ex.Message }); }
         catch (InvalidOperationException ex)
         {
             if (ajax) return BadRequest(new { error = ex.Message });
@@ -78,10 +119,12 @@ public class DetailsModel(
     public async Task<IActionResult> OnGetAsync(int id) =>
         await LoadPageAsync(id);
 
-    public async Task<IActionResult> OnPostCompleteAsync(int id)
+    public async Task<IActionResult> OnPostCompleteAsync(int id, Guid? operationId, Guid? expectedRevision)
     {
         ModelState.Clear();
-        var result = await workoutService.CompleteAsync(id);
+        CompleteWorkoutResult result;
+        try { result = await workoutService.CompleteAsync(id, operationId, expectedRevision); }
+        catch (WorkoutConflictException ex) { ModelState.AddModelError("", ex.Message); return await LoadPageAsync(id); }
         if (result == CompleteWorkoutResult.NotFound) return NotFound();
         if (result == CompleteWorkoutResult.Empty)
         {
@@ -99,7 +142,9 @@ public class DetailsModel(
         if (ExerciseEntryId != 0)
             return await MutateAsync(id, () => workoutService.ChangeExerciseAsync(id, ExerciseEntryId, "replace", AddExercise.ExerciseId));
 
-        var result = await workoutService.AddExerciseAsync(id, AddExercise.ExerciseId);
+        AddWorkoutExerciseResult result;
+        try { result = await workoutService.AddExerciseAsync(id, AddExercise.ExerciseId); }
+        catch (WorkoutConflictException ex) { ModelState.AddModelError("", ex.Message); return await LoadPageAsync(id); }
 
         if (result == AddWorkoutExerciseResult.WorkoutNotFound)
         {
@@ -122,7 +167,7 @@ public class DetailsModel(
         return RedirectToPage(new { id });
     }
 
-    public async Task<IActionResult> OnPostAddSetAsync(int id)
+    public async Task<IActionResult> OnPostAddSetAsync(int id, bool? completed)
     {
         ValidateOnly(nameof(AddSet));
 
@@ -131,7 +176,10 @@ public class DetailsModel(
             return await LoadPageAsync(id);
         }
 
-        if (await workoutService.AddSetAsync(id, AddSet) == AddSetEntryResult.WorkoutExerciseNotFound)
+        AddSetEntryResult result;
+        try { result = await workoutService.AddSetAsync(id, AddSet, completed ?? true); }
+        catch (WorkoutConflictException ex) { ModelState.AddModelError("", ex.Message); return await LoadPageAsync(id); }
+        if (result == AddSetEntryResult.WorkoutExerciseNotFound)
         {
             return NotFound();
         }
@@ -156,6 +204,7 @@ public class DetailsModel(
         }
 
         Workout = workout;
+        Execution = WorkoutService.State(workout);
         Templates = await workoutService.TemplatesAsync();
         CanUpdateTemplate = await workoutService.CanUpdateTemplateAsync(workout);
         Response.Headers.CacheControl = "no-cache, no-store";
@@ -168,6 +217,7 @@ public class DetailsModel(
         Library = new ExerciseLibraryModel
         {
             Id = "workout-library", ViewerId = currentUser.Id,
+            ContextName = workout.Title ?? "Текущая тренировка",
             Exercises = await exerciseService.GetAllAsync(null),
             SelectedIds = workout.WorkoutExercises.Select(e => e.ExerciseId).ToArray(),
             RecentIds = await exerciseService.GetRecentIdsAsync(workout.UserId ?? string.Empty)

@@ -1,0 +1,32 @@
+@model enx_fit.Services.DashboardWidgetViewModel
+@using enx_fit.ViewModels
+@using System.Globalization
+@{
+    var dashboard = Model.Dashboard;
+    var vm = new HomeProgressViewModel(dashboard);
+    var prefix = Model.WidgetId == "home-progress-mobile" ? "mobile" : "desktop";
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string N(decimal value) => value.ToString("0.##", ru);
+}
+<section class="ef-card em-card home-progress" id="home-progress-@prefix" data-home-progress>
+    <header><h2><reference-icon name="bars" />Мой прогресс</h2><a asp-page="/Dashboard/Progress" asp-route-ClientId="@dashboard.ClientId" asp-route-ProgressExercise="@vm.ExerciseId" asp-route-Reference="@(dashboard.Reference ? true : (bool?)null)" aria-label="Весь прогресс"><reference-icon name="chevron" /></a></header>
+    @if (vm.Exercises.Count > 0)
+    {
+        <form method="get" action="@Url.Page("/Dashboard")#home-progress-@prefix" class="home-progress-controls">
+            <input type="hidden" name="ClientId" value="@dashboard.ClientId" /><input type="hidden" name="Reference" value="@(dashboard.Reference ? "true" : null)" /><input type="hidden" name="Until" value="@dashboard.Until?.ToString("yyyy-MM-dd")" />
+            <label><span class="sr-only">Упражнение для графика</span><select name="ProgressExercise" data-home-select>@foreach (var exercise in vm.Exercises) { <option value="@exercise.Id" selected="@(vm.ExerciseId == exercise.Id)">@exercise.Name</option> }</select></label>
+            <label><span class="sr-only">Период графика</span><select name="ChartWeeks" data-home-select>@foreach (var weeks in new[] { 2, 4, 6 }) { <option value="@weeks" selected="@(dashboard.ChartWeeks == weeks)">@weeks @(weeks == 6 ? "недель" : "недели")</option> }</select></label>
+            <noscript><button class="button secondary">Показать</button></noscript>
+        </form>
+    }
+    @if (vm.Last is { } last)
+    {
+        <div class="home-progress-result"><div><strong>@N(last.Weight)<small> кг × @last.Reps</small></strong><span>Последний результат · @last.Date.ToString("d MMMM", ru)</span></div>@if (vm.Change is { } change) { <span class="home-progress-change">@(change > 0 ? "+" : "")@N(change) кг<small>за период</small></span> }</div>
+        <partial name="_ProgressChart" model="@(new ProgressChart("home-" + prefix, vm.ExerciseName + ": рабочий вес, кг", vm.Results.Select(r => new ProgressPoint(r.Date, r.Weight, r.WorkoutId > 0 ? r.WorkoutId : null, r.Reps)).ToList()))" />
+        <div class="home-point-detail" data-home-point-detail><span>Нажмите на точку: вес, повторения и занятие</span><a data-home-point-link hidden>Открыть тренировку <reference-icon name="arrow" /></a></div>
+    }
+    else
+    {
+        <div class="home-progress-empty"><reference-icon name="bars" /><strong>@(vm.Exercises.Count == 0 ? "Ваш первый результат впереди" : "За этот период результатов нет")</strong><p>@(vm.Exercises.Count == 0 ? "После выполненных рабочих подходов с весом здесь появится график. Начните свободно или выберите шаблон." : "Выберите другой период или упражнение.")</p></div>
+    }
+</section>

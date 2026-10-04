@@ -38,6 +38,7 @@
         }
     </div>
 </div>
+@if (!Model.IsCoachView) { <div class="ew-entry-actions"><a class="ef-primary" asp-page="/Workouts/Record"><reference-icon name="document" />Записать прошедшую</a><a asp-page="/Workouts/Create">Создать план тренировки</a></div> }
 <div class="ew-top-grid">
     <section class="ef-card ef-workout ew-next" id="next-workout" data-widget-id="next">
         <div class="ew-hero-photo" aria-hidden="true"></div>
@@ -73,7 +74,7 @@
                 var showMarker = day.Status != "none" || reference && day.Date.Month == 10 && new[] { 4, 5, 7, 9, 14, 15 }.Contains(day.Date.Day);
                 var label = $"{day.Date.ToString("d MMMM", ru)}: {(day.Status == "completed" ? "Выполнена" : day.Status == "planned" ? "Запланирована" : "Нет тренировки")}";
                 var destination = !reference && day.Status == "planned" && day.PlannedWorkoutId is { } planId ? Url.Page("/Workouts/Details", new { id = planId })
-                    : !reference && day.Status == "planned" && day.ProgramId is { } programId ? Url.Page("/Programs/Details", new { id = programId, Tab = "workouts" })
+                    : !reference && day.Status == "planned" && day.ProgramId is { } programId ? Url.Page("/Programs/Details", new { id = programId, Tab = "schedule", Week = day.Date.ToString("yyyy-MM-dd"), Day = day.Date.ToString("yyyy-MM-dd") })
                     : PageUrl(selected: day.WorkoutId, date: day.Date);
                 <a class="ew-calendar-day @(day.Date.Month != overview.Month.Month ? "outside" : "") @(day.Date == selectedDay ? "is-selected" : "")" href="@destination" aria-label="@label" aria-current="@(day.Date == selectedDay ? "date" : null)" title="@day.Title"><time datetime="@day.Date.ToString("yyyy-MM-dd")">@day.Date.Day</time><i class="ew-marker @day.Status @(!showMarker ? "no-marker" : "")" aria-hidden="true"></i></a>
             }
@@ -99,7 +100,7 @@
                     <time datetime="@w.Date.ToString("yyyy-MM-dd")"><strong>@w.Date.Day</strong><span>@w.Date.ToString("MMMM", ru)</span></time>
                     <span class="ew-workout-name"><span class="ew-thumbnail ew-photo-@w.Photo" aria-hidden="true"></span><strong>@w.Title</strong></span>
                     <span class="ew-exercise-count"><span class="ew-mobile-label">Упражнения: </span>@w.Exercises</span><span class="ew-set-count"><span class="ew-mobile-label">Подходы: </span>@w.Sets</span><span class="ew-volume">@N(w.Volume) кг</span>
-                    <span class="ef-saved"><reference-icon name="check" />Сохранена</span><reference-icon name="chevron" />
+                    <span class="ef-saved"><reference-icon name="check" />@(w.IsManual ? "Вручную" : "Сохранена")</span><reference-icon name="chevron" />
                 </a>
             }
         </div>

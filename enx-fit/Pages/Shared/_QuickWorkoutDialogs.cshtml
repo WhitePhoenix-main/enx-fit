@@ -2,16 +2,11 @@
 @if (!Model.IsCoachView)
 {
 <dialog class="app-dialog quick-dialog" id="quick-workout-dialog" aria-labelledby="quick-title">
-    <div class="dialog-heading"><h2 id="quick-title">Начать тренировку</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><admin-icon name="close" /></button></div>
+    <div class="dialog-heading"><h2 id="quick-title">Как хотите тренироваться?</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><admin-icon name="close" /></button></div>
     <div class="quick-options">
-        <form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="empty" /><button class="quick-option"><admin-icon name="plus" /><span><strong>Пустая тренировка</strong><small>Начните с чистого листа и добавляйте упражнения по ходу занятия</small></span><admin-icon name="arrow" /></button></form>
-        <button class="quick-option" type="button" data-dialog="template-start-dialog"><admin-icon name="layers" /><span><strong>Из шаблона</strong><small>Загрузите готовый шаблон и изменяйте его во время тренировки</small></span><admin-icon name="arrow" /></button>
-        <form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="previous" /><button class="quick-option" disabled="@(!Model.Data.Completed.Any())"><admin-icon name="history" /><span><strong>Повторить последнюю</strong><small>Возьмите последнюю завершённую тренировку как основу</small></span><admin-icon name="arrow" /></button></form>
-        @if (Model.Data.NextWorkout?.Date == Model.Data.Today || Model.NextProgramWorkout?.Date == Model.Data.Today)
-        {
-            var planned = Model.Data.NextWorkout?.Date == Model.Data.Today ? Model.Data.NextWorkout : null;
-            <form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="@(planned is not null ? "planned" : "program")" /><input type="hidden" name="plannedId" value="@planned?.Id" /><input type="hidden" name="programId" value="@Model.ActiveProgram?.Id" /><button class="quick-option"><admin-icon name="calendar" /><span><strong>По плану</strong><small>@(planned?.Title ?? Model.NextProgramWorkout?.Workout.Name)</small></span><admin-icon name="arrow" /></button></form>
-        }
+        <a class="quick-option" asp-page="/Workouts/Record"><admin-icon name="plus" /><span><strong>Записать тренировку</strong><small>Внести уже выполненное занятие без запуска таймера</small></span><admin-icon name="arrow" /></a>
+        <button class="quick-option" type="button" data-dialog="template-start-dialog"><admin-icon name="layers" /><span><strong>Заниматься по шаблону</strong><small>Начать с готовым составом упражнений и подходов</small></span><admin-icon name="arrow" /></button>
+        <form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="empty" /><button class="quick-option"><admin-icon name="bolt" /><span><strong>Добавлять упражнения на лету</strong><small>Начать свободно и собирать занятие по ходу</small></span><admin-icon name="arrow" /></button></form>
     </div>
 </dialog>
 <dialog class="app-dialog quick-dialog" id="template-start-dialog" aria-labelledby="template-start-title">
@@ -21,6 +16,6 @@
     {
         <form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="template" /><input type="hidden" name="templateId" value="@template.Id" /><button class="quick-option"><admin-icon name="workout" /><span><strong>@template.Name</strong><small>@template.ProgramName · @template.Exercises упражнений</small></span><admin-icon name="arrow" /></button></form>
     }</div>
-    @if (Model.Templates.Count == 0) { <p class="muted">Шаблонов пока нет. Добавьте тренировку в программу.</p><a class="button secondary" asp-page="/Programs/Index">Мои программы</a> }
+    @if (Model.Templates.Count == 0) { <p class="muted">Шаблонов пока нет. Выберите готовую программу или сохраните свободную тренировку после выполнения.</p><a class="button secondary" asp-page="/Programs/Index" asp-route-Tab="templates">Готовые программы</a> }
 </dialog>
 }

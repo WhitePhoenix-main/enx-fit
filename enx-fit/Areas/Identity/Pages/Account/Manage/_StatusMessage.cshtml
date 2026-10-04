@@ -1,10 +1,5 @@
-﻿@model string
-
-@if (!String.IsNullOrEmpty(Model))
-{
-    var statusMessageClass = Model.StartsWith("Error") ? "danger" : "success";
-    <div class="alert alert-@statusMessageClass alert-dismissible" role="alert">
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        @Model
-    </div>
+@model string
+@if (!string.IsNullOrEmpty(Model)) {
+    var error = Model.StartsWith("Error", StringComparison.OrdinalIgnoreCase) || Model.StartsWith("Ошибка", StringComparison.OrdinalIgnoreCase);
+    <div class="account-status @(error ? "is-error" : "")" role="@(error ? "alert" : "status")"><reference-icon name="@(error ? "shield" : "check-circle")" /><span>@Model</span></div>
 }

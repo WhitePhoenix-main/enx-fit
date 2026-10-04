@@ -54,6 +54,8 @@ public sealed class DashboardReferenceIconTagHelper : TagHelper
         , ["crown"] = "<path d='m3 6 5 5 4-8 4 8 5-5-2 12H5Zm2 15h14'/><circle cx='3' cy='5' r='1'/><circle cx='12' cy='2' r='1'/><circle cx='21' cy='5' r='1'/>"
         , ["download"] = "<path d='M12 2v14m-6-6 6 6 6-6M3 16v6h18v-6'/>"
         , ["card"] = "<rect x='2' y='4' width='20' height='16' rx='2'/><path d='M2 9h20M6 15h4'/>"
+        , ["mail"] = "<rect x='2' y='4' width='20' height='16' rx='2'/><path d='m3 5 9 8 9-8'/>"
+        , ["lock"] = "<rect x='4' y='10' width='16' height='12' rx='2'/><path d='M7 10V6a5 5 0 0 1 10 0v4M12 15v3'/>"
     };
 
     public override void Process(TagHelperContext context, TagHelperOutput output)

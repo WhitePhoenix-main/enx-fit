@@ -90,7 +90,7 @@ public class CreateModel(
         var exercises = await exerciseService.GetAllAsync(null);
         var owner = currentUser.ResolveOwnerId(Input.OwnerId);
         var history = await db.WorkoutSessions.AsNoTracking().AsSplitQuery()
-            .Where(w => w.UserId == owner && w.CompletedAtUtc != null)
+            .Where(w => w.UserId == owner).Where(WorkoutStates.Completed)
             .Include(w => w.WorkoutExercises).ThenInclude(e => e.SetEntries)
             .OrderByDescending(w => w.Date).ThenByDescending(w => w.Id).Take(50).ToListAsync();
         var last = history.FirstOrDefault();

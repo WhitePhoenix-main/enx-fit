@@ -11,6 +11,8 @@ public sealed class CurrentUser(IHttpContextAccessor httpContextAccessor)
         ?? throw new InvalidOperationException("The current request is not authenticated.");
 
     public UserRole? Role => Principal.GetUserRole();
+    public int UtcOffsetMinutes => int.TryParse(httpContextAccessor.HttpContext?.Request.Cookies["enix-utc-offset"], out var offset) && offset is >= -840 and <= 840 ? offset : 0;
+    public DateOnly LocalToday => DateOnly.FromDateTime(DateTime.UtcNow.AddMinutes(UtcOffsetMinutes));
 
     public bool HasMinimumRole(UserRole minimum) => Principal.HasMinimumRole(minimum);
 

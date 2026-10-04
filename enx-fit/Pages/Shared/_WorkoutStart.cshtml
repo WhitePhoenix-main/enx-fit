@@ -23,7 +23,7 @@ else
     }
     else if (active is not null)
     {
-        <p class="active-session-meta"><span class="live-dot"></span><span data-session-clock="@DateTime.SpecifyKind(active.StartedAtUtc ?? active.CreatedAtUtc, DateTimeKind.Utc).ToString("O")">@((int)(DateTime.UtcNow - (active.StartedAtUtc ?? active.CreatedAtUtc)).TotalMinutes) мин</span> · @active.WorkoutExercises.Count упражнений · сохранено</p>
+        <p class="active-session-meta"><span class="live-dot"></span><span data-session-clock="@DateTime.SpecifyKind(active.StartedAtUtc ?? active.CreatedAtUtc, DateTimeKind.Utc).ToString("O")">@(enx_fit.Services.WorkoutStates.ElapsedSeconds(active, DateTime.UtcNow) / 60) мин</span> · @active.WorkoutExercises.Count упражнений · сохранено</p>
         <a class="button full" asp-page="/Workouts/Details" asp-route-id="@active.Id"><admin-icon name="play" />Продолжить тренировку <admin-icon name="arrow" /></a>
     }
     else

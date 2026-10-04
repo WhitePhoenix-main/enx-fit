@@ -10,4 +10,6 @@ public sealed class ExerciseLibraryModel
     public IReadOnlyCollection<int> SelectedIds { get; init; } = [];
     public IReadOnlyCollection<int> RecentIds { get; init; } = [];
     public bool ForBuilder { get; init; }
+    public bool ForSelection { get; init; }
+    public string ContextName { get; init; } = "Текущая тренировка";
 }

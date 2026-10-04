@@ -25,6 +25,7 @@
     var viewer = User.Identity?.Name?.Split('@')[0] is { Length: > 0 } name ? name : "Спортсмен";
     var isTrainer = User.GetUserRole() == UserRole.Trainer || User.HasMinimumRole(UserRole.Administrator);
     var clientsActive = IsActive("/Trainer/Clients");
+    var mobileNavigation = enx_fit.ViewModels.MobileAppNavigationViewModel.Create(ViewData, User, activePage);
 }
 <!DOCTYPE html>
 <html lang="ru">
@@ -40,9 +41,11 @@
     <link rel="stylesheet" href="~/css/dashboard-widgets.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/dashboard-refresh.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/dashboard-design.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/workout-shared.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
+    <link rel="stylesheet" href="~/css/mobile-shell.css" asp-append-version="true" />
 </head>
-<body class="fitness-app @(clientId is not null ? "coach-mode" : "personal-mode") @(activePage == "/Dashboard" ? "dashboard-home" : "")">
+<body class="fitness-app em-app-shell @(clientId is not null ? "coach-mode" : "personal-mode") @(activePage == "/Dashboard" ? "dashboard-home" : "")">
 <a class="skip-link" href="#main-content">Перейти к содержимому</a>
 <aside class="sidebar">
     <a class="brand" asp-page="/Dashboard">
@@ -89,7 +92,8 @@
     </div>
 </aside>
 <div class="app-body">
-    <header class="topbar">
+    <partial name="_MobileAppShell" model="mobileNavigation" /><partial name="_WorkoutResume" model="mobileNavigation" />
+    <header class="topbar em-desktop-header">
         <a class="brand mobile-brand" asp-page="/Dashboard">
 <span class="brand-mark">
 <i>
@@ -128,21 +132,12 @@
     </header>
     <main id="main-content" tabindex="-1">@RenderBody()</main>
 </div>
-<nav class="bottom-nav" aria-label="Мобильная навигация">
-    <a class="@(IsActive("/Dashboard") ? "active" : "")" href="@dashboardUrl" aria-current="@(IsActive("/Dashboard") ? "page" : null)">
-<admin-icon name="home" />
-<span>Главная</span>
-</a>
-    <a class="@(IsActive("/Dashboard/Workouts") ? "active" : "")" href="@PageUrl("/Dashboard/Workouts")" aria-current="@(IsActive("/Dashboard/Workouts") ? "page" : null)">
-<admin-icon name="workout" />
-<span>Тренировки</span>
-</a>
+<nav class="bottom-nav em-tablet-nav" aria-label="Навигация на планшете">
+    <a class="@(IsActive("/Dashboard") ? "active" : "")" href="@dashboardUrl" aria-current="@(IsActive("/Dashboard") ? "page" : null)"><admin-icon name="home" /><span>Главная</span></a>
+    <a class="@(IsActive("/Dashboard/Workouts") ? "active" : "")" href="@PageUrl("/Dashboard/Workouts")" aria-current="@(IsActive("/Dashboard/Workouts") ? "page" : null)"><admin-icon name="workout" /><span>Тренировки</span></a>
     <a class="@(IsActive("/Programs/Index") ? "active" : "")" href="@PageUrl("/Programs/Index")" aria-current="@(IsActive("/Programs/Index") ? "page" : null)"><admin-icon name="calendar" /><span>Программы</span></a>
     <a class="@(IsActive("/Dashboard/Progress") ? "active" : "")" href="@PageUrl("/Dashboard/Progress")" aria-current="@(IsActive("/Dashboard/Progress") ? "page" : null)"><admin-icon name="bars" /><span>Прогресс</span></a>
-    <button type="button" data-dialog="navigation-dialog" class="@(IsActive("/Dashboard/Habits") || clientsActive ? "active" : "")" aria-label="Все разделы" aria-haspopup="dialog">
-<admin-icon name="menu" />
-<span>Ещё</span>
-</button>
+    <button type="button" data-dialog="navigation-dialog" class="@(IsActive("/Dashboard/Habits") || clientsActive ? "active" : "")" aria-label="Все разделы" aria-haspopup="dialog"><admin-icon name="menu" /><span>Ещё</span></button>
 </nav>
 <dialog id="navigation-dialog" class="app-dialog">
     <div class="dialog-heading">
@@ -198,9 +193,11 @@
 <p>Новых уведомлений пока нет.</p>
 </div>
 </dialog>
-<script src="~/js/dashboard.js" asp-append-version="true">
+<script src="~/js/workout-time.js" asp-append-version="true"></script>
+    <script src="~/js/dashboard.js" asp-append-version="true">
 </script>
 @await RenderSectionAsync("Scripts", required: false)
 <script src="~/js/dashboard-widgets.js" asp-append-version="true"></script>
+<script src="~/js/mobile-shell.js" asp-append-version="true"></script>
 </body>
 </html>

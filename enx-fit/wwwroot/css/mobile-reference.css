@@ -1,5 +1,5 @@
 /* Mobile is a separate composition. Photo SVGs expose only reference photographs. */
-.ef-mobile-screen,.em-statusbar,.em-avatar-link { display:none; }
+.ef-mobile-screen { display:none; }
 .em-card { position:relative; border:1px solid #24394b; border-radius:12px; background:linear-gradient(115deg,#101e2a,#0c1923); }
 .em-primary,.em-outline { display:flex; align-items:center; justify-content:center; gap:10px; min-height:42px; border:1px solid #6586ff; border-radius:10px; padding:9px 12px; color:#fff!important; background:linear-gradient(115deg,#426cff,#3555ff); font-weight:600; text-align:center; cursor:pointer; }
 .em-primary { box-shadow:inset 0 1px 1px #ffffff25; }
@@ -78,50 +78,15 @@
 .em-trainer-info small { display:block; margin:3px 0 0; font-size:10px; text-align:left!important; max-width:none!important; color:#aac7ec; }
 .em-export-actions { display:flex; gap:12px; margin-top:20px; }
 @media (max-width:767px) {
-  .dashboard-home { min-width:320px; font-family:Arial,sans-serif; font-size:14px; background:radial-gradient(ellipse at 55% 30%,#10233333,transparent 65%),#07131d; }
+  .dashboard-home { min-width:0; font-family:Arial,sans-serif; font-size:14px; background:radial-gradient(ellipse at 55% 30%,#10233333,transparent 65%),#07131d; }
   .dashboard-home * { box-sizing:border-box; }
   .ef-desktop-screen { display:none; }
   .ef-mobile-screen { display:block; }
   .ef-sidebar { display:none; }
   .ef-app { margin:0; }
   .dashboard-home #main-content.ef-main { max-width:560px; width:100%; padding:18px 13px calc(88px + env(safe-area-inset-bottom)); margin:auto; }
-  .ef-topbar { max-width:534px; height:59px; margin:0 auto; padding:0 0 8px; border-bottom:1px solid #24394a; gap:13px; width:calc(100% - 26px); }
-  .ef-mobile-brand { display:flex; font-size:24px; gap:10px; letter-spacing:-1px; line-height:31px; }
-  .ef-mobile-brand .ef-brand-mark { flex-shrink:0; }
-  .ef-search { width:43px; height:43px; border-radius:10px; margin-left:auto; padding:0; background:linear-gradient(120deg,#0e1b27,#132333); color:#abc8f1!important; }
-  .ef-search svg { width:23px; height:23px; }
-  .ef-search span,.ef-account,.ef-notification { display:none; }
-  .ef-topbar-actions { gap:0; }
-  .em-avatar-link { position:relative; display:block; width:43px; height:43px; }
-  .em-avatar-link>svg { width:43px; height:43px; border-radius:50%; }
-  .em-avatar-plan { position:absolute; right:-3px; bottom:-2px; padding:0 5px; border-radius:7px; background:linear-gradient(115deg,#416eff,#354dff); font-size:11px; line-height:17px; }
-  .em-home-page .em-avatar-plan,.em-library-page .em-avatar-plan { display:none; }
-  .em-statusbar { display:flex; align-items:center; justify-content:space-between; height:29px; max-width:520px; margin:auto; padding:3px 17px 0; font:600 16px/1 Arial,sans-serif; }
-  .em-statusbar>div { display:flex; align-items:center; gap:6px; }
-  .em-statusbar svg { width:19px; height:15px; fill:currentColor; }
-  .em-statusbar svg:nth-child(2) { width:21px; }
-  .em-statusbar svg:last-child { width:25px; }
-  .em-statusbar svg:nth-child(2) { fill:none; }
-  .ef-bottom-nav { position:fixed; z-index:50; inset:auto 0 0; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); width:100%; min-height:66px; padding:8px 6px calc(8px + env(safe-area-inset-bottom)); border-top:1px solid #294154; background:#08151ff5; backdrop-filter:blur(16px); }
-  .ef-bottom-nav>a,.ef-bottom-nav>button { min-width:0; gap:6px; padding:0; font-size:11px; line-height:16px; font-weight:500; color:#adc8ed; border:0; background:none; }
-  .ef-bottom-nav svg { width:25px; height:25px; }
-  .ef-bottom-nav .active { color:#5374ff; }
-  .ef-bottom-nav .active svg { filter:drop-shadow(0 0 4px #4264ff25); }
-  .em-reference.ef-programs-page .ef-bottom-nav { padding-bottom:22px; }
-  .em-reference.ef-programs-page .ef-bottom-nav::after { content:""; position:absolute; bottom:8px; left:34%; width:32%; height:4px; border-radius:3px; background:#fff; }
   .app-dialog { max-width:calc(100vw - 24px); max-height:calc(100dvh - 36px); overflow:auto; border-radius:16px; }
   .app-dialog .dialog-heading h2 { font-size:20px; }
-  .em-home-page .ef-topbar { border:0; height:50px; padding:0; }
-  .em-home-page .em-statusbar,.em-profile-page .em-statusbar { height:39px; }
-  .em-home-page .ef-search,.em-profile-page .ef-search { display:none; }
-  .em-home-page .ef-topbar-actions,.em-profile-page .ef-topbar-actions { margin-left:auto; }
-  .em-home-page .ef-mobile-brand,.em-profile-page .ef-mobile-brand { font-size:22px; }
-  .em-home-page .ef-notification { display:grid; width:28px; height:30px; border:0; padding:0; margin-right:18px; }
-  .em-home-page .ef-notification svg { width:23px; height:23px; }
-  .em-home-page .em-avatar-link { order:2; width:36px; height:36px; border-radius:50%; background:url('../images/mobile/overview.png') -341px -130px / 1632px 963px no-repeat; }
-  .em-home-page .em-avatar-link>svg { width:36px; height:36px; visibility:hidden; }
-  .em-profile-page .ef-topbar { border:0; height:52px; }
-  .em-profile-page .em-avatar-link { display:none; }
   .em-home-page #main-content.ef-main { padding-top:10px; }
   .em-greeting { margin:0 4px 13px; }
   .em-greeting h1 { font-size:25px; line-height:32px; letter-spacing:-.5px; }
@@ -303,7 +268,6 @@
   .em-record>svg:last-child { margin-left:auto; width:18px; }
   .em-record strong { font-size:25px; }
   .em-record p { color:#aecbf2; }
-  .em-library-page .ef-topbar { border:0; }
   .em-library-page #main-content.ef-main { padding-top:0; }
   .em-library .em-page-heading { margin-bottom:7px; }
   .em-library .em-page-heading h1 { font-size:31px; }
@@ -373,3 +337,4 @@
   .em-profile-person h1 { font-size:17px; }
   .em-settings-group>a,.em-settings-group>button { gap:12px; padding-inline:12px; font-size:12px; }
 }
+.em-manual-actions { display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:center; margin:16px 0; }.em-manual-actions a { min-height:44px; display:flex; align-items:center; justify-content:center; font-size:12px; text-align:center; }.em-manual-actions>a:last-child { color:#abc3e7; border:1px solid #243749; border-radius:10px; }.ew-entry-actions { display:flex; gap:20px; align-items:center; margin:0 0 20px; }.ew-entry-actions a { font-size:12px; }.ew-entry-actions .ef-primary { padding:12px 18px; display:inline-flex; gap:8px; align-items:center; }.ew-entry-actions svg { width:17px; height:17px; }

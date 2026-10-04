@@ -5,10 +5,11 @@ using enx_fit.Services;
 
 namespace enx_fit.ViewModels;
 
-public sealed record ProgressPoint(DateOnly Date, decimal Value);
+public sealed record ProgressPoint(DateOnly Date, decimal Value, int? WorkoutId = null, int? Reps = null);
 public sealed record ProgressExerciseOption(int Id, string Name);
 public sealed record ProgressRecord(int ExerciseId, string Name, decimal Weight, DateOnly Date, int WorkoutId, string Photo);
-public sealed record ProgressChart(string Id, string Label, IReadOnlyList<ProgressPoint> Points, bool Compact = false, bool DecimalLabels = false, (decimal Min, decimal Max, decimal Step)? FixedScale = null)
+public sealed record ProgressWeek(DateOnly Since, DateOnly Until, int Count);
+public sealed record ProgressChart(string Id, string Label, IReadOnlyList<ProgressPoint> Points, bool Compact = false, bool DecimalLabels = false, (decimal Min, decimal Max, decimal Step)? FixedScale = null, DateOnly? Since = null, DateOnly? Until = null, bool DayHistory = false)
 {
     public (decimal Min, decimal Max, decimal Step) Scale
     {
@@ -46,6 +47,8 @@ public sealed class DashboardProgressViewModel
     public int NewRecords { get; }
     public int WorkoutCount { get; }
     public decimal TotalVolume { get; }
+    public IReadOnlyList<ProgressWeek> Weeks { get; } = [];
+    public DateOnly ChartSince { get; }
 
     public DashboardProgressViewModel(DashboardModel model)
     {
@@ -53,6 +56,7 @@ public sealed class DashboardProgressViewModel
         Since = model.Reference && model.ProgressWeeks == 6 && Until == new DateOnly(2026, 10, 2)
             ? new(2026, 8, 20) : Until.AddDays(1 - model.ProgressWeeks * 7);
         var chartSince = Until.AddDays(1 - model.ChartWeeks * 7);
+        ChartSince = chartSince;
         if (model.Reference)
         {
             Exercises = [new(1, "Жим лёжа"), new(2, "Приседания"), new(3, "Тяга")];
@@ -77,13 +81,17 @@ public sealed class DashboardProgressViewModel
             return;
         }
 
-        var completed = model.Data.Completed.Where(w => w.Date <= Until).OrderBy(w => w.Date).ThenBy(w => w.Id).ToList();
+        var completed = model.Data.Completed.Where(w => w.Date <= Until && w.WorkoutExercises.Any(e => e.SetEntries.Any(s => s.IsCompleted && !s.IsSkipped && !s.IsWarmup && s.Reps > 0 && s.Weight >= 0))).OrderBy(w => w.Date).ThenBy(w => w.Id).ToList();
         var observations = completed.SelectMany(w => w.WorkoutExercises.Where(e => e.SetEntries.Any(ValidSet))
-            .Select(e => new { w.Date, WorkoutId = w.Id, e.ExerciseId, Name = ExercisePresentation.DisplayName(e.Exercise), Weight = e.SetEntries.Where(ValidSet).Max(s => s.Weight) })).ToList();
+            .Select(e => new { w.Date, WorkoutId = w.Id, e.ExerciseId, Name = ExercisePresentation.DisplayName(e.Exercise), Weight = e.SetEntries.Where(ValidSet).Max(s => s.Weight), Reps = e.SetEntries.Where(ValidSet).OrderByDescending(s => s.Weight).ThenByDescending(s => s.Reps).First().Reps })).ToList();
         Exercises = observations.GroupBy(o => o.ExerciseId).Select(g => new ProgressExerciseOption(g.Key, g.Last().Name)).OrderBy(e => e.Id).ToList();
         ExerciseId = model.ProgressExercise ?? Exercises.FirstOrDefault()?.Id;
         ExerciseName = Exercises.FirstOrDefault(e => e.Id == ExerciseId)?.Name ?? (ExerciseId.HasValue ? "Упражнение не найдено" : "Рабочий вес");
-        var selected = observations.Where(o => o.ExerciseId == ExerciseId).GroupBy(o => o.Date).OrderBy(g => g.Key).Select(g => new ProgressPoint(g.Key, g.Max(o => o.Weight))).ToList();
+        var selected = observations.Where(o => o.ExerciseId == ExerciseId).GroupBy(o => o.Date).OrderBy(g => g.Key).Select(g =>
+        {
+            var best = g.OrderByDescending(o => o.Weight).ThenByDescending(o => o.Reps).ThenByDescending(o => o.WorkoutId).First();
+            return new ProgressPoint(g.Key, best.Weight, best.WorkoutId, best.Reps);
+        }).ToList();
         Strength = selected.Where(p => p.Date >= chartSince).ToList();
         var period = selected.Where(p => p.Date >= Since).ToList();
         WorkingWeight = period.Select(p => (decimal?)p.Value).DefaultIfEmpty().Max();
@@ -99,9 +107,17 @@ public sealed class DashboardProgressViewModel
         }).OrderByDescending(r => r.Date).ThenBy(r => r.ExerciseId).ToList();
         NewRecords = observations.GroupBy(o => o.ExerciseId).Count(g => g.Where(o => o.Date >= Since).Select(o => o.Weight).DefaultIfEmpty().Max() > g.Where(o => o.Date < Since).Select(o => o.Weight).DefaultIfEmpty().Max());
         var periodWorkouts = completed.Where(w => w.Date >= Since).ToList();
-        Volume = periodWorkouts.GroupBy(w => w.Date).OrderBy(g => g.Key).Select(g => new ProgressPoint(g.Key, g.Sum(DashboardData.Volume))).ToList();
-        WorkoutCount = periodWorkouts.Count; TotalVolume = periodWorkouts.Sum(DashboardData.Volume);
+        Volume = periodWorkouts.GroupBy(w => w.Date).OrderBy(g => g.Key).Select(g => new ProgressPoint(g.Key, g.Sum(WorkingVolume))).ToList();
+        WorkoutCount = periodWorkouts.Count; TotalVolume = periodWorkouts.Sum(WorkingVolume);
+        Weeks = Enumerable.Range(0, model.ProgressWeeks).Select(i =>
+        {
+            var start = Since.AddDays(i * 7);
+            var end = start.AddDays(6);
+            return new ProgressWeek(start, end, periodWorkouts.Count(w => w.Date >= start && w.Date <= end));
+        }).ToList();
     }
 
-    private static bool ValidSet(SetEntry set) => set.IsCompleted && !set.IsWarmup && set.Reps > 0 && set.Weight > 0;
+    private static bool ValidSet(SetEntry set) => set.IsCompleted && !set.IsSkipped && !set.IsWarmup && set.Reps > 0 && set.Weight > 0;
+    private static decimal WorkingVolume(WorkoutSession workout) => workout.WorkoutExercises.SelectMany(e => e.SetEntries)
+        .Where(s => s.IsCompleted && !s.IsSkipped && !s.IsWarmup && s.Reps > 0 && s.Weight >= 0).Sum(s => s.Weight * s.Reps);
 }

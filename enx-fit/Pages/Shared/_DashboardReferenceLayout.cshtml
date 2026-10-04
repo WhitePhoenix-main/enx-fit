@@ -7,11 +7,14 @@
     var access = await FeatureAccess.GetAsync();
     var viewer = User.Identity?.Name?.Split('@')[0] is { Length: > 0 } name ? name : "Спортсмен";
     if (reference) viewer = "Алексей";
-    string? PageUrl(string page) => Url.Page(page, dashboard?.NavigationValues ?? (reference ? new { Reference = true } : null));
+    string? PageUrl(string page) => Url.Page(page, page == "/Profile" ? new Microsoft.AspNetCore.Routing.RouteValueDictionary { ["area"] = "", ["Reference"] = reference ? true : null } : new Microsoft.AspNetCore.Routing.RouteValueDictionary(dashboard?.NavigationValues ?? (reference ? new { Reference = true } : null)) { ["area"] = "" });
     var trainer = !reference && (User.GetUserRole() == UserRole.Trainer || User.HasMinimumRole(UserRole.Administrator));
     var activePage = ViewContext.RouteData.Values["page"] as string;
     bool IsActive(string page) => string.Equals(activePage, page, StringComparison.OrdinalIgnoreCase);
-    var moreActive = IsActive("/Exercises/Index") || IsActive("/Profile");
+    var settingsActive = string.Equals(ViewContext.RouteData.Values["area"] as string, "Identity", StringComparison.OrdinalIgnoreCase) && activePage?.StartsWith("/Account/Manage/", StringComparison.OrdinalIgnoreCase) == true;
+    var mobileNavigation = enx_fit.ViewModels.MobileAppNavigationViewModel.Create(ViewData, User, activePage);
+    var workoutsActive = mobileNavigation.IsActive("workouts");
+    var programsActive = mobileNavigation.IsActive("programs");
 }
 <!DOCTYPE html>
 <html lang="ru">
@@ -25,65 +28,60 @@
     <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/dashboard-widgets.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/dashboard-reference.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/workout-shared.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
     @if (ReferenceEnvironment.WebRootFileProvider.GetFileInfo("css/mobile-reference.css").Exists) {
         <link rel="stylesheet" href="~/css/mobile-reference.css" asp-append-version="true" />
     }
+    <link rel="stylesheet" href="~/css/mobile-shell.css" asp-append-version="true" />
 </head>
-<body class="fitness-app dashboard-home @(IsActive("/Dashboard") ? "em-home-page" : "") @(IsActive("/Dashboard/Workouts") ? "ef-workouts-page" : "") @(IsActive("/Programs/Index") ? "ef-programs-page" : "") @(IsActive("/Dashboard/Progress") ? "ef-progress-page" : "") @(IsActive("/Exercises/Index") ? "em-library-page" : "") @(IsActive("/Profile") ? "em-profile-page" : "") @(reference ? "em-reference" : "") @(dashboard?.IsCoachView == true ? "coach-mode" : "personal-mode")">
+<body class="fitness-app dashboard-home em-app-shell @(IsActive("/Dashboard") ? "em-home-page" : "") @(IsActive("/Dashboard/Workouts") ? "ef-workouts-page" : "") @(IsActive("/Programs/Index") ? "ef-programs-page" : "") @(IsActive("/Dashboard/Progress") ? "ef-progress-page" : "") @(IsActive("/Exercises/Index") ? "em-library-page" : "") @(IsActive("/Profile") ? "em-profile-page" : "") @(reference ? "em-reference" : "") @(dashboard?.IsCoachView == true ? "coach-mode" : "personal-mode")">
 <a class="skip-link" href="#main-content">Перейти к содержимому</a>
 <aside class="ef-sidebar">
-    <a class="ef-brand" asp-page="/Dashboard"><span class="ef-brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>Enix Fit</span></a>
+    <a class="ef-brand" asp-area="" asp-page="/Dashboard"><span class="ef-brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>Enix Fit</span></a>
     <nav class="ef-navigation" aria-label="Основная навигация">
         <a class="ef-nav-item @(IsActive("/Dashboard") ? "active" : "")" href="@PageUrl("/Dashboard")" aria-current="@(IsActive("/Dashboard") ? "page" : null)"><reference-icon name="@(IsActive("/Dashboard") ? "home" : "home-outline")" />Главная</a>
-        <a class="ef-nav-item @(IsActive("/Dashboard/Workouts") ? "active" : "")" href="@PageUrl("/Dashboard/Workouts")" aria-current="@(IsActive("/Dashboard/Workouts") ? "page" : null)"><reference-icon name="workout" />Тренировки</a>
-        <a class="ef-nav-item @(IsActive("/Programs/Index") ? "active" : "")" href="@PageUrl("/Programs/Index")" aria-current="@(IsActive("/Programs/Index") ? "page" : null)"><reference-icon name="@(IsActive("/Programs/Index") ? "calendar-filled" : "calendar")" />Программы</a>
+        <a class="ef-nav-item @(workoutsActive ? "active" : "")" href="@PageUrl("/Dashboard/Workouts")" aria-current="@(workoutsActive ? "page" : null)"><reference-icon name="workout" />Тренировки</a>
+        <a class="ef-nav-item @(programsActive ? "active" : "")" href="@PageUrl("/Programs/Index")" aria-current="@(programsActive ? "page" : null)"><reference-icon name="@(programsActive ? "calendar-filled" : "calendar")" />Программы</a>
         <a class="ef-nav-item @(IsActive("/Dashboard/Progress") ? "active" : "")" href="@PageUrl("/Dashboard/Progress")" aria-current="@(IsActive("/Dashboard/Progress") ? "page" : null)"><reference-icon name="bars" />Прогресс</a>
         <a class="ef-nav-item @(IsActive("/Exercises/Index") ? "active" : "")" href="@PageUrl("/Exercises/Index")" aria-current="@(IsActive("/Exercises/Index") ? "page" : null)"><reference-icon name="book" />Библиотека</a>
-        @if (trainer) { <a class="ef-nav-item" asp-page="/Trainer/Clients"><reference-icon name="users" />Мои клиенты</a> }
+        @if (trainer) { <a class="ef-nav-item" asp-area="" asp-page="/Trainer/Clients"><reference-icon name="users" />Мои клиенты</a> }
         <a class="ef-nav-item ef-habits-link" href="@PageUrl("/Dashboard/Habits")"><reference-icon name="check-circle" />Привычки</a>
     </nav>
     <nav class="ef-sidebar-bottom" aria-label="Профиль и настройки">
-        <a class="ef-nav-item" asp-area="Identity" asp-page="/Account/Manage/Index"><reference-icon name="user" />Профиль</a>
-        <a class="ef-nav-item" asp-area="Identity" asp-page="/Account/Manage/Email"><reference-icon name="settings" />Настройки</a>
+        <a class="ef-nav-item @(IsActive("/Profile") ? "active" : "")" href="@PageUrl("/Profile")" aria-current="@(IsActive("/Profile") ? "page" : null)"><reference-icon name="user" />Профиль</a>
+        <a class="ef-nav-item @(settingsActive ? "active" : "")" asp-area="Identity" asp-page="/Account/Manage/Index" aria-current="@(settingsActive ? "page" : null)"><reference-icon name="settings" />Настройки</a>
     </nav>
 </aside>
 <div class="ef-app">
-    @if (reference) { <div class="em-statusbar" aria-hidden="true"><span>9:41</span><div><svg viewBox="0 0 20 16"><rect x="0" y="10" width="3" height="6" rx="1"/><rect x="5" y="7" width="3" height="9" rx="1"/><rect x="10" y="4" width="3" height="12" rx="1"/><rect x="15" width="3" height="16" rx="1"/></svg><svg viewBox="0 0 24 18" fill="none"><path d="M2 5a16 16 0 0 1 20 0M6 10a10 10 0 0 1 12 0M10 15a3 3 0 0 1 4 0" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg><svg viewBox="0 0 29 15"><rect x="1" y="1" width="24" height="13" rx="3" fill="none" stroke="currentColor"/><rect x="3" y="3" width="20" height="9" rx="1"/><path d="M27 5v5" stroke="currentColor" stroke-width="2"/></svg></div></div> }
-    <header class="ef-topbar">
-        <a class="ef-brand ef-mobile-brand" asp-page="/Dashboard"><span class="ef-brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>Enix Fit</a>
+    <partial name="_MobileAppShell" model="mobileNavigation" /><partial name="_WorkoutResume" model="mobileNavigation" />
+    <header class="ef-topbar em-desktop-header">
         <button class="ef-search" type="button" data-dialog="search-dialog"><reference-icon name="search" /><span>Поиск разделов</span></button>
         <div class="ef-topbar-actions">
-            <a class="em-avatar-link" href="@PageUrl("/Profile")" aria-label="Профиль"><reference-photo image="library" window="764 73 76 76"/><span class="em-avatar-plan">@(reference ? "Pro" : access.Plan switch { SubscriptionPlan.Pro => "Pro", SubscriptionPlan.Coach => "Coach", _ => "Free" })</span></a>
             <button class="ef-notification" type="button" data-dialog="notifications-dialog" aria-label="Уведомления"><reference-icon name="bell" /></button>
             <details class="account-menu ef-account"><summary><span class="ef-avatar" aria-hidden="true"></span><strong>@viewer</strong><span class="ef-plan">@(reference ? "Pro" : access.Plan switch { SubscriptionPlan.Pro => "Pro", SubscriptionPlan.Coach => "Coach", _ => "Free" })</span><reference-icon name="chevron" /></summary>
-                <div class="account-dropdown"><a asp-area="Identity" asp-page="/Account/Manage/Index">Настройки профиля</a>@if (trainer) { <a asp-page="/Trainer/Clients">Мои клиенты</a> }<form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/"><button type="submit">Выйти</button></form></div>
+                <div class="account-dropdown"><a href="@PageUrl("/Profile")">Профиль</a><a asp-area="Identity" asp-page="/Account/Manage/Index">Настройки аккаунта</a>@if (trainer) { <a asp-area="" asp-page="/Trainer/Clients">Мои клиенты</a> }<form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/"><button type="submit">Выйти</button></form></div>
             </details>
         </div>
     </header>
     <main id="main-content" class="ef-main" tabindex="-1">@RenderBody()</main>
 </div>
-<nav class="ef-bottom-nav" aria-label="Мобильная навигация">
-    <a class="@(IsActive("/Dashboard") ? "active" : "")" href="@PageUrl("/Dashboard")" aria-current="@(IsActive("/Dashboard") ? "page" : null)"><reference-icon name="@(moreActive ? "home-outline" : "home")" /><span>Главная</span></a>
-    <a class="@(IsActive("/Dashboard/Workouts") ? "active" : "")" href="@PageUrl("/Dashboard/Workouts")" aria-current="@(IsActive("/Dashboard/Workouts") ? "page" : null)"><reference-icon name="workout" /><span>Тренировки</span></a>
-    <a class="@(IsActive("/Programs/Index") ? "active" : "")" href="@PageUrl("/Programs/Index")" aria-current="@(IsActive("/Programs/Index") ? "page" : null)"><reference-icon name="calendar" /><span>Программы</span></a>
-    <a class="@(IsActive("/Dashboard/Progress") ? "active" : "")" href="@PageUrl("/Dashboard/Progress")" aria-current="@(IsActive("/Dashboard/Progress") ? "page" : null)"><reference-icon name="bars" /><span>Прогресс</span></a>
-    <button class="@(moreActive ? "active" : "")" type="button" data-dialog="navigation-dialog" aria-current="@(moreActive ? "page" : null)"><reference-icon name="menu" /><span>Ещё</span></button>
-</nav>
 <dialog id="navigation-dialog" class="app-dialog">
     <div class="dialog-heading"><h2>Разделы</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
-    <nav class="search-results" aria-label="Все разделы"><a href="@PageUrl("/Exercises/Index")">Библиотека <reference-icon name="book" /></a><a href="@PageUrl("/Profile")">Профиль <reference-icon name="user" /></a><a href="@PageUrl("/Dashboard/Habits")">Привычки <reference-icon name="check-circle" /></a>@if (trainer) { <a asp-page="/Trainer/Clients">Мои клиенты <reference-icon name="users" /></a> }</nav>
+    <nav class="search-results" aria-label="Все разделы"><a href="@PageUrl("/Exercises/Index")">Библиотека <reference-icon name="book" /></a><a href="@PageUrl("/Profile")">Профиль <reference-icon name="user" /></a><a href="@PageUrl("/Dashboard/Habits")">Привычки <reference-icon name="check-circle" /></a>@if (trainer) { <a asp-area="" asp-page="/Trainer/Clients">Мои клиенты <reference-icon name="users" /></a> }</nav>
 </dialog>
 <dialog id="search-dialog" class="app-dialog">
     <div class="dialog-heading"><h2>Быстрый переход</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
     <input class="dialog-search" type="search" placeholder="Что хотите найти?" aria-label="Поиск раздела" data-section-search />
-    <div class="search-results"><a href="@PageUrl("/Dashboard/Workouts")">Тренировки и упражнения <reference-icon name="workout" /></a><a href="@PageUrl("/Programs/Index")">Программы тренировок <reference-icon name="calendar" /></a><a href="@PageUrl("/Dashboard/Progress")">Прогресс, вес и замеры тела <reference-icon name="bars" /></a><a asp-page="/Exercises/Index">Библиотека упражнений <reference-icon name="book" /></a><a href="@PageUrl("/Dashboard/Habits")">Вода, сон и привычки <reference-icon name="check-circle" /></a><a href="@PageUrl("/Dashboard/Achievements")">Достижения и личные рекорды <reference-icon name="trophy" /></a><p hidden data-search-empty>Ничего не найдено. Попробуйте другой запрос.</p></div>
+    <div class="search-results"><a href="@PageUrl("/Dashboard/Workouts")">Тренировки и упражнения <reference-icon name="workout" /></a><a href="@PageUrl("/Programs/Index")">Программы тренировок <reference-icon name="calendar" /></a><a href="@PageUrl("/Dashboard/Progress")">Прогресс, вес и замеры тела <reference-icon name="bars" /></a><a asp-area="" asp-page="/Exercises/Index">Библиотека упражнений <reference-icon name="book" /></a><a href="@PageUrl("/Dashboard/Habits")">Вода, сон и привычки <reference-icon name="check-circle" /></a><a href="@PageUrl("/Dashboard/Achievements")">Достижения и личные рекорды <reference-icon name="trophy" /></a><p hidden data-search-empty>Ничего не найдено. Попробуйте другой запрос.</p></div>
 </dialog>
 <dialog id="notifications-dialog" class="app-dialog">
     <div class="dialog-heading"><h2>Центр уведомлений</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><div class="empty-state"><reference-icon name="bell" /><h3>Вы всё посмотрели</h3><p>Новых уведомлений пока нет.</p></div>
 </dialog>
-<script src="~/js/dashboard.js" asp-append-version="true"></script>
+<script src="~/js/workout-time.js" asp-append-version="true"></script>
+    <script src="~/js/dashboard.js" asp-append-version="true"></script>
 <script src="~/js/mobile-reference.js" asp-append-version="true"></script>
+<script src="~/js/mobile-shell.js" asp-append-version="true"></script>
 <script src="~/js/dashboard-widgets.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>

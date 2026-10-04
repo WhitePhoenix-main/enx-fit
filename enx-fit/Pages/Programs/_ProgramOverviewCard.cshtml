@@ -11,7 +11,7 @@
         <div class="ep-program-meta"><span><reference-icon name="calendar" />@p.Weeks @duration</span><span><reference-icon name="workout" />@p.DaysPerWeek @frequency в неделю</span></div>
         @if (p.StartDate.HasValue) { <p class="ep-card-progress">Выполнено @Model.Card.Done из @Model.Card.Total · @Model.Card.Percent%</p> }
         <div class="ep-card-actions">
-            @if (p.IsTemplate) { <form method="post" asp-page-handler="Duplicate" asp-route-id="@p.Id" asp-route-Tab="templates" data-busy><button class="ep-outline" type="submit"><reference-icon name="play" />Использовать шаблон</button></form> }
+            @if (p.IsTemplate) { <button class="ep-outline plan-preview-button" type="button" data-dialog="template-preview-@p.Id">Состав программы</button><form method="post" asp-page-handler="Duplicate" asp-route-id="@p.Id" asp-route-Tab="templates" data-busy><button class="ep-outline" type="submit"><reference-icon name="plus" />Выбрать</button></form> }
             else {
                 @if (Model.Page.Reference) { <button class="ep-outline" type="button" data-dialog="program-preview-@p.Id"><reference-icon name="play" />Открыть программу</button> }
                 else { <a class="ep-outline" asp-page="Details" asp-route-id="@p.Id"><reference-icon name="play" />Открыть программу</a> }

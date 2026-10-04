@@ -1,0 +1,47 @@
+@model enx_fit.ViewModels.MobileAppNavigationViewModel
+@{
+    string? PageUrl(string page) => Url.Page(page, page == "/Profile" ? new Microsoft.AspNetCore.Routing.RouteValueDictionary { ["area"] = "", ["Reference"] = Model.Reference ? true : null } : Model.RouteValues);
+}
+@if (Model.Reference)
+{
+    <div class="em-mobile-statusbar" aria-hidden="true"><span>9:41</span><div><svg viewBox="0 0 20 16"><rect x="0" y="10" width="3" height="6" rx="1"/><rect x="5" y="7" width="3" height="9" rx="1"/><rect x="10" y="4" width="3" height="12" rx="1"/><rect x="15" width="3" height="16" rx="1"/></svg><svg viewBox="0 0 24 18" fill="none"><path d="M2 5a16 16 0 0 1 20 0M6 10a10 10 0 0 1 12 0M10 15a3 3 0 0 1 4 0" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg><svg viewBox="0 0 29 15"><rect x="1" y="1" width="24" height="13" rx="3" fill="none" stroke="currentColor"/><rect x="3" y="3" width="20" height="9" rx="1"/><path d="M27 5v5" stroke="currentColor" stroke-width="2"/></svg></div></div>
+}
+<header class="em-mobile-header">
+    <div class="em-mobile-header-inner">
+        <a class="em-mobile-brand" href="@PageUrl("/Dashboard")" aria-label="Enix Fit — главная"><span class="ef-brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>Enix Fit</span></a>
+        <div class="em-mobile-actions">
+            <button class="em-mobile-notification" type="button" data-mobile-dialog="mobile-notifications-dialog" aria-label="Уведомления" aria-haspopup="dialog"><reference-icon name="bell" /></button>
+            <a class="em-mobile-avatar" href="@PageUrl("/Profile")" aria-label="Профиль"><reference-photo image="overview" window="341 130 36 36" /></a>
+        </div>
+    </div>
+</header>
+<nav class="em-mobile-nav" aria-label="Мобильная навигация">
+    <a class="@(Model.IsActive("home") ? "active" : "")" href="@PageUrl("/Dashboard")" aria-current="@(Model.IsActive("home") ? "page" : null)"><reference-icon name="home" /><span>Главная</span></a>
+    <a class="@(Model.IsActive("workouts") ? "active" : "")" href="@PageUrl("/Dashboard/Workouts")" aria-current="@(Model.IsActive("workouts") ? "page" : null)"><reference-icon name="workout" /><span>Тренировки</span></a>
+    <a class="@(Model.IsActive("programs") ? "active" : "")" href="@PageUrl("/Programs/Index")" aria-current="@(Model.IsActive("programs") ? "page" : null)"><reference-icon name="calendar" /><span>Программы</span></a>
+    <a class="@(Model.IsActive("progress") ? "active" : "")" href="@PageUrl("/Dashboard/Progress")" aria-current="@(Model.IsActive("progress") ? "page" : null)"><reference-icon name="bars" /><span>Прогресс</span></a>
+    <button class="@(Model.IsActive("more") ? "active" : "")" type="button" data-mobile-dialog="mobile-navigation-dialog" aria-label="Все разделы" aria-current="@(Model.IsActive("more") ? "page" : null)" aria-haspopup="dialog"><reference-icon name="menu" /><span>Ещё</span></button>
+</nav>
+<dialog id="mobile-navigation-dialog" class="em-mobile-dialog">
+    <div class="em-mobile-dialog-heading"><h2>Разделы</h2><button type="button" data-mobile-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
+    <nav class="em-mobile-menu-links" aria-label="Все разделы">
+        <a href="@PageUrl("/Exercises/Index")">Библиотека <reference-icon name="book" /></a>
+        <a href="@PageUrl("/Profile")">Профиль <reference-icon name="user" /></a>
+        <a href="@PageUrl("/Dashboard/Habits")">Привычки <reference-icon name="check-circle" /></a>
+        <a href="@PageUrl("/Dashboard/Analytics")">Аналитика <reference-icon name="trend" /></a>
+        <a href="@PageUrl("/Dashboard/Achievements")">Достижения <reference-icon name="trophy" /></a>
+        <a href="@PageUrl("/Subscription")">Подписка <reference-icon name="crown" /></a>
+        @if (Model.IsTrainer) { <a href="@PageUrl("/Trainer/Clients")">Мои клиенты <reference-icon name="users" /></a> }
+        @if (Model.IsAdministrator) {
+            <a href="@PageUrl("/Admin/Index")">Администрирование <reference-icon name="shield" /></a>
+            <a href="@PageUrl("/Admin/Users/Index")">Пользователи <reference-icon name="users" /></a>
+            <a href="@PageUrl("/Workouts/Index")">Управление тренировками <reference-icon name="workout" /></a>
+            <a href="@PageUrl("/Body/Index")">Замеры пользователей <reference-icon name="body-scale" /></a>
+        }
+        <form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })"><button type="submit">Выйти из аккаунта <reference-icon name="arrow" /></button></form>
+    </nav>
+</dialog>
+<dialog id="mobile-notifications-dialog" class="em-mobile-dialog">
+    <div class="em-mobile-dialog-heading"><h2>Центр уведомлений</h2><button type="button" data-mobile-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
+    <div class="em-mobile-notifications-empty"><reference-icon name="bell" /><h3>Вы всё посмотрели</h3><p>Новых уведомлений пока нет.</p></div>
+</dialog>

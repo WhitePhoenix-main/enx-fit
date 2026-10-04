@@ -8,6 +8,7 @@ using enx_fit.Security;
 using enx_fit.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,6 +31,12 @@ await using var dataConnection = new SqliteConnection("Data Source=:memory:");
 await dataConnection.OpenAsync();
 builder.Services.AddDbContext<ApplicationDbContext>(o => o.UseSqlite(dataConnection));
 builder.Services.AddDefaultIdentity<ApplicationUser>().AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+var defaultEmailSender = builder.Services.Last(descriptor => descriptor.ServiceType == typeof(IEmailSender));
+var previewAccountEmail = new PreviewAccountEmailSender();
+builder.Services.AddSingleton(previewAccountEmail);
+builder.Services.AddScoped<IEmailSender>(provider => previewAccountEmail.Enabled ? previewAccountEmail :
+    (IEmailSender)(defaultEmailSender.ImplementationInstance ?? defaultEmailSender.ImplementationFactory?.Invoke(provider) ??
+        ActivatorUtilities.CreateInstance(provider, defaultEmailSender.ImplementationType!)));
 builder.Services.ConfigureApplicationCookie(options => options.LoginPath = "/TechnicalPages/Login");
 builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
 builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(AppContext.BaseDirectory, "test-keys")));
@@ -41,6 +48,8 @@ builder.Services.AddScoped<RegistrationService>();
 builder.Services.AddScoped<WorkoutService>();
 builder.Services.AddScoped<ExerciseService>();
 builder.Services.AddScoped<BodyMeasurementService>();
+builder.Services.AddScoped<AnalyticsDataService>();
+builder.Services.AddSingleton<TrainingAnalyticsService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddTrainingPrograms(builder.Configuration);
 builder.Services.AddRazorPages()
@@ -48,6 +57,21 @@ builder.Services.AddRazorPages()
 await using var app = builder.Build();
 app.UseStaticFiles();
 app.UseRouting();
+// Browser recovery tests can reject writes while keeping the in-memory diary and page reads alive.
+var rejectWorkoutWrites = false;
+app.Use(async (context, next) =>
+{
+    if (rejectWorkoutWrites && context.Request.Method == "POST" && context.Request.Path.StartsWithSegments("/Workouts") &&
+        context.Request.Query["handler"].ToString() is "Set" or "Control")
+    { context.Response.StatusCode = 503; await context.Response.WriteAsJsonAsync(new { error = "Тестовая потеря соединения." }); return; }
+    await next();
+});
+app.MapPost("/__tests/workout-writes/{enabled:bool}", (bool enabled) => { rejectWorkoutWrites = !enabled; return Results.Ok(); });
+app.MapPost("/__tests/auth-mail/{enabled:bool}", (bool enabled) => {
+    previewAccountEmail.Enabled = enabled; previewAccountEmail.FailDelivery = false;
+    previewAccountEmail.Messages.Clear(); return Results.Ok();
+});
+app.MapGet("/__tests/auth-mail", () => Results.Json(previewAccountEmail.Messages.LastOrDefault()));
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
@@ -81,13 +105,18 @@ await using (var scope = app.Services.CreateAsyncScope())
 }
 await app.StartAsync();
 await AuthChecks.RunAsync(app.Services, new Uri(baseUrl));
+await AuthJourneyChecks.RunAsync(app.Services, new Uri(baseUrl));
 await DashboardChecks.RunAsync(app.Services, new Uri(baseUrl));
 await DashboardLayoutChecks.RunAsync(app.Services, new Uri(baseUrl));
 await DashboardNavigationChecks.RunAsync(new Uri(baseUrl));
 await ProgressChecks.RunAsync(app.Services, new Uri(baseUrl));
 await ProgramChecks.RunAsync(app.Services, new Uri(baseUrl));
+await ScheduleChecks.RunAsync(app.Services, new Uri(baseUrl));
 await WorkoutBuilderChecks.RunAsync(app.Services, new Uri(baseUrl));
 await QuickWorkoutChecks.RunAsync(app.Services, new Uri(baseUrl));
+await WorkoutExecutionChecks.RunAsync(app.Services, new Uri(baseUrl));
+await TrainingSetupChecks.RunAsync(app.Services, new Uri(baseUrl));
+await ProfileSettingsChecks.RunAsync(app.Services, new Uri(baseUrl));
 using var adminClient = Client();
 using var memberClient = Client();
 using var anonymous = Client();

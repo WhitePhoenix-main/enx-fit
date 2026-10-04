@@ -1,21 +1,12 @@
-﻿@page
+@page
 @model LogoutModel
 @{
-    ViewData["Title"] = "Log out";
+    ViewData["Title"] = User.Identity?.IsAuthenticated == true ? "Выйти из аккаунта" : "Вы вышли из аккаунта";
+    ViewData["AuthDescription"] = User.Identity?.IsAuthenticated == true ? "На этом устройстве потребуется войти снова." : "Можно войти снова и продолжить занятия.";
 }
-
-<header>
-    <h1>@ViewData["Title"]</h1>
-    @{
-        if (User.Identity?.IsAuthenticated ?? false)
-        {
-            <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
-                <button type="submit" class="nav-link btn btn-link text-dark">Click here to Logout</button>
-            </form>
-        }
-        else
-        {
-            <p>You have successfully logged out of the application.</p>
-        }
-    }
-</header>
+<partial name="_AuthStepHeader" />
+<section class="auth-card auth-step-card">
+    @if (User.Identity?.IsAuthenticated == true) {
+        <form method="post" asp-route-returnUrl="/" data-auth-form><button type="submit" class="auth-submit"><span>Выйти</span></button><p data-auth-feedback class="auth-form-feedback" role="status" aria-live="polite"></p></form>
+    } else { <a class="auth-submit" asp-area="" asp-page="/TechnicalPages/Login">Войти в Enix Fit</a> }
+</section>

@@ -1,18 +1,27 @@
+@{
+    var authenticated = User.Identity?.IsAuthenticated == true;
+    var mobileNavigation = enx_fit.ViewModels.MobileAppNavigationViewModel.Create(ViewData, User, ViewContext.RouteData.Values["page"] as string);
+}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>@(ViewData["DocumentTitle"] ?? $"{ViewData["Title"]} - Enix Fit")</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/app-header.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/enx-fit.styles.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
+    @if (authenticated) {
+        <partial name="_AppIcons" />
+        <link rel="stylesheet" href="~/css/mobile-shell.css" asp-append-version="true" />
+    }
 </head>
-<body>
+<body class="@(authenticated ? "em-app-shell" : "")">
     <a class="skip-link" href="#main-content">Перейти к основному содержимому</a>
     <partial name="_Header" />
+    @if (authenticated) { <partial name="_MobileAppShell" model="mobileNavigation" /><partial name="_WorkoutResume" model="mobileNavigation" /> }
 
     <main id="main-content" class="container py-4" role="main" tabindex="-1">
         @RenderBody()
@@ -27,6 +36,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (authenticated) { <script src="~/js/mobile-shell.js" asp-append-version="true"></script> }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

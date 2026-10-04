@@ -26,7 +26,7 @@
     label.textContent = zone === 'Asia/Irkutsk' ? 'Иркутск (UTC+8)' : zone;
   });
 
-  const library = document.querySelector('[data-exercise-library]');
+  const library = document.querySelector('.em-library[data-exercise-library]');
   if (!library) return;
   const cards = [...library.querySelectorAll('[data-library-id]')];
   const search = library.querySelector('[data-library-search]');

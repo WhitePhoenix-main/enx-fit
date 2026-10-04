@@ -1,0 +1,127 @@
+/* The original landing palette and composition, with image-based product examples. */
+.landing-story figure { margin: 0; }
+.landing-story .screenshot-device { display: block; height: auto; aspect-ratio: 1440 / 940; padding: 8px; }
+.landing-story .screenshot-device img { display: block; width: 100%; height: 100%; border-radius: 10px; object-fit: contain; }
+.landing-story .screenshot-phone { height: auto; aspect-ratio: 390 / 844; padding: 5px; overflow: hidden; }
+.landing-story .screenshot-phone img { display: block; width: 100%; height: 100%; border-radius: 20px; object-fit: contain; }
+.hero-preview-caption { position: absolute; left: 0; bottom: -9px; margin: 0; font-size: 11px; color: #91a7be; }
+.landing-story .hero-benefits { flex-wrap: wrap; gap: 12px 18px; }
+.landing-story .athlete-quote { top: 2rem; right: -1.5rem; }
+.landing-story .how-it-works { padding-block: 26px 40px; }
+.landing-story .steps { gap: 24px; }
+.landing-story .steps h3 { white-space: normal; font-size: 15px; line-height: 1.4; }
+.landing-story .steps p { font-size: 13px; line-height: 1.6; }
+.landing-story .steps li { gap: 16px; }
+.landing-story .steps-grid { align-items: start; }
+.story-grid { display: grid; grid-template-columns: minmax(0, .84fr) minmax(0, 1.3fr); gap: clamp(30px, 4vw, 64px); align-items: center; }
+.story-grid > * { min-width: 0; }
+.landing-story .mobile-showcase, .landing-story .planner, .landing-story .analytics, .landing-story .landing-faq { padding-block: 56px; }
+.story-grid .section-copy h2 { font-size: clamp(26px, 2.6vw, 38px); line-height: 1.1; }
+.story-grid .section-copy > p:not(.eyebrow) { max-width: 430px; font-size: 15px; line-height: 1.7; }
+.story-grid .section-copy .button { margin-top: 24px; min-height: 44px; font-size: 13px; white-space: normal; text-align: center; }
+.story-points { display: grid; gap: 20px; margin-block: 28px 0; }
+.story-points li { display: flex; gap: 14px; color: #a9b9cd; font-size: 14px; line-height: 1.6; }
+.story-points .icon { flex: 0 0 22px; width: 22px; height: 22px; color: #78b4ff; margin-top: 4px; }
+.story-points b { display: block; font-size: 15px; color: #e5efff; margin-bottom: 2px; font-weight: 600; }
+.mobile-preview { width: 244px; max-width: 100%; justify-self: center; position: relative; }
+.mobile-preview::before { content: ''; position: absolute; inset: 8% -15%; z-index: -1; background: radial-gradient(ellipse, #2957b133, transparent 68%); pointer-events: none; }
+.mobile-preview-frame { padding: 6px; border: 1px solid #8cbbf285; border-radius: 26px; background: #020609; box-shadow: 0 0 0 3px #162334, 0 20px 55px #0008; overflow: hidden; }
+.mobile-preview img { display: block; width: 100%; height: auto; border-radius: 19px; }
+.mobile-preview figcaption { text-align: center; color: #90a6bf; font-size: 11px; margin-top: 16px; line-height: 1.5; }
+.landing-story .device-benefits { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 40px; }
+.landing-story .device-benefits .integration-card { display: grid; grid-template-columns: 30px 1fr; grid-template-rows: auto auto; gap: 3px 14px; text-align: left; padding: 18px 22px; align-content: center; min-height: 0; }
+.landing-story .device-benefits .integration-logo { grid-row: 1 / 3; width: 28px; height: 28px; margin: 0; align-self: center; }
+.landing-story .device-benefits b { font-size: 14px; margin: 0; }
+.landing-story .device-benefits span { font-size: 12px; margin: 0; }
+.product-figure { border: 1px solid #406287; border-radius: 12px; background: #07121d; overflow: hidden; box-shadow: 0 12px 40px #0004; }
+.product-figure picture, .product-figure img { display: block; width: 100%; height: auto; }
+.product-figure figcaption { font-size: 11px; color: #97aec8; padding: 12px 16px; border-top: 1px solid #23394e; line-height: 1.5; }
+.landing-story .price-card-free { border-color: #5eaeff; box-shadow: 0 0 0 2px #0a0d12, 0 0 0 3px #4688e4; }
+.landing-story .price-card-pro { border-color: #283a4e; box-shadow: none; }
+.landing-story .pricing-cards { align-items: start; }
+.landing-story .price-card { min-height: 330px; }
+.tier-details { margin-top: auto; }
+.tier-details > summary { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 12px; border: 1px solid #5386bc; border-radius: 7px; list-style: none; font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; }
+.tier-details > summary::-webkit-details-marker, .faq-items summary::-webkit-details-marker { display: none; }
+.tier-details > summary:hover, .tier-details[open] > summary { background: #1a2b3e; border-color: #81baff; }
+.tier-details > p { padding: 14px 3px 2px; font-size: 13px; line-height: 1.6; color: #b2c2d6; }
+.faq-items { display: grid; gap: 12px; }
+.faq-items details { border: 1px solid #293b4e; border-radius: 10px; background: #101b24; overflow: hidden; scroll-margin-top: 100px; }
+.faq-items summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 58px; padding: 16px 20px; list-style: none; cursor: pointer; font-size: 15px; font-weight: 600; line-height: 1.4; }
+.faq-items summary::after { content: '+'; color: #86baff; font-size: 22px; font-weight: 400; flex: 0 0 16px; text-align: center; transition: rotate .2s; }
+.faq-items details[open] summary::after { rotate: 45deg; }
+.faq-items details[open] { border-color: #527fab; }
+.faq-items p { padding: 0 20px 20px; margin: 0; color: #b1c0d1; font-size: 14px; line-height: 1.7; }
+.tier-details > summary:focus-visible, .faq-items summary:focus-visible { outline: 2px solid #92c5ff; outline-offset: -3px; }
+.landing-story .closing-cta .button-outline { font-size: 13px; }
+
+@media (min-width: 901px) {
+  .landing-story .hero-benefits { max-width: calc(100% - 28px); }
+}
+
+@media (min-width: 901px) and (max-width: 1200px) {
+  .landing-story .screenshot-device { width: 39rem; }
+  .story-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 32px; }
+  .landing-story .steps-grid { grid-template-columns: 1fr; gap: 28px; }
+}
+@media (max-width: 900px) {
+  .landing-story .hero { min-height: 0; padding-bottom: 38px; }
+  .landing-story .hero-copy { width: 85%; }
+  .landing-story .hero-visual { position: relative; top: auto; left: auto; right: auto; height: 440px; margin-top: 36px; }
+  .landing-story .screenshot-device { width: 85%; transform: none; }
+  .landing-story .screenshot-phone { width: 180px; transform: none; top: 44px; right: 0; }
+  .hero-preview-caption { bottom: 0; }
+  .landing-story .steps-grid { grid-template-columns: 1fr; gap: 24px; }
+  .landing-story .how-it-works { padding-block: 24px 32px; }
+  .story-grid { gap: 28px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .story-grid .section-copy h2 { font-size: 30px; }
+  .landing-story .device-benefits .integration-card { padding: 16px; grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 8px; }
+  .landing-story .device-benefits .integration-logo { grid-row: auto; }
+  .landing-story .device-benefits span { font-size: 12px; }
+  .landing-story .landing-faq .story-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .landing-story .hero-copy { width: 100%; padding-top: 22px; }
+  .landing-story .hero-description { width: 100%; font-size: 14px; line-height: 1.65; }
+  .landing-story .hero .button { padding-inline: 13px; font-size: 12px; }
+  .landing-story .hero-benefits { gap: 10px 14px; }
+  .landing-story .hero-benefits li { font-size: 10px; }
+  .landing-story .hero-visual { margin-top: 28px; height: clamp(275px, 82vw, 360px); }
+  .landing-story .screenshot-device { width: 86%; padding: 5px; border-radius: 12px; }
+  .landing-story .screenshot-device img { border-radius: 7px; }
+  .landing-story .screenshot-phone { width: min(35%, 145px); padding: 4px; top: 35px; right: 1px; border-radius: 21px; }
+  .landing-story .screenshot-phone img { border-radius: 16px; }
+  .hero-preview-caption { font-size: 10px; }
+  .landing-story .hero { padding-bottom: 24px; }
+  .landing-story .how-it-works { padding-block: 14px 28px; }
+  .landing-story .steps { gap: 19px; }
+  .landing-story .steps li { gap: 18px; }
+  .landing-story .steps h3 { font-size: 15px; }
+  .landing-story .steps p { font-size: 13px; }
+  .landing-story .mobile-showcase, .landing-story .planner, .landing-story .analytics, .landing-story .landing-faq { padding-block: 34px; }
+  .story-grid { grid-template-columns: 1fr; gap: 26px; }
+  .story-grid .section-copy h2 { font-size: 28px; }
+  .story-grid .section-copy > p:not(.eyebrow) { font-size: 14px; line-height: 1.65; max-width: none; }
+  .story-grid .section-copy .button { margin-top: 20px; font-size: 12px; }
+  .story-points { gap: 16px; margin-top: 24px; }
+  .story-points li { font-size: 13px; }
+  .story-points b { font-size: 14px; }
+  .mobile-preview { width: min(250px, 82%); }
+  .landing-story .device-benefits { gap: 8px; margin-top: 28px; }
+  .landing-story .device-benefits .integration-card { padding: 14px 8px; gap: 7px; }
+  .landing-story .device-benefits b { font-size: 12px; }
+  .landing-story .device-benefits span { font-size: 11px; line-height: 1.5; }
+  .product-figure figcaption { font-size: 11px; padding: 12px; }
+  .landing-story .pricing { padding-block: 32px; }
+  .landing-story .pricing .section-grid { padding-block: 0; gap: 28px; }
+  .landing-story .price-card { min-height: 0; padding: 24px; }
+  .landing-story .price-card ul { margin-block: 18px 24px; }
+  .landing-story .price-card .button, .tier-details > summary { min-height: 44px; }
+  .faq-items summary { padding: 16px; font-size: 14px; }
+  .faq-items p { padding: 0 16px 18px; font-size: 13px; }
+  .landing-story .closing-cta .cta-inner h2 { font-size: 22px; }
+  .landing-story .closing-cta .button-row { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq-items summary::after { transition: none; }
+}

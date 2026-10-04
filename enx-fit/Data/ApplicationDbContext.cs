@@ -2,6 +2,7 @@ using enx_fit.Areas.Identity.Data;
 using enx_fit.Models;
 using enx_fit.Security;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace enx_fit.Data;
@@ -11,6 +12,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 {
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<TrainingProgram> TrainingPrograms => Set<TrainingProgram>();
+    public DbSet<ProgramScheduleChange> ProgramScheduleChanges => Set<ProgramScheduleChange>();
     public DbSet<AssignedProgram> AssignedPrograms => Set<AssignedProgram>();
     public DbSet<TrainingRecommendation> TrainingRecommendations => Set<TrainingRecommendation>();
 
@@ -28,6 +30,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        // Keep Identity's key lengths identical in runtime and the standalone migration factory.
+        modelBuilder.Entity<IdentityUserLogin<string>>().Property(x => x.LoginProvider).HasMaxLength(128);
+        modelBuilder.Entity<IdentityUserLogin<string>>().Property(x => x.ProviderKey).HasMaxLength(128);
+        modelBuilder.Entity<IdentityUserToken<string>>().Property(x => x.LoginProvider).HasMaxLength(128);
+        modelBuilder.Entity<IdentityUserToken<string>>().Property(x => x.Name).HasMaxLength(128);
         modelBuilder.ConfigureTrainingPrograms();
 
         modelBuilder.Entity<ApplicationUser>(user =>
@@ -47,6 +54,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasKey(item => item.UserId);
             entity.Property(item => item.GoalTitle).HasMaxLength(120);
             entity.Property(item => item.TrainerNote).HasMaxLength(1000);
+            entity.Property(item => item.PreferencesRevision).IsConcurrencyToken();
             entity.HasOne<ApplicationUser>().WithOne().HasForeignKey<DashboardSettings>(item => item.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
@@ -93,6 +101,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasMaxLength(450);
 
             entity.HasIndex(w => w.UserId);
+            entity.HasIndex(w => new { w.UserId, w.ClientRequestId }).IsUnique();
+            entity.Property(w => w.ManualPayloadHash).HasMaxLength(64);
             entity.HasIndex(w => w.UserId, "IX_WorkoutSessions_OneActivePerUser").IsUnique()
                 .HasFilter("\"StartedAtUtc\" IS NOT NULL AND \"CompletedAtUtc\" IS NULL AND \"UserId\" IS NOT NULL");
 
@@ -113,6 +123,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<ProgramScheduleChange>(entity =>
+        {
+            entity.HasIndex(c => new { c.TrainingProgramId, c.ProgramWorkoutKey, c.OriginalDate }).IsUnique();
+            entity.HasOne<TrainingProgram>().WithMany(p => p.ScheduleChanges)
+                .HasForeignKey(c => c.TrainingProgramId).OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<WorkoutExercise>(entity =>
         {
             entity.HasOne(w => w.Exercise)
@@ -127,6 +144,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         });
 
         modelBuilder.Entity<SetEntry>().Property(s => s.IsCompleted).HasDefaultValue(true).HasSentinel(true);
+
+        modelBuilder.Entity<WorkoutCommand>(entity =>
+        {
+            entity.HasKey(c => new { c.WorkoutSessionId, c.OperationId });
+            entity.HasOne(c => c.WorkoutSession).WithMany().HasForeignKey(c => c.WorkoutSessionId).OnDelete(DeleteBehavior.Cascade);
+        });
 
         /*modelBuilder.Entity<SetEntry>(entity =>
         {

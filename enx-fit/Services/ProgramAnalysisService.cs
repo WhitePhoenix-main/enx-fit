@@ -19,7 +19,7 @@ public sealed class ProgramAnalysisService : IProgramAnalysisService
     public ProgramCompletion Completion(TrainingProgram p, IReadOnlyList<WorkoutSession> sessions, DateOnly today)
     {
         var schedule = ProgramSchedule.Occurrences(p).ToList();
-        bool Done(ProgramOccurrence o) => sessions.Any(s => s.ProgramWorkoutKey == o.Workout.Key && s.ScheduledDate == o.Date && s.CompletedAtUtc.HasValue);
+        bool Done(ProgramOccurrence o) => sessions.Any(s => ProgramSchedule.Matches(s, o) && s.State == WorkoutStatus.Completed);
         var due = schedule.Where(o => o.Date <= today).ToList();
         return new(schedule.Count, schedule.Count(Done), due.Count, due.Count(Done), schedule.Count(o => o.Date < today && !Done(o)),
             p.StartDate?.AddDays(p.Weeks * 7 - 1));
@@ -34,7 +34,7 @@ public interface ITrainingVolumeService
 public sealed class TrainingVolumeService : ITrainingVolumeService
 {
     public IReadOnlyList<MuscleVolume> Calculate(IEnumerable<WorkoutSession> sessions) => sessions
-        .Where(s => s.CompletedAtUtc.HasValue).SelectMany(s => s.WorkoutExercises)
+        .Where(s => s.State == WorkoutStatus.Completed).SelectMany(s => s.WorkoutExercises)
         .GroupBy(e => string.IsNullOrWhiteSpace(e.Exercise.MuscleGroup) ? "Группа не указана" : e.Exercise.MuscleGroup)
         .Select(g => new MuscleVolume(g.Key, g.Sum(e => e.SetEntries.Count(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0)),
             g.SelectMany(e => e.SetEntries).Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0).Sum(s => s.Weight * s.Reps))).ToList();

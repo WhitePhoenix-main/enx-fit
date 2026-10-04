@@ -1,0 +1,92 @@
+@model enx_fit.Pages.DashboardModel
+@using enx_fit.ViewModels
+@{
+    var vm = new DashboardProgressViewModel(Model);
+    var ru = DashboardWorkoutsViewModel.Russian;
+    string N(decimal? value) => value?.ToString("0.#", ru) ?? "—";
+    string Delta(decimal value) => (value > 0 ? "+" : value < 0 ? "−" : "") + N(Math.Abs(value));
+    string Weeks(int weeks) => weeks + (weeks is 2 or 4 ? " недели" : " недель");
+    string Sessions(int count) => count % 100 is >= 11 and <= 14 ? "занятий" : count % 10 == 1 ? "занятие" : count % 10 is >= 2 and <= 4 ? "занятия" : "занятий";
+    string? PageUrl(string? tab = null, int? weeks = null, string? metric = null) => Url.Page("/Dashboard/Progress", new {
+        ClientId = Model.IsCoachView ? Model.Data.Subject.Id : null, Model.Days, Until = Model.Until?.ToString("yyyy-MM-dd"),
+        ProgressTab = tab ?? Model.ProgressTab, ProgressWeeks = weeks ?? Model.ProgressWeeks,
+        ProgressExercise = vm.ExerciseId, ProgressMetric = metric ?? Model.ProgressMetric
+    });
+    var lastStrength = vm.Strength.LastOrDefault();
+    var firstStrength = vm.Strength.FirstOrDefault();
+    var lastBody = vm.Body.LastOrDefault();
+    var strengthChange = vm.Strength.Count > 1 ? lastStrength!.Value - firstStrength!.Value : (decimal?)null;
+    var metrics = new List<(string Key, string Label)> { ("consistency", "Занятия"), ("strength", "Рабочий вес"), ("body", "Вес тела") };
+    if (Model.ProgressTab == "analytics") metrics.Add(("volume", "Объём"));
+}
+<div class="progress-workspace" data-progress-workspace data-metric="@Model.ProgressMetric">
+    <partial name="_DashboardContext" model="Model" />
+    <header class="pw-heading">
+        <div><span class="pw-eyebrow">Мои результаты</span><h1>Прогресс</h1><p>Каждое занятие — часть вашей истории</p></div>
+        <div class="pw-period">
+            <details class="epr-period"><summary><reference-icon name="calendar" />@Weeks(Model.ProgressWeeks)<reference-icon name="chevron" /></summary><div>@foreach (var weeks in new[] { 2, 4, 6, 12 }) { <a class="@(weeks == Model.ProgressWeeks ? "selected" : "")" href="@PageUrl(weeks: weeks)">@Weeks(weeks)</a> }</div></details>
+            <span>@vm.Since.ToString("d MMMM", ru) — @vm.Until.ToString("d MMMM yyyy", ru)</span>
+        </div>
+    </header>
+    <nav class="epr-tabs pw-sections" aria-label="Разделы прогресса">@foreach (var (tab, label) in new[] { ("overview", "Обзор"), ("analytics", "Подробнее"), ("records", "Рекорды") }) { <a class="@(Model.ProgressTab == tab ? "active" : "")" href="@PageUrl(tab: tab)" aria-current="@(Model.ProgressTab == tab ? "page" : null)">@label</a> }</nav>
+    @if (!Model.Data.Completed.Any() && Model.Data.Measurements.Count == 0 && !Model.IsCoachView) {
+        <section class="pw-welcome ef-card"><reference-icon name="bars" /><div><h2>Первый результат впереди</h2><p>Здесь появятся ваши занятия, выполненные подходы и замеры. Начать можно без программы.</p><div><a class="ef-primary" asp-page="/Dashboard">Начать тренировку</a><a asp-page="/Workouts/Record">Записать прошедшую</a></div></div></section>
+    }
+    @if (Model.ProgressTab != "records") {
+        <nav class="pw-metrics" role="tablist" aria-label="Показатель прогресса">@foreach (var metric in metrics) {
+            <a id="pw-tab-@metric.Key" href="@PageUrl(metric: metric.Key)" role="tab" aria-controls="pw-@metric.Key" aria-selected="@(Model.ProgressMetric == metric.Key ? "true" : "false")" data-progress-metric="@metric.Key">@metric.Label</a>
+        }</nav>
+        <div class="pw-grid">
+            <section class="ef-card pw-panel pw-consistency" id="pw-consistency" data-progress-panel="consistency" aria-labelledby="pw-consistency-title">
+                <header class="pw-panel-heading"><h2 id="pw-consistency-title"><reference-icon name="calendar" />Регулярность</h2><span>За @Weeks(Model.ProgressWeeks)</span></header>
+                <div class="pw-result"><strong>@vm.WorkoutCount<small> @Sessions(vm.WorkoutCount)</small></strong><span>Завершённые тренировки, включая ручные записи</span></div>
+                <partial name="_ProgressConsistency" model="vm" />
+                <details class="pw-explanation"><summary>Цель по регулярности<reference-icon name="chevron" /></summary><p>@Model.Data.Settings.GoalTitle · @Model.Data.Settings.WeeklyWorkoutGoal @Sessions(Model.Data.Settings.WeeklyWorkoutGoal) в неделю. Цель относится к календарной неделе; столбцы показывают семидневные отрезки выбранного периода.</p><a asp-page="/Dashboard/Plans" asp-route-ClientId="@(Model.IsCoachView ? Model.Data.Subject.Id : null)">Посмотреть цель</a></details>
+            </section>
+            <section class="ef-card pw-panel pw-strength" id="pw-strength" data-progress-panel="strength" aria-labelledby="pw-strength-title">
+                <header class="pw-panel-heading"><h2 id="pw-strength-title"><reference-icon name="bars" />Рабочий вес</h2><span>@(Model.ChartWeeks == Model.ProgressWeeks ? "Последний результат" : vm.ChartSince.ToString("dd.MM") + " — " + vm.Until.ToString("dd.MM"))</span></header>
+                <form method="get" class="pw-exercise-form">
+                    <input type="hidden" name="ClientId" value="@(Model.IsCoachView ? Model.Data.Subject.Id : null)" /><input type="hidden" name="ProgressTab" value="@Model.ProgressTab" /><input type="hidden" name="ProgressWeeks" value="@Model.ProgressWeeks" /><input type="hidden" name="ProgressMetric" value="strength" /><input type="hidden" name="Until" value="@Model.Until?.ToString("yyyy-MM-dd")" /><input type="hidden" name="Days" value="@Model.Days" />
+                    @if (Model.ChartWeeks != Model.ProgressWeeks) { <input type="hidden" name="ChartWeeks" value="@Model.ChartWeeks" /> }
+                    <label class="sr-only" for="pw-exercise">Упражнение для графика</label><select id="pw-exercise" name="ProgressExercise" data-submit-change>
+                        @if (!vm.Exercises.Any(e => e.Id == vm.ExerciseId)) { <option value="@vm.ExerciseId">@vm.ExerciseName</option> }
+                        @foreach (var exercise in vm.Exercises) { <option value="@exercise.Id" selected="@(vm.ExerciseId == exercise.Id)">@exercise.Name</option> }
+                    </select><noscript><button class="ef-primary">Показать</button></noscript>
+                </form>
+                <div class="pw-result"><strong>@N(lastStrength?.Value)<small>@(lastStrength is null ? "" : " кг × " + lastStrength.Reps + " повт.")</small></strong><span>@(lastStrength is null ? "Рабочих подходов с весом за этот период нет" : lastStrength.Date.ToString("d MMMM yyyy", ru))</span></div>
+                <partial name="_ProgressChart" model="@(new ProgressChart("progress-strength", vm.ExerciseName + ": рабочий вес, кг", vm.Strength, Since: vm.ChartSince, Until: vm.Until))" />
+                @if (strengthChange is { } change) { <p class="pw-change"><strong>@Delta(change) кг</strong><span>@N(firstStrength!.Value) кг × @firstStrength.Reps → @N(lastStrength!.Value) кг × @lastStrength.Reps<br />@firstStrength.Date.ToString("d MMMM", ru) → @lastStrength.Date.ToString("d MMMM", ru)</span></p> }
+                <details class="pw-explanation"><summary>Что показывает график?<reference-icon name="chevron" /></summary><p>Лучший выполненный рабочий подход с дополнительным весом за каждый день. При одинаковом весе выбираем больше повторений. Разминка и невыполненные подходы не учитываются. Расстояние между точками соответствует датам.</p>@if (Model.ChartWeeks != Model.ProgressWeeks) { <a href="@PageUrl(metric: "strength")">Применить общий период @Weeks(Model.ProgressWeeks)</a> }</details>
+            </section>
+            <section class="ef-card pw-panel pw-body" id="pw-body" data-progress-panel="body" data-widget-id="weight" aria-labelledby="pw-body-title">
+                <header class="pw-panel-heading"><h2 id="pw-body-title"><reference-icon name="body-scale" />Вес тела</h2>@if (!Model.IsCoachView) { <a asp-page="/Body/Create" aria-label="Добавить замер тела"><reference-icon name="plus" />Замер</a> }</header>
+                <div class="pw-result"><strong>@N(lastBody?.Value)<small>@(lastBody is null ? "" : " кг")</small></strong><span>@(lastBody is null ? "Замеров за этот период нет" : "Последний замер · " + lastBody.Date.ToString("d MMMM yyyy", ru))</span></div>
+                <partial name="_ProgressChart" model="@(new ProgressChart("progress-body", "Вес тела, кг", vm.Body, Since: vm.Since, Until: vm.Until))" />
+                @if (vm.WeightChange is { } bodyChange) { <p class="pw-change"><strong>@Delta(bodyChange) кг</strong><span>Изменение между первым и последним замером за период</span></p> }
+                else if (lastBody is null && vm.Latest is { } older) { <p class="pw-note">Предыдущий замер: @N(older.WeightKg) кг · @older.Date.ToString("d MMMM yyyy", ru). Он вне выбранного периода.</p> }
+                @if (vm.Latest is { } measurement && lastBody is not null) {
+                    <details class="pw-explanation pw-measurements"><summary>Параметры последнего замера<reference-icon name="chevron" /></summary><p>@measurement.Date.ToString("d MMMM yyyy", ru)</p><dl><div><dt>Обхват талии</dt><dd>@N(measurement.WaistCm)@(measurement.WaistCm.HasValue ? " см" : "")</dd></div><div><dt>Обхват груди</dt><dd>@N(measurement.ChestCm)@(measurement.ChestCm.HasValue ? " см" : "")</dd></div></dl></details>
+                }
+                <footer class="pw-body-footer"><span>Изменение веса оценивайте с учётом своей цели</span>@if (!Model.IsCoachView) { <a asp-page="/Body/Index">Все замеры <reference-icon name="arrow" /></a> }</footer>
+            </section>
+            @if (Model.ProgressTab == "analytics") {
+                <section class="ef-card pw-panel pw-volume" id="pw-volume" data-progress-panel="volume" aria-labelledby="pw-volume-title">
+                    <header class="pw-panel-heading"><h2 id="pw-volume-title"><reference-icon name="bars" />Объём тренировок</h2><span>@vm.WorkoutCount @Sessions(vm.WorkoutCount)</span></header>
+                    <div class="pw-result"><strong>@N(vm.TotalVolume)<small> кг</small></strong><span>Сумма рабочего объёма за период</span></div>
+                    <partial name="_ProgressChart" model="@(new ProgressChart("progress-volume", "Суммарный объём выполненных рабочих подходов, кг", vm.Volume, Since: vm.Since, Until: vm.Until, DayHistory: true))" />
+                    <details class="pw-explanation"><summary>Как считается объём?<reference-icon name="chevron" /></summary><p>Вес × повторения, суммарно по выполненным рабочим подходам за день. Например, 3 подхода по 8 повторений с 20 кг — это 480 кг. Разминка не учитывается; подходы без дополнительного веса дают 0 кг. Больше объёма само по себе не означает лучший результат.</p></details>
+                </section>
+            }
+            else if (Model.NextRecommendation is { } recommendation && Model.ActiveProgram is { } program) {
+                <section class="ef-card pw-next"><svg viewBox="1143 398 365 94" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Штанга в тренировочном зале"><image href="@Url.Content("~/images/dashboard/progress-reference-art.png")" width="1546" height="1017" /></svg><div><span class="pw-eyebrow">Следующий шаг</span><h2>@ExercisePresentation.DisplayName(Model.NextGoalExercise!.Exercise)</h2><p>@N(recommendation.CurrentValue) → @N(recommendation.SuggestedValue) кг · предложение ожидает подтверждения</p><a class="ef-primary" asp-page="/Programs/Details" asp-route-id="@program.Id" asp-route-Tab="progression" asp-route-ExerciseId="@Model.NextGoalExercise.Id">Рассмотреть в программе</a></div></section>
+            }
+        </div>
+    }
+    @if (Model.ProgressTab is "overview" or "records") {
+        <section class="ef-card epr-records pw-records @(Model.ProgressTab == "records" ? "is-full" : "")" aria-labelledby="pw-records-title"><header class="epr-card-heading"><h2 id="pw-records-title"><reference-icon name="trophy" />@(Model.ProgressTab == "records" ? "Личные рекорды" : "Лучшие результаты")</h2>@if (Model.ProgressTab == "overview") { <a href="@PageUrl(tab: "records")">Все <reference-icon name="arrow" /></a> }</header>
+            <p class="pw-records-note">Лучший рабочий вес за всю историю до @vm.Until.ToString("d MMMM yyyy", ru). Новых рекордов за период: @vm.NewRecords.</p>
+            @if (vm.Records.Count == 0) { <div class="epr-no-records">Сохраните рабочий подход с дополнительным весом — здесь появится первый результат.</div> }
+            else { <div class="epr-record-grid">@foreach (var record in Model.ProgressTab == "records" ? vm.Records : vm.Records.Take(3)) { <partial name="_ProgressRecord" model="record" /> }</div> }
+        </section>
+    }
+</div>

@@ -1,0 +1,9 @@
+@model enx_fit.Pages.DashboardModel
+<div class="home-workout-choices" aria-label="Как добавить тренировку">
+    <a asp-page="/Workouts/Record"><reference-icon name="plus-circle" /><strong>Записать</strong><small>Уже выполненную</small></a>
+    <button type="button" data-dialog="template-start-dialog"><reference-icon name="document" /><strong>По шаблону</strong><small>Готовый состав</small></button>
+    @if (!Model.Reference && Model.ActiveWorkout is { } active)
+    { <a asp-page="/Workouts/Details" asp-route-id="@active.Id"><reference-icon name="bolt" /><strong>Продолжить</strong><small>Текущее занятие</small></a> }
+    else
+    { <form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="empty" /><button type="@(Model.Reference ? "button" : "submit")" data-dialog="@(Model.Reference ? "quick-workout-dialog" : null)"><reference-icon name="bolt" /><strong>На лету</strong><small>Добавлять по ходу</small></button></form> }
+</div>

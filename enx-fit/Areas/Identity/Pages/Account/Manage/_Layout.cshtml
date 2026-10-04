@@ -1,29 +1,11 @@
-﻿@{
-    if (ViewData.TryGetValue("ParentLayout", out var parentLayout) && parentLayout !=  null)
-    {
-        Layout = parentLayout.ToString();
-    }
-    else
-    {
-        Layout = "/Areas/Identity/Pages/_Layout.cshtml";
-    }
-}
-
-<h1>Manage your account</h1>
-
-<div>
-    <h2>Change your account settings</h2>
-    <hr />
-    <div class="row">
-        <div class="col-md-3">
-            <partial name="_ManageNav" />
-        </div>
-        <div class="col-md-9">
-            @RenderBody()
-        </div>
-    </div>
+@{ Layout = "/Pages/Shared/_DashboardReferenceLayout.cshtml"; }
+@section Styles { <link rel="stylesheet" href="~/css/profile-settings.css" asp-append-version="true" /> @await RenderSectionAsync("Styles", required: false) }
+<div class="account-settings" data-account-settings>
+    <header class="account-heading"><a asp-area="" asp-page="/Profile"><reference-icon name="chevron" />В профиль</a><span class="profile-eyebrow">Настройки аккаунта</span><h1>@ViewData["Title"]</h1></header>
+    <div class="account-layout"><aside class="ef-card account-navigation"><details class="account-sections" data-settings-sections><summary>Разделы настроек <reference-icon name="chevron" /></summary><partial name="_ManageNav" /></details></aside><section class="ef-card account-panel">@RenderBody()</section></div>
 </div>
-
 @section Scripts {
-    @RenderSection("Scripts", required: false)
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+    <script src="~/js/account-settings.js" asp-append-version="true"></script>
 }

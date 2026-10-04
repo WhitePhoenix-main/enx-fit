@@ -1,8 +1,14 @@
-﻿@page
+@page
 @model ConfirmEmailChangeModel
 @{
-    ViewData["Title"] = "Confirm email change";
+    ViewData["Title"] = Model.Succeeded ? "Email изменён" : "Изменение email";
+    ViewData["AuthDescription"] = "Результат подтверждения нового адреса.";
+    ViewData["AuthBackUrl"] = Url.Page("/Profile", new { area = "" });
+    ViewData["AuthBackLabel"] = "В профиль";
 }
-
-<h1>@ViewData["Title"]</h1>
-<partial name="_StatusMessage" model="Model.StatusMessage" />
+<partial name="_AuthStepHeader" />
+<section class="auth-card auth-step-card">
+    <partial name="_StatusMessage" model="Model.StatusMessage" />
+    @if (Model.Succeeded) { <a class="auth-submit" asp-area="" asp-page="/TechnicalPages/Login" asp-route-returnUrl="/Profile">Войти в аккаунт</a> }
+    else { <a class="auth-submit" asp-area="Identity" asp-page="/Account/Manage/Email">Открыть настройки email</a> }
+</section>

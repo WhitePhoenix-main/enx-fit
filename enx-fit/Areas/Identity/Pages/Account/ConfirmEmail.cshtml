@@ -1,8 +1,12 @@
-﻿@page
+@page
 @model ConfirmEmailModel
 @{
-    ViewData["Title"] = "Confirm email";
+    ViewData["Title"] = Model.Succeeded ? "Email подтверждён" : "Подтверждение email";
+    ViewData["AuthDescription"] = "Результат подтверждения вашего адреса.";
 }
-
-<h1>@ViewData["Title"]</h1>
-<partial name="_StatusMessage" model="Model.StatusMessage" />
+<partial name="_AuthStepHeader" />
+<section class="auth-card auth-step-card">
+    <partial name="_StatusMessage" model="Model.StatusMessage" />
+    @if (Model.Succeeded) { <a class="auth-submit" asp-area="" asp-page="/TechnicalPages/Login" asp-route-returnUrl="@Model.ReturnUrl">Войти в Enix Fit</a> }
+    else { <a class="auth-submit" asp-page="./ResendEmailConfirmation" asp-route-returnUrl="@Model.ReturnUrl">Запросить новое письмо</a> }
+</section>

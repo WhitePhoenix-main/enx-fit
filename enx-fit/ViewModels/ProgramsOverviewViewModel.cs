@@ -44,7 +44,7 @@ public sealed class ProgramsOverviewViewModel
         {
             var date = monday.AddDays(i);
             var scheduled = occurrences.Where(o => o.Date == date).ToList();
-            var done = scheduled.Count > 0 ? scheduled.All(o => Active!.Sessions.Any(s => s.ProgramWorkoutKey == o.Workout.Key && s.ScheduledDate == date && s.CompletedAtUtc.HasValue)) : date < Today;
+            var done = scheduled.Count > 0 && scheduled.All(o => Active!.Sessions.Any(s => ProgramSchedule.Matches(s, o) && s.State == WorkoutStatus.Completed));
             return new ProgramOverviewDay(date, scheduled.Count > 0, done, date == Today, scheduled.FirstOrDefault()?.Workout.Name ?? "Отдых");
         }).ToList();
     }

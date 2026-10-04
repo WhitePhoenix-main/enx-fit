@@ -44,15 +44,12 @@
     const muscleIcons = {Грудь:'chest',Спина:'back',Поясница:'back',Трапеции:'back',Плечи:'shoulders',Ноги:'legs',Квадрицепсы:'legs','Задняя поверхность бедра':'legs',Ягодицы:'legs',Икры:'legs','Приводящие мышцы бедра':'legs','Отводящие мышцы бедра':'legs',Пресс:'core','Косые мышцы живота':'core','Мышцы кора':'core',Кардио:'bars'};
     const thumb = e => `<div class="wb-thumb" data-group="${escape(e.muscleGroup)}" aria-hidden="true">${icon(muscleIcons[e.muscleGroup] || 'workout')}</div>`;
     const key = `enix-workout-draft:${form.dataset.viewer}:${data.ownerId}`;
-    const favoritesKey = `enix-workout-favorites:${form.dataset.viewer}`;
     const read = key => { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } };
     const write = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; } };
     const remove = key => { try { localStorage.removeItem(key); } catch { /* Storage can be disabled. */ } };
-    const storedFavorites = read(favoritesKey);
-    const favorites = new Set(Array.isArray(storedFavorites) ? storedFavorites.filter(id => byId.has(id)) : []);
     let state = { goal:'Набор массы', level:'intermediate', durationMinutes:60, cover:'athlete', autoDuration:true, showRecords:true,
         blocks:[{name:'Разминка',kind:'warmup',exercises:[]},{name:'Силовой блок',kind:'strength',exercises:[]},{name:'Заминка',kind:'cooldown',exercises:[]}] };
-    let activeBlock = 1, tab = 'all', group = '', reorder = false, dirty = false, saving = false, dragId = null, lastLibraryTrigger;
+    let activeBlock = 1, reorder = false, dirty = false, saving = false, dragId = null, lastLibraryTrigger;
     let exerciseLibrary;
     const collapsed = new Set();
     let toastTimer;
@@ -92,6 +89,7 @@
             ${b.exercises.map(e => `<div class="wb-structure-exercise" draggable="true" data-drag-id="${e.exerciseId}">${icon('grip')}<span>${escape(byId.get(e.exerciseId).name)}</span><small>${setCount(e.sets.length)}</small></div>`).join('')}
             <button type="button" class="wb-block-add" data-open-library="${i}">${icon('plus')}Добавить упражнение</button></div>`).join('');
         $('wb-library-target').innerHTML = state.blocks.map((b,i) => `<option value="${i}" ${i === activeBlock ? 'selected' : ''}>${escape(b.name)}</option>`).join('');
+        exerciseLibrary?.setContext(`${$('Input_Title').value || 'Новая тренировка'} → ${state.blocks[activeBlock].name}`);
     }
     function renderExercises() {
         let order = 0;
@@ -108,16 +106,7 @@
                 <div class="wb-exercise-tools" ${reorder ? '' : 'hidden'}><button class="wb-icon" type="button" data-move="${id}:-1" ${ei === 0 ? 'disabled' : ''} aria-label="Поднять ${escape(item.name)}">${icon('up')}</button><button class="wb-icon" type="button" data-move="${id}:1" ${ei === b.exercises.length-1 ? 'disabled' : ''} aria-label="Опустить ${escape(item.name)}">${icon('down')}</button><label>Блок<select data-move-to="${id}">${state.blocks.map((block,i) => `<option value="${i}" ${i === bi ? 'selected' : ''}>${escape(block.name)}</option>`).join('')}</select></label></div></article>`;
         }).join('')}</section>`).join('');
     }
-    function renderLibrary() {
-        if (exerciseLibrary) {
-            exerciseLibrary.setSelected(all().map(e => e.exerciseId));
-            return;
-        }
-        const query = $('wb-search').value.trim().toLocaleLowerCase('ru');
-        const items = catalog.filter(e => (!group || e.muscleGroup === group) && (tab !== 'favorites' || favorites.has(e.id)) && (tab !== 'recent' || data.recentIds.includes(e.id)) && `${e.name} ${e.originalName} ${e.muscleGroup} ${e.equipment}`.toLocaleLowerCase('ru').includes(query));
-        $('wb-library-count').textContent = String(items.length);
-        $('wb-library-list').innerHTML = items.map(e => `<div class="wb-library-item">${thumb(e)}<div class="wb-exercise-copy"><strong>${escape(e.name)}</strong><small>${escape(e.muscleGroup)} · ${escape(e.equipment)}</small></div><a class="wb-icon" href="/Exercises/Details/${e.id}" target="_blank" rel="noopener" aria-label="Оборудование и описание: ${escape(e.name)} (откроется в новой вкладке)" title="Оборудование и описание">${icon('info')}</a><button class="wb-favorite ${favorites.has(e.id) ? 'active' : ''}" type="button" data-favorite="${e.id}" aria-pressed="${favorites.has(e.id)}" aria-label="В избранное: ${escape(e.name)}">${icon('star')}</button><button type="button" class="wb-icon" data-add="${e.id}" ${selected(e.id) ? 'disabled' : ''} aria-label="${selected(e.id) ? 'Добавлено' : 'Добавить'}: ${escape(e.name)}">${icon(selected(e.id) ? 'check' : 'plus')}</button></div>`).join('') || `<p class="wb-library-empty">${tab === 'favorites' && !query ? 'Отметь упражнения звёздочкой — они появятся здесь.' : tab === 'recent' && !query ? 'Здесь появятся упражнения из завершённых тренировок.' : 'Упражнений не найдено. Попробуй другую группу или запрос.'}</p>`;
-    }
+    function renderLibrary() { exerciseLibrary?.setSelected(all().map(e => e.exerciseId)); }
     function updateStats() {
         const entries = all(), sets = entries.flatMap(e => e.sets);
         const working = state.blocks.filter(b => b.kind !== 'warmup' && b.kind !== 'cooldown').flatMap(b => b.exercises);
@@ -185,9 +174,6 @@
         const button = event.target.closest('button'); if (!button) return;
         const d = button.dataset;
         if ('add' in d) addExercise(Number(d.add));
-        if ('favorite' in d) { const id = Number(d.favorite); favorites.has(id) ? favorites.delete(id) : favorites.add(id); if (!write(favoritesKey,[...favorites])) toast('Браузер не разрешил сохранить избранное.'); renderLibrary(); }
-        if ('libraryTab' in d) { tab = d.libraryTab; form.querySelectorAll('[data-library-tab]').forEach(b => { b.classList.toggle('active',b.dataset.libraryTab === tab); b.setAttribute('aria-pressed', String(b.dataset.libraryTab === tab)); }); renderLibrary(); }
-        if ('group' in d) { group = d.group; form.querySelectorAll('[data-group-filter]').forEach(b => { b.classList.toggle('active',b.dataset.group === group); b.setAttribute('aria-pressed',String(b.dataset.group === group)); }); renderLibrary(); }
         if ('openLibrary' in d) openLibrary(button, d.openLibrary === '' ? undefined : Number(d.openLibrary));
         if ('closeLibrary' in d) closeLibrary();
         if ('selectBlock' in d) { activeBlock = Number(d.selectBlock); renderBlocks(); }
@@ -219,14 +205,14 @@
     });
     form.addEventListener('input', event => {
         const input = event.target;
-        if (input.id === 'wb-search') return renderLibrary();
+        if (input.id === 'wb-search') return;
         if (input.dataset.field) {
             const value = input.valueAsNumber;
             if (Number.isFinite(value)) find(Number(input.dataset.id)).sets[Number(input.dataset.set)][input.dataset.field] = value;
             changed(); renderBlocks(); return;
         }
         if (input.id === 'wb-duration') { const n = input.valueAsNumber; if (Number.isFinite(n)) state.durationMinutes = n; dirty = true; $('BuilderJson').value = JSON.stringify(state); return; }
-        if (['Input_Title','Input_Date','Input_Notes'].includes(input.id)) dirty = true;
+        if (['Input_Title','Input_Date','Input_Notes'].includes(input.id)) { dirty = true; if (input.id === 'Input_Title') exerciseLibrary?.setContext(`${input.value || 'Новая тренировка'} → ${state.blocks[activeBlock].name}`); }
     });
     form.addEventListener('change', event => {
         const input = event.target;
@@ -295,7 +281,16 @@
     const libraryRoot = $('wb-library');
     if (window.ExerciseLibrary && libraryRoot) {
         exerciseLibrary = new window.ExerciseLibrary(libraryRoot);
-        libraryRoot.addEventListener('exercise-selected', event => addExercise(Number(event.detail?.id)));
+        libraryRoot.addEventListener('exercises-selected', event => {
+            const picks = event.detail.exercises.filter(p => !selected(p.exerciseId) && byId.has(p.exerciseId));
+            if (all().length + picks.length > 40) { exerciseLibrary.message('В тренировке может быть до 40 упражнений.'); return; }
+            picks.forEach(p => { state.blocks[activeBlock].exercises.push({exerciseId:p.exerciseId,sets:Array.from({length:p.setsCount}, () => ({weight:p.weight,reps:p.reps,restSeconds:p.restSeconds}))}); collapsed.delete(p.exerciseId); });
+            mutate(); exerciseLibrary.clear(); closeLibrary();
+            toast(`${exerciseCount(picks.length)} → ${state.blocks[activeBlock].name}`);
+            const card = form.querySelector(`[data-exercise="${picks[0]?.exerciseId}"]`);
+            card?.classList.add('exercise-just-added'); card?.scrollIntoView({behavior:'smooth',block:'center'});
+            card?.querySelector('input')?.focus({preventScroll:true});
+        });
     }
     $('wb-draft-notice').hidden = !read(key) || data.hasErrors;
     syncControls(); render();

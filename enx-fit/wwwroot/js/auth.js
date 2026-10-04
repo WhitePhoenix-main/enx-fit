@@ -1,6 +1,5 @@
 (() => {
   'use strict';
-  const form = document.querySelector('[data-auth-form]');
   const dialog = document.getElementById('auth-dialog');
   const info = {
     privacy: ['Конфиденциальность', 'Политика конфиденциальности Enix Fit готовится к публикации.'],
@@ -13,6 +12,7 @@
     dialog.showModal();
   }
   document.querySelectorAll('[data-auth-info]').forEach(button => {
+    button.hidden = false;
     button.addEventListener('click', () => showInfo(...info[button.dataset.authInfo]));
   });
   document.querySelectorAll('[data-close-auth-dialog]').forEach(button => button.addEventListener('click', () => dialog.close()));
@@ -29,36 +29,50 @@
   document.querySelectorAll('[data-reveal]').forEach(button => {
     button.hidden = false;
     const input = document.getElementById(button.dataset.reveal);
-    const confirmation = input.name.endsWith('ConfirmPassword');
+    const fieldLabel = document.querySelector(`label[for="${input.id}"]`)?.textContent.trim().toLowerCase() || 'пароль';
     button.addEventListener('click', () => {
       const reveal = input.type === 'password';
       input.type = reveal ? 'text' : 'password';
       button.setAttribute('aria-pressed', String(reveal));
-      button.setAttribute('aria-label', (reveal ? 'Скрыть ' : 'Показать ') + (confirmation ? 'повторный пароль' : 'пароль'));
+      button.setAttribute('aria-label', (reveal ? 'Скрыть ' : 'Показать ') + fieldLabel);
+      button.setAttribute('aria-controls', input.id);
       button.querySelector('use').setAttribute('href', reveal ? '#auth-eye' : '#auth-eye-off');
     });
   });
+  document.querySelectorAll('[data-auth-form]').forEach(form => {
   const confirmation = form.querySelector('[name="Input.ConfirmPassword"]');
   if (confirmation) {
     const password = form.querySelector('[name="Input.Password"]');
-    const validate = () => confirmation.setCustomValidity(confirmation.value && confirmation.value !== password.value ? 'Пароли не совпадают.' : '');
+    const validate = () => {
+      const message = confirmation.value && confirmation.value !== password.value ? 'Пароли не совпадают.' : '';
+      confirmation.setCustomValidity(message);
+      const error = form.querySelector('[data-valmsg-for="Input.ConfirmPassword"]');
+      if(error) error.textContent = message;
+    };
     confirmation.addEventListener('input', validate);
     password.addEventListener('input', validate);
   }
-  form.addEventListener('submit', () => {
-    const submit = form.querySelector('[type="submit"]');
+  const submit = form.querySelector('[type="submit"]'), caption = submit.querySelector('span'), initialCaption = caption?.textContent || submit.textContent;
+  const feedback = form.querySelector('[data-auth-feedback]');
+  form.addEventListener('submit', event => {
+    if(!navigator.onLine) { event.preventDefault(); if(feedback) feedback.textContent='Сейчас нет сети. Поля остаются в форме; повторите после подключения.'; return; }
+    if(event.defaultPrevented || !form.checkValidity()) return;
     submit.disabled = true;
     submit.setAttribute('aria-busy', 'true');
-    submit.querySelector('span').textContent = 'Подождите…';
+    if(caption) caption.textContent = 'Подождите…';
+    if(feedback) feedback.textContent = 'Ожидаем ответа…';
   });
-  window.addEventListener('pageshow', event => {
-    // A back/forward cache restoration must not leave the form disabled.
-    if (event.persisted) window.location.reload();
+  window.addEventListener('pageshow', () => {
+    submit.disabled = false; submit.removeAttribute('aria-busy');
+    if(caption) caption.textContent = initialCaption;
+    if(feedback) feedback.textContent = '';
+  });
+  window.addEventListener('online',()=>{if(feedback && feedback.textContent.includes('нет сети')) feedback.textContent='Подключение восстановлено. Повторите отправку.';});
   });
 
   // Encode the public page URL only: no password, session or return URL is shared.
   const appLink = document.querySelector('.auth-app');
-  if (typeof qrcode === 'function') {
+  if (appLink && typeof qrcode === 'function') {
     const code = qrcode(0, 'M');
     code.addData(appLink.href);
     code.make();
@@ -85,6 +99,7 @@
   const context = canvas.getContext('2d');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const finePointer = window.matchMedia('(pointer: fine)');
+  const desktopMotion = window.matchMedia('(min-width:1024px)');
   const space = document.querySelector('.auth-space');
   let width = 0, height = 0, frame = 0, previousTime = 0, elapsed = 0;
   let particles = [];
@@ -103,7 +118,7 @@
     }));
   }
   function draw(time) {
-    if (document.hidden || reducedMotion.matches || !context) { frame = 0; return; }
+    if (document.hidden || reducedMotion.matches || !desktopMotion.matches || !context) { frame = 0; return; }
     if (time - previousTime < 33) { frame = requestAnimationFrame(draw); return; }
     const delta = previousTime ? Math.min((time - previousTime) / 1000, .1) : .033;
     previousTime = time; elapsed += delta;
@@ -127,7 +142,7 @@
   function updateMotion() {
     cancelAnimationFrame(frame); frame = 0; previousTime = 0;
     document.body.classList.toggle('is-background-paused', document.hidden);
-    if (!document.hidden && !reducedMotion.matches && context) frame = requestAnimationFrame(draw);
+    if (!document.hidden && !reducedMotion.matches && desktopMotion.matches && context) frame = requestAnimationFrame(draw);
     else {
       space.style.removeProperty('--space-x');
       space.style.removeProperty('--space-y');
@@ -139,8 +154,9 @@
     observer.observe(document.querySelector('.auth-universe'));
     document.addEventListener('visibilitychange', updateMotion);
     reducedMotion.addEventListener('change', updateMotion);
+    desktopMotion.addEventListener('change', updateMotion);
     document.addEventListener('pointermove', event => {
-      if (!finePointer.matches || reducedMotion.matches) return;
+      if (!finePointer.matches || reducedMotion.matches || !desktopMotion.matches) return;
       space.style.setProperty('--space-x', ((event.clientX / window.innerWidth - .5) * -14) + 'px');
       space.style.setProperty('--space-y', ((event.clientY / window.innerHeight - .5) * -10) + 'px');
     }, { passive: true });

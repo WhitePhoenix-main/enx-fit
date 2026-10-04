@@ -1,0 +1,15 @@
+/* Entry dialogs and session indicators are shared by both dashboard shells. */
+.quick-dialog { max-height:85dvh; }
+.quick-dialog>.muted { font-size:12px; line-height:1.6; }
+.quick-options { display:grid; gap:10px; margin-top:16px; }
+.quick-option { width:100%; display:flex; align-items:center; gap:14px; padding:17px; background:#172338; border:1px solid var(--line); border-radius:12px; text-align:left; transition:background .18s; }
+.quick-option:hover { background:#223250; }
+.quick-option>svg { width:22px; height:22px; color:var(--blue); flex-shrink:0; }
+.quick-option>svg:last-child { margin-left:auto; width:16px; }
+.quick-option>span { min-width:0; }
+.quick-option strong { display:block; font-size:14px; }
+.quick-option small { display:block; color:var(--muted); font-size:12px; line-height:1.5; margin-top:5px; }
+.active-session-meta { display:flex; align-items:center; flex-wrap:wrap; gap:8px; color:var(--muted); font-size:13px; margin-bottom:20px; }
+.live-dot { width:8px; height:8px; flex-shrink:0; background:var(--green); border-radius:50%; }
+@media(max-width:599px) { .quick-option { min-height:80px; padding:14px; } }
+@media(prefers-reduced-motion:reduce) { .quick-option { transition:none; } }

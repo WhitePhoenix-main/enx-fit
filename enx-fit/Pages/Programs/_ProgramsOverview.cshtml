@@ -18,7 +18,7 @@
 else {
     <nav class="ep-tabs" aria-label="Разделы программ">
         <a class="@(Model.Tab == "mine" ? "active" : "")" href="@PageUrl(tab: "mine", archived: false, all: false)" aria-current="@(Model.Tab == "mine" ? "page" : null)">Мои программы</a>
-        <a class="@(Model.Tab == "templates" ? "active" : "")" href="@PageUrl(tab: "templates", archived: false, all: false)" aria-current="@(Model.Tab == "templates" ? "page" : null)">Шаблоны</a>
+        <a class="@(Model.Tab == "templates" ? "active" : "")" href="@PageUrl(tab: "templates", archived: false, all: false)" aria-current="@(Model.Tab == "templates" ? "page" : null)">Готовые планы</a>
         @if (Model.Access.IsCoach && !Model.Reference) { <a class="@(Model.Tab == "assigned" ? "active" : "")" href="@PageUrl(tab: "assigned", archived: false, all: false)" aria-current="@(Model.Tab == "assigned" ? "page" : null)">Назначенные</a> }
         @if (Model.Tab != "templates") { <a class="ep-archive @(Model.Archived ? "is-archived" : "")" href="@PageUrl(archived: !Model.Archived, all: true)" aria-label="@(Model.Archived ? "Текущие программы" : "Архив")"><reference-icon name="calendar" />@(Model.Archived ? "Текущие программы" : "Архив")</a> }
     </nav>
@@ -29,10 +29,7 @@ else {
     }
     else {
         @if (Model.Tab == "templates") {
-            <nav class="ep-template-filters" aria-label="Категории шаблонов"><a class="@(Model.Category is null && Model.Level is null ? "selected" : "")" href="@PageUrl(tab: "templates", archived: false, all: false)">Все</a>
-                @foreach (var (level, label) in new[] { (ProgramLevel.Beginner, "Начальный"), (ProgramLevel.Intermediate, "Средний"), (ProgramLevel.Advanced, "Продвинутый") }) { <a href="@PageUrl(tab: "templates", archived: false, level: level)" class="@(Model.Level == level ? "selected" : "")">@label</a> }
-                @foreach (var category in IndexModel.Categories) { <a href="@PageUrl(tab: "templates", archived: false, category: category)" class="@(Model.Category == category ? "selected" : "")">@category</a> }
-            </nav>
+            <partial name="_ProgramTemplateFilters" model="Model" />
         }
         @if (Model.Tab == "mine" && !Model.Archived) {
             <div class="ep-top-grid">
@@ -60,7 +57,7 @@ else {
                         @for (var i = 0; i < overview.Week.Count; i++) {
                             var day = overview.Week[i];
                             var refCard = overview.Active;
-                            <a class="ep-day @(day.Today ? "is-today" : "") @(day.Completed ? "is-complete" : "") @(day.Training ? "is-training" : "")" href="@(Model.Reference && refCard is not null ? "#program-preview-" + refCard.Program.Id : refCard is not null ? Url.Page("Details", new { id = refCard.Program.Id, Tab = "schedule" }) : PageUrl(tab: "templates", archived: false))" data-dialog="@(Model.Reference && refCard is not null ? "program-preview-" + refCard.Program.Id : null)" aria-label="@day.Date.ToString("d MMMM", ru): @day.Title" aria-current="@(day.Today ? "date" : null)"><span>@(new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" }[i])</span><time datetime="@day.Date.ToString("yyyy-MM-dd")">@day.Date.ToString("dd.MM")</time><reference-icon name="@(day.Training ? "workout" : "coffee")" /><small>@(day.Training ? "Тренировка" : "Отдых")</small>@if (day.Completed && overview.Active is not null) { <span class="ep-day-check"><reference-icon name="check" /></span> }</a>
+                            <a class="ep-day @(day.Today ? "is-today" : "") @(day.Completed ? "is-complete" : "") @(day.Training ? "is-training" : "")" href="@(Model.Reference && refCard is not null ? "#program-preview-" + refCard.Program.Id : refCard is not null ? Url.Page("Details", new { id = refCard.Program.Id, Tab = "schedule", Week = day.Date.ToString("yyyy-MM-dd"), Day = day.Date.ToString("yyyy-MM-dd") }) : PageUrl(tab: "templates", archived: false))" data-dialog="@(Model.Reference && refCard is not null ? "program-preview-" + refCard.Program.Id : null)" aria-label="@day.Date.ToString("d MMMM", ru): @day.Title" aria-current="@(day.Today ? "date" : null)"><span>@(new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" }[i])</span><time datetime="@day.Date.ToString("yyyy-MM-dd")">@day.Date.ToString("dd.MM")</time><reference-icon name="@(day.Training ? "workout" : "coffee")" /><small>@(day.Training ? "Тренировка" : "Отдых")</small>@if (day.Completed && overview.Active is not null) { <span class="ep-day-check"><reference-icon name="check" /></span> }</a>
                         }
                     </div>
                     <footer class="ep-week-next">
@@ -76,7 +73,7 @@ else {
             <header class="ep-section-heading" id="other-programs"><h2>@(Model.Tab == "templates" ? "Готовые шаблоны" : Model.Archived ? "Архив программ" : Model.Tab == "assigned" ? "Назначенные программы" : overview.Active is null ? "Мои программы" : "Другие программы")</h2>@if (Model.Tab == "mine" && !Model.Archived) { <a href="@PageUrl(all: !Model.All)#other-programs">@(Model.All ? "Свернуть" : "Все программы")<reference-icon name="arrow" /></a> }</header>
             <div class="ep-program-grid">@foreach (var card in overview.Others) { <partial name="_ProgramOverviewCard" model="new ProgramOverviewMenu(Model, card)" /> }</div>
         }
-        else if (Model.Tab != "mine" || Model.Archived) {
+        else if ((Model.Tab != "mine" || Model.Archived) && !(Model.Tab == "templates" && Model.MatchPreferences && Model.HasPreferences)) {
             <section class="ef-card ep-empty"><reference-icon name="calendar" /><h2>@(Model.Archived ? "Архив пока пуст" : Model.Tab == "assigned" ? "Пока нет назначенных программ" : "Шаблоны не найдены")</h2><p>Создайте собственную программу или выберите другую категорию шаблонов.</p><a class="ef-primary" asp-page="Edit">Создать программу</a></section>
         }
         <section class="ef-card ep-templates-banner" aria-labelledby="ep-templates-title">
@@ -89,6 +86,9 @@ else {
     }
 }
 </div>
+@if (Model.Tab == "templates" && Model.PageError is null) {
+    @foreach (var template in Model.Items) { <partial name="_ProgramTemplatePreview" model="template" /> }
+}
 @if (Model.Reference && Model.PageError is null) {
     var previews = overview.Active is { } activePreview ? new[] { activePreview }.Concat(overview.Others) : overview.Others;
     @foreach (var card in previews) {

@@ -27,21 +27,21 @@ public sealed class DashboardService(ApplicationDbContext db, CurrentUser curren
             users = users.Where(user => (user.NormalizedUserName ?? "").Contains(term) ||
                                        (user.NormalizedEmail ?? "").Contains(term));
         }
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = currentUser.LocalToday;
         return await users.OrderBy(user => user.UserName).Select(user => new ClientSummary(
             user.Id, user.UserName ?? user.Email ?? "Клиент",
             db.WorkoutSessions.Count(workout => workout.UserId == user.Id && workout.Date <= today &&
-                ((workout.StartedAtUtc == null && workout.TrainingProgramId == null) || workout.CompletedAtUtc != null) &&
+                (workout.Status == WorkoutStatus.Completed || (workout.Status == WorkoutStatus.Legacy && ((workout.StartedAtUtc == null && workout.TrainingProgramId == null) || workout.CompletedAtUtc != null))) &&
                 workout.WorkoutExercises.Any(exercise => exercise.SetEntries.Any(set => set.IsCompleted && !set.IsWarmup && set.Reps > 0))),
             db.WorkoutSessions.Where(workout => workout.UserId == user.Id && workout.Date <= today &&
-                ((workout.StartedAtUtc == null && workout.TrainingProgramId == null) || workout.CompletedAtUtc != null) &&
+                (workout.Status == WorkoutStatus.Completed || (workout.Status == WorkoutStatus.Legacy && ((workout.StartedAtUtc == null && workout.TrainingProgramId == null) || workout.CompletedAtUtc != null))) &&
                 workout.WorkoutExercises.Any(exercise => exercise.SetEntries.Any(set => set.IsCompleted && !set.IsWarmup && set.Reps > 0)))
                 .Select(workout => (DateOnly?)workout.Date).Max())).ToListAsync();
     }
 
     public async Task<DashboardData> LoadAsync(ApplicationUser subject, int days, DateOnly until)
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = currentUser.LocalToday;
         var data = new DashboardData { Subject = subject, Today = today, Until = until, Days = days };
         data.Settings = await db.DashboardSettings.AsNoTracking().SingleOrDefaultAsync(s => s.UserId == subject.Id)
                         ?? new DashboardSettings { UserId = subject.Id };
@@ -78,7 +78,7 @@ public sealed class DashboardData
     public static IEnumerable<SetEntry> WorkingSets(WorkoutSession w) => w.WorkoutExercises.SelectMany(e => e.SetEntries).Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0);
     public static decimal Volume(WorkoutSession w) => WorkingSets(w).Sum(s => s.Weight * s.Reps);
     public IEnumerable<WorkoutSession> Completed => Workouts.Where(w => w.Date <= Today &&
-        ((!w.StartedAtUtc.HasValue && !w.TrainingProgramId.HasValue) || w.CompletedAtUtc.HasValue) && WorkingSets(w).Any());
+        w.State == WorkoutStatus.Completed && WorkingSets(w).Any());
     public IEnumerable<WorkoutSession> PeriodWorkouts => Completed.Where(w => w.Date >= Since && w.Date <= Until);
     public decimal TotalVolume => PeriodWorkouts.Sum(Volume);
     public decimal PreviousVolume => Completed.Where(w => w.Date >= Since.AddDays(-Days) && w.Date < Since).Sum(Volume);
@@ -98,7 +98,7 @@ public sealed class DashboardData
     }
     public IEnumerable<WorkoutSession> ThisWeek => Completed.Where(w => w.Date >= Today.AddDays(-((int)Today.DayOfWeek + 6) % 7));
     public int GoalPercent => Math.Min(100, (int)Math.Round(ThisWeek.Count() * 100d / Settings.WeeklyWorkoutGoal));
-    public WorkoutSession? NextWorkout => Workouts.Where(w => w.Date >= Today && w.StartedAtUtc == null && w.CompletedAtUtc == null && !WorkingSets(w).Any()).OrderBy(w => w.Date).ThenBy(w => w.Id).FirstOrDefault();
+    public WorkoutSession? NextWorkout => Workouts.Where(w => w.Date >= Today && w.State == WorkoutStatus.Planned).OrderBy(w => w.Date).ThenBy(w => w.Id).FirstOrDefault();
     public DailyCheckIn TodayCheckIn => CheckIns.FirstOrDefault(c => c.Date == Today) ?? new DailyCheckIn { UserId = Subject.Id, Date = Today };
     public int HabitsDone => (TodayCheckIn.WaterMl >= 2000 ? 1 : 0) + (TodayCheckIn.Steps >= 8000 ? 1 : 0) + (TodayCheckIn.NutritionLogged ? 1 : 0) + (TodayCheckIn.StretchingDone ? 1 : 0);
     public int Streak

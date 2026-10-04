@@ -342,10 +342,10 @@ namespace enx_fit.Migrations
                     b.Property<bool>("NutritionLogged")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("SleepMinutes")
+                    b.Property<int>("ReadingMinutes")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ReadingMinutes")
+                    b.Property<int>("SleepMinutes")
                         .HasColumnType("integer");
 
                     b.Property<int>("Steps")
@@ -386,14 +386,33 @@ namespace enx_fit.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("text");
 
+                    b.Property<int>("AvailableEquipment")
+                        .HasColumnType("integer");
+
                     b.Property<string>("GoalTitle")
                         .IsRequired()
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
 
+                    b.Property<Guid>("PreferencesRevision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("PreferredDays")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SetupStatus")
+                        .HasColumnType("integer");
+
                     b.Property<string>("TrainerNote")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
+
+                    b.Property<int?>("TrainingGoal")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TrainingLocation")
+                        .HasColumnType("integer");
 
                     b.Property<int>("WeeklyWorkoutGoal")
                         .HasColumnType("integer");
@@ -2662,6 +2681,34 @@ namespace enx_fit.Migrations
                         });
                 });
 
+            modelBuilder.Entity("enx_fit.Models.ProgramScheduleChange", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("OriginalDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("ProgramWorkoutKey")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("TrainingProgramId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TrainingProgramId", "ProgramWorkoutKey", "OriginalDate")
+                        .IsUnique();
+
+                    b.ToTable("ProgramScheduleChanges");
+                });
+
             modelBuilder.Entity("enx_fit.Models.ProgramWorkout", b =>
                 {
                     b.Property<int>("Id")
@@ -3230,13 +3277,22 @@ namespace enx_fit.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
 
+                    b.Property<bool>("IsSkipped")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsWarmup")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Notes")
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("PerformedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("Reps")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RestSeconds")
                         .HasColumnType("integer");
 
                     b.Property<int?>("Rir")
@@ -3479,6 +3535,22 @@ namespace enx_fit.Migrations
                     b.ToTable("TrainingRecommendations");
                 });
 
+            modelBuilder.Entity("enx_fit.Models.WorkoutCommand", b =>
+                {
+                    b.Property<int>("WorkoutSessionId")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("OperationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("WorkoutSessionId", "OperationId");
+
+                    b.ToTable("WorkoutCommand");
+                });
+
             modelBuilder.Entity("enx_fit.Models.WorkoutExercise", b =>
                 {
                     b.Property<int>("Id")
@@ -3486,6 +3558,9 @@ namespace enx_fit.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BlockKind")
+                        .HasColumnType("text");
 
                     b.Property<int>("ExerciseId")
                         .HasColumnType("integer");
@@ -3500,6 +3575,9 @@ namespace enx_fit.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int?>("TargetRepsMin")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TargetRestSeconds")
                         .HasColumnType("integer");
 
                     b.Property<int?>("TargetRir")
@@ -3537,6 +3615,9 @@ namespace enx_fit.Migrations
                     b.Property<string>("BuilderConfigurationJson")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("ClientRequestId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime?>("CompletedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -3546,11 +3627,40 @@ namespace enx_fit.Migrations
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date");
 
+                    b.Property<int?>("DurationSeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EntryMode")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ManualPayloadHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<DateTime?>("PausedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PausedSeconds")
+                        .HasColumnType("integer");
+
                     b.Property<Guid?>("ProgramWorkoutKey")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("RestAfterSetId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("RestEndsAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("RestRemainingSeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("Revision")
+                        .IsConcurrencyToken()
                         .HasColumnType("uuid");
 
                     b.Property<DateOnly?>("ScheduledDate")
@@ -3568,6 +3678,9 @@ namespace enx_fit.Migrations
                     b.Property<DateTime?>("StartedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("TemplateDecisionPending")
                         .HasColumnType("boolean");
 
@@ -3582,12 +3695,19 @@ namespace enx_fit.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
 
+                    b.Property<int>("UtcOffsetMinutes")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("TrainingProgramId", "ProgramWorkoutKey", "ScheduledDate")
+                    b.HasIndex("UserId", "ClientRequestId")
                         .IsUnique();
+
+                    b.HasIndex("TrainingProgramId", "ProgramWorkoutKey", "ScheduledDate")
+                        .IsUnique()
+                        .HasFilter("\"Status\" <> 5");
 
                     b.HasIndex(new[] { "UserId" }, "IX_WorkoutSessions_OneActivePerUser")
                         .IsUnique()
@@ -3724,6 +3844,15 @@ namespace enx_fit.Migrations
                 {
                     b.HasOne("enx_fit.Models.TrainingProgram", null)
                         .WithMany("Blocks")
+                        .HasForeignKey("TrainingProgramId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("enx_fit.Models.ProgramScheduleChange", b =>
+                {
+                    b.HasOne("enx_fit.Models.TrainingProgram", null)
+                        .WithMany("ScheduleChanges")
                         .HasForeignKey("TrainingProgramId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -4927,6 +5056,17 @@ namespace enx_fit.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("enx_fit.Models.WorkoutCommand", b =>
+                {
+                    b.HasOne("enx_fit.Models.WorkoutSession", "WorkoutSession")
+                        .WithMany()
+                        .HasForeignKey("WorkoutSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("WorkoutSession");
+                });
+
             modelBuilder.Entity("enx_fit.Models.WorkoutExercise", b =>
                 {
                     b.HasOne("enx_fit.Models.Exercise", "Exercise")
@@ -4974,6 +5114,8 @@ namespace enx_fit.Migrations
                     b.Navigation("Assignment");
 
                     b.Navigation("Blocks");
+
+                    b.Navigation("ScheduleChanges");
 
                     b.Navigation("Workouts");
                 });

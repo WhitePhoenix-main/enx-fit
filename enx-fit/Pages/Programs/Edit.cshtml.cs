@@ -10,6 +10,9 @@ namespace enx_fit.Pages.Programs;
 public sealed class EditModel(TrainingProgramService programs) : ProgramPageModel(programs)
 {
     [BindProperty] public ProgramInput Input { get; set; } = new();
+    [BindProperty] public int SelectedWorkout { get; set; }
+    [BindProperty] public bool AboutExpanded { get; set; } = true;
+    public bool HasUnsavedChanges { get; private set; }
     public List<Exercise> Exercises { get; private set; } = [];
     public int? ProgramId { get; private set; }
 
@@ -17,6 +20,7 @@ public sealed class EditModel(TrainingProgramService programs) : ProgramPageMode
     {
         if (!await LoadAsync(id)) return Page();
         if (id.HasValue) Input = ProgramInput.From((await Programs.FindAsync(id.Value))!);
+        AboutExpanded = !id.HasValue;
         return Page();
     }
 
@@ -36,6 +40,7 @@ public sealed class EditModel(TrainingProgramService programs) : ProgramPageMode
 
     public async Task<IActionResult> OnPostAsync(int? id)
     {
+        HasUnsavedChanges = true;
         if (!await LoadAsync(id) || !ModelState.IsValid) return Page();
         try
         {
@@ -48,27 +53,42 @@ public sealed class EditModel(TrainingProgramService programs) : ProgramPageMode
     }
 
     // Structural edits are a preview. Only the main Save button persists the program.
-    public async Task<IActionResult> OnPostStructureAsync(int? id, string command, int workout = -1, int exercise = -1)
+    public async Task<IActionResult> OnPostStructureAsync(int? id, string command, int workout = -1, int exercise = -1, int[]? selectedExerciseIds = null)
     {
+        HasUnsavedChanges = true;
         if (!await LoadAsync(id)) return Page();
         if (Input.Workouts.Count > 14 || Input.Workouts.Any(w => w.Exercises.Count > 30)) return BadRequest();
         ModelState.Clear();
         var w = Input.Workouts.ElementAtOrDefault(workout);
         switch (command)
         {
-            case "add-workout" when Input.Workouts.Count < 14: Input.Workouts.Add(new()); break;
-            case "remove-workout" when w is not null: Input.Workouts.RemoveAt(workout); break;
+            case "add-workout" when Input.Workouts.Count < 14:
+                Input.Workouts.Add(new()); SelectedWorkout = Input.Workouts.Count - 1; break;
+            case "remove-workout" when w is not null:
+                Input.Workouts.RemoveAt(workout); SelectedWorkout = Math.Min(workout, Input.Workouts.Count - 1); break;
             case "duplicate-workout" when w is not null && Input.Workouts.Count < 14:
                 var copy = System.Text.Json.JsonSerializer.Deserialize<ProgramWorkoutInput>(System.Text.Json.JsonSerializer.Serialize(w))!;
                 copy.Key = Guid.Empty; copy.DayOfWeek = null; copy.Name = w.Name[..Math.Min(110, w.Name.Length)] + " · копия";
-                Input.Workouts.Insert(workout + 1, copy); break;
+                Input.Workouts.Insert(workout + 1, copy); SelectedWorkout = workout + 1; break;
             case "up-workout" when workout > 0 && w is not null:
-                (Input.Workouts[workout - 1], Input.Workouts[workout]) = (w, Input.Workouts[workout - 1]); break;
+                (Input.Workouts[workout - 1], Input.Workouts[workout]) = (w, Input.Workouts[workout - 1]); SelectedWorkout = workout - 1; break;
             case "down-workout" when w is not null && workout < Input.Workouts.Count - 1:
-                (Input.Workouts[workout + 1], Input.Workouts[workout]) = (w, Input.Workouts[workout + 1]); break;
+                (Input.Workouts[workout + 1], Input.Workouts[workout]) = (w, Input.Workouts[workout + 1]); SelectedWorkout = workout + 1; break;
             case "add-exercise" when w is not null && w.Exercises.Count < 30:
-                var available = Exercises.FirstOrDefault(e => w.Exercises.All(x => x.ExerciseId != e.Id));
-                if (available is not null) w.Exercises.Add(new() { ExerciseId = available.Id }); break;
+                if (selectedExerciseIds is { Length: > 0 })
+                {
+                    var ids = selectedExerciseIds.Distinct().ToArray();
+                    if (ids.Any(id => Exercises.All(e => e.Id != id)) ||
+                        ids.Any(id => w.Exercises.Any(e => e.ExerciseId == id)) || w.Exercises.Count + ids.Length > 30)
+                        ModelState.AddModelError("", "Выберите до 30 разных упражнений из справочника для одной тренировки.");
+                    else foreach (var exerciseId in ids) w.Exercises.Add(new() { ExerciseId = exerciseId });
+                }
+                else
+                {
+                    var available = Exercises.FirstOrDefault(e => w.Exercises.All(x => x.ExerciseId != e.Id));
+                    if (available is not null) w.Exercises.Add(new() { ExerciseId = available.Id });
+                }
+                SelectedWorkout = workout; break;
             case "remove-exercise" when w is not null && exercise >= 0 && exercise < w.Exercises.Count:
                 w.Exercises.RemoveAt(exercise); break;
             case "up-exercise" when w is not null && exercise > 0 && exercise < w.Exercises.Count:
@@ -76,6 +96,8 @@ public sealed class EditModel(TrainingProgramService programs) : ProgramPageMode
             case "down-exercise" when w is not null && exercise >= 0 && exercise < w.Exercises.Count - 1:
                 (w.Exercises[exercise + 1], w.Exercises[exercise]) = (w.Exercises[exercise], w.Exercises[exercise + 1]); break;
         }
+        SelectedWorkout = Math.Clamp(SelectedWorkout, 0, Math.Max(0, Input.Workouts.Count - 1));
+        ModelState.Remove(nameof(SelectedWorkout));
         return Page();
     }
 }

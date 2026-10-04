@@ -1,10 +1,12 @@
-﻿@page
+@page
 @model LockoutModel
 @{
-    ViewData["Title"] = "Locked out";
+    ViewData["Title"] = "Вход временно ограничен";
+    ViewData["AuthDescription"] = "Слишком много попыток входа. Подождите и попробуйте позже.";
 }
-
-<header>
-    <h1 class="text-danger">@ViewData["Title"]</h1>
-    <p class="text-danger">This account has been locked out, please try again later.</p>
-</header>
+<partial name="_AuthStepHeader" />
+<section class="auth-card auth-step-card">
+    <div class="auth-notice"><h2>Можно вернуться позже</h2><p>Проверьте раскладку клавиатуры и данные аккаунта. Если пароль забыт, используйте восстановление доступа.</p></div>
+    <a class="auth-submit" asp-area="" asp-page="/TechnicalPages/Login">Вернуться к входу</a>
+    <p class="auth-secondary-link"><a asp-page="./ForgotPassword">Восстановить доступ</a></p>
+</section>

@@ -1,118 +1,62 @@
-using enx_fit.Areas.Identity.Data;
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-#nullable disable
-
-using System;
 using System.ComponentModel.DataAnnotations;
-using System.Text;
-using System.Threading.Tasks;
+using enx_fit.Areas.Identity.Data;
+using enx_fit.Areas.Identity.Pages.Account.Manage;
+using enx_fit.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.WebUtilities;
 
-namespace enx_fit.Areas.Identity.Pages.Account
+namespace enx_fit.Areas.Identity.Pages.Account;
+
+[AllowAnonymous]
+public class ResetPasswordModel(UserManager<ApplicationUser> users) : PageModel
 {
-    public class ResetPasswordModel : PageModel
+    [BindProperty] public InputModel Input { get; set; } = new();
+    public string ReturnUrl { get; private set; } = "/Dashboard";
+    public bool HasValidLink { get; private set; }
+    public string PasswordHint => AccountMessages.PasswordHint(users.Options.Password);
+    public class InputModel
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-
-        public ResetPasswordModel(UserManager<ApplicationUser> userManager)
+        [Required(ErrorMessage = "Введите email.")]
+        [EmailAddress(ErrorMessage = "Проверьте адрес электронной почты.")]
+        public string Email { get; set; } = "";
+        [Required(ErrorMessage = "Введите новый пароль.")]
+        [StringLength(100, ErrorMessage = "Пароль должен содержать от {2} до {1} символов.", MinimumLength = 6)]
+        [DataType(DataType.Password)] public string Password { get; set; } = "";
+        [Required(ErrorMessage = "Повторите новый пароль.")]
+        [DataType(DataType.Password)]
+        [Compare("Password", ErrorMessage = "Пароли не совпадают.")]
+        public string ConfirmPassword { get; set; } = "";
+        [Required(ErrorMessage = "Запросите новую ссылку восстановления.")]
+        public string Code { get; set; } = "";
+    }
+    public void OnGet(string? code = null, string? returnUrl = null)
+    {
+        ReturnUrl = AuthPageLinks.LocalReturnUrl(Url, returnUrl);
+        HasValidLink = AuthPageLinks.TryDecodeToken(code, out var token);
+        Input.Code = token;
+    }
+    public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
+    {
+        ReturnUrl = AuthPageLinks.LocalReturnUrl(Url, returnUrl);
+        HasValidLink = !string.IsNullOrWhiteSpace(Input.Code);
+        if (!ModelState.IsValid) return Page();
+        var user = await users.FindByEmailAsync(Input.Email.Trim());
+        if (user is null)
         {
-            _userManager = userManager;
-        }
-
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        [BindProperty]
-        public InputModel Input { get; set; }
-
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        public class InputModel
-        {
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Required]
-            [EmailAddress]
-            public string Email { get; set; }
-
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Required]
-            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-            [DataType(DataType.Password)]
-            public string Password { get; set; }
-
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [DataType(DataType.Password)]
-            [Display(Name = "Confirm password")]
-            [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
-            public string ConfirmPassword { get; set; }
-
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Required]
-            public string Code { get; set; }
-
-        }
-
-        public IActionResult OnGet(string code = null)
-        {
-            if (code == null)
-            {
-                return BadRequest("A code must be supplied for password reset.");
-            }
-            else
-            {
-                Input = new InputModel
-                {
-                    Code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code))
-                };
-                return Page();
-            }
-        }
-
-        public async Task<IActionResult> OnPostAsync()
-        {
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
-
-            var user = await _userManager.FindByEmailAsync(Input.Email);
-            if (user == null)
-            {
-                // Don't reveal that the user does not exist
-                return RedirectToPage("./ResetPasswordConfirmation");
-            }
-
-            var result = await _userManager.ResetPasswordAsync(user, Input.Code, Input.Password);
-            if (result.Succeeded)
-            {
-                return RedirectToPage("./ResetPasswordConfirmation");
-            }
-
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
+            ModelState.AddModelError(string.Empty, "Не удалось изменить пароль. Проверьте email и запросите новую ссылку.");
             return Page();
         }
+        var result = await users.ResetPasswordAsync(user, Input.Code, Input.Password);
+        if (result.Succeeded) {
+            TempData["AccountPasswordResetComplete"] = true;
+            return RedirectToPage("./ResetPasswordConfirmation", new { returnUrl = ReturnUrl });
+        }
+        foreach (var error in result.Errors)
+            ModelState.AddModelError(string.Empty, error.Code == "InvalidToken"
+                ? "Ссылка недействительна или уже использована. Запросите новую."
+                : AccountMessages.PasswordError(error, users.Options.Password));
+        return Page();
     }
 }

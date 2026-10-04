@@ -8,7 +8,7 @@ namespace enx_fit.ViewModels;
 
 public sealed record WorkoutExercisePreview(int Id, string Name, string Summary, string Photo);
 public sealed record WorkoutHistoryItem(int Id, DateOnly Date, string Title, int Exercises, int Sets,
-    decimal Volume, string Photo, int? ProgramId, string ProgramName, IReadOnlyList<WorkoutExercisePreview> Preview);
+    decimal Volume, string Photo, int? ProgramId, string ProgramName, IReadOnlyList<WorkoutExercisePreview> Preview, bool IsManual = false);
 public sealed record WorkoutCalendarDay(DateOnly Date, string Status, int? WorkoutId, string Title,
     int? PlannedWorkoutId = null, int? ProgramId = null);
 
@@ -52,7 +52,7 @@ public sealed class DashboardWorkoutsViewModel
         Selected = History.FirstOrDefault(w => w.Id == model.SelectedWorkout) ?? History.FirstOrDefault();
         var start = Month.AddDays(-((int)Month.DayOfWeek + 6) % 7);
         var cells = (int)Math.Ceiling((((int)Month.DayOfWeek + 6) % 7 + DateTime.DaysInMonth(Month.Year, Month.Month)) / 7d) * 7;
-        var planned = data.Workouts.Where(w => !w.StartedAtUtc.HasValue && !w.CompletedAtUtc.HasValue && !DashboardData.WorkingSets(w).Any()).ToList();
+        var planned = data.Workouts.Where(w => w.State == WorkoutStatus.Planned).ToList();
         var occurrences = model.WorkoutPrograms.Where(p => !p.IsArchived).SelectMany(ProgramSchedule.Occurrences).ToList();
         Calendar = Enumerable.Range(0, cells).Select(i =>
         {
@@ -88,7 +88,7 @@ public sealed class DashboardWorkoutsViewModel
         }).ToList();
         return new(workout.Id, workout.Date, workout.Title ?? "Тренировка", workout.WorkoutExercises.Count,
             DashboardData.WorkingSets(workout).Count(), DashboardData.Volume(workout), exercises.FirstOrDefault()?.Photo ?? "bench",
-            workout.TrainingProgramId, programs.FirstOrDefault(p => p.Id == workout.TrainingProgramId)?.Name ?? (workout.TrainingProgramId.HasValue ? "Программа" : "Без программы"), exercises);
+            workout.TrainingProgramId, programs.FirstOrDefault(p => p.Id == workout.TrainingProgramId)?.Name ?? (workout.TrainingProgramId.HasValue ? "Программа" : "Без программы"), exercises, workout.EntryMode == WorkoutEntryMode.Manual);
     }
 
     private static string PhotoFor(string name) => name.Contains("планк", StringComparison.OrdinalIgnoreCase) ? "plank" :

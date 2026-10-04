@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using enx_fit.Services;
 namespace enx_fit.Areas.Identity.Pages.Account
 {
     public class LoginWithRecoveryCodeModel : PageModel
@@ -41,6 +42,7 @@ namespace enx_fit.Areas.Identity.Pages.Account
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
         public string ReturnUrl { get; set; }
+        public bool RememberMe { get; private set; }
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -53,38 +55,36 @@ namespace enx_fit.Areas.Identity.Pages.Account
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
             [BindProperty]
-            [Required]
+            [Required(ErrorMessage = "Введите код восстановления.")]
             [DataType(DataType.Text)]
-            [Display(Name = "Recovery Code")]
+            [Display(Name = "Код восстановления")]
             public string RecoveryCode { get; set; }
         }
 
-        public async Task<IActionResult> OnGetAsync(string returnUrl = null)
+        public async Task<IActionResult> OnGetAsync(string returnUrl = null, bool rememberMe = false)
         {
+            RememberMe = rememberMe;
+            ReturnUrl = AuthPageLinks.LocalReturnUrl(Url, returnUrl);
             // Ensure the user has gone through the username & password screen first
             var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
             if (user == null)
             {
-                throw new InvalidOperationException($"Unable to load two-factor authentication user.");
+                return RedirectToPage("/TechnicalPages/Login", new { area = "", returnUrl = ReturnUrl });
             }
-
-            ReturnUrl = returnUrl;
 
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync(string returnUrl = null)
+        public async Task<IActionResult> OnPostAsync(string returnUrl = null, bool rememberMe = false)
         {
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
-
+            RememberMe = rememberMe;
+            ReturnUrl = AuthPageLinks.LocalReturnUrl(Url, returnUrl);
             var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
             if (user == null)
             {
-                throw new InvalidOperationException($"Unable to load two-factor authentication user.");
+                return RedirectToPage("/TechnicalPages/Login", new { area = "", returnUrl = ReturnUrl });
             }
+            if (!ModelState.IsValid) return Page();
 
             var recoveryCode = Input.RecoveryCode.Replace(" ", string.Empty);
 
@@ -95,7 +95,7 @@ namespace enx_fit.Areas.Identity.Pages.Account
             if (result.Succeeded)
             {
                 _logger.LogInformation("User with ID '{UserId}' logged in with a recovery code.", user.Id);
-                return LocalRedirect(returnUrl ?? Url.Content("~/"));
+                return LocalRedirect(ReturnUrl);
             }
             if (result.IsLockedOut)
             {
@@ -105,7 +105,9 @@ namespace enx_fit.Areas.Identity.Pages.Account
             else
             {
                 _logger.LogWarning("Invalid recovery code entered for user with ID '{UserId}' ", user.Id);
-                ModelState.AddModelError(string.Empty, "Invalid recovery code entered.");
+                ModelState.AddModelError(string.Empty, "Код не подошёл или уже использован. Попробуйте другой код восстановления.");
+                ModelState.Remove("Input.RecoveryCode");
+                Input.RecoveryCode = "";
                 return Page();
             }
         }

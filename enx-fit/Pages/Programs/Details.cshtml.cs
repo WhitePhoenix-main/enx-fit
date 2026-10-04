@@ -3,6 +3,7 @@ using enx_fit.Security;
 using enx_fit.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using enx_fit.ViewModels;
 
 namespace enx_fit.Pages.Programs;
 
@@ -12,11 +13,15 @@ public sealed class DetailsModel(TrainingProgramService programs, CurrentUser us
     public TrainingProgram Item { get; private set; } = null!;
     public List<WorkoutSession> Sessions { get; private set; } = [];
     public List<ProgramClientStatus> Clients { get; private set; } = [];
-    public ProgramOccurrence? Next => ProgramSchedule.Next(Item, Sessions);
+    public ProgramOccurrence? Next => ProgramSchedule.Next(Item, Sessions, user.LocalToday);
     public bool IsOwner => Item.OwnerId == user.Id;
     public int Total => ProgramSchedule.Occurrences(Item).Count();
     public int Done => ProgramSchedule.Done(Item, Sessions);
     public int Percent => Total > 0 ? Math.Min(100, Done * 100 / Total) : 0;
+    public DateOnly Today => user.LocalToday;
+    [BindProperty(SupportsGet = true)] public DateOnly? Week { get; set; }
+    [BindProperty(SupportsGet = true)] public DateOnly? Day { get; set; }
+    public ProgramCalendarViewModel Calendar => new(Item, Sessions, Today, Week);
     [BindProperty(SupportsGet = true)] public string? Tab { get; set; } = "overview";
     [BindProperty(SupportsGet = true)] public int? ExerciseId { get; set; }
     [BindProperty] public ProgressionRule Rule { get; set; } = new();
@@ -57,8 +62,29 @@ public sealed class DetailsModel(TrainingProgramService programs, CurrentUser us
             }
         }
     }
-    public Task<IActionResult> OnPostActivateAsync(int id) => Mutate(id, async () =>
-    { await Programs.ActivateAsync(id, DateOnly.FromDateTime(DateTime.UtcNow)); return RedirectToPage(new { id }); });
+    public async Task<IActionResult> OnPostActivateAsync(int id, DateOnly? startDate)
+    {
+        Tab = "schedule";
+        if (!ModelState.IsValid) { await LoadAsync(id); return Page(); }
+        return await Mutate(id, async () => { await Programs.ActivateAsync(id, startDate ?? Today); return RedirectToPage(new { id, Tab, Week = (startDate ?? Today).ToString("yyyy-MM-dd") }); });
+    }
+    public async Task<IActionResult> OnPostMoveAsync(int id, Guid workoutKey, DateOnly originalDate, DateOnly date, Guid scheduleRevision)
+    {
+        Tab = "schedule";
+        if (!ModelState.IsValid) { await LoadAsync(id); return Page(); }
+        return await Mutate(id, async () =>
+        {
+            await Programs.MoveOccurrenceAsync(id, workoutKey, originalDate, date, scheduleRevision);
+            TempData["StatusMessage"] = "Занятие перенесено. Другие дни программы сохранились.";
+            return RedirectToPage(new { id, Tab, Week = date.ToString("yyyy-MM-dd"), Day = date.ToString("yyyy-MM-dd") });
+        });
+    }
+    public async Task<IActionResult> OnPostStartOccurrenceAsync(int id, Guid workoutKey, DateOnly originalDate)
+    {
+        Tab = "schedule";
+        if (!ModelState.IsValid) { await LoadAsync(id); return Page(); }
+        return await Mutate(id, async () => RedirectToPage("/Workouts/Details", new { id = await Programs.StartOccurrenceAsync(id, workoutKey, originalDate) }));
+    }
     public Task<IActionResult> OnPostStartAsync(int id) => Mutate(id, async () =>
         RedirectToPage("/Workouts/Details", new { id = await Programs.StartNextAsync(id) }));
     public Task<IActionResult> OnPostDuplicateAsync(int id) => Mutate(id, async () =>
@@ -114,13 +140,14 @@ public sealed class DetailsModel(TrainingProgramService programs, CurrentUser us
         try { return await action(); }
         catch (ProgramOperationException e) { await LoadAsync(id); return Error(e); }
         catch (DbUpdateException e) { SaveError(e); await LoadAsync(id); return Page(); }
+        catch (System.Data.Common.DbException e) { SaveError(e); await LoadAsync(id); return Page(); }
     }
 }
 public sealed record ProgramClientStatus(TrainingProgram Program, string Name, List<WorkoutSession> Sessions)
 {
     public int Percent => ProgramSchedule.Occurrences(Program).Any() ? Math.Min(100, ProgramSchedule.Done(Program, Sessions) * 100 / ProgramSchedule.Occurrences(Program).Count()) : 0;
-    public DateOnly? Last => Sessions.Where(s => s.CompletedAtUtc.HasValue).Max(s => (DateOnly?)s.Date);
+    public DateOnly? Last => Sessions.Where(s => s.State == WorkoutStatus.Completed).Max(s => (DateOnly?)s.Date);
     public string Status => Program.StartDate > DateOnly.FromDateTime(DateTime.UtcNow) ? "Ожидает старта" :
         ProgramSchedule.Occurrences(Program).Any(o => o.Date < DateOnly.FromDateTime(DateTime.UtcNow) &&
-            !Sessions.Any(s => s.ProgramWorkoutKey == o.Workout.Key && s.ScheduledDate == o.Date && s.CompletedAtUtc.HasValue)) ? "Есть пропуски" : "Всё по плану";
+            !Sessions.Any(s => ProgramSchedule.Matches(s, o) && s.State == WorkoutStatus.Completed)) ? "Есть пропуски" : "Всё по плану";
 }

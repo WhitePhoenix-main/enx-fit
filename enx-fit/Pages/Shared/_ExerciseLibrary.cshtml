@@ -5,65 +5,52 @@
     var groups = Model.Exercises.Select(e => e.MuscleGroup).Distinct().OrderBy(g => g);
 }
 <section id="@Model.Id" class="exercise-library @(Model.ForBuilder ? "wb-panel wb-library" : "")"
-         data-exercise-library data-viewer="@Model.ViewerId" data-mode="@(Model.ForBuilder ? "builder" : "submit")"
-         aria-labelledby="@(Model.Id)-heading">
+         data-exercise-library data-viewer="@Model.ViewerId" data-mode="@(Model.ForBuilder || Model.ForSelection ? "builder" : "submit")"
+         data-prescription="@(Model.ForSelection ? "results" : "plan")" aria-labelledby="@(Model.Id)-heading">
     <header class="exercise-library-heading">
-        <h2 id="@(Model.Id)-heading">Библиотека упражнений</h2>
-        <span id="@(Model.ForBuilder ? "wb-library-count" : null)" data-library-count aria-live="polite">@Model.Exercises.Count</span>
+        <div><span class="exercise-library-eyebrow">СОБЕРИТЕ СВОЙ ПЛАН</span><h2 id="@(Model.Id)-heading">Добавить упражнения</h2></div>
         @if (Model.ForBuilder)
-        {
-            <button type="button" class="exercise-library-action wb-library-close" data-close-library aria-label="Закрыть библиотеку"><admin-icon name="close" /></button>
-        }
+        { <button type="button" class="exercise-library-action wb-library-close" data-close-library aria-label="Закрыть библиотеку"><admin-icon name="close" /></button> }
     </header>
-    <div class="exercise-library-tabs" role="group" aria-label="Раздел библиотеки">
-        <button type="button" data-library-tab="all" aria-pressed="true">Все</button>
-        <button type="button" data-library-tab="favorites" aria-pressed="false">Избранные</button>
-        <button type="button" data-library-tab="recent" aria-pressed="false">Недавние</button>
-    </div>
-    <label class="exercise-library-search">
-        <admin-icon name="search" />
-        <input type="search" id="@(Model.ForBuilder ? "wb-search" : Model.Id + "-search")" data-library-search
-               placeholder="Название, мышцы или оборудование…" aria-label="Поиск упражнений" autocomplete="off" />
-    </label>
-    <label class="exercise-library-group">
-        Группа мышц
-        <select data-library-group aria-label="Группа мышц">
-            <option value="">Все группы</option>
-            @foreach (var group in groups)
-            {
-                <option value="@group">@group</option>
-            }
-        </select>
-    </label>
+    <div class="exercise-library-context"><admin-icon name="workout" /><div><strong data-library-context>@Model.ContextName</strong><small><span data-library-existing>@selected.Count</span> в тренировке · выберите и настройте упражнения</small></div></div>
     @if (Model.ForBuilder)
-    {
-        <label class="wb-library-target">Добавлять в<select id="wb-library-target"></select></label>
-    }
+    { <label class="wb-library-target">Добавить в блок<select id="wb-library-target" aria-label="Блок для новых упражнений"></select></label> }
+    <label class="exercise-library-search"><admin-icon name="search" /><input type="search" id="@(Model.ForBuilder ? "wb-search" : Model.Id + "-search")" data-library-search placeholder="Поиск упражнений…" aria-label="Поиск упражнений" autocomplete="off" /><button type="button" data-clear-search aria-label="Очистить поиск" hidden><admin-icon name="close" /></button></label>
+    <div class="exercise-library-tabs" role="group" aria-label="Раздел библиотеки"><button type="button" data-library-tab="all" aria-pressed="true">Все</button><button type="button" data-library-tab="favorites" aria-pressed="false">Избранные</button><button type="button" data-library-tab="recent" aria-pressed="false">Недавние</button></div>
+    <div class="exercise-library-filters" role="group" aria-label="Быстрый выбор мышц">
+        <button type="button" data-muscle-filter="" aria-pressed="true">Все мышцы</button>
+        @foreach (var group in new[] { "Грудь", "Спина", "Ноги" })
+        { <button type="button" data-muscle-filter="@group" aria-pressed="false">@group</button> }
+    </div>
+    <label class="exercise-library-group">Другие группы<select data-library-group aria-label="Группа мышц"><option value="">Все группы</option>@if (!groups.Contains("Ноги")) { <option value="Ноги">Ноги</option> }@foreach (var group in groups) { <option value="@group">@group</option> }</select></label>
+    <div class="exercise-library-result-count"><span>Доступные упражнения</span><span id="@(Model.ForBuilder ? "wb-library-count" : null)" data-library-count aria-live="polite">@Model.Exercises.Count</span></div>
     <div class="exercise-library-list" data-library-list>
         @foreach (var exercise in Model.Exercises)
         {
             var name = ExercisePresentation.DisplayName(exercise);
             var isSelected = selected.Contains(exercise.Id);
-            <article class="exercise-library-item" data-exercise-id="@exercise.Id" data-name="@name" data-group="@exercise.MuscleGroup"
+            <article class="exercise-library-item @(isSelected ? "is-added" : "")" data-exercise-id="@exercise.Id" data-name="@name" data-group="@exercise.MuscleGroup"
                      data-search="@name @exercise.Name @exercise.MuscleGroup @exercise.Equipment" data-recent="@(recent.Contains(exercise.Id) ? "true" : "false")">
-                <span class="exercise-library-icon" data-library-icon aria-hidden="true"><admin-icon name="@ExercisePresentation.MuscleIcon(exercise.MuscleGroup)" /></span>
-                <div class="exercise-library-copy"><strong>@name</strong><small>@exercise.MuscleGroup · @exercise.Equipment</small></div>
-                <a class="exercise-library-action" asp-page="/Exercises/Details" asp-route-id="@exercise.Id" target="_blank" rel="noopener"
-                   aria-label="Оборудование и описание: @name (новая вкладка)" title="Оборудование и описание"><admin-icon name="info" /></a>
-                <button type="button" class="exercise-library-action" data-library-favorite aria-pressed="false" aria-label="В избранное: @name"><admin-icon name="star" /></button>
-                <button type="@(Model.ForBuilder ? "button" : "submit")" class="exercise-library-action exercise-library-add" data-library-add
-                        name="AddExercise.ExerciseId" value="@exercise.Id" disabled="@(isSelected ? "disabled" : null)" aria-label="@(isSelected ? "Добавлено" : "Добавить"): @name"
-                        title="@(isSelected ? "Уже в тренировке" : "Добавить упражнение")">
-                    <span data-add-icon hidden="@(isSelected ? "hidden" : null)"><admin-icon name="plus" /></span>
-                    <span data-selected-icon hidden="@(!isSelected ? "hidden" : null)"><admin-icon name="check" /></span>
-                </button>
+                <div class="exercise-library-row">
+                    <button type="button" class="exercise-library-select" data-library-add name="AddExercise.ExerciseId" value="@exercise.Id" disabled="@(isSelected ? "disabled" : null)" aria-pressed="false" aria-label="@(isSelected ? "Добавлено" : "Добавить"): @name">
+                        <span class="exercise-library-icon" data-library-icon aria-hidden="true"><admin-icon name="@ExercisePresentation.MuscleIcon(exercise.MuscleGroup)" /></span>
+                        <span class="exercise-library-copy"><strong>@name</strong><small>@exercise.MuscleGroup · @exercise.Equipment</small><small class="exercise-library-added" data-added-label hidden="@(!isSelected)">В тренировке</small></span>
+                        <span class="exercise-library-check"><span data-add-icon hidden="@isSelected"><admin-icon name="plus" /></span><span data-selected-icon hidden="@(!isSelected)"><admin-icon name="check" /></span></span>
+                    </button>
+                    <button type="button" class="exercise-library-action" data-library-favorite aria-pressed="false" aria-label="В избранное: @name"><admin-icon name="star" /></button>
+                </div>
+                <button type="button" class="exercise-library-prescription" data-configure-pick hidden aria-expanded="false"><span data-pick-summary></span><span>Настроить <admin-icon name="chevron" /></span></button>
+                <div data-pick-settings class="exercise-library-settings" hidden></div>
+                <details class="exercise-library-info"><summary>Оборудование и техника</summary><p>@(string.IsNullOrWhiteSpace(exercise.Notes) ? $"{exercise.MuscleGroup} · {exercise.Equipment}. Описание и техника доступны в карточке упражнения." : exercise.Notes)</p><a asp-page="/Exercises/Details" asp-route-id="@exercise.Id" target="_blank" rel="noopener" aria-label="Оборудование и описание: @name (новая вкладка)">Открыть карточку <admin-icon name="arrow" /></a></details>
             </article>
         }
+        <p class="exercise-library-empty" data-library-empty hidden="@(Model.Exercises.Count > 0)">Упражнений не найдено. Измените группу или поисковый запрос.</p>
     </div>
-    <p class="exercise-library-empty" data-library-empty hidden="@(Model.Exercises.Count > 0)">Упражнений не найдено. Измените группу или поисковый запрос.</p>
-    <p class="exercise-library-status" data-library-status role="status" hidden></p>
-    @if (Model.ForBuilder)
-    {
-        <button class="wb-block-add" type="button" data-add-block><admin-icon name="plus" />Создать блок / суперсет</button>
-    }
+    <footer class="exercise-library-selection">
+        <div class="exercise-library-selection-heading"><strong data-selection-summary>Выберите упражнения</strong><button type="button" data-clear-selection hidden>Очистить</button></div>
+        <div class="exercise-library-chips" data-selection-chips hidden></div>
+        <p class="exercise-library-status" data-library-status role="status" hidden></p>
+        <button type="button" class="exercise-library-commit" data-library-commit disabled><admin-icon name="plus" /><span>Добавить в тренировку</span><admin-icon name="arrow" /></button>
+        <small data-selection-hint>@(Model.ForSelection ? "Укажите фактические результаты сейчас или после добавления" : "Подходы, вес и отдых можно изменить до добавления")</small>
+    </footer>
 </section>

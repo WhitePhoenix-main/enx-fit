@@ -28,7 +28,7 @@ public sealed class ProgramTrainingDataService(ApplicationDbContext db, Training
         var rows = await db.WorkoutExercises.AsNoTracking().Include(e => e.SetEntries).Include(e => e.WorkoutSession)
             .Where(e => e.WorkoutSession.UserId == p.OwnerId && e.WorkoutSession.TrainingProgramId == p.Id &&
                 e.WorkoutSession.ProgramWorkoutKey == workout!.Key && e.ExerciseId == exercise.ExerciseId &&
-                e.WorkoutSession.CompletedAtUtc != null && e.WorkoutSession.Date <= today)
+                e.WorkoutSession.CompletedAtUtc != null && e.WorkoutSession.Status != WorkoutStatus.Cancelled && e.WorkoutSession.Date <= today)
             .OrderByDescending(e => e.WorkoutSession.Date).ThenByDescending(e => e.WorkoutSessionId).Take(12).ToListAsync();
         return rows.Where(e => e.SetEntries.Any(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0))
             .Select(e => new ExercisePerformance(e.WorkoutSessionId, e.WorkoutSession.Date,
