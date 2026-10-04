@@ -12,6 +12,7 @@ public class AddSetEntryInputModel
     public int SetNumber { get; set; } = 1;
 
     [Range(typeof(decimal), "0", "10000")]
+    [Microsoft.AspNetCore.Mvc.ModelBinder(BinderType = typeof(WorkoutWeightBinder))]
     public decimal Weight { get; set; }
 
     [Range(0, 1000)]
@@ -22,6 +23,8 @@ public class AddSetEntryInputModel
 
     [Display(Name = "Warm-up")]
     public bool IsWarmup { get; set; }
+
+    [Range(0, 1800)] public int? RestSeconds { get; set; }
 
     [StringLength(500)]
     public string? Notes { get; set; }

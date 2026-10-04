@@ -7,6 +7,7 @@ public sealed class DailyCheckIn
     public int WaterMl { get; set; }
     public int Steps { get; set; }
     public int SleepMinutes { get; set; }
+    public int ReadingMinutes { get; set; }
     public bool NutritionLogged { get; set; }
     public bool StretchingDone { get; set; }
 }

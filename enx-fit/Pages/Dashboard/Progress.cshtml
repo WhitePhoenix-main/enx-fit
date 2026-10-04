@@ -1,4 +1,12 @@
 @page
 @model enx_fit.Pages.DashboardModel
-@{ Layout = "_DashboardLayout"; ViewData["Title"] = Model.Section!.Title; }
-<partial name="_DashboardSection" model="Model" />
+@{ Layout = "_DashboardReferenceLayout"; ViewData["Title"] = "Прогресс"; }
+@section Styles {
+    <link rel="stylesheet" href="~/css/progress-reference.css" asp-append-version="true" />
+    @if (!Model.Reference) { <link rel="stylesheet" href="~/css/progress-workspace.css" asp-append-version="true" /> }
+}
+@if (Model.Reference) { <partial name="_DashboardProgress" model="Model" /> }
+else { <partial name="_ProgressWorkspace" model="Model" /> }
+@section Scripts {
+    <script src="~/js/progress-reference.js" asp-append-version="true"></script>
+}

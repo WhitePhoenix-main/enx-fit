@@ -8,6 +8,13 @@ public sealed class AdminIconTagHelper : TagHelper
     public string Name { get; set; } = "grid";
     private static readonly Dictionary<string, string> Paths = new()
     {
+        ["bolt"] = "<path d='m13 2-8 12h6l-1 8 9-13h-6l1-7Z'/>",
+        ["document"] = "<path d='M14 3H5v18h14V8Zm0 0v5h5M8 12h8m-8 4h8'/>",
+        ["repeat"] = "<path d='M20 8a8 8 0 0 0-14-3L3 8m0-5v5h5M4 16a8 8 0 0 0 14 3l3-3m0 5v-5h-5'/>",
+        ["coffee"] = "<path d='M4 6h12v14H4Zm12 2h3a3 3 0 0 1 0 6h-3M7 2h5'/>",
+        ["check-circle"] = "<circle cx='12' cy='12' r='9'/><path d='m7 12 3 3 7-7'/>",
+        ["more"] = "<circle cx='4' cy='12' r='1' fill='currentColor'/><circle cx='12' cy='12' r='1' fill='currentColor'/><circle cx='20' cy='12' r='1' fill='currentColor'/>",
+        ["star"] = "<path d='m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9L6.5 20l1-6.2L3 9.6l6.2-.9Z'/>",
         ["grip"] = "<circle cx='8' cy='5' r='1'/><circle cx='16' cy='5' r='1'/><circle cx='8' cy='12' r='1'/><circle cx='16' cy='12' r='1'/><circle cx='8' cy='19' r='1'/><circle cx='16' cy='19' r='1'/>",
         ["up"] = "<path d='M12 20V4m-6 6 6-6 6 6'/>",
         ["down"] = "<path d='M12 4v16m-6-6 6 6 6-6'/>",

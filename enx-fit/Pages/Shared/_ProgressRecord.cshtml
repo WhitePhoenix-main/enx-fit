@@ -1,0 +1,11 @@
+@model enx_fit.ViewModels.ProgressRecord
+@using System.Globalization
+@{
+    var reference = ViewData["Dashboard"] is enx_fit.Pages.DashboardModel { Reference: true };
+    var window = Model.Photo switch { "squat" => "690 925 91 66", "deadlift" => "1096 925 106 66", _ => "290 925 89 66" };
+}
+<a class="epr-record" href="@(reference ? "#progress-record-" + Model.ExerciseId : Url.Page("/Workouts/Details", new { id = Model.WorkoutId }))" data-dialog="@(reference ? "progress-record-" + Model.ExerciseId : null)" data-record-exercise="@Model.ExerciseId">
+    <svg class="epr-record-photo @(Model.Photo == "deadlift" ? "is-wide" : "")" viewBox="@window" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><image href="@Url.Content("~/images/dashboard/progress-reference-art.png")" width="1546" height="1017" /></svg>
+    <div><h3>@Model.Name</h3><strong>@Model.Weight.ToString("0.#", CultureInfo.GetCultureInfo("ru-RU")) кг</strong></div>
+    <time datetime="@Model.Date.ToString("yyyy-MM-dd")">@Model.Date.ToString("d MMMM yyyy", CultureInfo.GetCultureInfo("ru-RU"))</time><reference-icon name="chevron" />
+</a>

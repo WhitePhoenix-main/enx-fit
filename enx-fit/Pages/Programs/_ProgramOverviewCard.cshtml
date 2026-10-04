@@ -1,0 +1,22 @@
+@model enx_fit.ViewModels.ProgramOverviewMenu
+@{
+    var p = Model.Card.Program;
+    var duration = p.Weeks % 100 is >= 11 and <= 14 || p.Weeks % 10 is 0 or >= 5 ? "недель" : p.Weeks % 10 == 1 ? "неделя" : "недели";
+    var frequency = p.DaysPerWeek == 1 ? "раз" : p.DaysPerWeek is >= 2 and <= 4 ? "раза" : "раз";
+}
+<article class="ef-card ep-program-card @(p.IsArchived ? "is-archived" : "")" data-program-id="@p.Id" data-program-level="@p.Level">
+    <span class="ep-program-photo ep-photo-@Model.Card.Photo" role="img" aria-label="@(Model.Card.Photo == "bench" ? "Штанга и скамья в тренажёрном зале" : "Гантели в тренажёрном зале")"></span>
+    <div class="ep-program-copy"><h2>@p.Name</h2><span class="ep-status"><reference-icon name="@(p.IsArchived ? "calendar" : "check")" />@Model.Card.Status</span>
+        <p>@(p.Description ?? p.Goal)</p>
+        <div class="ep-program-meta"><span><reference-icon name="calendar" />@p.Weeks @duration</span><span><reference-icon name="workout" />@p.DaysPerWeek @frequency в неделю</span></div>
+        @if (p.StartDate.HasValue) { <p class="ep-card-progress">Выполнено @Model.Card.Done из @Model.Card.Total · @Model.Card.Percent%</p> }
+        <div class="ep-card-actions">
+            @if (p.IsTemplate) { <button class="ep-outline plan-preview-button" type="button" data-dialog="template-preview-@p.Id">Состав программы</button><form method="post" asp-page-handler="Duplicate" asp-route-id="@p.Id" asp-route-Tab="templates" data-busy><button class="ep-outline" type="submit"><reference-icon name="plus" />Выбрать</button></form> }
+            else {
+                @if (Model.Page.Reference) { <button class="ep-outline" type="button" data-dialog="program-preview-@p.Id"><reference-icon name="play" />Открыть программу</button> }
+                else { <a class="ep-outline" asp-page="Details" asp-route-id="@p.Id"><reference-icon name="play" />Открыть программу</a> }
+                <partial name="_ProgramOverviewMenu" model="Model" />
+            }
+        </div>
+    </div>
+</article>

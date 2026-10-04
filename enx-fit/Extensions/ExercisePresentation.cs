@@ -7,6 +7,20 @@ public sealed record EquipmentDescription(string Name, string Description, strin
 
 public static class ExercisePresentation
 {
+    // Only the original seed names are localized. Administrator renames stay visible everywhere.
+    public static string DisplayName(Exercise exercise) => (exercise.Id, exercise.Name) switch
+    {
+        (1, "Bench Press") => "Жим лёжа",
+        (2, "Squat") => "Приседания со штангой",
+        (3, "Deadlift") => "Становая тяга",
+        (4, "Pull Up") => "Подтягивания",
+        (5, "Overhead Press") => "Жим над головой",
+        (6, "Romanian Deadlift") => "Румынская тяга",
+        (7, "Leg Press") => "Жим ногами",
+        (8, "Barbell Row") => "Тяга штанги в наклоне",
+        _ => exercise.Name
+    };
+
     private static readonly Dictionary<string, EquipmentDescription> Equipment = BuildEquipment();
 
     private static readonly Dictionary<string, string> MachineDescriptions = new(StringComparer.OrdinalIgnoreCase)

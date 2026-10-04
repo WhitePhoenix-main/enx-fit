@@ -1,0 +1,97 @@
+@model IndexModel
+@using System.Globalization
+@using enx_fit.ViewModels
+@{
+    var overview = new ProgramsOverviewViewModel(Model);
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string? PageUrl(string? tab = null, bool? archived = null, int? week = null, bool? all = null, ProgramLevel? level = null, string? category = null) => Url.Page("/Programs/Index", new {
+        Tab = tab ?? Model.Tab, Archived = archived ?? Model.Archived, WeekOffset = week ?? Model.WeekOffset,
+        Reference = Model.Reference ? (bool?)true : null, All = all ?? Model.All, Level = level, Category = category
+    });
+}
+<partial name="_MobilePrograms" model="Model" />
+@if (TempData["StatusMessage"] is string status) { <div class="program-notice" role="status">@status</div> }
+@if (TempData["ErrorMessage"] is string error) { <div class="program-notice error" role="alert">@error</div> }
+<div class="ef-desktop-screen">
+<header class="ep-heading"><div><h1>Программы</h1><p>Ваш план тренировок и готовые шаблоны</p></div><a class="ef-primary ep-create" asp-page="Edit"><reference-icon name="plus-circle" />Создать программу</a></header>
+@if (Model.PageError is not null) { <partial name="_ProgramError" model="Model.PageError" /> }
+else {
+    <nav class="ep-tabs" aria-label="Разделы программ">
+        <a class="@(Model.Tab == "mine" ? "active" : "")" href="@PageUrl(tab: "mine", archived: false, all: false)" aria-current="@(Model.Tab == "mine" ? "page" : null)">Мои программы</a>
+        <a class="@(Model.Tab == "templates" ? "active" : "")" href="@PageUrl(tab: "templates", archived: false, all: false)" aria-current="@(Model.Tab == "templates" ? "page" : null)">Готовые планы</a>
+        @if (Model.Access.IsCoach && !Model.Reference) { <a class="@(Model.Tab == "assigned" ? "active" : "")" href="@PageUrl(tab: "assigned", archived: false, all: false)" aria-current="@(Model.Tab == "assigned" ? "page" : null)">Назначенные</a> }
+        @if (Model.Tab != "templates") { <a class="ep-archive @(Model.Archived ? "is-archived" : "")" href="@PageUrl(archived: !Model.Archived, all: true)" aria-label="@(Model.Archived ? "Текущие программы" : "Архив")"><reference-icon name="calendar" />@(Model.Archived ? "Текущие программы" : "Архив")</a> }
+    </nav>
+    <div asp-validation-summary="All" class="program-notice error" role="alert"></div>
+    @if (Model.ShowUpgrade) { <partial name="_UpgradePrompt" model="@(-1)" /> }
+    @if (Model.Tab == "assigned" && !Model.Access.CanUse(Feature.CoachProgramAssignment)) {
+        <section class="ef-card ep-empty"><reference-icon name="users" /><h2>Программы ваших клиентов</h2><p>В Coach вы можете назначать программы клиентам и следить за выполнением.</p><a class="ef-primary" asp-page="/Subscription">Посмотреть Coach</a></section>
+    }
+    else {
+        @if (Model.Tab == "templates") {
+            <partial name="_ProgramTemplateFilters" model="Model" />
+        }
+        @if (Model.Tab == "mine" && !Model.Archived) {
+            <div class="ep-top-grid">
+                @if (overview.Active is { } active) {
+                    var p = active.Program;
+                    <section class="ef-card ep-hero" aria-labelledby="ep-active-title" data-active-program="@p.Id">
+                        <div class="ep-hero-photo" aria-hidden="true"></div>
+                        <p class="ep-eyebrow"><reference-icon name="calendar" />Активная программа @if (p.Assignment is not null) { <span class="ep-assigned-badge">От тренера</span> }</p>
+                        <h2 id="ep-active-title">@p.Name</h2>
+                        <p class="ep-hero-description">@p.Goal · @p.Weeks недель · @p.DaysPerWeek тренировки в неделю</p>
+                        <div class="ep-progress-stats"><div><span>Неделя</span><p><strong>@overview.CurrentWeek</strong> из @p.Weeks</p></div><div><span>Выполнено</span><p><strong>@active.Done</strong> из @active.Total</p></div><div><span>Прогресс</span><div class="ep-percent-row"><strong>@active.Percent%</strong><progress max="100" value="@active.Percent" aria-label="Выполнение программы">@active.Percent%</progress></div></div></div>
+                        <div class="ep-active-actions">
+                            @if (Model.Reference) { <button class="ef-primary ep-open-active" type="button" data-dialog="program-preview-@p.Id"><reference-icon name="play" />Открыть программу</button><button class="ep-outline ep-edit-active" type="button" data-dialog="program-preview-@p.Id"><reference-icon name="pencil" />Редактировать</button> }
+                            else { <a class="ef-primary ep-open-active" asp-page="Details" asp-route-id="@p.Id"><reference-icon name="play" />Открыть программу</a><a class="ep-outline ep-edit-active" asp-page="Edit" asp-route-id="@p.Id"><reference-icon name="pencil" />Редактировать</a> }
+                            <partial name="_ProgramOverviewMenu" model="new ProgramOverviewMenu(Model, active)" />
+                        </div>
+                    </section>
+                }
+                else {
+                    <section class="ef-card ep-empty ep-no-active"><reference-icon name="calendar" /><h2>Начните свою программу</h2><p>Создайте план тренировок или выберите готовую программу ниже.</p><div><a class="ef-primary" asp-page="Edit">Создать программу</a><a class="ep-outline" href="@PageUrl(tab: "templates", archived: false)">Выбрать шаблон</a></div></section>
+                }
+                <section class="ef-card ep-week" aria-labelledby="ep-week-title">
+                    <header class="ef-card-heading"><h2 id="ep-week-title"><reference-icon name="calendar" />Неделя программы</h2><nav class="ef-week-navigation" aria-label="Выбор недели программы"><a href="@PageUrl(week: Model.WeekOffset - 1)" aria-label="Предыдущая неделя"><reference-icon name="chevron" /></a><a href="@PageUrl(week: Model.WeekOffset + 1)" aria-label="Следующая неделя"><reference-icon name="chevron" /></a></nav></header>
+                    <div class="ep-week-days">
+                        @for (var i = 0; i < overview.Week.Count; i++) {
+                            var day = overview.Week[i];
+                            var refCard = overview.Active;
+                            <a class="ep-day @(day.Today ? "is-today" : "") @(day.Completed ? "is-complete" : "") @(day.Training ? "is-training" : "")" href="@(Model.Reference && refCard is not null ? "#program-preview-" + refCard.Program.Id : refCard is not null ? Url.Page("Details", new { id = refCard.Program.Id, Tab = "schedule", Week = day.Date.ToString("yyyy-MM-dd"), Day = day.Date.ToString("yyyy-MM-dd") }) : PageUrl(tab: "templates", archived: false))" data-dialog="@(Model.Reference && refCard is not null ? "program-preview-" + refCard.Program.Id : null)" aria-label="@day.Date.ToString("d MMMM", ru): @day.Title" aria-current="@(day.Today ? "date" : null)"><span>@(new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" }[i])</span><time datetime="@day.Date.ToString("yyyy-MM-dd")">@day.Date.ToString("dd.MM")</time><reference-icon name="@(day.Training ? "workout" : "coffee")" /><small>@(day.Training ? "Тренировка" : "Отдых")</small>@if (day.Completed && overview.Active is not null) { <span class="ep-day-check"><reference-icon name="check" /></span> }</a>
+                        }
+                    </div>
+                    <footer class="ep-week-next">
+                        <reference-icon name="workout" />
+                        <div><span>Следующая тренировка</span><strong>@overview.NextTitle</strong><small>@if (overview.Next is { } next) { <span>@next.Date.ToString("d MMMM", ru) · @DashboardWorkoutsViewModel.ExerciseCount(next.Workout.Exercises.Count)</span> } else { <span>@(overview.Active is null ? "Начните с готового шаблона" : "Откройте программу и проверьте расписание")</span> }</small></div>
+                        @if (Model.Reference && overview.Active is { } refActive) { <button class="ef-primary ep-start" type="button" data-dialog="program-preview-@refActive.Program.Id"><reference-icon name="play" />Начать тренировку</button> }
+                        else if (overview.Active is { } own && overview.Next is not null && own.Program.OwnerId == Model.ViewerId) { <form method="post" asp-page-handler="Start" asp-route-id="@own.Program.Id" data-busy><button class="ef-primary ep-start" type="submit"><reference-icon name="play" />@(own.Sessions.Any(s => s.CompletedAtUtc is null) ? "Продолжить" : "Начать тренировку")</button></form> }
+                    </footer>
+                </section>
+            </div>
+        }
+        @if (overview.Others.Count > 0) {
+            <header class="ep-section-heading" id="other-programs"><h2>@(Model.Tab == "templates" ? "Готовые шаблоны" : Model.Archived ? "Архив программ" : Model.Tab == "assigned" ? "Назначенные программы" : overview.Active is null ? "Мои программы" : "Другие программы")</h2>@if (Model.Tab == "mine" && !Model.Archived) { <a href="@PageUrl(all: !Model.All)#other-programs">@(Model.All ? "Свернуть" : "Все программы")<reference-icon name="arrow" /></a> }</header>
+            <div class="ep-program-grid">@foreach (var card in overview.Others) { <partial name="_ProgramOverviewCard" model="new ProgramOverviewMenu(Model, card)" /> }</div>
+        }
+        else if ((Model.Tab != "mine" || Model.Archived) && !(Model.Tab == "templates" && Model.MatchPreferences && Model.HasPreferences)) {
+            <section class="ef-card ep-empty"><reference-icon name="calendar" /><h2>@(Model.Archived ? "Архив пока пуст" : Model.Tab == "assigned" ? "Пока нет назначенных программ" : "Шаблоны не найдены")</h2><p>Создайте собственную программу или выберите другую категорию шаблонов.</p><a class="ef-primary" asp-page="Edit">Создать программу</a></section>
+        }
+        <section class="ef-card ep-templates-banner" aria-labelledby="ep-templates-title">
+            <div class="ep-template-intro"><reference-icon name="document" /><div><h2 id="ep-templates-title">Начните с шаблона</h2><p>Готовые планы для разного уровня подготовки</p></div></div>
+            <div class="ep-template-levels">
+                @foreach (var (level, label, description) in new[] { (ProgramLevel.Beginner, "Начальный", "Базовые движения и техника"), (ProgramLevel.Intermediate, "Средний", "Постепенный рост нагрузки"), (ProgramLevel.Advanced, "Продвинутый", "Для опытных атлетов") }) { <a class="ep-level @(level == ProgramLevel.Advanced ? "ep-level-advanced" : "")" href="@PageUrl(tab: "templates", archived: false, all: false, level: level)"><span class="ep-level-mark" aria-hidden="true"><i></i><i></i><i></i></span><span><strong>@label</strong><small>@description</small></span></a> }
+            </div>
+            <a class="ep-outline ep-view-templates" href="@PageUrl(tab: "templates", archived: false, all: false)">Смотреть шаблоны<reference-icon name="arrow" /></a>
+        </section>
+    }
+}
+</div>
+@if (Model.Tab == "templates" && Model.PageError is null) {
+    @foreach (var template in Model.Items) { <partial name="_ProgramTemplatePreview" model="template" /> }
+}
+@if (Model.Reference && Model.PageError is null) {
+    var previews = overview.Active is { } activePreview ? new[] { activePreview }.Concat(overview.Others) : overview.Others;
+    @foreach (var card in previews) {
+        <dialog id="program-preview-@card.Program.Id" class="app-dialog ep-preview-dialog" aria-labelledby="program-preview-title-@card.Program.Id"><div class="dialog-heading"><h2 id="program-preview-title-@card.Program.Id">@card.Program.Name</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>@(card.Program.Description ?? card.Program.Goal)</p><p class="ep-preview-meta">@card.Program.Weeks недель · @card.Program.DaysPerWeek тренировки в неделю</p>@foreach (var workout in card.Program.Workouts) { <div class="ep-preview-workout"><reference-icon name="workout" /><strong>@workout.Name</strong><span>@DashboardWorkoutsViewModel.ExerciseCount(workout.Exercises.Count)</span></div> }<a class="ef-primary" href="@PageUrl(tab: "templates", archived: false)">Выбрать шаблон</a></dialog>
+    }
+}

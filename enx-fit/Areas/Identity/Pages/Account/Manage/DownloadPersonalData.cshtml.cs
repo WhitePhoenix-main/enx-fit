@@ -62,6 +62,7 @@ namespace enx_fit.Areas.Identity.Pages.Account.Manage
             personalData.Add($"Authenticator Key", await _userManager.GetAuthenticatorKeyAsync(user));
 
             Response.Headers.TryAdd("Content-Disposition", "attachment; filename=PersonalData.json");
+            Response.Headers.CacheControl = "no-store";
             return new FileContentResult(JsonSerializer.SerializeToUtf8Bytes(personalData), "application/json");
         }
     }

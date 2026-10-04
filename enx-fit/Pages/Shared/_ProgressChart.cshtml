@@ -1,0 +1,65 @@
+@model enx_fit.ViewModels.ProgressChart
+@using System.Globalization
+@{
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string F(decimal value) => value.ToString("0.###", CultureInfo.InvariantCulture);
+    string N(decimal value) => value.ToString(Model.DecimalLabels ? "0.0" : "0.#", ru);
+    var width = Model.Compact ? 772m : 800m;
+    var left = Model.Compact ? 35m : 30m;
+    var insetLeft = Model.Compact ? 40m : 46m;
+    var insetRight = Model.Compact ? 37m : 54m;
+    var top = 14m;
+    var bottom = Model.Compact ? 110m : 168m;
+    var height = Model.Compact ? 139 : 211;
+    var (min, max, step) = Model.Scale;
+    var dateScale = Model.Since.HasValue && Model.Until.HasValue;
+    var dateSpan = dateScale ? Model.Until!.Value.DayNumber - Model.Since!.Value.DayNumber : 0;
+    var points = Model.Points.Select((p, i) => new { Point = p,
+        X = dateScale && dateSpan > 0 ? left + insetLeft + (decimal)(p.Date.DayNumber - Model.Since!.Value.DayNumber) / dateSpan * (width - left - insetLeft - insetRight)
+            : Model.Points.Count == 1 ? (left + width) / 2 : left + insetLeft + i * (width - left - insetLeft - insetRight) / (Model.Points.Count - 1),
+        Y = bottom - (p.Value - min) / (max - min) * (bottom - top) }).ToList();
+    var path = string.Join(" ", points.Select((p, i) => (i == 0 ? "M" : "L") + F(p.X) + "," + F(p.Y)));
+    var area = points.Count > 1 ? path + " L" + F(points[^1].X) + "," + F(bottom) + " L" + F(points[0].X) + "," + F(bottom) + " Z" : "";
+    var labelEvery = Math.Max(1, (int)Math.Ceiling(points.Count / 6d));
+}
+@if (points.Count == 0) {
+    <div class="epr-empty-chart"><reference-icon name="bars" /><div><strong>Пока нет результатов</strong><p>Здесь появятся данные за выбранный период.</p></div></div>
+}
+else {
+    <div class="epr-chart-wrap" data-progress-chart data-auto-select="@(dateScale ? "true" : null)">
+        <svg id="@Model.Id" class="epr-chart @(Model.Compact ? "is-compact" : "")" viewBox="0 0 @width @height" preserveAspectRatio="none" role="group" aria-label="@Model.Label">
+            <defs><linearGradient id="@(Model.Id)-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#466bff" stop-opacity=".17"/><stop offset="100%" stop-color="#466bff" stop-opacity=".015"/></linearGradient></defs>
+            @for (var tick = min; tick <= max; tick += step) {
+                var y = bottom - (tick - min) / (max - min) * (bottom - top);
+                <line x1="@F(left)" y1="@F(y)" x2="@F(width)" y2="@F(y)" />
+                <g><text x="0" y="@F(y + 4)" class="epr-axis">@tick.ToString("0.#", ru)</text></g>
+            }
+            <line x1="@F(left)" y1="@F(top)" x2="@F(left)" y2="@F(bottom)" />
+            <line x1="@F(width)" y1="@F(top)" x2="@F(width)" y2="@F(bottom)" />
+            @if (dateScale) {
+                @foreach (var date in new[] { Model.Since!.Value, Model.Since!.Value.AddDays(dateSpan / 2), Model.Until!.Value }.Distinct()) {
+                    var x = dateSpan > 0 ? left + insetLeft + (decimal)(date.DayNumber - Model.Since!.Value.DayNumber) / dateSpan * (width - left - insetLeft - insetRight) : (left + width) / 2;
+                    <g><text x="@F(x)" y="@(height - (Model.Compact ? 5 : 13))" text-anchor="middle" class="epr-axis">@date.ToString("dd.MM")</text></g>
+                }
+            }
+            @for (var i = 0; !dateScale && i < points.Count; i++) {
+                if (i % labelEvery != 0 && i != points.Count - 1) continue;
+                var point = points[i];
+                <line x1="@F(point.X)" y1="@F(top)" x2="@F(point.X)" y2="@F(bottom)" />
+                <g><text x="@F(point.X)" y="@(height - (Model.Compact ? 5 : 13))" text-anchor="middle" class="epr-axis">@point.Point.Date.ToString("dd.MM")</text>
+                <text x="@F(point.X)" y="@F(Math.Max(top + 12, point.Y - 14))" text-anchor="middle" class="epr-point-value">@N(point.Point.Value)</text></g>
+            }
+            @if (points.Count > 1) {
+                <path d="@area" fill="url(#@(Model.Id)-fill)" />
+                <path d="@path" fill="none" stroke="#4d73ff" stroke-width="2.2" vector-effect="non-scaling-stroke" />
+            }
+            @foreach (var point in points) {
+                var detail = point.Point.Date.ToString("d MMMM yyyy", ru) + " · " + N(point.Point.Value) + " кг" + (point.Point.Reps.HasValue ? " × " + point.Point.Reps + " повт." : "");
+                var historyUrl = Model.DayHistory ? Url.Page("/Dashboard/Workouts", new { ClientId = (ViewData["Dashboard"] as enx_fit.Pages.DashboardModel)?.ClientId, WorkoutDate = point.Point.Date.ToString("yyyy-MM-dd"), Until = point.Point.Date.ToString("yyyy-MM-dd"), Month = point.Point.Date.ToString("yyyy-MM-01") }) : null;
+                <circle cx="@F(point.X)" cy="@F(point.Y)" r="5.1" fill="#5277ff" stroke="#4163e9" stroke-width="1" tabindex="0" role="button" aria-pressed="false" data-chart-point data-value="@N(point.Point.Value)" data-date="@point.Point.Date.ToString("d MMMM yyyy", ru)" data-reps="@point.Point.Reps" data-detail="@detail" data-workout-url="@(point.Point.WorkoutId is { } workoutId ? Url.Page("/Workouts/Details", new { id = workoutId }) : historyUrl)" data-link-label="@(Model.DayHistory ? "Тренировки за этот день" : "Открыть тренировку")" aria-label="@detail"><title>@detail</title></circle>
+            }
+        </svg>
+        <output class="epr-chart-tooltip" hidden></output>
+        <div class="progress-point-result" data-progress-result hidden><span aria-live="polite"></span><a hidden><span data-point-link-label>Открыть тренировку</span> <reference-icon name="arrow" /></a></div>
+    </div>
+}

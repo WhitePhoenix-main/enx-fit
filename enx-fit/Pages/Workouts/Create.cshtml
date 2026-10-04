@@ -3,11 +3,12 @@
 @using System.Text.Json
 @using enx_fit.ViewModels
 @{
-    Layout = "_DashboardLayout";
+    Layout = "_DashboardReferenceLayout";
     ViewData["Title"] = "Конструктор тренировки";
 }
 @section Styles {
     <link rel="stylesheet" href="~/css/workout-builder.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/exercise-library.css" asp-append-version="true" />
 }
 <form method="post" id="workout-builder" class="wb" data-viewer="@Model.ViewerId">
     <input type="hidden" asp-for="BuilderJson" />
@@ -65,16 +66,7 @@
             <div id="wb-exercises"></div>
             <button class="wb-add-exercise" type="button" data-open-library><admin-icon name="plus" />Добавить упражнение</button>
         </section>
-        <section class="wb-panel wb-library" id="wb-library" aria-labelledby="wb-library-heading">
-            <div class="wb-heading"><h2 id="wb-library-heading">Библиотека упражнений</h2><span class="wb-count" id="wb-library-count"></span><button type="button" class="wb-icon wb-library-close" data-close-library aria-label="Закрыть библиотеку"><admin-icon name="close" /></button></div>
-            <div class="wb-tabs" role="group" aria-label="Раздел библиотеки"><button type="button" data-library-tab="all" class="active" aria-pressed="true">Все</button><button type="button" data-library-tab="favorites" aria-pressed="false">Избранные</button><button type="button" data-library-tab="recent" aria-pressed="false">Недавние</button></div>
-            <label class="wb-search"><admin-icon name="search" /><input type="search" id="wb-search" placeholder="Поиск упражнений…" aria-label="Поиск упражнений" autocomplete="off" /></label>
-            <div class="wb-filters" id="wb-filters" role="group" aria-label="Группа мышц"></div>
-            <label class="wb-library-target">Добавлять в<select id="wb-library-target"></select></label>
-            <div id="wb-library-list" class="wb-library-list"></div>
-            <button class="wb-block-add" type="button" data-add-block><admin-icon name="plus" />Создать блок / суперсет</button>
-            <p class="wb-library-caption"><admin-icon name="book" />Твой следующий шаг к прогрессу</p>
-        </section>
+        <partial name="~/Pages/Shared/_ExerciseLibrary.cshtml" model="Model.Library" />
     </div>
     <div class="wb-insights">
         <section class="wb-panel wb-comparison" aria-labelledby="wb-comparison-heading"><div class="wb-heading"><h2 id="wb-comparison-heading">Что изменилось <span>с прошлой тренировкой?</span></h2><admin-icon name="trend" /></div><div id="wb-comparison"></div></section>
@@ -95,5 +87,6 @@
 <dialog id="wb-block-dialog" class="wb-dialog"><form id="wb-block-form"><div class="wb-heading"><h2>Новый блок</h2><button type="button" class="wb-icon" data-close-block aria-label="Закрыть"><admin-icon name="close" /></button></div><label>Название<input id="wb-block-name" maxlength="60" required placeholder="Например, Силовой блок" /></label><label>Тип блока<select id="wb-block-kind"><option value="strength">Силовой блок</option><option value="warmup">Разминка</option><option value="superset">Суперсет</option><option value="cooldown">Заминка</option></select></label><button type="submit" class="wb-button wb-primary">Добавить блок</button></form></dialog>
 <script id="wb-data" type="application/json">@Html.Raw(JsonSerializer.Serialize(Model.BuilderData, WorkoutBuilderInput.JsonOptions))</script>
 @section Scripts {
+    <script src="~/js/exercise-library.js" asp-append-version="true"></script>
     <script src="~/js/workout-builder.js" asp-append-version="true"></script>
 }

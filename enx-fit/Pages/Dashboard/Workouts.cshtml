@@ -1,4 +1,13 @@
 @page
 @model enx_fit.Pages.DashboardModel
-@{ Layout = "_DashboardLayout"; ViewData["Title"] = Model.Section!.Title; }
-<partial name="_DashboardSection" model="Model" />
+@{ Layout = "_DashboardReferenceLayout"; ViewData["Title"] = "Тренировки"; }
+@section Styles {
+    <link rel="stylesheet" href="~/css/workouts-reference.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/home-interactive.css" asp-append-version="true" />
+}
+<partial name="_DashboardWorkouts" model="Model" />
+<partial name="_QuickWorkoutDialogs" model="Model" />
+<partial name="_WorkoutHistorySheets" model="Model" />
+@section Scripts {
+    <script src="~/js/workouts-reference.js" asp-append-version="true"></script>
+}

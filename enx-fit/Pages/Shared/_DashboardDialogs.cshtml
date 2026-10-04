@@ -54,6 +54,8 @@
 <label asp-for="CheckIn.SleepMinutes">Продолжительность сна, минут</label>
 <input asp-for="CheckIn.SleepMinutes" type="number" min="0" max="1440" required />
 <small class="field-help">Например, 450 минут — это 7 часов 30 минут.</small>
+<label asp-for="CheckIn.ReadingMinutes">Чтение, минут</label>
+<input asp-for="CheckIn.ReadingMinutes" type="number" min="0" max="1440" required />
 <label class="checkbox-label">
 <input asp-for="CheckIn.NutritionLogged" />Заполнил дневник питания</label>
 <label class="checkbox-label">
@@ -92,7 +94,7 @@
 </span>
 <admin-icon name="chevron" />
 </button> }@if (!d.PeriodWorkouts.Any()) { <p class="card-empty">В этом периоде тренировок пока нет.</p> }</dialog>
-@foreach (var w in d.PeriodWorkouts.Concat(next is null ? [] : new[] { next }).DistinctBy(w => w.Id))
+@foreach (var w in d.PeriodWorkouts.Concat(d.Completed.Take(1)).Concat(next is null ? [] : new[] { next }).DistinctBy(w => w.Id))
 {
     <dialog id="workout-@w.Id" class="app-dialog wide-dialog">
 <div class="dialog-heading">
@@ -102,8 +104,8 @@
 </button>
 </div>
 <p class="field-help">@w.Date.ToString("d MMMM yyyy", ru) · Объём @N(DashboardData.Volume(w)) кг</p>@foreach (var exercise in w.WorkoutExercises.OrderBy(e => e.Order)) { <div class="exercise-detail">
-<h3>@exercise.Exercise.Name</h3>@foreach (var set in exercise.SetEntries.OrderBy(s => s.SetNumber)) { <p>
-<span>Подход @set.SetNumber @(set.IsWarmup ? "· разминка" : "")</span>
+<h3>@ExercisePresentation.DisplayName(exercise.Exercise)</h3>@foreach (var set in exercise.SetEntries.OrderBy(s => s.SetNumber)) { <p>
+<span>Подход @set.SetNumber @(set.IsWarmup ? "· разминка" : "") @(!set.IsCompleted ? "· не выполнен" : "")</span>
 <strong>@N(set.Weight) кг × @set.Reps</strong>
 </p> }@if (exercise.SetEntries.Count == 0) { <p class="muted">Подходы ещё не записаны</p> }</div> }@if (!string.IsNullOrWhiteSpace(w.Notes)) { <p class="workout-notes">@w.Notes</p> }@if (!coach) { <a class="button full" asp-page="/Workouts/Details" asp-route-id="@w.Id">Открыть тренировку <admin-icon name="arrow" />
 </a> }</dialog>

@@ -1,0 +1,10 @@
+@model enx_fit.ViewModels.MobileAppNavigationViewModel
+@inject enx_fit.Services.WorkoutService Workouts
+@if (!Model.Reference && Model.Dashboard?.IsCoachView != true && Model.Page != "/Dashboard" && !Model.Page.StartsWith("/Workouts/Details"))
+{
+    var active = Model.Dashboard?.ActiveWorkout ?? await Workouts.ActiveAsync();
+    if (active is not null)
+    {
+        <a class="workout-resume" asp-area="" asp-page="/Workouts/Details" asp-route-id="@active.Id"><admin-icon name="play" /><span><strong>Тренировка продолжается</strong><small>@active.Title</small></span><admin-icon name="arrow" /></a>
+    }
+}

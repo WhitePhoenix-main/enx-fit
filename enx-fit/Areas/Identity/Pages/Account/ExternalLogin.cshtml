@@ -1,33 +1,16 @@
-﻿@page
+@page
 @model ExternalLoginModel
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Завершить регистрацию";
+    ViewData["AuthDescription"] = "Подтвердите email для аккаунта Enix Fit.";
 }
-
-<h1>@ViewData["Title"]</h1>
-<h2 id="external-login-title">Associate your @Model.ProviderDisplayName account.</h2>
-<hr />
-
-<p id="external-login-description" class="text-info">
-    You've successfully authenticated with <strong>@Model.ProviderDisplayName</strong>.
-    Please enter an email address for this site below and click the Register button to finish
-    logging in.
-</p>
-
-<div class="row">
-    <div class="col-md-4">
-        <form asp-page-handler="Confirmation" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email."/>
-                <label asp-for="Input.Email" class="form-label"></label>
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </form>
-    </div>
-</div>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+<partial name="_AuthStepHeader" />
+<section class="auth-card auth-step-card">
+    <p class="auth-hint">Внешний сервис: @Model.ProviderDisplayName</p>
+    <form method="post" asp-page-handler="Confirmation" asp-route-returnUrl="@Model.ReturnUrl" data-auth-form>
+        <div asp-validation-summary="ModelOnly" class="auth-errors" role="alert"></div>
+        <div class="auth-field"><label asp-for="Input.Email">Email аккаунта</label><div class="auth-input"><svg class="auth-icon" aria-hidden="true"><use href="#auth-mail" /></svg><input asp-for="Input.Email" type="email" autocomplete="email" inputmode="email" spellcheck="false" placeholder="name@domain.com" aria-describedby="email-error" required /></div><span asp-validation-for="Input.Email" id="email-error" class="auth-field-error"></span></div>
+        <button type="submit" class="auth-submit"><span>Создать аккаунт</span></button>
+        <p data-auth-feedback class="auth-form-feedback" role="status" aria-live="polite"></p>
+    </form>
+</section>

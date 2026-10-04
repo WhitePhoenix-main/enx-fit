@@ -63,7 +63,7 @@ namespace enx_fit.Areas.Identity.Pages.Account.Manage
             }
 
             _logger.LogInformation("User with ID '{UserId}' has disabled 2fa.", _userManager.GetUserId(User));
-            StatusMessage = "2fa has been disabled. You can reenable 2fa when you setup an authenticator app";
+            StatusMessage = "Двухэтапный вход отключён. Его можно включить в настройках приложения.";
             return RedirectToPage("./TwoFactorAuthentication");
         }
     }

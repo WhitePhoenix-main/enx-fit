@@ -12,7 +12,7 @@ public sealed partial class TrainingProgramService(ApplicationDbContext db, Curr
 {
     public Task<FeatureAccess> AccessAsync() => features.GetAsync();
     private IQueryable<TrainingProgram> Graph() => db.TrainingPrograms.AsSplitQuery()
-        .Include(p => p.Assignment).Include(p => p.Blocks)
+        .Include(p => p.Assignment).Include(p => p.Blocks).Include(p => p.ScheduleChanges)
         .Include(p => p.Workouts).ThenInclude(w => w.Exercises).ThenInclude(e => e.Exercise);
 
     public async Task<TrainingProgram?> FindAsync(int id, bool tracking = false)
@@ -79,6 +79,15 @@ public sealed partial class TrainingProgramService(ApplicationDbContext db, Curr
         Require(!p.Blocks.Any(b => b.EndWeek > input.Weeks), ProgramFailure.Invalid, "Сначала скорректируйте блоки периодизации, выходящие за новую длительность.");
         p.Name = input.Name.Trim(); p.Goal = input.Goal.Trim(); p.Description = input.Description?.Trim();
         p.Level = input.Level; p.Weeks = input.Weeks; p.DaysPerWeek = input.DaysPerWeek; p.Revision = Guid.NewGuid();
+        if (p.StartDate is { } cycleStart)
+        {
+            var cycleEnd = cycleStart.AddDays(input.Weeks * 7);
+            Require(!p.ScheduleChanges.Any(c => c.Date >= cycleEnd), ProgramFailure.Invalid,
+                "Сначала верните перенесённые занятия в пределы новой длительности программы.");
+            // Exceptions for removed days must not reappear if the weekly pattern is changed again later.
+            foreach (var change in p.ScheduleChanges.Where(c => c.OriginalDate >= cycleEnd || !input.Workouts.Any(w =>
+                w.Key == c.ProgramWorkoutKey && w.DayOfWeek == ((int)c.OriginalDate.DayOfWeek + 6) % 7 + 1)).ToList()) db.Remove(change);
+        }
         // Keep stable workout keys and progression settings when editing prescriptions.
         foreach (var removed in p.Workouts.Where(w => !input.Workouts.Any(i => i.Key == w.Key)).ToList()) db.Remove(removed);
         for (var i = 0; i < input.Workouts.Count; i++)
@@ -178,7 +187,7 @@ public sealed partial class TrainingProgramService(ApplicationDbContext db, Curr
         var p = await EditableAsync(id);
         Require(p.OwnerId == currentUser.Id, ProgramFailure.Forbidden);
         Require(!p.StartDate.HasValue, ProgramFailure.Invalid, "Программа уже начата.");
-        Require(start >= DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-1) && start <= DateOnly.FromDateTime(DateTime.UtcNow).AddYears(2), ProgramFailure.Invalid, "Проверьте дату начала.");
+        Require(start >= currentUser.LocalToday.AddYears(-1) && start <= currentUser.LocalToday.AddYears(2), ProgramFailure.Invalid, "Проверьте дату начала.");
         Require(p.Workouts.Count(w => w.DayOfWeek.HasValue) == p.DaysPerWeek && p.Workouts.All(w => w.Exercises.Count > 0), ProgramFailure.Invalid, "Заполните расписание и добавьте упражнения перед началом.");
         p.StartDate = start; p.Revision = Guid.NewGuid(); await db.SaveChangesAsync();
     }
@@ -188,31 +197,14 @@ public sealed partial class TrainingProgramService(ApplicationDbContext db, Curr
 
     public async Task<int> StartNextAsync(int id)
     {
-        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
-        var p = await EditableAsync(id);
-        Require(p.OwnerId == currentUser.Id, ProgramFailure.Forbidden);
-        var sessions = await SessionsAsync(p);
-        var ongoing = sessions.FirstOrDefault(s => s.CompletedAtUtc is null);
-        if (ongoing is not null) return ongoing.Id;
-        var next = ProgramSchedule.Next(p, sessions);
+        var program = await FindAsync(id);
+        Require(program is not null, ProgramFailure.NotFound);
+        Require(!program!.IsTemplate && !program.IsArchived && program.OwnerId == currentUser.Id, ProgramFailure.Forbidden);
+        var active = await db.WorkoutSessions.AsNoTracking().Where(s => s.UserId == currentUser.Id).Where(WorkoutStates.Active).FirstOrDefaultAsync();
+        if (active is not null) return active.Id;
+        var next = ProgramSchedule.Next(program, await SessionsAsync(program), currentUser.LocalToday);
         Require(next is not null, ProgramFailure.Invalid, "Начните программу и заполните расписание. Если все тренировки выполнены, создайте новый цикл.");
-        Require(next!.Workout.Exercises.Count > 0, ProgramFailure.Invalid, "Сначала добавьте упражнения в тренировку.");
-        var session = new WorkoutSession
-        {
-            UserId = currentUser.Id, Title = next.Workout.Name, TrainingProgramId = id,
-            ProgramWorkoutKey = next.Workout.Key, ScheduledDate = next.Date,
-            WorkoutExercises = next.Workout.Exercises.OrderBy(e => e.Order).Select(e => new WorkoutExercise
-            {
-                ExerciseId = e.ExerciseId, Order = e.Order,
-                TargetSets = e.Prescription.Sets, TargetRepsMin = e.Prescription.RepsMin, TargetRepsMax = e.Prescription.RepsMax,
-                TargetWeightKg = e.Prescription.WeightKg, TargetRir = e.Prescription.Rir, TargetRpe = e.Prescription.Rpe,
-                Notes = $"План: {e.Prescription.Summary}" + (e.Prescription.WeightKg is { } kg ? $" · {kg} кг" : "") +
-                    (e.Prescription.PercentOneRepMax is { } percent ? $" · {percent}% 1ПМ" : "") +
-                    (e.Prescription.Rir is { } rir ? $" · RIR {rir}" : "") + (e.Prescription.Rpe is { } rpe ? $" · RPE {rpe}" : "") +
-                    (e.Prescription.RestSeconds is { } rest ? $" · отдых {rest} с" : "") + " " + e.Prescription.Comment
-            }).ToList()
-        };
-        db.Add(session); await db.SaveChangesAsync(); await transaction.CommitAsync(); return session.Id;
+        return await StartOccurrenceAsync(id, next!.Workout.Key, next.SlotDate);
     }
 
     private static TrainingProgram CopyProgram(TrainingProgram p, string ownerId) => new()
@@ -263,13 +255,23 @@ public sealed class ProgramOperationException(ProgramFailure failure, string? me
 { public ProgramFailure Failure { get; } = failure; }
 public sealed record ProgramClient(string Id, string Name);
 
-public sealed record ProgramOccurrence(ProgramWorkout Workout, DateOnly Date);
+public sealed record ProgramOccurrence(ProgramWorkout Workout, DateOnly Date, DateOnly? OriginalDate = null)
+{
+    public DateOnly SlotDate => OriginalDate ?? Date;
+    public bool IsMoved => Date != SlotDate;
+}
 public static class ProgramSchedule
 {
     public static string LevelName(ProgramLevel level) => level switch
     { ProgramLevel.Beginner => "Начинающий", ProgramLevel.Intermediate => "Средний", ProgramLevel.Advanced => "Продвинутый", _ => "" };
     public static readonly string[] DayNames = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"];
     public static IEnumerable<ProgramOccurrence> Occurrences(TrainingProgram p)
+    {
+        var changes = p.ScheduleChanges.ToDictionary(c => (c.ProgramWorkoutKey, c.OriginalDate), c => c.Date);
+        return BaseOccurrences(p).Select(o => changes.TryGetValue((o.Workout.Key, o.Date), out var date)
+            ? new ProgramOccurrence(o.Workout, date, o.Date) : o).OrderBy(o => o.Date).ThenBy(o => o.Workout.Order);
+    }
+    public static IEnumerable<ProgramOccurrence> BaseOccurrences(TrainingProgram p)
     {
         if (p.StartDate is not { } start) yield break;
         // A cycle is Weeks × 7 days from the selected start, including a partial calendar week.
@@ -280,11 +282,13 @@ public static class ProgramSchedule
             foreach (var workout in p.Workouts.Where(w => w.DayOfWeek == day)) yield return new(workout, date);
         }
     }
-    public static ProgramOccurrence? Next(TrainingProgram p, IReadOnlyList<WorkoutSession> sessions) =>
-        Occurrences(p).FirstOrDefault(o => sessions.Any(s => s.ProgramWorkoutKey == o.Workout.Key && s.ScheduledDate == o.Date && !s.CompletedAtUtc.HasValue)) ??
-        Occurrences(p).FirstOrDefault(o => o.Date >= DateOnly.FromDateTime(DateTime.UtcNow) && !sessions.Any(s => s.ProgramWorkoutKey == o.Workout.Key && s.ScheduledDate == o.Date && s.CompletedAtUtc.HasValue));
+    public static ProgramOccurrence? Next(TrainingProgram p, IReadOnlyList<WorkoutSession> sessions, DateOnly? today = null) =>
+        Occurrences(p).FirstOrDefault(o => sessions.Any(s => Matches(s, o) && s.IsActive)) ??
+        Occurrences(p).FirstOrDefault(o => o.Date >= (today ?? DateOnly.FromDateTime(DateTime.UtcNow)) && !sessions.Any(s => Matches(s, o) && s.State == WorkoutStatus.Completed));
     public static int Done(TrainingProgram p, IReadOnlyList<WorkoutSession> sessions) => Occurrences(p).Count(o =>
-        sessions.Any(s => s.ProgramWorkoutKey == o.Workout.Key && s.ScheduledDate == o.Date && s.CompletedAtUtc.HasValue));
+        sessions.Any(s => Matches(s, o) && s.State == WorkoutStatus.Completed));
+    public static bool Matches(WorkoutSession session, ProgramOccurrence occurrence) =>
+        session.ProgramWorkoutKey == occurrence.Workout.Key && session.ScheduledDate == occurrence.SlotDate;
     public static int CurrentWeek(TrainingProgram p) => p.StartDate is { } start
         ? Math.Clamp((DateOnly.FromDateTime(DateTime.UtcNow).DayNumber - start.DayNumber) / 7 + 1, 1, p.Weeks) : 0;
 }

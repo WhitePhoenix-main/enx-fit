@@ -1,0 +1,30 @@
+@model enx_fit.Pages.DashboardModel
+@using enx_fit.Services
+@using enx_fit.Models
+@using enx_fit.Extensions
+@{
+    var ru = enx_fit.ViewModels.DashboardWorkoutsViewModel.Russian;
+    var monday = (Model.Reference ? new DateOnly(2026, 9, 28) : Model.Data.Today.AddDays(-((int)Model.Data.Today.DayOfWeek + 6) % 7)).AddDays(Model.WeekOffset * 7);
+}
+@for (var i = 0; i < 7; i++)
+{
+    var date = monday.AddDays(i);
+    var completed = Model.Data.Completed.Where(w => w.Date == date).ToList();
+    var planned = Model.Data.Workouts.Where(w => w.Date == date && w.State == WorkoutStatus.Planned).ToList();
+    var scheduled = Model.ActiveProgram is { } program ? ProgramSchedule.Occurrences(program).Where(o => o.Date == date).ToList() : [];
+    <dialog class="app-dialog home-day-dialog" id="home-day-@date.ToString("yyyy-MM-dd")" aria-labelledby="home-day-title-@i">
+        <div class="dialog-heading"><h2 id="home-day-title-@i">@ru.TextInfo.ToTitleCase(date.ToString("dddd, d MMMM", ru))</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
+        <div class="home-day-list">
+            @foreach (var session in completed.Concat(planned))
+            {
+                <article class="home-day-item"><h3>@session.Title</h3><p>@(session.State == WorkoutStatus.Completed ? $"Выполнена · {DashboardData.WorkingSets(session).Count()} рабочих подходов · {DashboardData.Volume(session):0.##} кг" : "Запланирована")</p><a class="button secondary" asp-page="/Workouts/Details" asp-route-id="@session.Id">@(session.State == WorkoutStatus.Completed ? "Посмотреть результат" : "Открыть тренировку")<reference-icon name="arrow" /></a></article>
+            }
+            @foreach (var occurrence in scheduled)
+            {
+                <article class="home-day-item"><h3>@occurrence.Workout.Name</h3><p>По программе · @occurrence.Workout.Exercises.Count упражнений</p><p>@string.Join(" · ", occurrence.Workout.Exercises.OrderBy(e => e.Order).Take(4).Select(e => ExercisePresentation.DisplayName(e.Exercise)))</p>@if (occurrence.IsMoved) { <p>Перенесена с @occurrence.SlotDate.ToString("d MMMM", ru)</p> }<a class="button secondary" asp-page="/Programs/Details" asp-route-id="@Model.ActiveProgram!.Id" asp-route-Tab="schedule" asp-route-Week="@date.ToString("yyyy-MM-dd")" asp-route-Day="@date.ToString("yyyy-MM-dd")">Открыть занятие<reference-icon name="arrow" /></a></article>
+            }
+            @if (completed.Count == 0 && planned.Count == 0 && scheduled.Count == 0)
+            { <article class="home-day-item"><h3>Свободный день</h3><p>На этот день занятий нет. Можно отдохнуть или выбрать тренировку.</p>@if (!Model.IsCoachView) { <button class="button" type="button" data-dialog="quick-workout-dialog">Выбрать тренировку</button> }</article> }
+        </div>
+    </dialog>
+}

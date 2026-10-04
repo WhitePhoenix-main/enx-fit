@@ -6,9 +6,9 @@
     var mode = Model.IsRegister ? "Register" : "Login";
 }
 <section class="auth-intro" aria-labelledby="auth-title">
-    <p class="auth-eyebrow">Твой прогресс начинается здесь</p>
-    <h1 id="auth-title">@(Model.IsRegister ? "Начни свой прогресс!" : "С возвращением!")</h1>
-    <p class="auth-description">@(Model.IsRegister ? "Создай аккаунт и сделай первый шаг" : "Войди в свой аккаунт и продолжай путь")<br /> к лучшей версии себя.</p>
+    <p class="auth-eyebrow">@(Model.IsRegister ? "Ваш дневник тренировок" : "Enix Fit")</p>
+    <h1 id="auth-title">@(Model.IsRegister ? "Начните свой прогресс" : "С возвращением")</h1>
+    <p class="auth-description">@(Model.IsRegister ? "Создайте аккаунт. Первую тренировку можно начать без готовой программы." : "Войдите, чтобы продолжить тренировку и сохранить результат.")</p>
 </section>
 
 <section class="auth-card" aria-label="@(Model.IsRegister ? "Создание аккаунта" : "Вход в аккаунт")">
@@ -43,9 +43,7 @@
             <span asp-validation-for="Input.Password" id="password-error" class="auth-field-error"></span>
             @if (Model.IsRegister)
             {
-                <p class="auth-hint" id="password-hint">
-                    От @Model.PasswordRules.RequiredLength символов@(Model.PasswordRules.RequireUppercase || Model.PasswordRules.RequireLowercase ? ", латинские буквы" : "")@(Model.PasswordRules.RequireUppercase ? " в верхнем" : "")@(Model.PasswordRules.RequireUppercase && Model.PasswordRules.RequireLowercase ? " и нижнем регистре" : Model.PasswordRules.RequireLowercase ? " в нижнем регистре" : Model.PasswordRules.RequireUppercase ? " регистре" : "")@(Model.PasswordRules.RequireDigit ? ", цифра" : "")@(Model.PasswordRules.RequireNonAlphanumeric ? " и специальный символ" : "").
-                </p>
+                <p class="auth-hint" id="password-hint">@Model.PasswordHint</p>
             }
         </div>
         @if (Model.IsRegister)
@@ -66,23 +64,24 @@
         {
             <div class="auth-options">
                 <label class="auth-remember"><input asp-for="Input.RememberMe" /><span>Запомнить меня</span></label>
-                <a asp-area="Identity" asp-page="/Account/ForgotPassword">Забыли пароль?</a>
+                <a asp-area="Identity" asp-page="/Account/ForgotPassword" asp-route-returnUrl="@Model.ReturnUrl">Забыли пароль?</a>
             </div>
         }
         <button class="auth-submit" type="submit">
             <span>@(Model.IsRegister ? "Создать аккаунт" : "Войти в Enix Fit")</span>
             <svg class="auth-icon" aria-hidden="true"><use href="#auth-arrow" /></svg>
         </button>
+        <p class="auth-form-feedback" data-auth-feedback role="status" aria-live="polite"></p>
     </form>
 
-    <div class="auth-divider"><span>@(Model.IsRegister ? "или зарегистрируйтесь через" : "или войдите через")</span></div>
+    <details class="auth-extra" open="@(Model.ExternalLogins.Count > 0)"><summary>Другие способы входа<svg class="auth-icon" aria-hidden="true"><use href="#auth-chevron" /></svg></summary>
     <form class="auth-providers" method="post" asp-page-handler="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl">
         @foreach (var provider in new[] { "Google", "Apple" })
         {
             var available = Model.ExternalLogins.Any(scheme => scheme.Name == provider);
             <button class="auth-provider" type="submit" name="provider" value="@provider" aria-label="Продолжить с @provider" data-unavailable-provider="@(!available ? provider : null)">
                 <svg class="auth-provider-icon" aria-hidden="true"><use href="@(provider == "Google" ? "#auth-google" : "#auth-apple")" /></svg>
-                <span><span class="auth-provider-prefix">Продолжить с </span>@provider</span>
+                <span><span class="auth-provider-prefix">Продолжить с </span>@provider@if (!available) { <small>Пока недоступен</small> }</span>
             </button>
         }
         @foreach (var provider in Model.ExternalLogins.Where(scheme => scheme.Name != "Google" && scheme.Name != "Apple"))
@@ -90,11 +89,12 @@
             <button class="auth-provider" type="submit" name="provider" value="@provider.Name">Продолжить с @provider.DisplayName</button>
         }
     </form>
-    <p class="auth-security"><svg class="auth-icon" aria-hidden="true"><use href="#auth-lock" /></svg><span>Ваши данные защищены и не передаются третьим лицам.</span></p>
+    </details>
+    @if (!Model.IsRegister) { <p class="auth-secondary-link"><a asp-area="Identity" asp-page="/Account/ResendEmailConfirmation" asp-route-returnUrl="@Model.ReturnUrl">Не пришло подтверждение email?</a></p> }
 </section>
 
 <a class="auth-app" asp-page="/TechnicalPages/Login" asp-page-handler="@mode" aria-label="Открыть Enix Fit на телефоне">
     <span class="auth-qr" id="auth-qr" aria-hidden="true"><svg class="auth-icon"><use href="#auth-phone" /></svg></span>
-    <span class="auth-app-copy"><strong>Продолжить в приложении</strong><span>Сканируй QR-код, чтобы открыть<br class="auth-app-break" /> Enix Fit на телефоне.</span></span>
+    <span class="auth-app-copy"><strong>Открыть на телефоне</strong><span>Сканируйте QR-код.<br class="auth-app-break" /> Мобильная версия работает в браузере.</span></span>
     <svg class="auth-icon auth-app-arrow" aria-hidden="true"><use href="#auth-chevron" /></svg>
 </a>

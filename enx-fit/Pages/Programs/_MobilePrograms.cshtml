@@ -1,0 +1,30 @@
+@model IndexModel
+@using enx_fit.ViewModels
+@{
+    var vm = new ProgramsOverviewViewModel(Model);
+    string? PageUrl(string? tab = "mine", bool archived = false) => Url.Page("/Programs/Index", new { Tab = tab ?? "mine", Archived = archived, Reference = Model.Reference ? (bool?)true : null, All = true });
+}
+<div class="ef-mobile-screen em-programs">
+    <header class="em-page-heading"><h1>Программы</h1><a class="em-primary" asp-page="Edit"><reference-icon name="plus" />Создать</a></header>
+    <nav class="em-segments" aria-label="Разделы программ"><a href="@PageUrl()" class="@(Model.Tab == "mine" ? "active" : "")">Мои программы</a><a href="@PageUrl("templates")" class="@(Model.Tab == "templates" ? "active" : "")">Готовые планы</a>@if (Model.Access.IsCoach && !Model.Reference) { <a href="@PageUrl("assigned")" class="@(Model.Tab == "assigned" ? "active" : "")">Назначенные</a> }</nav>
+    <div asp-validation-summary="All" class="program-notice error" role="alert"></div>
+    @if (Model.ShowUpgrade) { <partial name="_UpgradePrompt" model="@(-1)" /> }
+    @if (Model.PageError is not null) { <partial name="_ProgramError" model="Model.PageError" /> }
+    else {
+        @if (Model.Tab == "templates") { <partial name="_ProgramTemplateFilters" model="Model" /> }
+        @if (vm.Active is { } active) { var p = active.Program;
+            <section class="em-card em-program-hero"><reference-photo class="em-hero-art" image="programs" window="565 425 293 117"/><span class="em-current-program">Текущая программа</span><h2>@p.Name</h2><p>@p.Weeks недель · @p.DaysPerWeek раза в неделю</p><h3>Неделя @vm.CurrentWeek из @p.Weeks</h3><div class="em-program-progress"><progress max="100" value="@active.Percent" aria-label="Выполнение программы">@active.Percent%</progress><strong>@active.Percent%</strong></div><p class="em-program-done">@active.Done из @active.Total тренировок</p>
+                <a class="em-program-next" href="@(Model.Reference ? "#program-preview-" + p.Id : Url.Page("Details", new { id = p.Id, Tab = "schedule", Week = vm.Next?.Date.ToString("yyyy-MM-dd"), Day = vm.Next?.Date.ToString("yyyy-MM-dd") }))" data-dialog="@(Model.Reference ? "program-preview-" + p.Id : null)"><reference-photo image="programs" window="131 854 141 148" alt="Гантели в тренажёрном зале"/><div><span>Следующая тренировка</span><strong>@vm.NextTitle@(Model.Reference || vm.Next?.Date == vm.Today ? " · Сегодня" : "")</strong><p>@(vm.Next is { } next ? DashboardWorkoutsViewModel.ExerciseCount(next.Workout.Exercises.Count) : "Откройте расписание")</p></div><reference-icon name="chevron" /></a>
+                @if (Model.Reference) { <button class="em-primary em-program-open" type="button" data-dialog="program-preview-@p.Id"><reference-icon name="play" />Открыть программу</button> }
+                else { <a class="em-primary em-program-open" asp-page="Details" asp-route-id="@p.Id"><reference-icon name="play" />Открыть программу</a> }
+            </section>
+        }
+        <div class="em-program-list">
+            @foreach (var card in Model.Reference && Model.Tab == "mine" && !Model.Archived ? vm.Others.Take(1) : vm.Others) { var p = card.Program;
+                <article class="em-card em-program-card @(p.IsTemplate ? "em-template-card" : "")"><reference-photo image="programs" window="120 1206 157 159" alt="Гантели в тренажёрном зале"/><div><h2>@p.Name</h2><p>@p.Weeks @(p.Weeks == 4 ? "недели" : "недель") · @p.DaysPerWeek раза в неделю</p><span class="em-saved"><reference-icon name="check" />@card.Status</span>@if (p.IsTemplate) { <div class="em-template-actions"><button type="button" class="em-outline" data-dialog="template-preview-@p.Id">Состав</button><form method="post" asp-page-handler="Duplicate" asp-route-id="@p.Id" asp-route-Tab="templates" data-busy><button class="em-outline" type="submit">Выбрать</button></form></div> }</div>@if (!p.IsTemplate) { <a class="em-card-link" href="@(Model.Reference ? "#program-preview-" + p.Id : Url.Page("Details", new { id = p.Id }))" data-dialog="@(Model.Reference ? "program-preview-" + p.Id : null)" aria-label="Открыть программу @p.Name"></a><reference-icon name="chevron" /> }</article>
+            }
+        </div>
+        @if (vm.Active is null && vm.Others.Count == 0 && !(Model.Tab == "templates" && Model.MatchPreferences && Model.HasPreferences)) { <section class="em-card em-empty"><reference-icon name="calendar"/><h2>@(Model.Archived ? "Архив пока пуст" : Model.Tab == "templates" ? "Планы не найдены" : "Начните свою программу")</h2><p>@(Model.Tab == "templates" ? "Попробуйте другие фильтры или создайте свой план." : "Выберите готовую программу или создайте свой план.")</p><a class="em-primary" href="@(Model.Tab == "templates" ? Url.Page("Edit") : PageUrl("templates"))">@(Model.Tab == "templates" ? "Создать программу" : "Выбрать план")</a></section> }
+        @if (Model.Tab != "templates") { <a class="em-archive" href="@PageUrl(Model.Tab, !Model.Archived)"><reference-icon name="archive" />@(Model.Archived ? "Текущие программы" : "Архив программ")<reference-icon name="chevron" /></a> }
+    }
+</div>

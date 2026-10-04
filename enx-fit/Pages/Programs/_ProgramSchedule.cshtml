@@ -1,0 +1,78 @@
+@model DetailsModel
+@using System.Globalization
+@using enx_fit.ViewModels
+@using enx_fit.Extensions
+@{
+    var p = Model.Item;
+    var vm = Model.Calendar;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string Iso(DateOnly date) => date.ToString("yyyy-MM-dd");
+    var firstDate = Model.Today > vm.MinDate ? Model.Today : vm.MinDate;
+    var dates = vm.Days;
+}
+@if (!p.StartDate.HasValue) {
+    <section class="panel schedule-activation">
+        <span class="schedule-kicker">НАЧАЛО ЦИКЛА</span><h2>Когда начинаем?</h2><p>Выберите дату старта. Тренировки появятся в календаре на @p.Weeks недель по дням вашей программы.</p>
+        @if (Model.IsOwner && !p.IsArchived) {
+            <form method="post" asp-page-handler="Activate" asp-route-id="@p.Id" data-busy><label>Дата начала<input type="date" name="startDate" value="@Iso(Model.Today)" min="@Iso(Model.Today.AddYears(-1))" max="@Iso(Model.Today.AddYears(2))" required /></label><button class="button primary" type="submit"><reference-icon name="calendar" />Запланировать программу</button></form>
+        }
+        <div class="schedule-pattern">@foreach (var workout in p.Workouts.Where(w => w.DayOfWeek.HasValue).OrderBy(w => w.DayOfWeek)) { <div><span>@ProgramSchedule.DayNames[workout.DayOfWeek!.Value - 1]</span><strong>@workout.Name</strong><small>@workout.Exercises.Count упр. · @workout.EstimatedMinutes мин</small></div> }</div>
+        @if (p.Workouts.Count(w => w.DayOfWeek.HasValue) != p.DaysPerWeek || p.Workouts.Any(w => w.Exercises.Count == 0)) { <p class="program-notice">Перед стартом добавьте упражнения и согласуйте дни с частотой тренировок.</p><a class="button secondary" asp-page="Edit" asp-route-id="@p.Id">Настроить программу</a> }
+    </section>
+} else {
+    <div class="schedule-workspace" data-program-calendar data-today="@Iso(Model.Today)" data-selected-day="@(Model.Day.HasValue ? Iso(Model.Day.Value) : "")">
+        <section class="panel schedule-calendar">
+            <header class="schedule-heading"><div><span class="schedule-kicker">ВАШ ЦИКЛ</span><h2>@vm.Monday.ToString("d MMMM", ru) — @vm.Monday.AddDays(6).ToString("d MMMM", ru)</h2><p>Нажмите на день, чтобы открыть занятие.</p></div><nav aria-label="Недели программы">@if (vm.HasPrevious) { <a asp-route-id="@p.Id" asp-route-Tab="schedule" asp-route-Week="@Iso(vm.Monday.AddDays(-7))" aria-label="Предыдущая неделя"><reference-icon name="chevron" /></a> }@if (vm.HasNext) { <a asp-route-id="@p.Id" asp-route-Tab="schedule" asp-route-Week="@Iso(vm.Monday.AddDays(7))" aria-label="Следующая неделя"><reference-icon name="chevron" /></a> }</nav></header>
+            <nav class="schedule-week" aria-label="Дни недели" data-program-schedule>
+                @foreach (var date in dates) {
+                    var entry = vm.Entries.FirstOrDefault(e => e.Occurrence.Date == date);
+                    var outside = date < vm.MinDate || date > vm.MaxDate;
+                    <a href="#schedule-details" class="schedule-day @(date == Model.Today ? "is-today" : "") @(entry is not null ? "has-training" : "") @(entry?.Session?.State == WorkoutStatus.Completed ? "is-complete" : "") @(outside ? "is-outside" : "")" data-schedule-day="@Iso(date)" data-workout-key="@entry?.Occurrence.Workout.Key" aria-label="@date.ToString("d MMMM", ru): @(entry?.Occurrence.Workout.Name ?? "Отдых")"><span>@ProgramSchedule.DayNames[((int)date.DayOfWeek + 6) % 7]</span><strong>@date.Day</strong><reference-icon name="@(entry?.Session?.State == WorkoutStatus.Completed ? "check" : entry is not null ? "workout" : "coffee")" /><small>@(entry?.Status ?? (outside ? "Вне цикла" : "Отдых"))</small></a>
+                }
+            </nav>
+            <div class="schedule-agenda"><h3>Занятия недели</h3>
+                @foreach (var entry in vm.Entries.Where(e => dates.Contains(e.Occurrence.Date))) {
+                    <a href="#schedule-details" data-schedule-day="@Iso(entry.Occurrence.Date)" class="schedule-agenda-row"><time datetime="@Iso(entry.Occurrence.Date)"><strong>@entry.Occurrence.Date.Day</strong><span>@entry.Occurrence.Date.ToString("ddd", ru)</span></time><span><strong>@entry.Occurrence.Workout.Name</strong><small>@entry.Status · @entry.Occurrence.Workout.Exercises.Count упр. · @entry.Occurrence.Workout.EstimatedMinutes мин</small>@if (entry.Occurrence.IsMoved) { <small class="schedule-moved">Перенесена с @entry.Occurrence.SlotDate.ToString("d MMMM", ru)</small> }</span><reference-icon name="chevron" /></a>
+                }
+                @if (!vm.Entries.Any(e => dates.Contains(e.Occurrence.Date))) { <p class="schedule-empty-week">На этой неделе занятий нет.</p> }
+            </div>
+            <footer class="schedule-calendar-footer"><p>Перенос меняет одно занятие. Для изменения всех недель откройте редактор.</p>@if (!p.IsArchived) { <a asp-page="Edit" asp-route-id="@p.Id" asp-fragment="week-structure">Изменить дни программы<reference-icon name="arrow" /></a> }</footer>
+        </section>
+        <aside class="panel schedule-details" id="schedule-details" data-schedule-details-host>
+            <div data-schedule-content>
+            @foreach (var date in dates) {
+                var entries = vm.Entries.Where(e => e.Occurrence.Date == date).ToList();
+                <section data-details-day="@Iso(date)">
+                    <span class="schedule-kicker">@date.ToString("dddd, d MMMM", ru)</span>
+                    @if (entries.Count == 0) { <h2>Свободный день</h2><p class="schedule-description">@(date < vm.MinDate || date > vm.MaxDate ? "Этот день за пределами программы." : "Можно отдохнуть или перенести сюда занятие из другого дня.")</p> }
+                    @foreach (var entry in entries) {
+                        var occurrence = entry.Occurrence;
+                        var workout = occurrence.Workout;
+                        <article class="schedule-appointment" data-appointment-key="@workout.Key" data-slot-date="@Iso(occurrence.SlotDate)" data-appointment-date="@Iso(date)">
+                            <h2>@workout.Name</h2><p class="schedule-description">@entry.Status · @workout.EstimatedMinutes мин · @workout.Exercises.Count упр.</p>
+                            @if (occurrence.IsMoved) { <p class="schedule-moved">Перенесена с @occurrence.SlotDate.ToString("d MMMM", ru)</p> }
+                            <ol class="schedule-exercises">@foreach (var exercise in workout.Exercises.OrderBy(e => e.Order)) { <li><span>@ExercisePresentation.DisplayName(exercise.Exercise)</span><strong>@exercise.Prescription.Summary</strong></li> }</ol>
+                            @if (entry.Session is { } session && (session.IsActive || session.IsFinished)) { <a class="button secondary" asp-page="/Workouts/Details" asp-route-id="@session.Id">@(session.IsActive ? "Продолжить занятие" : "Открыть запись")<reference-icon name="arrow" /></a> }
+                            @if (Model.IsOwner && !p.IsArchived && entry.CanStart && entry.Session?.IsActive != true) {
+                                <form method="post" asp-page-handler="StartOccurrence" asp-route-id="@p.Id" data-busy><input type="hidden" name="workoutKey" value="@workout.Key" /><input type="hidden" name="originalDate" value="@Iso(occurrence.SlotDate)" /><button class="button primary" type="submit"><reference-icon name="play" />@(entry.Session?.State == WorkoutStatus.Cancelled ? "Начать заново" : date > Model.Today ? "Начать раньше" : "Начать тренировку")</button></form>
+                            }
+                            @if (Model.IsOwner && !p.IsArchived && entry.CanMove && firstDate <= vm.MaxDate) {
+                                var suggestions = Enumerable.Range(0, Math.Min(14, vm.MaxDate.DayNumber - firstDate.DayNumber + 1)).Select(i => firstDate.AddDays(i)).Where(d => d != date && !vm.Entries.Any(e => e.Occurrence.Date == d)).Take(4).ToArray();
+                                <details class="schedule-move"><summary><reference-icon name="calendar" />Перенести занятие</summary><p>Выберите свободный день этого цикла. Другие тренировки не сдвигаются.</p>
+                                    <form method="post" asp-page-handler="Move" asp-route-id="@p.Id" data-busy>
+                                        <input type="hidden" name="workoutKey" value="@workout.Key" /><input type="hidden" name="originalDate" value="@Iso(occurrence.SlotDate)" /><input type="hidden" name="scheduleRevision" value="@p.Revision" /><input type="hidden" name="Week" value="@Iso(vm.Monday)" /><input type="hidden" name="Day" value="@Iso(date)" />
+                                        <div class="schedule-date-options">@foreach (var suggestion in suggestions) { <button type="button" data-date-choice="@Iso(suggestion)">@suggestion.ToString("ddd, d MMM", ru)</button> }</div>
+                                        <label>Новая дата<input type="date" name="date" value="@Iso(date >= firstDate ? date : suggestions.FirstOrDefault(firstDate))" min="@Iso(firstDate)" max="@Iso(vm.MaxDate)" required /></label><p data-date-summary hidden role="status"></p><button class="button primary" type="submit">Сохранить перенос<reference-icon name="arrow" /></button>
+                                    </form>
+                                </details>
+                                @if (occurrence.IsMoved && occurrence.SlotDate >= firstDate) { <form method="post" asp-page-handler="Move" asp-route-id="@p.Id" data-busy class="schedule-undo"><input type="hidden" name="workoutKey" value="@workout.Key" /><input type="hidden" name="originalDate" value="@Iso(occurrence.SlotDate)" /><input type="hidden" name="date" value="@Iso(occurrence.SlotDate)" /><input type="hidden" name="scheduleRevision" value="@p.Revision" /><button class="text-button" type="submit">Вернуть на @occurrence.SlotDate.ToString("d MMMM", ru)</button></form> }
+                            }
+                        </article>
+                    }
+                </section>
+            }
+            </div>
+        </aside>
+    </div>
+    <dialog id="schedule-day-dialog" class="app-dialog schedule-day-dialog" aria-labelledby="schedule-dialog-title"><div class="dialog-heading"><h2 id="schedule-dialog-title">День программы</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><div data-schedule-dialog-host></div></dialog>
+}

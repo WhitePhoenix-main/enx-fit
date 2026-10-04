@@ -25,6 +25,7 @@
     var viewer = User.Identity?.Name?.Split('@')[0] is { Length: > 0 } name ? name : "Спортсмен";
     var isTrainer = User.GetUserRole() == UserRole.Trainer || User.HasMinimumRole(UserRole.Administrator);
     var clientsActive = IsActive("/Trainer/Clients");
+    var mobileNavigation = enx_fit.ViewModels.MobileAppNavigationViewModel.Create(ViewData, User, activePage);
 }
 <!DOCTYPE html>
 <html lang="ru">
@@ -35,13 +36,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>@ViewData["Title"] — Enix Fit</title>
-    <link rel="icon" href="~/images/landing/favicon.svg" type="image/svg+xml" />
-    <link rel="manifest" href="~/manifest.webmanifest" />
+    <partial name="_AppIcons" />
     <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/dashboard-widgets.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard-refresh.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard-design.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/workout-shared.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
+    <link rel="stylesheet" href="~/css/mobile-shell.css" asp-append-version="true" />
 </head>
-<body class="fitness-app @(clientId is not null ? "coach-mode" : "personal-mode")">
+<body class="fitness-app em-app-shell @(clientId is not null ? "coach-mode" : "personal-mode") @(activePage == "/Dashboard" ? "dashboard-home" : "")">
 <a class="skip-link" href="#main-content">Перейти к содержимому</a>
 <aside class="sidebar">
     <a class="brand" asp-page="/Dashboard">
@@ -62,14 +66,16 @@
 <admin-icon name="users" />Мои клиенты</a> }
         @foreach (var tab in navigation)
         {
-            <a class="nav-item @(IsActive(tab.Page) ? "active" : "")" href="@PageUrl(tab.Page)" aria-current="@(IsActive(tab.Page) ? "page" : null)">
-                <admin-icon name="@tab.Icon" />@tab.Title
+            @if (tab.Page == "/Dashboard/Habits") { <a class="nav-item @(IsActive("/Exercises/Index") ? "active" : "")" asp-page="/Exercises/Index" aria-current="@(IsActive("/Exercises/Index") ? "page" : null)"><admin-icon name="book" />Библиотека</a> }
+            <a class="nav-item @(tab.Page == "/Dashboard/Habits" ? "nav-secondary" : "") @(IsActive(tab.Page) ? "active" : "")" href="@PageUrl(tab.Page)" aria-current="@(IsActive(tab.Page) ? "page" : null)">
+                <admin-icon name="@(tab.Page == "/Dashboard/Habits" ? "check-circle" : tab.Page == "/Dashboard/Progress" ? "bars" : tab.Icon)" />@tab.Title
             </a>
         }
     </nav>
     <div class="sidebar-bottom">
         <a class="nav-item" asp-area="Identity" asp-page="/Account/Manage/Index">
-<admin-icon name="settings" />Настройки</a>
+<admin-icon name="user" />Профиль</a>
+        <a class="nav-item" asp-area="Identity" asp-page="/Account/Manage/Email"><admin-icon name="settings" />Настройки</a>
         @if (User.HasMinimumRole(UserRole.Administrator)) { <a class="nav-item" asp-page="/Admin/Index">
 <admin-icon name="shield" />Администрирование</a> }
         <div class="sidebar-motivation">
@@ -86,7 +92,8 @@
     </div>
 </aside>
 <div class="app-body">
-    <header class="topbar">
+    <partial name="_MobileAppShell" model="mobileNavigation" /><partial name="_WorkoutResume" model="mobileNavigation" />
+    <header class="topbar em-desktop-header">
         <a class="brand mobile-brand" asp-page="/Dashboard">
 <span class="brand-mark">
 <i>
@@ -100,17 +107,17 @@
 </a>
         <button class="search-trigger" data-dialog="search-dialog">
 <admin-icon name="search" />
-<span>Поиск по тренировкам, упражнениям, целям…</span><kbd>Ctrl K</kbd>
+<span>Поиск разделов</span><kbd>Ctrl K</kbd>
 </button>
         <div class="topbar-actions">
             <button class="icon-button notification-button" data-dialog="notifications-dialog" aria-label="Уведомления">
 <admin-icon name="bell" />
 </button>
             <details class="account-menu"><summary>
-<span class="avatar">@viewer[..1].ToUpperInvariant()</span>
+<span class="avatar reference-avatar" aria-hidden="true">@viewer[..1].ToUpperInvariant()</span>
 <span class="account-copy">
 <strong>@viewer</strong>
-<small>@(featureAccess.Plan switch { SubscriptionPlan.Pro => "Athlete Pro", SubscriptionPlan.Coach => "Coach", _ => isTrainer ? "Тренер · Free" : "Athlete Free" })</small>
+<small class="account-plan">@(featureAccess.Plan switch { SubscriptionPlan.Pro => "Pro", SubscriptionPlan.Coach => "Coach", _ => "Free" })</small>
 </span>
 <admin-icon name="chevron" />
 </summary>
@@ -125,31 +132,12 @@
     </header>
     <main id="main-content" tabindex="-1">@RenderBody()</main>
 </div>
-<nav class="bottom-nav" aria-label="Мобильная навигация">
-    <a class="@(IsActive("/Dashboard") ? "active" : "")" href="@dashboardUrl" aria-current="@(IsActive("/Dashboard") ? "page" : null)">
-<admin-icon name="home" />
-<span>Главная</span>
-</a>
-    <a class="@(IsActive("/Dashboard/Progress") ? "active" : "")" href="@PageUrl("/Dashboard/Progress")" aria-current="@(IsActive("/Dashboard/Progress") ? "page" : null)">
-<admin-icon name="bars" />
-<span>Прогресс</span>
-</a>
-    <a class="@(IsActive("/Dashboard/Workouts") ? "active" : "")" href="@PageUrl("/Dashboard/Workouts")" aria-current="@(IsActive("/Dashboard/Workouts") ? "page" : null)">
-<admin-icon name="workout" />
-<span>Тренировки</span>
-</a>
-    @if (isTrainer) { <a class="@(clientsActive ? "active" : "")" asp-page="/Trainer/Clients" aria-current="@(clientsActive ? "page" : null)">
-<admin-icon name="users" />
-<span>Клиенты</span>
-</a> }
-    else { <a class="@(IsActive("/Dashboard/Habits") ? "active" : "")" href="@PageUrl("/Dashboard/Habits")" aria-current="@(IsActive("/Dashboard/Habits") ? "page" : null)">
-<admin-icon name="activity" />
-<span>Привычки</span>
-</a> }
-    <button type="button" data-dialog="navigation-dialog" class="@(IsActive("/Programs/Index") || IsActive("/Dashboard/Progress") || IsActive("/Dashboard/Achievements") || (isTrainer && IsActive("/Dashboard/Habits")) ? "active" : "")" aria-label="Все разделы" aria-haspopup="dialog">
-<admin-icon name="menu" />
-<span>Ещё</span>
-</button>
+<nav class="bottom-nav em-tablet-nav" aria-label="Навигация на планшете">
+    <a class="@(IsActive("/Dashboard") ? "active" : "")" href="@dashboardUrl" aria-current="@(IsActive("/Dashboard") ? "page" : null)"><admin-icon name="home" /><span>Главная</span></a>
+    <a class="@(IsActive("/Dashboard/Workouts") ? "active" : "")" href="@PageUrl("/Dashboard/Workouts")" aria-current="@(IsActive("/Dashboard/Workouts") ? "page" : null)"><admin-icon name="workout" /><span>Тренировки</span></a>
+    <a class="@(IsActive("/Programs/Index") ? "active" : "")" href="@PageUrl("/Programs/Index")" aria-current="@(IsActive("/Programs/Index") ? "page" : null)"><admin-icon name="calendar" /><span>Программы</span></a>
+    <a class="@(IsActive("/Dashboard/Progress") ? "active" : "")" href="@PageUrl("/Dashboard/Progress")" aria-current="@(IsActive("/Dashboard/Progress") ? "page" : null)"><admin-icon name="bars" /><span>Прогресс</span></a>
+    <button type="button" data-dialog="navigation-dialog" class="@(IsActive("/Dashboard/Habits") || clientsActive ? "active" : "")" aria-label="Все разделы" aria-haspopup="dialog"><admin-icon name="menu" /><span>Ещё</span></button>
 </nav>
 <dialog id="navigation-dialog" class="app-dialog">
     <div class="dialog-heading">
@@ -163,6 +151,7 @@
             <a href="@PageUrl(tab.Page)" aria-current="@(IsActive(tab.Page) ? "page" : null)">@tab.Title <admin-icon name="@tab.Icon" /></a>
         }
         @if (isTrainer) { <a asp-page="/Trainer/Clients" aria-current="@(clientsActive ? "page" : null)">Мои клиенты <admin-icon name="users" /></a> }
+        <a asp-page="/Exercises/Index">Библиотека упражнений <admin-icon name="book" /></a>
         <a asp-area="Identity" asp-page="/Account/Manage/Index">Профиль <admin-icon name="user" /></a>
     </nav>
 </dialog>
@@ -183,6 +172,7 @@
 </a>
 <a asp-page="/Programs/Index">Программы тренировок <admin-icon name="calendar" />
 </a>
+<a asp-page="/Exercises/Index">Библиотека упражнений <admin-icon name="book" /></a>
 <a href="@PageUrl("/Dashboard/Habits")">Вода, сон и привычки <admin-icon name="water" />
 </a>
 <a href="@PageUrl("/Dashboard/Achievements")">Достижения и личные рекорды <admin-icon name="trophy" /></a>
@@ -203,9 +193,11 @@
 <p>Новых уведомлений пока нет.</p>
 </div>
 </dialog>
-<script src="~/js/dashboard.js" asp-append-version="true">
+<script src="~/js/workout-time.js" asp-append-version="true"></script>
+    <script src="~/js/dashboard.js" asp-append-version="true">
 </script>
 @await RenderSectionAsync("Scripts", required: false)
 <script src="~/js/dashboard-widgets.js" asp-append-version="true"></script>
+<script src="~/js/mobile-shell.js" asp-append-version="true"></script>
 </body>
 </html>

@@ -8,7 +8,7 @@
   };
   document.addEventListener('click', event => {
     const trigger = event.target.closest('[data-dialog]');
-    if (trigger) openDialog(trigger.dataset.dialog);
+    if (trigger) { if (trigger.tagName === 'A') event.preventDefault(); openDialog(trigger.dataset.dialog); }
     const close = event.target.closest('[data-close]');
     if (close) close.closest('dialog').close();
     if (event.target instanceof HTMLDialogElement) {
@@ -20,6 +20,12 @@
     if (menu && !menu.contains(event.target)) menu.open = false;
   });
   document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      const dialog = document.querySelector('dialog[open]');
+      if (dialog) { event.preventDefault(); dialog.close(); }
+      document.querySelectorAll('.account-menu[open], .ef-chart-period[open], .ef-why[open]')
+        .forEach(menu => { menu.open = false; });
+    }
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault();
       openDialog('search-dialog');

@@ -1,39 +1,19 @@
-﻿@page
+@page
 @model LoginWith2faModel
 @{
-    ViewData["Title"] = "Two-factor authentication";
+    ViewData["Title"] = "Подтвердите вход";
+    ViewData["AuthDescription"] = "Введите текущий код из приложения для аутентификации.";
 }
-
-<h1>@ViewData["Title"]</h1>
-<hr />
-<p>Your login is protected with an authenticator app. Enter your authenticator code below.</p>
-<div class="row">
-    <div class="col-md-4">
-        <form method="post" asp-route-returnUrl="@Model.ReturnUrl">
-            <input asp-for="RememberMe" type="hidden" />
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.TwoFactorCode" class="form-control" autocomplete="off" />
-                <label asp-for="Input.TwoFactorCode" class="form-label"></label>
-                <span asp-validation-for="Input.TwoFactorCode" class="text-danger"></span>
-            </div>
-            <div class="checkbox mb-3">
-                <label asp-for="Input.RememberMachine" class="form-label">
-                    <input asp-for="Input.RememberMachine" />
-                    @Html.DisplayNameFor(m => m.Input.RememberMachine)
-                </label>
-            </div>
-            <div>
-                <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-            </div>
-        </form>
-    </div>
-</div>
-<p>
-    Don't have access to your authenticator device? You can
-    <a id="recovery-code-login" asp-page="./LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl">log in with a recovery code</a>.
-</p>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+<partial name="_AuthStepHeader" />
+<section class="auth-card auth-step-card">
+    <p class="auth-step-label"><span>1. Пароль проверен</span><strong>2. Код из приложения</strong></p>
+    <form method="post" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe" data-auth-form>
+        <div asp-validation-summary="ModelOnly" class="auth-errors" role="alert"></div>
+        <div class="auth-field"><label asp-for="Input.TwoFactorCode">Код из приложения</label><div class="auth-input auth-code-input"><input asp-for="Input.TwoFactorCode" type="text" autocomplete="one-time-code" inputmode="numeric" placeholder="000 000" maxlength="8" spellcheck="false" aria-describedby="code-error" required /></div><span asp-validation-for="Input.TwoFactorCode" id="code-error" class="auth-field-error"></span></div>
+        <div class="auth-options"><label class="auth-remember"><input asp-for="Input.RememberMachine" /><span>Запомнить это устройство</span></label></div>
+        <p class="auth-hint">Выбирайте только на своём устройстве.</p>
+        <button type="submit" class="auth-submit"><span>Войти</span><svg class="auth-icon" aria-hidden="true"><use href="#auth-arrow" /></svg></button>
+        <p data-auth-feedback class="auth-form-feedback" role="status" aria-live="polite"></p>
+    </form>
+    <p class="auth-secondary-link"><a asp-page="./LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe">Использовать код восстановления</a></p>
+</section>

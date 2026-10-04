@@ -1,0 +1,4 @@
+@model enx_fit.Pages.DashboardModel
+@if (Model.ShowSetupPrompt) {
+    <aside class="home-setup-prompt"><reference-icon name="target" /><div><strong>Под ваши условия</strong><p>Цель, оборудование и удобные дни</p><a asp-page="/Onboarding">Настроить <reference-icon name="arrow" /></a></div><form method="post" asp-page="/Onboarding" asp-page-handler="Skip"><button type="submit">Позже</button></form></aside>
+}

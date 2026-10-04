@@ -1,0 +1,15 @@
+@model enx_fit.ViewModels.ProgramOverviewMenu
+@{ var p = Model.Card.Program; }
+<details class="program-menu ep-more"><summary aria-label="Действия с программой @p.Name"><reference-icon name="more" /></summary><div class="program-menu-items">
+    @if (Model.Page.Reference) {
+        <button type="button" data-dialog="program-preview-@p.Id">Посмотреть программу</button>
+        <a asp-page="Edit">Создать свою программу</a>
+        <a asp-page="Index" asp-route-Tab="templates" asp-route-Reference="true">Выбрать шаблон</a>
+    }
+    else {
+        @if (!p.IsArchived) { <a asp-page="Edit" asp-route-id="@p.Id">Редактировать</a> }
+        <form method="post" asp-page-handler="Duplicate" asp-route-id="@p.Id" data-busy><button type="submit">Дублировать</button></form>
+        @if (Model.Page.Access.IsCoach && !p.IsArchived) { <a asp-page="Assign" asp-route-id="@p.Id">Назначить клиенту</a> }
+        <form method="post" asp-page-handler="Archive" asp-route-id="@p.Id" asp-route-restore="@p.IsArchived" asp-route-Tab="@Model.Page.Tab" asp-route-Archived="@Model.Page.Archived" data-busy><button type="submit">@(p.IsArchived ? "Восстановить" : "Архивировать")</button></form>
+    }
+</div></details>

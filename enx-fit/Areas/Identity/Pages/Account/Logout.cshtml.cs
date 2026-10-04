@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 
 namespace enx_fit.Areas.Identity.Pages.Account
 {
+    [AllowAnonymous]
     public class LogoutModel : PageModel
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -28,7 +29,7 @@ namespace enx_fit.Areas.Identity.Pages.Account
         {
             await _signInManager.SignOutAsync();
             _logger.LogInformation("User logged out.");
-            if (returnUrl != null)
+            if (Url.IsLocalUrl(returnUrl))
             {
                 return LocalRedirect(returnUrl);
             }

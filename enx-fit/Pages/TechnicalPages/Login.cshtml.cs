@@ -30,6 +30,7 @@ public class LoginModel(
     public string ReturnUrl { get; private set; } = "/";
     public IList<AuthenticationScheme> ExternalLogins { get; private set; } = [];
     public PasswordOptions PasswordRules => signInManager.UserManager.Options.Password;
+    public string PasswordHint => Areas.Identity.Pages.Account.Manage.AccountMessages.PasswordHint(PasswordRules);
 
     public class InputModel
     {
@@ -118,11 +119,15 @@ public class LoginModel(
         code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
         var callbackUrl = Url.Page("/Account/ConfirmEmail", null,
             new { area = "Identity", userId = user.Id, code, returnUrl = ReturnUrl }, Request.Scheme)!;
-        await emailSender.SendEmailAsync(email, "Подтвердите email в Enix Fit",
-            $"Подтвердите аккаунт: <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>подтвердить email</a>.");
+        var emailSent = await AccountEmailDelivery.TrySendAsync(emailSender, logger, email,
+            "Подтвердите email в Enix Fit", $"Подтвердите аккаунт: <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>подтвердить email</a>.", HttpContext.RequestAborted);
 
         if (users.Options.SignIn.RequireConfirmedAccount)
+        {
+            TempData["AccountConfirmationEmailSent"] = emailSent;
+            TempData["AccountConfirmationEmailRecipient"] = email;
             return RedirectToPage("/Account/RegisterConfirmation", new { area = "Identity", email, returnUrl = ReturnUrl });
+        }
 
         await signInManager.SignInAsync(user, isPersistent: false);
         return LocalRedirect(ReturnUrl);

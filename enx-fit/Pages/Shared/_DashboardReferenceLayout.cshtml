@@ -1,0 +1,88 @@
+@using enx_fit.Services
+@inject enx_fit.Security.IFeatureAccessService FeatureAccess
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment ReferenceEnvironment
+@{
+    var dashboard = ViewData["Dashboard"] as enx_fit.Pages.DashboardModel;
+    var reference = dashboard?.Reference == true || ViewData["Reference"] is true;
+    var access = await FeatureAccess.GetAsync();
+    var viewer = User.Identity?.Name?.Split('@')[0] is { Length: > 0 } name ? name : "Спортсмен";
+    if (reference) viewer = "Алексей";
+    string? PageUrl(string page) => Url.Page(page, page == "/Profile" ? new Microsoft.AspNetCore.Routing.RouteValueDictionary { ["area"] = "", ["Reference"] = reference ? true : null } : new Microsoft.AspNetCore.Routing.RouteValueDictionary(dashboard?.NavigationValues ?? (reference ? new { Reference = true } : null)) { ["area"] = "" });
+    var trainer = !reference && (User.GetUserRole() == UserRole.Trainer || User.HasMinimumRole(UserRole.Administrator));
+    var activePage = ViewContext.RouteData.Values["page"] as string;
+    bool IsActive(string page) => string.Equals(activePage, page, StringComparison.OrdinalIgnoreCase);
+    var settingsActive = string.Equals(ViewContext.RouteData.Values["area"] as string, "Identity", StringComparison.OrdinalIgnoreCase) && activePage?.StartsWith("/Account/Manage/", StringComparison.OrdinalIgnoreCase) == true;
+    var mobileNavigation = enx_fit.ViewModels.MobileAppNavigationViewModel.Create(ViewData, User, activePage);
+    var workoutsActive = mobileNavigation.IsActive("workouts");
+    var programsActive = mobileNavigation.IsActive("programs");
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#09131e" />
+    <title>@ViewData["Title"] — Enix Fit</title>
+    <partial name="_AppIcons" />
+    @* Shared reference shell; each migrated section supplies its own stylesheet. *@
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard-widgets.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dashboard-reference.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/workout-shared.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+    @if (ReferenceEnvironment.WebRootFileProvider.GetFileInfo("css/mobile-reference.css").Exists) {
+        <link rel="stylesheet" href="~/css/mobile-reference.css" asp-append-version="true" />
+    }
+    <link rel="stylesheet" href="~/css/mobile-shell.css" asp-append-version="true" />
+</head>
+<body class="fitness-app dashboard-home em-app-shell @(IsActive("/Dashboard") ? "em-home-page" : "") @(IsActive("/Dashboard/Workouts") ? "ef-workouts-page" : "") @(IsActive("/Programs/Index") ? "ef-programs-page" : "") @(IsActive("/Dashboard/Progress") ? "ef-progress-page" : "") @(IsActive("/Exercises/Index") ? "em-library-page" : "") @(IsActive("/Profile") ? "em-profile-page" : "") @(reference ? "em-reference" : "") @(dashboard?.IsCoachView == true ? "coach-mode" : "personal-mode")">
+<a class="skip-link" href="#main-content">Перейти к содержимому</a>
+<aside class="ef-sidebar">
+    <a class="ef-brand" asp-area="" asp-page="/Dashboard"><span class="ef-brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>Enix Fit</span></a>
+    <nav class="ef-navigation" aria-label="Основная навигация">
+        <a class="ef-nav-item @(IsActive("/Dashboard") ? "active" : "")" href="@PageUrl("/Dashboard")" aria-current="@(IsActive("/Dashboard") ? "page" : null)"><reference-icon name="@(IsActive("/Dashboard") ? "home" : "home-outline")" />Главная</a>
+        <a class="ef-nav-item @(workoutsActive ? "active" : "")" href="@PageUrl("/Dashboard/Workouts")" aria-current="@(workoutsActive ? "page" : null)"><reference-icon name="workout" />Тренировки</a>
+        <a class="ef-nav-item @(programsActive ? "active" : "")" href="@PageUrl("/Programs/Index")" aria-current="@(programsActive ? "page" : null)"><reference-icon name="@(programsActive ? "calendar-filled" : "calendar")" />Программы</a>
+        <a class="ef-nav-item @(IsActive("/Dashboard/Progress") ? "active" : "")" href="@PageUrl("/Dashboard/Progress")" aria-current="@(IsActive("/Dashboard/Progress") ? "page" : null)"><reference-icon name="bars" />Прогресс</a>
+        <a class="ef-nav-item @(IsActive("/Exercises/Index") ? "active" : "")" href="@PageUrl("/Exercises/Index")" aria-current="@(IsActive("/Exercises/Index") ? "page" : null)"><reference-icon name="book" />Библиотека</a>
+        @if (trainer) { <a class="ef-nav-item" asp-area="" asp-page="/Trainer/Clients"><reference-icon name="users" />Мои клиенты</a> }
+        <a class="ef-nav-item ef-habits-link" href="@PageUrl("/Dashboard/Habits")"><reference-icon name="check-circle" />Привычки</a>
+    </nav>
+    <nav class="ef-sidebar-bottom" aria-label="Профиль и настройки">
+        <a class="ef-nav-item @(IsActive("/Profile") ? "active" : "")" href="@PageUrl("/Profile")" aria-current="@(IsActive("/Profile") ? "page" : null)"><reference-icon name="user" />Профиль</a>
+        <a class="ef-nav-item @(settingsActive ? "active" : "")" asp-area="Identity" asp-page="/Account/Manage/Index" aria-current="@(settingsActive ? "page" : null)"><reference-icon name="settings" />Настройки</a>
+    </nav>
+</aside>
+<div class="ef-app">
+    <partial name="_MobileAppShell" model="mobileNavigation" /><partial name="_WorkoutResume" model="mobileNavigation" />
+    <header class="ef-topbar em-desktop-header">
+        <button class="ef-search" type="button" data-dialog="search-dialog"><reference-icon name="search" /><span>Поиск разделов</span></button>
+        <div class="ef-topbar-actions">
+            <button class="ef-notification" type="button" data-dialog="notifications-dialog" aria-label="Уведомления"><reference-icon name="bell" /></button>
+            <details class="account-menu ef-account"><summary><span class="ef-avatar" aria-hidden="true"></span><strong>@viewer</strong><span class="ef-plan">@(reference ? "Pro" : access.Plan switch { SubscriptionPlan.Pro => "Pro", SubscriptionPlan.Coach => "Coach", _ => "Free" })</span><reference-icon name="chevron" /></summary>
+                <div class="account-dropdown"><a href="@PageUrl("/Profile")">Профиль</a><a asp-area="Identity" asp-page="/Account/Manage/Index">Настройки аккаунта</a>@if (trainer) { <a asp-area="" asp-page="/Trainer/Clients">Мои клиенты</a> }<form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/"><button type="submit">Выйти</button></form></div>
+            </details>
+        </div>
+    </header>
+    <main id="main-content" class="ef-main" tabindex="-1">@RenderBody()</main>
+</div>
+<dialog id="navigation-dialog" class="app-dialog">
+    <div class="dialog-heading"><h2>Разделы</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
+    <nav class="search-results" aria-label="Все разделы"><a href="@PageUrl("/Exercises/Index")">Библиотека <reference-icon name="book" /></a><a href="@PageUrl("/Profile")">Профиль <reference-icon name="user" /></a><a href="@PageUrl("/Dashboard/Habits")">Привычки <reference-icon name="check-circle" /></a>@if (trainer) { <a asp-area="" asp-page="/Trainer/Clients">Мои клиенты <reference-icon name="users" /></a> }</nav>
+</dialog>
+<dialog id="search-dialog" class="app-dialog">
+    <div class="dialog-heading"><h2>Быстрый переход</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
+    <input class="dialog-search" type="search" placeholder="Что хотите найти?" aria-label="Поиск раздела" data-section-search />
+    <div class="search-results"><a href="@PageUrl("/Dashboard/Workouts")">Тренировки и упражнения <reference-icon name="workout" /></a><a href="@PageUrl("/Programs/Index")">Программы тренировок <reference-icon name="calendar" /></a><a href="@PageUrl("/Dashboard/Progress")">Прогресс, вес и замеры тела <reference-icon name="bars" /></a><a asp-area="" asp-page="/Exercises/Index">Библиотека упражнений <reference-icon name="book" /></a><a href="@PageUrl("/Dashboard/Habits")">Вода, сон и привычки <reference-icon name="check-circle" /></a><a href="@PageUrl("/Dashboard/Achievements")">Достижения и личные рекорды <reference-icon name="trophy" /></a><p hidden data-search-empty>Ничего не найдено. Попробуйте другой запрос.</p></div>
+</dialog>
+<dialog id="notifications-dialog" class="app-dialog">
+    <div class="dialog-heading"><h2>Центр уведомлений</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><div class="empty-state"><reference-icon name="bell" /><h3>Вы всё посмотрели</h3><p>Новых уведомлений пока нет.</p></div>
+</dialog>
+<script src="~/js/workout-time.js" asp-append-version="true"></script>
+    <script src="~/js/dashboard.js" asp-append-version="true"></script>
+<script src="~/js/mobile-reference.js" asp-append-version="true"></script>
+<script src="~/js/mobile-shell.js" asp-append-version="true"></script>
+<script src="~/js/dashboard-widgets.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

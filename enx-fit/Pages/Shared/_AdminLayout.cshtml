@@ -11,19 +11,21 @@
         (Page: "/Body/Index", Label: "Замеры тела", Icon: "activity", Prefix: "/Body/")
     };
     var sectionLabel = links.FirstOrDefault(link => currentPage.StartsWith(link.Prefix)).Label ?? "Обзор";
+    var mobileNavigation = enx_fit.ViewModels.MobileAppNavigationViewModel.Create(ViewData, User, currentPage);
 }
 <!DOCTYPE html>
 <html lang="ru">
     <head>
         <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="color-scheme" content="light" />
         <title>@ViewData["Title"] · Администрирование · Enix Fit</title>
-        <link rel="icon" href="~/favicon.ico" />
+        <partial name="_AppIcons" />
         <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
         @await RenderSectionAsync("Styles", required: false)
+        <link rel="stylesheet" href="~/css/mobile-shell.css" asp-append-version="true" />
     </head>
-    <body class="admin-shell">
+    <body class="admin-shell em-app-shell">
         <a class="admin-skip" href="#main-content">К содержимому</a>
         <aside class="admin-sidebar" id="admin-sidebar" aria-label="Меню администратора">
             <a class="admin-brand" asp-page="/Admin/Index">
@@ -84,7 +86,8 @@
         <button type="button" class="admin-backdrop" aria-label="Закрыть меню" tabindex="-1" hidden>
         </button>
         <div class="admin-workarea">
-            <header class="admin-topbar">
+            <partial name="_MobileAppShell" model="mobileNavigation" /><partial name="_WorkoutResume" model="mobileNavigation" />
+            <header class="admin-topbar em-desktop-header">
                 <button class="admin-icon-button" id="admin-menu-toggle" type="button" aria-controls="admin-sidebar" aria-expanded="true" aria-label="Переключить меню">
                     <admin-icon name="menu" />
                 </button>
@@ -125,6 +128,7 @@
         </script>
         <script src="~/js/admin.js" asp-append-version="true">
         </script>
+        <script src="~/js/mobile-shell.js" asp-append-version="true"></script>
         @await RenderSectionAsync("Scripts", required: false)
     </body>
 </html>

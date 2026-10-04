@@ -1,0 +1,21 @@
+@model TrainingProgram
+@using System.Globalization
+@{
+    var equipment = Model.Workouts.SelectMany(w => w.Exercises).Select(e => e.Exercise.Equipment).Where(e => !string.IsNullOrWhiteSpace(e)).Distinct().ToList();
+}
+<dialog id="template-preview-@Model.Id" class="app-dialog plan-template-preview" aria-labelledby="template-title-@Model.Id">
+    <div class="dialog-heading"><div><span class="plan-template-kicker">ГОТОВАЯ ПРОГРАММА</span><h2 id="template-title-@Model.Id">@Model.Name</h2></div><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
+    <p class="plan-template-description">@(Model.Description ?? Model.Goal)</p>
+    <dl class="plan-template-facts"><div><dt>Уровень</dt><dd>@ProgramSchedule.LevelName(Model.Level)</dd></div><div><dt>Длительность</dt><dd>@Model.Weeks нед.</dd></div><div><dt>В неделю</dt><dd>@Model.DaysPerWeek трен.</dd></div></dl>
+    @if (equipment.Count > 0) { <p class="plan-template-equipment">Оборудование: @string.Join(", ", equipment)</p> }
+    <div class="plan-template-workouts">
+        @foreach (var workout in Model.Workouts.OrderBy(w => w.Order)) {
+            <details open="@(workout.Order == Model.Workouts.Min(w => w.Order))"><summary><span><strong>@workout.Name</strong><small>@(workout.DayOfWeek is { } day ? ProgramSchedule.DayNames[day - 1] + " · " : "")@workout.EstimatedMinutes мин · @workout.Exercises.Count упр.</small></span><reference-icon name="chevron" /></summary>
+                @if (workout.Exercises.Count == 0) { <p class="plan-template-description">Упражнения пока не добавлены.</p> }
+                else { <ol>@foreach (var exercise in workout.Exercises.OrderBy(e => e.Order)) { <li><span>@exercise.Exercise.Name<small>@exercise.Exercise.MuscleGroup</small></span><strong>@exercise.Prescription.Summary@if (exercise.Prescription.WeightKg is { } weight) { <small>@weight.ToString("0.##", CultureInfo.GetCultureInfo("ru-RU")) кг</small> }</strong></li> }</ol> }
+            </details>
+        }
+        @if (Model.Workouts.Count == 0) { <p class="plan-template-description">Тренировки можно добавить после выбора программы.</p> }
+    </div>
+    <footer><p>После выбора сможете изменить упражнения, нагрузку и расписание.</p><form method="post" asp-page="Index" asp-page-handler="Duplicate" asp-route-id="@Model.Id" asp-route-Tab="templates" data-busy><button class="button primary" type="submit"><reference-icon name="plus" />Добавить в мои программы</button></form></footer>
+</dialog>

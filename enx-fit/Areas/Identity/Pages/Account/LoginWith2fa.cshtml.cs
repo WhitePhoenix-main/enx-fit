@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
+using enx_fit.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
@@ -60,50 +60,46 @@ namespace enx_fit.Areas.Identity.Pages.Account
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
-            [Required]
-            [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+            [Required(ErrorMessage = "Введите код из приложения.")]
+            [StringLength(8, ErrorMessage = "Введите шестизначный код; пробелы и дефисы допустимы.", MinimumLength = 6)]
             [DataType(DataType.Text)]
-            [Display(Name = "Authenticator code")]
+            [Display(Name = "Код из приложения")]
             public string TwoFactorCode { get; set; }
 
             /// <summary>
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
-            [Display(Name = "Remember this machine")]
+            [Display(Name = "Запомнить это устройство")]
             public bool RememberMachine { get; set; }
         }
 
         public async Task<IActionResult> OnGetAsync(bool rememberMe, string returnUrl = null)
         {
+            ReturnUrl = AuthPageLinks.LocalReturnUrl(Url, returnUrl);
+            RememberMe = rememberMe;
             // Ensure the user has gone through the username & password screen first
             var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
 
             if (user == null)
             {
-                throw new InvalidOperationException($"Unable to load two-factor authentication user.");
+                return RedirectToPage("/TechnicalPages/Login", new { area = "", returnUrl = ReturnUrl });
             }
-
-            ReturnUrl = returnUrl;
-            RememberMe = rememberMe;
 
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync(bool rememberMe, string returnUrl = null)
         {
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
-
-            returnUrl = returnUrl ?? Url.Content("~/");
+            ReturnUrl = AuthPageLinks.LocalReturnUrl(Url, returnUrl);
+            RememberMe = rememberMe;
 
             var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
             if (user == null)
             {
-                throw new InvalidOperationException($"Unable to load two-factor authentication user.");
+                return RedirectToPage("/TechnicalPages/Login", new { area = "", returnUrl = ReturnUrl });
             }
+            if (!ModelState.IsValid) return Page();
 
             var authenticatorCode = Input.TwoFactorCode.Replace(" ", string.Empty).Replace("-", string.Empty);
 
@@ -114,7 +110,7 @@ namespace enx_fit.Areas.Identity.Pages.Account
             if (result.Succeeded)
             {
                 _logger.LogInformation("User with ID '{UserId}' logged in with 2fa.", user.Id);
-                return LocalRedirect(returnUrl);
+                return LocalRedirect(ReturnUrl);
             }
             else if (result.IsLockedOut)
             {
@@ -124,7 +120,9 @@ namespace enx_fit.Areas.Identity.Pages.Account
             else
             {
                 _logger.LogWarning("Invalid authenticator code entered for user with ID '{UserId}'.", user.Id);
-                ModelState.AddModelError(string.Empty, "Invalid authenticator code.");
+                ModelState.AddModelError(string.Empty, "Код не подошёл. Проверьте текущий код в приложении и повторите.");
+                ModelState.Remove("Input.TwoFactorCode");
+                Input.TwoFactorCode = "";
                 return Page();
             }
         }

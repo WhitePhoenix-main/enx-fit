@@ -1,0 +1,229 @@
+/* Workouts reference canvas: 1546 × 1017. Only the photographic regions of
+   the supplied reference are used as sprites; the interface is native HTML. */
+.ef-workouts-page #main-content.ef-main { padding-top:17px; padding-bottom:42px; }
+.ew-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; min-height:74px; margin:0 2px 15px 4px; }
+.ew-heading-copy { flex:1 1 340px; min-width:0; transform:translateY(-5px); }
+.ew-heading h1 { font-size:40px; font-weight:700; line-height:44px; letter-spacing:0; white-space:nowrap; }
+.ew-heading p { color:#bad2f0; font-size:19px; line-height:27px; }
+.ew-heading-actions { display:flex; align-items:center; gap:8px; min-width:0; }
+.ew-metric { display:flex; flex:0 0 175px; align-items:center; gap:14px; height:74px; padding:10px 12px; border-radius:10px; width:175px; white-space:nowrap; }
+.ew-metric.ew-monthly { width:217px; flex-basis:217px; margin-right:2px; }
+.ew-metric>svg { flex-shrink:0; width:24px; height:24px; color:#f0f5ff; }
+.ew-metric>div { display:flex; flex-direction:column; }
+.ew-metric strong { font-size:26px; line-height:32px; font-weight:700; }
+.ew-metric span { color:#b2ceef; font-size:13px; line-height:20px; }
+.ew-start-top { flex-shrink:0; height:58px; min-width:235px; padding-inline:20px; border-radius:10px; font-family:"Enix Reference",Arial,sans-serif; font-size:16px; font-weight:400; background:linear-gradient(110deg,#2446ec,#2444ea); border-color:#5275ff; }
+.ew-start-top>svg { width:27px; height:27px; }
+.ew-top-grid { display:grid; grid-template-columns:minmax(0,1.233fr) minmax(0,1fr); gap:14px; margin-bottom:13px; }
+.ew-next { min-height:320px; padding:24px 26px 0; }
+.ew-next .ef-eyebrow { margin-bottom:9px!important; }
+.ew-next h2 { font-size:38px; line-height:46px; margin-bottom:5px; }
+.ew-next .ef-workout-description { margin-bottom:18px!important; }
+.ew-next .ef-start { min-width:306px; border-radius:13px; }
+.ew-next .ef-workout-shortcuts { margin-top:19px; height:65px; }
+.ew-next .ef-workout-shortcuts button { font-size:15px; gap:15px; }
+.ew-next .ef-workout-shortcuts svg { width:25px; height:25px; }
+.ew-next .ef-workout-shortcuts>button+button,.ew-next .ef-workout-shortcuts>form { border-left-color:#6285d829; }
+.ew-hero-photo { position:absolute; z-index:-1; top:0; right:0; width:322px; height:225px; background:url('../images/dashboard/workouts-reference-art.png') -634px -178px / 1546px 1017px no-repeat; mask-image:linear-gradient(to right,transparent,#000 24%),linear-gradient(to bottom,#000 82%,transparent); mask-composite:intersect; pointer-events:none; }
+.ew-calendar { padding:17px 14px 12px; min-height:320px; }
+.ew-calendar .ef-card-heading { padding:0 4px 14px; border-bottom:1px solid #1e3041; }
+.ew-calendar .ef-card-heading h2 { font-size:18px; gap:11px; }
+.ew-calendar .ef-card-heading h2>svg { width:24px; height:24px; }
+.ew-month { margin-left:auto; color:#6ef0bb; font-size:16px; white-space:nowrap; }
+.ew-calendar .ef-week-navigation { gap:10px; margin-left:6px; }
+.ew-calendar-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); grid-auto-rows:36px; gap:0 7px; padding:1px 3px 0; }
+.ew-weekday { display:grid; place-items:center; height:36px; color:#c7ddf7; font-size:14px; }
+.ew-calendar-day { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; height:36px; border:1px solid transparent; border-radius:9px; font-size:14px; line-height:16px; color:#c0d8f9; }
+.ew-calendar-day:hover { background:#24375a50; }
+.ew-calendar-day.outside { color:#607287; }
+.ew-calendar-day.is-selected { color:#fff; background:linear-gradient(110deg,#182b62,#19244d); border-color:#5072ff; box-shadow:inset 0 0 0 1px #466cff25; font-weight:700; }
+.ew-marker { display:inline-block; flex-shrink:0; width:8px; height:8px; border-radius:50%; background:#314252; }
+.ew-marker.completed { background:linear-gradient(135deg,#91ffd1,#56dfaf); }
+.ew-marker.planned { width:14px; height:14px; border:1.5px solid #abd2ff; background:transparent; }
+.ew-calendar-day .ew-marker.none { width:7px; height:7px; background:#1b2c5f; }
+.ew-calendar-day .ew-marker.planned { margin-bottom:-6px; }
+.ew-marker.no-marker { visibility:hidden; }
+.ew-calendar-legend { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:10px 10px 0; color:#b7d1ee; font-size:14px; }
+.ew-calendar-legend>span { display:flex; align-items:center; gap:12px; white-space:nowrap; }
+.ew-calendar-legend .ew-marker { width:9px; height:9px; }
+.ew-calendar-legend .ew-marker.planned { width:14px; height:14px; }
+.ew-bottom-grid { display:grid; grid-template-columns:minmax(0,1.713fr) minmax(0,1fr); gap:13px; align-items:start; }
+.ew-history { min-height:465px; padding:18px 20px 20px; }
+.ew-history .ef-card-heading { margin-bottom:13px; gap:10px; }
+.ew-history .ef-card-heading h2 { gap:12px; font-size:18px; }
+.ew-history .ef-card-heading h2>svg { width:26px; height:26px; color:#e5efff; }
+.ew-period { display:flex; align-items:center; margin-left:auto; margin-right:207px; border-radius:8px; background:#101f30; box-shadow:inset 0 0 0 1px #1b2e43; }
+.ew-period>a { display:grid; place-items:center; min-width:78px; height:33px; padding:0 13px; border:1px solid transparent; border-radius:7px; color:#c2d8f3; font-size:14px; }
+.ew-period>a.active { color:#fff; background:linear-gradient(110deg,#1e3583,#172d6a); border-color:#4366ec; box-shadow:inset 0 0 10px #385ee72a; }
+.ew-filters { display:grid; grid-template-columns:minmax(0,1fr) 198px; gap:15px; margin-bottom:10px; }
+.ew-search,.ew-program-filter { display:flex; align-items:center; position:relative; height:43px; border:1px solid #263e56; border-radius:9px; background:linear-gradient(110deg,#101f2f,#112031); color:#a7c5eb; }
+.ew-search { gap:12px; padding:0 15px; }
+.ew-search>svg { flex-shrink:0; width:21px; height:21px; }
+.ew-search input { min-width:0; width:100%; height:100%; border:0; outline:0; padding:0; color:#dceaff; background:transparent; font-size:15px; }
+.ew-search input::placeholder { color:#9bb9de; opacity:1; }
+.ew-search:focus-within,.ew-program-filter:focus-within { border-color:#6388ff; box-shadow:0 0 0 2px #557aff20; }
+.ew-program-filter select { appearance:none; width:100%; height:100%; margin:0; border:0; padding:0 39px 0 15px; outline:0; background:transparent; color:#c5dbf9; font-size:15px; cursor:pointer; }
+.ew-program-filter option { color:#dceaff; background:#112031; }
+.ew-program-filter>svg { position:absolute; right:12px; width:17px; height:17px; transform:rotate(90deg); pointer-events:none; }
+.ew-table-grid { display:grid; grid-template-columns:78px minmax(170px,1fr) 86px 100px 86px 141px 16px; gap:0; align-items:center; }
+.ew-table-head { min-height:49px; padding:0 4px; color:#b5cfee; font-size:14px; line-height:17px; }
+.ew-table-head>span:nth-child(2) { padding-left:50px; }
+.ew-table-head>span:nth-child(n+3) { text-align:center; }
+.ew-history-row { position:relative; min-height:69px; padding:6px 4px; border-bottom:1px solid #203749; color:#c6dbf9; font-size:14px; }
+.ew-history-row.is-selected { z-index:1; margin-inline:-17px -13px; padding-inline:21px 13px; background:linear-gradient(110deg,#192d50,#1a3052); border:1px solid #354d7c; border-radius:9px; }
+.ew-history-row:hover { background-color:#1b304c80; }
+.ew-history-row time { display:flex; flex-direction:column; gap:1px; line-height:21px; }
+.ew-history-row time>strong { color:#f4f7ff; font-size:18px; font-weight:500; }
+.ew-history-row time>span { font-size:14px; }
+.ew-workout-name { display:flex; align-items:center; gap:17px; min-width:0; }
+.ew-workout-name>strong { color:#f2f6ff; font-size:15px; font-weight:600; line-height:21px; }
+.ew-thumbnail,.ew-exercise-photo { flex-shrink:0; display:block; position:relative; overflow:hidden; border:1px solid #314555; border-radius:8px; background-color:#0a121b; background-image:url('../images/dashboard/workouts-reference-art.png'); background-repeat:no-repeat; background-size:1546px 1017px; }
+.ew-thumbnail { width:61px; height:54px; }
+.ew-photo-history-1 { background-position:-372px -684px; }
+.ew-photo-history-2 { background-position:-372px -754px; }
+.ew-photo-history-3 { background-position:-372px -822px; }
+.ew-photo-history-4 { background-position:-372px -891px; }
+.ew-photo-squat { background-position:-1091px -609px; }
+.ew-photo-leg-press { background-position:-1091px -684px; }
+.ew-photo-deadlift { background-position:-1091px -758px; }
+.ew-photo-plank { background-position:-1091px -833px; }
+.ew-photo-bench { background-image:url('../images/dashboard/reference-art.png'); background-size:1547px 1017px; background-position:-294px -507px; }
+.ew-history-row>span:nth-child(n+3) { text-align:center; }
+.ew-history-row>.ef-saved { justify-self:center; padding:5px 9px; font-size:14px; gap:7px; white-space:nowrap; }
+.ew-history-row>svg { width:17px; height:17px; color:#b7d5ff; }
+.ew-mobile-label { display:none; }
+.ew-detail { min-height:465px; padding:18px 17px 0; }
+.ew-detail .ef-card-heading { gap:9px; margin-bottom:7px; }
+.ew-detail .ef-card-heading h2 { min-width:0; flex-shrink:1; font-size:18px; line-height:25px; gap:13px; }
+.ew-detail .ef-card-heading h2>svg { width:25px; height:25px; flex-shrink:0; }
+.ew-detail .ef-card-heading>.ef-saved { margin-left:auto; padding:5px 10px; font-size:14px; white-space:nowrap; }
+.ew-detail-summary,.ew-preview-summary { color:#accdf2; font-size:15px; line-height:24px; margin-bottom:9px!important; }
+.ew-exercises { display:flex; flex-direction:column; }
+.ew-exercise { display:flex; align-items:center; gap:17px; min-height:75px; padding:6px 3px; border-bottom:1px solid #223b4c; color:#ecf5ff; }
+.ew-exercise:first-child { border:1px solid #1c3448; border-radius:9px; min-height:74px; padding:4px 3px; }
+.ew-exercise:hover { background:#172a3c60; }
+.ew-exercise-photo { width:94px; height:62px; }
+.ew-exercise>span:nth-child(2) { display:flex; flex-direction:column; gap:7px; min-width:0; }
+.ew-exercise strong { font-size:15px; line-height:20px; font-weight:600; }
+.ew-exercise small { color:#b4d3f5; font-size:14px; line-height:18px; }
+.ew-exercise>svg { width:18px; height:18px; flex-shrink:0; margin-left:auto; }
+.ew-details-link { display:flex; align-items:center; width:100%; gap:16px; height:64px; padding:0 4px; color:#6189ff!important; font-size:18px; text-align:left; }
+.ew-details-link>svg:first-child { color:#adcbef; width:26px; height:26px; }
+.ew-details-link>svg:last-child { width:20px; height:20px; margin-left:auto; color:#b2d3ff; }
+.ew-empty { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; min-height:280px; padding:25px; text-align:center; color:#acc8e9; }
+.ew-empty>svg { width:38px; height:38px; color:#6d8fce; }
+.ew-empty h3,.ew-empty h2 { font-size:20px; color:#f1f5ff; }
+.ew-date-filter { display:flex; justify-content:space-between; align-items:center; margin:0 4px 8px!important; color:#a5c8ef; }
+.ew-date-filter>a { display:flex; align-items:center; gap:8px; color:#799dff; }
+.ew-date-filter svg { width:16px; height:16px; }
+@media (min-width:1450px) {
+  .ew-heading-actions>.ew-metric:nth-child(3) { width:179px; flex-basis:179px; }
+}
+@media (min-width:1024px) {
+  .ew-heading-actions { min-width:max-content; }
+}
+@media (max-width:1449px) {
+  .ew-heading { flex-wrap:wrap; }
+  .ew-heading-actions { flex:1; justify-content:flex-end; }
+  .ew-heading h1 { font-size:34px; }
+  .ew-heading p { font-size:17px; }
+  .ew-metric,.ew-metric.ew-monthly { min-width:0; width:auto; flex-basis:auto; padding-inline:13px; gap:10px; margin-right:0; }
+  .ew-start-top { min-width:195px; padding-inline:15px; }
+  .ew-period { margin-right:0; }
+  .ew-table-grid { grid-template-columns:68px minmax(140px,1fr) 86px 80px 80px 116px 16px; }
+  .ew-table-head { font-size:13px; }
+  .ew-workout-name { gap:10px; }
+  .ew-workout-name>strong { font-size:14px; }
+  .ew-calendar .ef-card-heading { flex-wrap:wrap; gap:6px; }
+  .ew-calendar .ef-card-heading h2 { font-size:16px; gap:8px; }
+  .ew-calendar-legend { margin-inline:0; gap:6px; font-size:12px; }
+  .ew-calendar-legend>span { gap:6px; }
+}
+@media (max-width:1399px) {
+  .ew-heading-copy,.ew-heading-actions { flex-basis:100%; }
+  .ew-heading-actions { justify-content:stretch; }
+  .ew-metric,.ew-metric.ew-monthly { flex:1; }
+  .ew-next .ef-workout-shortcuts button { font-size:13px; gap:9px; white-space:normal; }
+  .ew-next .ef-workout-shortcuts svg { width:21px; height:21px; }
+  .ew-bottom-grid { grid-template-columns:minmax(0,1fr); }
+  .ew-detail { min-height:0; padding-bottom:0; }
+  .ew-detail .ew-exercises { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 20px; }
+}
+@media (max-width:1199px) {
+  .ew-heading-copy { flex-basis:100%; }
+  .ew-heading-actions { justify-content:stretch; flex-basis:100%; }
+  .ew-metric,.ew-metric.ew-monthly { flex:1; }
+  .ew-top-grid { grid-template-columns:minmax(0,1fr); }
+  .ew-next { min-height:300px; }
+  .ew-calendar { min-height:320px; }
+  .ew-calendar .ef-card-heading h2 { font-size:18px; }
+  .ew-calendar-legend { justify-content:flex-start; gap:35px; font-size:14px; }
+  .ew-history { min-height:0; }
+}
+@media (max-width:899px) {
+  .ew-heading-actions { flex-wrap:wrap; }
+  .ew-start-top { width:100%; height:48px; }
+}
+@media (max-width:767px) {
+  .ew-heading h1 { font-size:30px; line-height:37px; }
+  .ew-heading p { font-size:16px; line-height:23px; white-space:normal; }
+  .ew-heading-actions { flex-wrap:wrap; gap:8px; }
+  .ew-metric { height:68px; padding-inline:10px; gap:8px; }
+  .ew-metric>svg { width:22px; height:22px; }
+  .ew-metric strong { font-size:23px; }
+  .ew-metric span { font-size:11px; line-height:15px; white-space:normal; }
+  .ew-start-top { width:100%; height:48px; }
+  .ew-calendar .ef-card-heading { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; }
+  .ew-calendar .ef-card-heading h2 { grid-column:1 / -1; }
+  .ew-calendar .ew-month { margin-left:0; }
+  .ew-calendar .ef-week-navigation { justify-self:end; }
+  .ew-next { padding:22px 18px 0; min-height:300px; }
+  .ew-next h2 { font-size:31px; line-height:39px; }
+  .ew-next .ef-start { min-width:0; width:100%; font-size:18px; }
+  .ew-next .ef-workout-shortcuts button { font-size:11px; gap:4px; }
+  .ew-next .ef-workout-shortcuts svg { width:21px; height:21px; }
+  .ew-next .ef-workout-shortcuts { margin-top:18px; }
+  .ew-history { padding:16px 12px; }
+  .ew-history .ef-card-heading { flex-wrap:wrap; gap:12px; }
+  .ew-history .ef-card-heading h2 { font-size:18px; }
+  .ew-period { width:100%; margin:0; }
+  .ew-period>a { flex:1; }
+  .ew-filters { grid-template-columns:minmax(0,1fr); gap:8px; }
+  .ew-table-head { display:none; }
+  .ew-history-row { display:grid; grid-template-columns:57px minmax(0,1fr) 18px; gap:7px 9px; min-height:115px; padding:12px 3px; }
+  .ew-history-row.is-selected { margin-inline:-5px; padding-inline:7px; }
+  .ew-history-row time { grid-column:1; grid-row:1 / 4; font-size:12px; }
+  .ew-history-row time>span { font-size:11px; }
+  .ew-workout-name { grid-column:2; grid-row:1; gap:10px; }
+  .ew-workout-name>strong { font-size:14px; }
+  .ew-thumbnail { width:44px; height:48px; }
+  .ew-exercise-count { grid-column:2; grid-row:2; }
+  .ew-set-count { grid-column:2; grid-row:3; }
+  .ew-history-row>.ew-volume { grid-column:2; grid-row:4; text-align:left!important; }
+  .ew-history-row>span:nth-child(n+3) { text-align:left; font-size:12px; }
+  .ew-mobile-label { display:inline; color:#91afd5; }
+  .ew-history-row>.ef-saved { grid-column:2; grid-row:4; justify-self:end; font-size:11px; padding:3px 6px; }
+  .ew-history-row>.ef-saved>svg { width:15px; height:15px; }
+  .ew-history-row>svg { grid-column:3; grid-row:1 / 5; }
+  .ew-detail { padding:16px 12px 0; }
+  .ew-detail .ef-card-heading { flex-wrap:wrap; gap:8px; }
+  .ew-detail .ef-card-heading h2 { font-size:17px; }
+  .ew-detail .ef-card-heading>.ef-saved { font-size:12px; }
+  .ew-detail .ew-exercises { display:flex; }
+  .ew-detail-summary { font-size:12px; }
+  .ew-exercise { gap:12px; }
+  .ew-exercise strong { font-size:14px; }
+  .ew-exercise small { font-size:12px; }
+  .ew-details-link { font-size:16px; }
+}
+@media (max-width:399px) {
+  .ew-metric { padding-inline:7px; gap:5px; }
+  .ew-metric>svg { width:18px; height:18px; }
+  .ew-metric strong { font-size:21px; }
+  .ew-metric span { font-size:10px; }
+  .ew-calendar { padding-inline:9px; }
+  .ew-calendar .ef-card-heading h2 { font-size:15px; }
+  .ew-month { font-size:14px; }
+  .ew-calendar-legend { gap:10px; font-size:11px; }
+  .ew-calendar-legend>span { gap:5px; }
+}

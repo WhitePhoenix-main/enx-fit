@@ -34,6 +34,7 @@ public class AnalyticsDataService(ApplicationDbContext dbContext, CurrentUser cu
         return await workouts
             .AsNoTracking()
             .AsSplitQuery()
+            .Where(WorkoutStates.Completed)
             .Where(workout => workout.WorkoutExercises.Any(exercise => exercise.ExerciseId == exerciseId))
             .Include(workout => workout.WorkoutExercises)
                 .ThenInclude(exercise => exercise.SetEntries)

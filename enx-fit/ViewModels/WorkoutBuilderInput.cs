@@ -39,7 +39,7 @@ public sealed class WorkoutBuilderBlock
 
 public sealed class WorkoutBuilderExercise
 {
-    [Range(1, int.MaxValue)] public int ExerciseId { get; set; }
+    [DeniedValues(0, ErrorMessage = "Выберите упражнение.")] public int ExerciseId { get; set; }
     [Required, MinLength(1), MaxLength(20)] public List<WorkoutBuilderSet> Sets { get; set; } = [];
 }
 

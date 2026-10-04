@@ -1,192 +1,158 @@
 @page "{id:int}"
 @model enx_fit.Pages.Workouts.DetailsModel
+@using System.Globalization
+@using enx_fit.Models
+@using enx_fit.Services
+@using enx_fit.ViewModels
 @{
-    ViewData["Title"] = "Детали тренировки";
+    Layout = "_DashboardReferenceLayout";
+    ViewData["Title"] = Model.Workout.Title ?? "Тренировка";
+    var workout = Model.Workout;
+    var locked = workout.IsFinished;
+    var templateOperationId = Guid.NewGuid();
 }
-
-<div class="d-flex flex-column flex-md-row align-items-md-start justify-content-between gap-3 mb-4">
-    <div>
-        <p class="text-muted mb-1">@Model.Workout.Date.ToString("yyyy-MM-dd")</p>
-        <h1 class="h3 mb-2">@(string.IsNullOrWhiteSpace(Model.Workout.Title) ? "Тренировка" : Model.Workout.Title)</h1>
-        @if (Model.IsAdministrator)
-        {
-            <p class="small text-muted mb-2">Пользователь: @Model.OwnerName</p>
-        }
-        @if (!string.IsNullOrWhiteSpace(Model.Workout.Notes))
-        {
-            <p class="mb-0">@Model.Workout.Notes</p>
-        }
-    </div>
-    <div class="d-flex gap-2 flex-wrap">
-        @if (Model.Workout.TrainingProgramId is { } programId) { <a class="btn btn-outline-primary" asp-page="/Programs/Details" asp-route-id="@programId">К программе</a> }
-        @if (Model.Workout.CompletedAtUtc.HasValue) { <span class="badge text-bg-success align-self-center">Завершена</span> }
-        else { <form method="post" asp-page-handler="Complete"><button class="btn btn-primary" type="submit">Завершить тренировку</button></form> }
-        <a class="btn btn-outline-primary" asp-page="./Edit" asp-route-id="@Model.Workout.Id">Изменить</a>
-        <a class="btn btn-outline-secondary" asp-page="./Index">К списку</a>
-    </div>
-</div>
-
-@if (TempData["StatusMessage"] is string statusMessage)
-{
-    <div class="alert alert-success" role="alert">@statusMessage</div>
-}
-
-@if (!ViewData.ModelState.IsValid)
-{
-    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
-}
-
-@if (Model.Blueprint is { } blueprint)
-{
-    <section class="border rounded-3 p-3 mb-4" aria-label="Сохранённый план тренировки">
-        <h2 class="h5">План тренировки</h2>
-        <p class="text-muted mb-0">@blueprint.Goal · ~ @blueprint.DurationMinutes мин · Блоков: @blueprint.Blocks.Count. Запишите фактические подходы ниже, чтобы результаты попали в статистику.</p>
-    </section>
-}
-
-<section class="border rounded-3 p-3 p-md-4 mb-4">
-    <h2 class="h5 mb-3">Добавить упражнение</h2>
-    @if (Model.AvailableExercises.Count == 0)
+<div class="active-workout" data-active-workout data-session-id="@workout.Id" data-viewer="@Model.ViewerId" data-recorded-request="@TempData["RecordedWorkout"]">
+    <script type="application/json" id="workout-execution-state">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Execution, WorkoutBuilderInput.JsonOptions))</script>
+    <a class="workout-back" asp-page="/Dashboard"><admin-icon name="back" />На главную</a>
+    <header class="active-header">
+        <div><p class="eyebrow">@(workout.State == WorkoutStatus.Cancelled ? "ТРЕНИРОВКА ОТМЕНЕНА" : locked ? "ТРЕНИРОВКА ЗАВЕРШЕНА" : workout.IsActive ? "ЗДЕСЬ И СЕЙЧАС" : "ПЛАН ТРЕНИРОВКИ") · @workout.Date.ToString("dd.MM.yyyy")</p><h1>@(workout.Title ?? "Быстрая тренировка")</h1>
+            @if (workout.StartedAtUtc is { } started)
+            { <p class="active-session-meta"><span class="live-dot"></span><strong data-session-clock="@DateTime.SpecifyKind(started, DateTimeKind.Utc).ToString("O")" data-session-end="@(workout.CompletedAtUtc is { } ended ? DateTime.SpecifyKind(ended, DateTimeKind.Utc).ToString("O") : null)">00:00</strong><span>Начало: <time data-local-time="@DateTime.SpecifyKind(started, DateTimeKind.Utc).ToString("O")">@started.ToString("HH:mm") UTC</time></span></p> }
+            @if (Model.IsAdministrator) { <p class="muted">Пользователь: @Model.OwnerName</p> }
+            @if (!string.IsNullOrWhiteSpace(workout.Notes)) { <p class="muted">@workout.Notes</p> }
+        </div>
+        <div class="active-header-actions">
+            @if (!locked && workout.WorkoutExercises.Count == 0) { <button class="button secondary" data-dialog="load-template-dialog">Загрузить шаблон <admin-icon name="chevron" /></button> }
+            @if (workout.State == WorkoutStatus.Planned) { <form method="post" asp-page-handler="Start"><button class="button">Начать занятие <admin-icon name="play" /></button></form> }
+            @if (workout.IsActive) { <button type="button" class="button secondary" data-control="@(workout.State == WorkoutStatus.Paused ? "resume" : "pause")" data-pause-button>@(workout.State == WorkoutStatus.Paused ? "Продолжить" : "Пауза")</button> }
+            @if (workout.TrainingProgramId is { } programId) { <a class="button secondary" asp-page="/Programs/Details" asp-route-id="@programId">К программе</a> }
+            <a class="button secondary" asp-page="./Edit" asp-route-id="@workout.Id">Название и заметки</a>
+        </div>
+    </header>
+    @if (TempData["StatusMessage"] is string message) { <p class="status-message" role="status"><admin-icon name="check" />@message</p> }
+    <div asp-validation-summary="All" class="validation-message" role="alert"></div>
+    <p class="execution-sync" data-sync-status role="status" aria-live="polite">Все изменения сохранены</p>
+    <button type="button" class="button secondary" data-reconcile hidden>Применить мои изменения к текущей версии</button>
+    <button type="button" class="text-button" data-discard-operation hidden>Убрать отклонённое действие из очереди</button>
+    @if (workout.IsActive)
     {
-        <p class="text-muted mb-0">Все упражнения из библиотеки уже добавлены в эту тренировку.</p>
+        <section class="workout-app-overview" data-app-overview hidden aria-label="Выполнение тренировки">
+            <div class="workout-app-progress"><span>Ваше занятие</span><strong data-app-count>0 подходов</strong><progress data-app-progress max="1" value="0" aria-label="Выполнение подходов"></progress></div>
+            <button type="button" class="button secondary" data-dialog="workout-outline-dialog"><admin-icon name="layers" /><span data-app-outline-count>Состав занятия</span></button>
+        </section>
+        <section class="panel rest-panel" data-rest-panel aria-labelledby="rest-title" hidden>
+            <div><p class="eyebrow" id="rest-title">ОТДЫХ ПОСЛЕ ПОДХОДА</p><strong class="rest-clock" data-rest-clock>01:30</strong><p class="muted" data-rest-caption>Восстановитесь перед следующим подходом</p></div>
+            <div class="rest-controls"><button type="button" class="button secondary" data-control="adjust-rest" data-seconds="-15">−15 с</button><button type="button" class="button secondary" data-control="adjust-rest" data-seconds="30">+30 с</button><button type="button" class="button" data-control="skip-rest">Пропустить отдых</button><button type="button" class="text-button" data-sound aria-pressed="false">Звук: выкл.</button></div>
+        </section>
+        <p class="pause-notice" data-pause-notice hidden>Тренировка на паузе. Время занятия и отдыха остановлено.</p>
     }
-    else
+    @if (locked)
     {
-        <form method="post" asp-page-handler="AddExercise" class="row g-2 align-items-end">
-            <div class="col-md-8">
-                <label class="form-label" asp-for="AddExercise.ExerciseId"></label>
-                <select class="form-select" asp-for="AddExercise.ExerciseId">
-                    <option value="">Выберите упражнение</option>
-                    @foreach (var exercise in Model.AvailableExercises)
-                    {
-                        <option value="@exercise.Id">@exercise.Name &middot; @exercise.MuscleGroup</option>
-                    }
-                </select>
-            </div>
-            <div class="col-auto">
-                <button class="btn btn-primary" type="submit">Добавить упражнение</button>
-            </div>
-        </form>
+        <section class="panel execution-summary"><div><span>Рабочие подходы</span><strong>@DashboardData.WorkingSets(workout).Count()</strong></div><div><span>Объём</span><strong>@DashboardData.Volume(workout).ToString("0.##") кг</strong></div><div><span>Длительность</span><strong>@(workout.DurationSeconds is { } duration ? $"{duration / 60} мин" : "Не указана")</strong></div><div><span>Источник</span><strong>@(workout.EntryMode == WorkoutEntryMode.Manual ? "Внесена вручную" : "Выполнена в приложении")</strong></div></section>
     }
-</section>
-
-@if (Model.Workout.WorkoutExercises.Count == 0)
-{
-    <div class="border rounded-3 p-5 text-center bg-body-tertiary">
-        <h2 class="h5">В тренировке пока нет упражнений</h2>
-        <p class="text-muted mb-0">Добавьте первое упражнение с помощью формы выше.</p>
-    </div>
-}
-else
-{
-    <div class="d-flex flex-column gap-3">
-        @foreach (var workoutExercise in Model.Workout.WorkoutExercises.OrderBy(w => w.Order))
-        {
-            var nextSetNumber = workoutExercise.SetEntries.Count == 0
-                ? 1
-                : workoutExercise.SetEntries.Max(s => s.SetNumber) + 1;
-            var plannedExercise = Model.Blueprint?.Blocks.SelectMany(b => b.Exercises).FirstOrDefault(e => e.ExerciseId == workoutExercise.ExerciseId);
-            var plannedSet = plannedExercise?.Sets.ElementAtOrDefault(nextSetNumber - 1);
-
-            <section class="card">
-                <div class="card-header bg-body d-flex flex-column flex-sm-row justify-content-between gap-2">
-                    <div>
-                        <h2 class="h5 mb-1">@workoutExercise.Exercise.Name</h2>
-                        <p class="small text-muted mb-0">@workoutExercise.Exercise.MuscleGroup &middot; @workoutExercise.Exercise.Equipment</p>
-                        @if (!string.IsNullOrWhiteSpace(workoutExercise.Notes)) { <p class="small mb-0">@workoutExercise.Notes</p> }
+    @if (workout.TemplateDecisionPending)
+    {
+        <section class="panel template-decision" aria-labelledby="template-decision-title"><h2 id="template-decision-title">Вы изменили тренировку относительно шаблона</h2><p class="muted">Результаты уже сохранены. Исходный шаблон пока без изменений.</p>
+            <form method="post" asp-page-handler="TemplateDecision"><button name="choice" value="keep" class="button">Оставить шаблон без изменений</button>
+                @if (Model.CanUpdateTemplate) { <button name="choice" value="update" class="button secondary">Обновить шаблон</button> }
+            </form>
+            <details><summary>Сохранить как новый шаблон</summary><form method="post" asp-page-handler="TemplateDecision"><input name="operationId" type="hidden" value="@templateOperationId" /><label>Название шаблона<input name="templateName" required maxlength="120" value="@workout.Title" /></label><button class="button secondary" name="choice" value="new">Сохранить как новый шаблон</button></form></details>
+        </section>
+    }
+    @if (workout.CompletedAtUtc.HasValue && !workout.TemplateDecisionPending && workout.UserId == Model.ViewerId)
+    {
+        <section class="panel template-decision workout-save-template">
+            <details><summary>Сохранить как шаблон</summary>
+                <p class="muted">Сохраните выполненные упражнения и подходы, чтобы повторить занятие. Результат останется в истории.</p>
+                <form method="post" asp-page-handler="TemplateDecision">
+                    <input name="operationId" type="hidden" value="@templateOperationId" />
+                    <input name="choice" type="hidden" value="new" />
+                    <label>Название шаблона<input name="templateName" required maxlength="120" value="@workout.Title" /></label>
+                    <button class="button" type="submit">Сохранить шаблон</button>
+                </form>
+            </details>
+        </section>
+    }
+    @if (Model.Blueprint is { } blueprint)
+    {
+        <details class="panel workout-blueprint"><summary>План тренировки · @blueprint.Goal · ~ @blueprint.DurationMinutes мин</summary>
+            @foreach (var block in blueprint.Blocks) { <p>@block.Name</p>@foreach (var e in block.Exercises) { <p class="muted">@string.Join(" · ", e.Sets.Select(s => $"{s.Weight} кг × {s.Reps}, отдых {s.RestSeconds} с"))</p> } }
+        </details>
+    }
+    @if (workout.WorkoutExercises.Count == 0)
+    {
+        <section class="panel workout-empty"><span class="start-icon"><admin-icon name="workout" /></span><h2>Всё начинается с первого упражнения</h2><p>Добавляйте упражнения и записывайте подходы в своём темпе.</p><button class="button" data-dialog="exercise-dialog" data-add-exercise><admin-icon name="plus" />Добавить упражнение</button><button class="text-button" data-dialog="load-template-dialog">Или загрузить шаблон</button></section>
+    }
+    <div class="workout-app-layout"><nav class="workout-app-sidebar" data-app-sidebar aria-label="Упражнения занятия" hidden></nav><div class="session-exercises">
+    @foreach (var exercise in workout.WorkoutExercises.OrderBy(e => e.Order))
+    {
+        var sets = exercise.SetEntries.OrderBy(s => s.SetNumber).ThenBy(s => s.Id).ToList();
+        var nextNumber = sets.Count == 0 ? 1 : sets.Max(s => s.SetNumber) + 1;
+        var planned = Model.Blueprint?.Blocks.SelectMany(b => b.Exercises).FirstOrDefault(e => e.ExerciseId == exercise.ExerciseId)?.Sets.ElementAtOrDefault(nextNumber - 1);
+        <section class="panel session-exercise" id="exercise-@exercise.Id" data-catalog-id="@exercise.ExerciseId">
+            <header><span class="exercise-order">@(workout.WorkoutExercises.OrderBy(e => e.Order).ToList().IndexOf(exercise) + 1)</span><div><h2>@ExercisePresentation.DisplayName(exercise.Exercise)</h2><p>@exercise.Exercise.MuscleGroup · @exercise.Exercise.Equipment</p></div>
+                @if (!locked) { <details class="exercise-menu"><summary aria-label="Действия: @ExercisePresentation.DisplayName(exercise.Exercise)">⋯</summary><div>
+                    <button type="button" data-dialog="exercise-dialog" data-replace-exercise="@exercise.Id">Заменить упражнение</button>
+                    <form method="post" asp-page-handler="Exercise"><input type="hidden" name="ExerciseEntryId" value="@exercise.Id" /><button name="action" value="up">Переместить выше</button><button name="action" value="down">Переместить ниже</button><button name="action" value="remove" class="danger-text">Удалить из тренировки</button></form>
+                </div></details> }
+            </header>
+            @if (exercise.TargetRpe is { } rpe) { <p class="muted">RPE по плану: @rpe</p> }
+            @if (exercise.TargetSets is { } target) { <p class="exercise-prescription">План: @target × @exercise.TargetRepsMin–@exercise.TargetRepsMax · @(exercise.TargetWeightKg is { } weight ? $"{weight:0.##} кг" : "вес на выбор") @(exercise.TargetRir is { } rir ? $"· RIR {rir}" : "")</p> }
+            @if (!string.IsNullOrWhiteSpace(exercise.Notes)) { <p class="muted">@exercise.Notes</p> }
+            <div class="set-labels" aria-hidden="true"><span>№</span><span>Вес, кг</span><span>Повторения</span><span>Выполнено</span></div>
+            @foreach (var set in sets)
+            {
+                <form method="post" asp-page-handler="Set" class="set-form @(set.IsCompleted ? "is-completed" : "") @(set.IsSkipped ? "is-skipped" : "")">
+                    <input type="hidden" name="setId" value="@set.Id" /><input type="hidden" name="AddSet.WorkoutExerciseId" value="@exercise.Id" /><input type="hidden" name="AddSet.SetNumber" value="@set.SetNumber" />
+                    <div class="set-main"><span class="set-number">@set.SetNumber</span>
+                        <input aria-label="Вес подхода @set.SetNumber, кг" name="AddSet.Weight" type="number" inputmode="decimal" min="0" max="10000" step="0.01" value="@set.Weight.ToString(CultureInfo.InvariantCulture)" readonly="@locked" required />
+                        <input aria-label="Повторения подхода @set.SetNumber" name="AddSet.Reps" type="number" inputmode="numeric" min="0" max="1000" value="@set.Reps" readonly="@locked" required />
+                        <label class="set-completed"><input type="checkbox" name="completed" value="true" checked="@set.IsCompleted" disabled="@locked" aria-label="Подход @set.SetNumber выполнен" /><span><admin-icon name="check" /></span></label>
                     </div>
-                    <span class="text-muted small">@workoutExercise.SetEntries.Count подходов</span>
-                </div>
-                <div class="card-body">
-                    @if (plannedExercise is not null)
-                    {
-                        <details class="mb-3" open="@(workoutExercise.SetEntries.Count == 0)">
-                            <summary class="mb-2">Подходов в плане: @plannedExercise.Sets.Count</summary>
-                            <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Подход</th><th>Вес, кг</th><th>Повторы</th><th>Отдых, с</th></tr></thead><tbody>
-                            @for (var i = 0; i < plannedExercise.Sets.Count; i++)
-                            {
-                                var set = plannedExercise.Sets[i];
-                                <tr><td>@(i + 1)</td><td>@set.Weight</td><td>@set.Reps</td><td>@set.RestSeconds</td></tr>
-                            }
-                            </tbody></table></div>
-                        </details>
-                    }
-                    @if (workoutExercise.SetEntries.Count > 0)
-                    {
-                        <div class="table-responsive mb-4">
-                            <table class="table table-sm align-middle mb-0">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">Подход</th>
-                                        <th scope="col">Вес, кг</th>
-                                        <th scope="col">Повторения</th>
-                                        <th scope="col">RIR</th>
-                                        <th scope="col">Тип</th>
-                                        <th scope="col">Заметки</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var set in workoutExercise.SetEntries.OrderBy(s => s.SetNumber).ThenBy(s => s.Id))
-                                    {
-                                        <tr>
-                                            <td>@set.SetNumber</td>
-                                            <td>@set.Weight</td>
-                                            <td>@set.Reps</td>
-                                            <td>@(set.Rir?.ToString() ?? "-")</td>
-                                            <td>
-                                                @if (set.IsWarmup)
-                                                {
-                                                    <span class="badge text-bg-secondary">Разминка</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge text-bg-primary">Рабочий</span>
-                                                }
-                                            </td>
-                                            <td>@set.Notes</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-
-                    <h3 class="h6">Добавить подход</h3>
-                    <form method="post" asp-page-handler="AddSet" class="row g-2 align-items-end">
-                        <input type="hidden" name="AddSet.WorkoutExerciseId" value="@workoutExercise.Id" />
-                        <div class="col-4 col-md-2">
-                            <label class="form-label small" for="set-number-@workoutExercise.Id">Подход</label>
-                            <input class="form-control" id="set-number-@workoutExercise.Id" name="AddSet.SetNumber" type="number" min="1" value="@nextSetNumber" />
-                        </div>
-                        <div class="col-4 col-md-2">
-                            <label class="form-label small" for="weight-@workoutExercise.Id">Вес, кг</label>
-                            <input class="form-control" id="weight-@workoutExercise.Id" name="AddSet.Weight" type="number" min="0" step="0.01" value="@((plannedSet?.Weight ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture))" />
-                        </div>
-                        <div class="col-4 col-md-2">
-                            <label class="form-label small" for="reps-@workoutExercise.Id">Повторения</label>
-                            <input class="form-control" id="reps-@workoutExercise.Id" name="AddSet.Reps" type="number" min="0" value="@(plannedSet?.Reps ?? 0)" />
-                        </div>
-                        <div class="col-4 col-md-2">
-                            <label class="form-label small" for="rir-@workoutExercise.Id">RIR</label>
-                            <input class="form-control" id="rir-@workoutExercise.Id" name="AddSet.Rir" type="number" min="0" max="10" />
-                        </div>
-                        <div class="col-8 col-md-3">
-                            <label class="form-label small" for="notes-@workoutExercise.Id">Заметки</label>
-                            <input class="form-control" id="notes-@workoutExercise.Id" name="AddSet.Notes" maxlength="500" />
-                        </div>
-                        <div class="col-auto">
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" id="warmup-@workoutExercise.Id" name="AddSet.IsWarmup" type="checkbox" value="true" />
-                                <input name="AddSet.IsWarmup" type="hidden" value="false" />
-                                <label class="form-check-label" for="warmup-@workoutExercise.Id">Разминка</label>
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <button class="btn btn-outline-primary" type="submit">Добавить подход</button>
-                        </div>
-                    </form>
-                </div>
-            </section>
+                    <details class="set-extra"><summary>Дополнительно: отдых, заметка и действия</summary><div>
+                        <label>RIR<input type="number" name="AddSet.Rir" min="0" max="10" value="@set.Rir" readonly="@locked" /></label><label>Отдых, с<input type="number" name="AddSet.RestSeconds" min="0" max="1800" value="@(set.RestSeconds ?? exercise.TargetRestSeconds ?? 90)" readonly="@locked" /></label><label class="set-note">Комментарий<input name="AddSet.Notes" maxlength="500" value="@set.Notes" readonly="@locked" /></label><label class="warmup-check"><input type="checkbox" name="AddSet.IsWarmup" value="true" checked="@set.IsWarmup" disabled="@locked" />Разминка</label>
+                        @if (!locked) { <button class="button secondary">Сохранить подход</button><button type="button" data-skip-set class="text-button">Пропустить подход</button><button name="remove" value="true" formnovalidate class="text-button danger-text">Удалить подход</button> }
+                    </div></details>
+                    @if (!locked) { <p class="set-save-status" role="status" hidden></p><noscript><button class="button secondary">Сохранить</button></noscript> }
+                    @if (set.IsSkipped) { <small class="muted">Пропущен</small> }
+                </form>
+            }
+            @if (!locked)
+            {
+                <form method="post" asp-page-handler="AddSet" class="new-set-form"><input type="hidden" name="AddSet.WorkoutExerciseId" value="@exercise.Id" /><input type="hidden" name="AddSet.SetNumber" value="@nextNumber" />
+                    <input type="hidden" name="completed" value="false" /><input type="hidden" name="AddSet.RestSeconds" value="@(exercise.TargetRestSeconds ?? 90)" />
+                    <label>Вес, кг<input name="AddSet.Weight" aria-label="Вес нового подхода, кг" type="number" inputmode="decimal" min="0" max="10000" step="0.01" value="@((planned?.Weight ?? sets.LastOrDefault()?.Weight ?? exercise.TargetWeightKg ?? 0).ToString(CultureInfo.InvariantCulture))" required /></label>
+                    <label>Повторения<input name="AddSet.Reps" aria-label="Повторения нового подхода" type="number" inputmode="numeric" min="1" max="1000" value="@(planned?.Reps ?? sets.LastOrDefault()?.Reps ?? exercise.TargetRepsMin ?? 8)" required /></label>
+                    <button class="button secondary"><admin-icon name="plus" />Добавить подход</button><small>Отметьте галочку после выполнения подхода</small>
+                </form>
+            }
+        </section>
+    }
+    </div></div>
+    @if (!locked)
+    {
+        <button class="button secondary add-session-exercise" data-dialog="exercise-dialog" data-add-exercise><admin-icon name="plus" />Добавить упражнение</button>
+        <div class="workout-sticky-actions"><button class="button secondary" data-dialog="exercise-dialog" data-add-exercise><admin-icon name="plus" /><span>Упражнение</span></button><button class="button" type="button" data-dialog="finish-workout-dialog" data-finish><admin-icon name="check" />Завершить</button></div>
+        @if (workout.IsActive)
+        {
+            <div class="workout-app-dock" data-app-dock hidden>
+                <div class="workout-app-dock-info"><span data-app-action-caption>Текущее упражнение</span><strong data-app-action-detail>Выберите упражнение</strong><button class="text-button" type="button" data-dialog="finish-workout-dialog" data-finish>Завершить занятие</button></div>
+                <div class="workout-app-dock-actions"><button type="button" class="button secondary" data-dialog="exercise-dialog" data-add-exercise aria-label="Добавить упражнение"><admin-icon name="plus" /></button><button type="button" class="button workout-app-action" data-app-action>Добавить упражнение</button></div>
+                <div class="workout-app-rest-tools" data-app-rest-tools hidden><button type="button" class="text-button" data-control="adjust-rest" data-seconds="-15">−15 с</button><button type="button" class="text-button" data-control="adjust-rest" data-seconds="30">+30 с</button><button type="button" class="text-button" data-app-pause>Пауза</button></div>
+            </div>
+            <p class="workout-app-feedback" data-app-feedback role="status" aria-live="polite" hidden></p>
         }
-    </div>
-}
+        @if (workout.IsActive) { <button class="text-button danger-text" type="button" data-dialog="cancel-workout-dialog">Отменить занятие</button> }
+    }
+    else { <a class="button" asp-page="/Dashboard">Вернуться на главную <admin-icon name="arrow" /></a> }
+</div>
+<dialog class="app-dialog workout-outline-dialog interactive-sheet" id="workout-outline-dialog" aria-labelledby="workout-outline-title"><div class="dialog-heading"><h2 id="workout-outline-title">Состав занятия</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><admin-icon name="close" /></button></div><div data-app-outline></div><button type="button" class="button secondary" data-dialog="exercise-dialog" data-add-exercise><admin-icon name="plus" />Добавить упражнение</button></dialog>
+<dialog class="app-dialog" id="finish-workout-dialog"><div class="dialog-heading"><h2>Завершить тренировку</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><admin-icon name="close" /></button></div><p data-finish-summary></p><p class="muted">Невыполненные подходы будут отмечены как пропущенные. В статистику войдут только рабочие результаты.</p><form method="post" asp-page-handler="Complete" data-complete-form><button class="button">Сохранить в историю</button></form></dialog>
+<dialog class="app-dialog" id="cancel-workout-dialog"><div class="dialog-heading"><h2>Отменить занятие</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><admin-icon name="close" /></button></div><p>Занятие сохранится как отменённое и освободит место для новой тренировки. Оно не войдёт в статистику.</p><button class="button secondary" type="button" data-control="cancel">Отменить тренировку</button></dialog>
+<dialog class="app-dialog exercise-picker-dialog" id="exercise-dialog" aria-labelledby="exercise-dialog-title"><div class="dialog-heading"><h2 id="exercise-dialog-title">Добавить упражнения</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><admin-icon name="close" /></button></div><form method="post" asp-page-handler="PickExercises" data-pick-form><input name="ExerciseEntryId" type="hidden" value="0" data-exercise-entry /><partial name="~/Pages/Shared/_ExerciseLibrary.cshtml" model="Model.Library" /></form></dialog>
+<dialog class="app-dialog quick-dialog" id="load-template-dialog" aria-labelledby="load-template-title"><div class="dialog-heading"><h2 id="load-template-title">Загрузить шаблон</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><admin-icon name="close" /></button></div><p class="muted">Упражнения и подходы копируются в текущее занятие. Оригинал сохраняется.</p><div class="quick-options">
+    @foreach (var template in Model.Templates) { <form method="post" asp-page-handler="LoadTemplate"><input type="hidden" name="templateId" value="@template.Id" /><button class="quick-option"><admin-icon name="workout" /><span><strong>@template.Name</strong><small>@template.ProgramName · @template.Exercises упражнений</small></span><admin-icon name="arrow" /></button></form> }
+    @if (Model.Templates.Count == 0) { <a class="button secondary" asp-page="/Programs/Index">Создать шаблон в программе</a> }
+</div></dialog>
+@section Styles { <link rel="stylesheet" href="~/css/exercise-library.css" asp-append-version="true" /><link rel="stylesheet" href="~/css/active-workout.css" asp-append-version="true" /><link rel="stylesheet" href="~/css/workout-app.css" asp-append-version="true" /> }
+@section Scripts { <script src="~/js/exercise-library.js" asp-append-version="true"></script><script src="~/js/workout-app.js" asp-append-version="true"></script><script src="~/js/active-workout.js" asp-append-version="true"></script> }

@@ -1,26 +1,22 @@
-﻿@page
+@page
 @model ResendEmailConfirmationModel
 @{
-    ViewData["Title"] = "Resend email confirmation";
+    ViewData["Title"] = "Подтвердить email";
+    ViewData["AuthDescription"] = "Запросите новую ссылку подтверждения для своего аккаунта.";
 }
-
-<h1>@ViewData["Title"]</h1>
-<h2>Enter your email.</h2>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form method="post">
-            <div asp-validation-summary="All" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Email" class="form-control" aria-required="true" placeholder="name@example.com" />
-                <label asp-for="Input.Email" class="form-label"></label>
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Resend</button>
-        </form>
-    </div>
-</div>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+<partial name="_AuthStepHeader" />
+<section class="auth-card auth-step-card">
+@if (Model.CanSendEmail) {
+    <partial name="_StatusMessage" model="Model.StatusMessage" />
+    <form method="post" asp-route-returnUrl="@Model.ReturnUrl" data-auth-form>
+        <div asp-validation-summary="ModelOnly" class="auth-errors" role="alert"></div>
+        <div class="auth-field"><label asp-for="Input.Email">Email аккаунта</label><div class="auth-input"><svg class="auth-icon" aria-hidden="true"><use href="#auth-mail" /></svg><input asp-for="Input.Email" type="email" autocomplete="username" inputmode="email" spellcheck="false" placeholder="name@domain.com" aria-describedby="email-error" required /></div><span asp-validation-for="Input.Email" id="email-error" class="auth-field-error"></span></div>
+        <button type="submit" class="auth-submit"><span>Запросить письмо</span><svg class="auth-icon" aria-hidden="true"><use href="#auth-arrow" /></svg></button>
+        <p data-auth-feedback class="auth-form-feedback" role="status" aria-live="polite"></p>
+    </form>
+} else {
+    <div class="auth-notice"><h2>Подтверждение пока недоступно</h2><p>Отправка писем ещё не подключена. Уже подтверждённый аккаунт можно использовать как обычно.</p></div>
+    <div asp-validation-summary="ModelOnly" class="auth-errors" role="alert"></div>
+    <a class="auth-submit" asp-area="" asp-page="/TechnicalPages/Login" asp-route-returnUrl="@Model.ReturnUrl">Вернуться к входу</a>
 }
+</section>

@@ -1,0 +1,80 @@
+@model enx_fit.Pages.DashboardModel
+@using enx_fit.ViewModels
+@using System.Globalization
+@{
+    var progress = new DashboardProgressViewModel(Model);
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string N(decimal? value) => value?.ToString("0.#", ru) ?? "—";
+    string Delta(decimal? value) => value.HasValue ? (value > 0 ? "+" : value < 0 ? "−" : "") + N(Math.Abs(value.Value)) : "—";
+    string WeeksLabel(int weeks) => weeks + (weeks is 2 or 4 ? " недели" : " недель");
+    string? PageUrl(string? tab = null, int? weeks = null, int? chart = null, int? exercise = null) => Url.Page("/Dashboard/Progress", new {
+        ClientId = Model.IsCoachView ? Model.Data.Subject.Id : null, Model.Days, Until = Model.Until?.ToString("yyyy-MM-dd"),
+        Reference = Model.Reference ? (bool?)true : null, ProgressTab = tab ?? Model.ProgressTab, ProgressWeeks = weeks ?? Model.ProgressWeeks,
+        ChartWeeks = chart ?? Model.ChartWeeks, ProgressExercise = exercise ?? progress.ExerciseId
+    });
+    var strengthScale = Model.Reference && progress.ExerciseId == 1 ? ((decimal, decimal, decimal)?)(40m,70m,10m) : null;
+    var bodyScale = Model.Reference ? ((decimal, decimal, decimal)?)(76m,82m,2m) : null;
+}
+<partial name="_MobileProgress" model="Model" />
+<div class="ef-desktop-screen">
+<partial name="_DashboardContext" model="Model" />
+<header class="epr-heading"><div><h1>Прогресс</h1><p>Фактические результаты тренировок и замеров</p></div><div class="epr-heading-actions">
+    <div class="epr-range"><details class="epr-period"><summary><reference-icon name="calendar" />@WeeksLabel(Model.ProgressWeeks)<reference-icon name="chevron" /></summary><div>@foreach (var weeks in new[] { 2, 4, 6, 12 }) { <a class="@(weeks == Model.ProgressWeeks ? "selected" : "")" href="@PageUrl(weeks: weeks)">@WeeksLabel(weeks)</a> }</div></details><span>@progress.Since.ToString("d MMMM", ru) — @progress.Until.ToString("d MMMM yyyy", ru)</span></div>
+    @if (!Model.IsCoachView) { <a class="ef-primary epr-add" asp-page="/Body/Create"><reference-icon name="plus" />Добавить замер</a> }
+</div></header>
+<nav class="epr-tabs" aria-label="Разделы прогресса"><a class="@(Model.ProgressTab == "overview" ? "active" : "")" href="@PageUrl(tab: "overview")" aria-current="@(Model.ProgressTab == "overview" ? "page" : null)">Обзор</a><a class="@(Model.ProgressTab == "analytics" ? "active" : "")" href="@PageUrl(tab: "analytics")" aria-current="@(Model.ProgressTab == "analytics" ? "page" : null)">Аналитика</a><a class="@(Model.ProgressTab == "records" ? "active" : "")" href="@PageUrl(tab: "records")" aria-current="@(Model.ProgressTab == "records" ? "page" : null)">Рекорды</a></nav>
+<div class="epr-stats">
+    <section class="ef-card epr-stat"><reference-icon name="bars" /><div><h2>Рабочий вес</h2><strong>@N(progress.WorkingWeight)@(progress.WorkingWeight.HasValue ? " кг" : "")</strong><p>Максимальный рабочий вес в основных упражнениях</p></div>@if (progress.StrengthChange is { } strengthChange) { <span class="epr-delta"><reference-icon name="@(strengthChange < 0 ? "down-right" : "up-right")" />@Delta(strengthChange) кг</span> }</section>
+    <section class="ef-card epr-stat"><reference-icon name="body-scale" /><div><h2>Вес тела</h2><strong>@N(progress.Latest?.WeightKg)@(progress.Latest is not null ? " кг" : "")</strong><p>По последнему замеру</p></div>@if (progress.WeightChange is { } weightChange) { <span class="epr-delta"><reference-icon name="@(weightChange < 0 ? "down-right" : "up-right")" />@Delta(weightChange) кг</span> }</section>
+    <section class="ef-card epr-stat"><reference-icon name="trophy" /><div><h2>Личные рекорды</h2><strong>@progress.Records.Count</strong><p>Новых рекордов за период</p></div><span class="epr-delta"><reference-icon name="up-right" />+@progress.NewRecords</span></section>
+</div>
+@if (Model.ProgressTab != "records") {
+    <div class="epr-top-grid @(Model.ProgressTab == "analytics" ? "is-analytics" : "")">
+        <section class="ef-card epr-strength" aria-labelledby="epr-strength-title" data-widget-id="strength">
+            <header class="epr-chart-heading"><h2 id="epr-strength-title"><reference-icon name="bars" /><span><strong>@progress.ExerciseName</strong><span> · рабочий вес, кг</span></span></h2><div class="epr-chart-controls">
+                <form method="get" class="epr-exercise-form"><input type="hidden" name="ClientId" value="@(Model.IsCoachView ? Model.Data.Subject.Id : null)"/><input type="hidden" name="Reference" value="@Model.Reference.ToString().ToLowerInvariant()"/><input type="hidden" name="ProgressTab" value="@Model.ProgressTab"/><input type="hidden" name="ProgressWeeks" value="@Model.ProgressWeeks"/><input type="hidden" name="ChartWeeks" value="@Model.ChartWeeks"/><input type="hidden" name="Until" value="@Model.Until?.ToString("yyyy-MM-dd")"/><input type="hidden" name="Days" value="@Model.Days"/>
+                    <select name="ProgressExercise" aria-label="Упражнение для графика" data-submit-change>@if (!progress.Exercises.Any(e => e.Id == progress.ExerciseId)) { <option value="@(progress.ExerciseId?.ToString() ?? "")">@progress.ExerciseName</option> }@foreach (var exercise in progress.Exercises) { <option value="@exercise.Id" selected="@(exercise.Id == progress.ExerciseId)">@exercise.Name</option> }</select><noscript><button>Показать</button></noscript><reference-icon name="chevron" />
+                </form>
+                <nav class="epr-chart-weeks" aria-label="Период графика">@foreach (var weeks in new[] { 2, 4, 6 }) { <a class="@(weeks == Model.ChartWeeks ? "active" : "")" href="@PageUrl(chart: weeks)" aria-current="@(weeks == Model.ChartWeeks ? "true" : null)">@weeks @(weeks == 6 ? "недель" : "недели")</a> }</nav>
+            </div></header><p class="epr-chart-subtitle">Максимальный выполненный вес рабочего подхода</p>
+            <partial name="_ProgressChart" model="@(new ProgressChart("progress-strength", progress.ExerciseName + ": рабочий вес, кг", progress.Strength, FixedScale: strengthScale))" />
+        </section>
+        @if (Model.ProgressTab == "overview") {
+            <section class="ef-card epr-goal" aria-labelledby="epr-goal-title"><header class="epr-card-heading"><h2 id="epr-goal-title"><reference-icon name="target" />Следующая цель</h2></header><svg class="epr-goal-photo" viewBox="1143 398 365 94" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Штанга для жима лёжа"><image href="@Url.Content("~/images/dashboard/progress-reference-art.png")" width="1546" height="1017" /></svg>
+                @if (Model.Reference) {
+                    <h3>Жим лёжа</h3><p class="epr-goal-weight">60 <span>→</span><strong>62,5 кг</strong></p><span class="epr-proposal">Предложение · ожидает подтверждения</span><p class="epr-goal-reason">Два полных занятия в верхней границе диапазона.</p><footer class="epr-goal-actions"><button type="button" class="epr-why" data-dialog="progress-goal-dialog"><reference-icon name="info" />Почему?</button><button type="button" class="ef-primary" data-dialog="progress-goal-dialog">Рассмотреть</button></footer>
+                }
+                else if (Model.NextGoalExercise is { } goalExercise && Model.ActiveProgram is { } goalProgram) {
+                    var recommendation = Model.NextRecommendation;
+                    <h3>@ExercisePresentation.DisplayName(goalExercise.Exercise)</h3>
+                    @if (recommendation is not null) { <p class="epr-goal-weight">@N(recommendation.CurrentValue) <span>→</span><strong>@N(recommendation.SuggestedValue) кг</strong></p><span class="epr-proposal">Предложение · ожидает подтверждения</span><p class="epr-goal-reason">@recommendation.SuggestedChange</p><footer class="epr-goal-actions"><button type="button" class="epr-why" data-dialog="progress-goal-dialog"><reference-icon name="info" />Почему?</button><a class="ef-primary" asp-page="/Programs/Details" asp-route-id="@goalProgram.Id" asp-route-Tab="progression" asp-route-ExerciseId="@goalExercise.Id">Рассмотреть</a></footer> }
+                    else { <p class="epr-goal-plan">@goalExercise.Prescription.Summary · @N(goalExercise.Prescription.WeightKg) кг</p><p class="epr-goal-reason">@goalProgram.Name</p><footer class="epr-goal-actions"><a class="ef-primary" asp-page="/Programs/Details" asp-route-id="@goalProgram.Id">Открыть программу</a></footer> }
+                }
+                else { <h3>@Model.Data.Settings.GoalTitle</h3><p class="epr-goal-plan">@Model.Data.ThisWeek.Count() / @Model.Data.Settings.WeeklyWorkoutGoal тренировок на этой неделе</p><p class="epr-goal-reason">Постепенно двигайтесь к своей цели.</p>@if (!Model.IsCoachView) { <footer class="epr-goal-actions"><a class="ef-primary" asp-page="/Programs/Index">Выбрать программу</a></footer> } }
+            </section>
+        }
+    </div>
+    <div class="epr-body-grid">
+        <section class="ef-card epr-body-chart" data-widget-id="weight" aria-labelledby="epr-weight-title"><header class="epr-card-heading"><h2 id="epr-weight-title"><reference-icon name="body-scale" /><span><strong>Вес тела</strong> · кг</span></h2></header><partial name="_ProgressChart" model="@(new ProgressChart("progress-body", "Вес тела, кг", progress.Body, Compact: true, DecimalLabels: true, FixedScale: bodyScale))" /></section>
+        <section class="ef-card epr-body" aria-labelledby="epr-body-title"><header class="epr-card-heading"><h2 id="epr-body-title"><reference-icon name="scale" />Параметры тела</h2>@if (!Model.IsCoachView) { <a asp-page="/Body/Index" aria-label="Все замеры тела"><reference-icon name="chevron" /></a> }</header><dl>
+            @foreach (var row in new[] { ("Вес", progress.Latest?.WeightKg, progress.Previous?.WeightKg, "кг"), ("Обхват талии", progress.Latest?.WaistCm, progress.Previous?.WaistCm, "см"), ("Обхват груди", progress.Latest?.ChestCm, progress.Previous?.ChestCm, "см") }) { var delta = row.Item2 - row.Item3; <div><dt>@row.Item1</dt><dd>@N(row.Item2)@(row.Item2.HasValue ? " " + row.Item4 : "")</dd><dd class="epr-body-delta">@(Model.Reference || !delta.HasValue || delta == 0 ? "—" : Delta(delta))</dd></div> }
+        </dl><footer><span>@(progress.Latest is null ? "Замеров пока нет" : "Обновлено " + progress.Latest.Date.ToString("d MMMM yyyy", ru))</span>@if (!Model.IsCoachView) { @if (Model.Reference) { <button type="button" data-dialog="progress-measurement-dialog">Изменить</button> } else { <a asp-page="@(progress.Latest is null ? "/Body/Create" : "/Body/Edit")" asp-route-id="@progress.Latest?.Id">Изменить</a> } }</footer></section>
+    </div>
+    @if (Model.ProgressTab == "analytics") {
+        <section class="ef-card epr-volume"><header class="epr-card-heading"><h2><reference-icon name="bars" />Объём тренировок · кг</h2><span>@progress.WorkoutCount занятий · @N(progress.TotalVolume) кг</span></header><partial name="_ProgressChart" model="@(new ProgressChart("progress-volume", "Суммарный объём выполненных рабочих подходов, кг", progress.Volume))" /></section>
+    }
+}
+@if (Model.ProgressTab is "overview" or "records") {
+    <section class="ef-card epr-records @(Model.ProgressTab == "records" ? "is-full" : "")" aria-labelledby="epr-records-title"><header class="epr-card-heading"><h2 id="epr-records-title"><reference-icon name="trophy" />@(Model.ProgressTab == "records" ? "Личные рекорды" : "Последние личные рекорды")</h2>@if (Model.ProgressTab == "overview") { <a href="@PageUrl(tab: "records")">Все рекорды <reference-icon name="arrow" /></a> }</header>
+        @if (progress.Records.Count == 0) { <div class="epr-no-records">Первые рекорды появятся после сохранения рабочих подходов.</div> }
+        else { <div class="epr-record-grid">@foreach (var record in Model.ProgressTab == "records" ? progress.Records : progress.Records.Take(3)) { <partial name="_ProgressRecord" model="record" /> }</div> }
+    </section>
+}
+</div>
+@if (Model.Reference || Model.NextRecommendation is not null) {
+    <dialog id="progress-goal-dialog" class="app-dialog epr-dialog"><div class="dialog-heading"><h2>Следующая цель: @(Model.Reference ? "Жим лёжа" : ExercisePresentation.DisplayName(Model.NextGoalExercise!.Exercise))</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>@(Model.Reference ? "Два полных занятия в верхней границе диапазона. Следующий шаг — увеличить рабочий вес с 60 до 62,5 кг. Изменение нагрузки требует подтверждения в программе." : Model.NextRecommendation!.Reason)</p>@if (!Model.Reference && Model.ActiveProgram is { } active) { <a class="ef-primary" asp-page="/Programs/Details" asp-route-id="@active.Id" asp-route-Tab="progression" asp-route-ExerciseId="@Model.NextGoalExercise!.Id">Рассмотреть в программе</a> }<button type="button" class="epr-dialog-close" data-close>Закрыть</button></dialog>
+}
+@if (Model.Reference) {
+    <dialog id="progress-measurement-dialog" class="app-dialog epr-dialog"><div class="dialog-heading"><h2>Параметры тела</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>30 сентября 2026: вес 78,2 кг, обхват талии 82 см, обхват груди 101 см.</p><a class="ef-primary" asp-page="/Body/Create">Добавить свой замер</a></dialog>
+    @foreach (var record in progress.Records) { <dialog id="progress-record-@record.ExerciseId" class="app-dialog epr-dialog"><div class="dialog-heading"><h2>@record.Name</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>Личный рекорд: @N(record.Weight) кг · @record.Date.ToString("d MMMM yyyy", ru)</p><a class="ef-primary" href="@PageUrl(tab: "records")">Все рекорды</a></dialog> }
+}

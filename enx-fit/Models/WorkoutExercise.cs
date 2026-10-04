@@ -23,6 +23,8 @@ public class WorkoutExercise
     public decimal? TargetWeightKg { get; set; }
     public int? TargetRir { get; set; }
     public decimal? TargetRpe { get; set; }
+    public int? TargetRestSeconds { get; set; }
+    public string? BlockKind { get; set; }
 
     public ICollection<SetEntry> SetEntries { get; set; } = [];
 }
