@@ -9,7 +9,7 @@
 {
     @foreach (var item in vm.History)
     {
-        <dialog class="app-dialog history-peek-dialog" id="history-peek-@item.Id" aria-labelledby="history-peek-title-@item.Id">
+        <dialog class="app-dialog history-peek-dialog app-workspace" id="history-peek-@item.Id" aria-labelledby="history-peek-title-@item.Id">
             <div class="dialog-heading"><h2 id="history-peek-title-@item.Id">@item.Title</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
             <p class="muted">@item.Date.ToString("d MMMM yyyy", ru) · @item.Sets рабочих подходов · @item.Volume.ToString("0.##", ru) кг</p>
             <div class="history-peek-exercises">@foreach (var exercise in item.Preview) { <div><reference-icon name="workout" /><span><strong>@exercise.Name</strong><small>@exercise.Summary</small></span></div> }</div>

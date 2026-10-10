@@ -217,57 +217,15 @@ ul,ol {
   gap:1.4rem;
 }
 
-.button {
-  min-height:2.85rem;
-  padding:.8rem 1.6rem;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:.55rem;
-  border:1px solid transparent;
-  border-radius:.48rem;
-  font-size:.76rem;
-  font-weight:700;
-  line-height:1.15;
-  white-space:nowrap;
-  transition:background .18s,border-color .18s,box-shadow .18s,transform .18s;
-}
 
-.button:hover {
-  transform:translateY(-1px);
-}
 
-.button-primary {
-  color:white;
-  background:linear-gradient(120deg,#3c83ff,#3977f9);
-  border-color:#629dff99;
-  box-shadow:inset 0 0 8px #77acff55,0 3px 12px #0004;
-}
 
-.button-primary:hover {
-  background:#528fff;
-  box-shadow:0 0 20px #367fff33;
-}
 
-.button-outline {
-  color:#f4f8ff;
-  background:#080d1580;
-  border-color:#488fe5;
-  box-shadow:inset 0 0 0 3px #0006;
-}
 
-.button-outline:hover {
-  background:#172538;
-  border-color:#84baff;
-}
 
-.button .icon {
-  width:1rem;
-  height:1rem;
-}
 
 .header-actions .button {
-  min-height:2.45rem;
+
   border-radius:.85rem;
   padding:.7rem 1.25rem;
   font-size:.69rem;
@@ -950,7 +908,7 @@ ul,ol {
 
 .section-copy .button {
   margin-top:.95rem;
-  min-height:2.65rem;
+
   padding:.75rem 1.55rem;
 }
 
@@ -1659,7 +1617,7 @@ ul,ol {
 .price-card .button {
   width:100%;
   margin-top:auto;
-  min-height:2.25rem;
+
   padding:.62rem .5rem;
   font-size:.68rem;
   border-radius:.4rem;
@@ -2093,7 +2051,7 @@ ul,ol {
     font-size:.8rem;
   }
   .price-card .button {
-    min-height:2.7rem;
+
     font-size:.75rem;
   }
   .closing-cta {
@@ -2200,7 +2158,7 @@ ul,ol {
   .hero .button {
     font-size:.72rem;
     padding-inline:1rem;
-    min-height:3rem;
+
   }
   .hero-benefits {
     gap:.75rem;
@@ -2407,7 +2365,7 @@ ul,ol {
     margin-block:1.2rem;
   }
   .price-card .button {
-    min-height:3rem;
+
     font-size:.85rem;
   }
   .price-caption {
@@ -2562,14 +2520,14 @@ ul,ol {
   transition: background .2s, border-color .2s;
 }
 .header-login:hover { color: white; border-color: transparent; background: #233e5d; }
-.header-actions .button { min-height: 44px; font-size: 15px; padding: 10px 20px; }
+.header-actions .button {  font-size: 15px; padding: 10px 20px; }
 
 @media (min-width: 901px) {
   .hero { min-height: max(30rem, 460px); padding-bottom: 32px; }
   .hero-copy .eyebrow { font-size: 11px; white-space: normal; line-height: 1.5; }
   .hero-description { font-size: 17px; line-height: 1.6; }
   .hero .button-row { flex-wrap: wrap; gap: 10px; }
-  .hero .button, .section-copy .button, .cta-inner .button { font-size: 15px; min-height: 44px; padding: 11px 16px; }
+  .hero .button, .section-copy .button, .cta-inner .button { font-size: 15px;  padding: 11px 16px; }
   .hero-benefits { flex-wrap: wrap; row-gap: 8px; }
   .hero-benefits li { font-size: 12px; }
   .eyebrow { font-size: 12px; }
@@ -2597,7 +2555,7 @@ ul,ol {
   .price small { font-size: 15px; }
   .price-caption { font-size: 13px; }
   .price-card ul { font-size: 15px; line-height: 1.55; color: #b8c4d5; }
-  .price-card .button { font-size: 14px; min-height: 44px; }
+  .price-card .button { font-size: 14px;  }
   .price-card { min-height: max(18.5rem, 340px); }
   .popular-badge { font-size: 11px; }
   .cta-inner { gap: 24px; padding-block: 24px; flex-wrap: wrap; }

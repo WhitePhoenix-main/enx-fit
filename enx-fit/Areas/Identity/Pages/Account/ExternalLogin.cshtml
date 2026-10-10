@@ -8,9 +8,9 @@
 <section class="auth-card auth-step-card">
     <p class="auth-hint">Внешний сервис: @Model.ProviderDisplayName</p>
     <form method="post" asp-page-handler="Confirmation" asp-route-returnUrl="@Model.ReturnUrl" data-auth-form>
-        <div asp-validation-summary="ModelOnly" class="auth-errors" role="alert"></div>
+        <div asp-validation-summary="ModelOnly" class="auth-errors app-status app-notice" data-app-state="error" role="alert"></div>
         <div class="auth-field"><label asp-for="Input.Email">Email аккаунта</label><div class="auth-input"><svg class="auth-icon" aria-hidden="true"><use href="#auth-mail" /></svg><input asp-for="Input.Email" type="email" autocomplete="email" inputmode="email" spellcheck="false" placeholder="name@domain.com" aria-describedby="email-error" required /></div><span asp-validation-for="Input.Email" id="email-error" class="auth-field-error"></span></div>
-        <button type="submit" class="auth-submit"><span>Создать аккаунт</span></button>
-        <p data-auth-feedback class="auth-form-feedback" role="status" aria-live="polite"></p>
+        <button type="submit" class="auth-submit app-button"><span>Создать аккаунт</span></button>
+        <p data-auth-feedback class="auth-form-feedback app-status app-notice" data-app-state="info" hidden role="status" aria-live="polite"></p>
     </form>
 </section>

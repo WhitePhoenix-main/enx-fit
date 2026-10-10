@@ -27,6 +27,7 @@
         else { <button class="em-primary em-today-start" type="button" data-dialog="quick-workout-dialog">@(Model.ShowOnboarding ? "Начать первую тренировку" : "Выбрать тренировку")</button> }
         @if (!Model.IsCoachView && (active is not null || planned is not null || next is not null)) { <button class="em-today-quick" type="button" data-dialog="quick-workout-dialog"><reference-icon name="layers" />Другой способ тренировки</button> }
     </section>
+    <partial name="_HomeNextStep" model="Model" />
     @if (!Model.IsCoachView) { <partial name="_HomeWorkoutChoices" model="Model" /> }
     <partial name="_TrainingSetupPrompt" model="Model" />
     <nav class="em-home-week" aria-label="План недели">

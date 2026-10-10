@@ -1,4 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using enx_fit.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace enx_fit.ViewModels;
 
@@ -15,7 +18,11 @@ public sealed class RecordWorkoutInput
 
 public sealed class RecordedExercise
 {
-    [Range(1, int.MaxValue, ErrorMessage = "Выберите упражнение из библиотеки.")] public int ExerciseId { get; set; }
+    // Guid.Empty means no exercise was selected.
+    [ExerciseIdentifier]
+    [JsonConverter(typeof(ExerciseIdJsonConverter))]
+    [ModelBinder(BinderType = typeof(ExerciseIdModelBinder))]
+    public Guid ExerciseId { get; set; }
     [Required(ErrorMessage = "Укажите подходы."), MinLength(1, ErrorMessage = "Укажите хотя бы один подход."), MaxLength(20, ErrorMessage = "В упражнении может быть не более 20 подходов.")]
     public List<RecordedSet> Sets { get; set; } = [];
 }

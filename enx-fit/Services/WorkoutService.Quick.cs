@@ -136,6 +136,20 @@ public partial class WorkoutService
     internal static string Structure(WorkoutSession session) => JsonSerializer.Serialize(session.WorkoutExercises
         .OrderBy(e => e.Order).ThenBy(e => e.Id).Select(e => new { e.ExerciseId, Sets = e.SetEntries.Count }));
 
+    private sealed record SourceExercise(
+        [property: System.Text.Json.Serialization.JsonConverter(typeof(ExerciseIdJsonConverter))] Guid ExerciseId, int Sets);
+
+    private static bool StructureMatches(WorkoutSession session)
+    {
+        try
+        {
+            var source = JsonSerializer.Deserialize<List<SourceExercise>>(session.SourceStructureJson!, WorkoutBuilderInput.JsonOptions);
+            return source is not null && source.SequenceEqual(session.WorkoutExercises.OrderBy(e => e.Order).ThenBy(e => e.Id)
+                .Select(e => new SourceExercise(e.ExerciseId, e.SetEntries.Count)));
+        }
+        catch (JsonException) { return false; }
+    }
+
     private async Task<WorkoutSession> EditableSessionAsync(int id)
     {
         var session = await VisibleWorkouts().Include(w => w.WorkoutExercises).ThenInclude(e => e.SetEntries)
@@ -145,9 +159,12 @@ public partial class WorkoutService
         return session;
     }
 
-    public async Task ChangeExerciseAsync(int id, int exerciseEntryId, string action, int replacementId = 0)
+    public async Task ChangeExerciseAsync(int id, int exerciseEntryId, string action, Guid replacementId = default,
+        Guid? operationId = null, Guid? expectedRevision = null)
     {
+        if (await CommandExistsAsync(id, operationId)) return;
         var session = await EditableSessionAsync(id);
+        CheckRevision(session, expectedRevision);
         var ordered = session.WorkoutExercises.OrderBy(e => e.Order).ThenBy(e => e.Id).ToList();
         var exercise = ordered.SingleOrDefault(e => e.Id == exerciseEntryId) ?? throw new KeyNotFoundException();
         if (action == "remove") { dbContext.WorkoutExercises.Remove(exercise); ordered.Remove(exercise); }
@@ -157,21 +174,25 @@ public partial class WorkoutService
                 throw new InvalidOperationException("В упражнении есть выполненные подходы. Добавьте другое упражнение, чтобы сохранить результаты.");
             if (!await dbContext.Exercises.AnyAsync(e => e.Id == replacementId)) throw new InvalidOperationException("Выберите упражнение из библиотеки.");
             if (ordered.Any(e => e.ExerciseId == replacementId)) throw new InvalidOperationException("Это упражнение уже в тренировке.");
+            var block = WorkoutExerciseBlocks.Describe(session)[exercise.Id];
             exercise.ExerciseId = replacementId;
             // Results belong to the old exercise; a replacement starts with fresh, uncompleted sets.
             foreach (var set in exercise.SetEntries) { set.IsCompleted = false; set.Weight = 0; set.Rir = null; set.Notes = null; }
-            exercise.Notes = null;
+            exercise.Notes = block.Key.StartsWith("plan:") || block.Kind != "strength" ? block.Name : null;
             exercise.TargetWeightKg = null; exercise.TargetRir = null; exercise.TargetRpe = null;
         }
         else if (action is "up" or "down")
         {
             var index = ordered.IndexOf(exercise);
             var target = Math.Clamp(index + (action == "up" ? -1 : 1), 0, ordered.Count - 1);
+            var blocks = WorkoutExerciseBlocks.Describe(session);
+            if (blocks[exercise.Id].Key != blocks[ordered[target].Id].Key)
+                throw new InvalidOperationException("Переставляйте упражнения внутри блока. Перенос между блоками доступен в конструкторе.");
             (ordered[index], ordered[target]) = (ordered[target], ordered[index]);
         }
         else throw new InvalidOperationException("Неизвестное действие.");
         for (var i = 0; i < ordered.Count; i++) ordered[i].Order = i;
-        await SaveCommandAsync(session, null);
+        await SaveCommandAsync(session, operationId);
     }
 
     public async Task<WorkoutExecutionState> ChangeSetAsync(int id, int setId, AddSetEntryInputModel input, bool completed, bool remove,

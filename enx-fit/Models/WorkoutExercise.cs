@@ -8,7 +8,7 @@ public class WorkoutExercise
 
     public WorkoutSession WorkoutSession { get; set; } = null!;
 
-    public int ExerciseId { get; set; }
+    public Guid ExerciseId { get; set; }
 
     public Exercise Exercise { get; set; } = null!;
 

@@ -30,6 +30,6 @@ public class CreateModel(ExerciseService exerciseService) : PageModel
         }
 
         TempData["StatusMessage"] = "Упражнение создано.";
-        return RedirectToPage("./Index");
+        return RedirectToPage("/Admin/Exercises/Index");
     }
 }

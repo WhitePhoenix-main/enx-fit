@@ -1,5 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using enx_fit.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace enx_fit.ViewModels;
 
@@ -39,7 +42,10 @@ public sealed class WorkoutBuilderBlock
 
 public sealed class WorkoutBuilderExercise
 {
-    [DeniedValues(0, ErrorMessage = "Выберите упражнение.")] public int ExerciseId { get; set; }
+    [ExerciseIdentifier(ErrorMessage = "Выберите упражнение.")]
+    [JsonConverter(typeof(ExerciseIdJsonConverter))]
+    [ModelBinder(BinderType = typeof(ExerciseIdModelBinder))]
+    public Guid ExerciseId { get; set; }
     [Required, MinLength(1), MaxLength(20)] public List<WorkoutBuilderSet> Sets { get; set; } = [];
 }
 

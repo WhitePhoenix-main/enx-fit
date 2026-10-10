@@ -40,6 +40,7 @@
         const labels = catalogLabels[originalName];
         return { ...e, originalName, name: e.name || labels?.[0] || originalName, muscleGroup: e.muscleGroup || labels?.[1] || 'Другое', equipment: e.equipment || labels?.[2] || '' };
     });
+    const exerciseId = window.ExerciseIds.normalize;
     const byId = new Map(catalog.map(e => [e.id, e]));
     const muscleIcons = {Грудь:'chest',Спина:'back',Поясница:'back',Трапеции:'back',Плечи:'shoulders',Ноги:'legs',Квадрицепсы:'legs','Задняя поверхность бедра':'legs',Ягодицы:'legs',Икры:'legs','Приводящие мышцы бедра':'legs','Отводящие мышцы бедра':'legs',Пресс:'core','Косые мышцы живота':'core','Мышцы кора':'core',Кардио:'bars'};
     const thumb = e => `<div class="wb-thumb" data-group="${escape(e.muscleGroup)}" aria-hidden="true">${icon(muscleIcons[e.muscleGroup] || 'workout')}</div>`;
@@ -48,15 +49,45 @@
     const write = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; } };
     const remove = key => { try { localStorage.removeItem(key); } catch { /* Storage can be disabled. */ } };
     let state = { goal:'Набор массы', level:'intermediate', durationMinutes:60, cover:'athlete', autoDuration:true, showRecords:true,
-        blocks:[{name:'Разминка',kind:'warmup',exercises:[]},{name:'Силовой блок',kind:'strength',exercises:[]},{name:'Заминка',kind:'cooldown',exercises:[]}] };
-    let activeBlock = 1, reorder = false, dirty = false, saving = false, dragId = null, lastLibraryTrigger;
+        blocks:[{name:'Основные упражнения',kind:'strength',exercises:[]}] };
+    let activeBlock = 0, reorder = false, dirty = false, saving = false, dragId = null, lastLibraryTrigger;
+    let selectedExerciseId = null;
+    const mobileLayout = matchMedia('(max-width:1023px)');
+    const optionalPanels = [...form.querySelectorAll('[data-mobile-disclosure]')];
+    const syncPanels = () => optionalPanels.forEach(panel => { panel.open = !mobileLayout.matches || (data.hasErrors && panel.classList.contains('wb-advanced')); });
+    syncPanels();
     let exerciseLibrary;
     const collapsed = new Set();
+    const rawSets = new WeakMap();
+    const blockTypes = {strength:'Силовой блок', warmup:'Разминка', superset:'Суперсет', cooldown:'Заминка'};
+    const blockHelp = {strength:'Основные упражнения с отдельными подходами и отдыхом.', warmup:'Подготовительные упражнения. Подходы этого блока отмечаются как разминка.', superset:'Связанные упражнения в одном блоке. Подходы отмечаются отдельно; автоматического чередования кругов пока нет.', cooldown:'Упражнения в конце занятия. Значения и отметки подходов задаёте вы.'};
+    const setValue = (set, field) => rawSets.get(set)?.[field] ?? set[field];
+    function rememberField(input) {
+        const set = find(exerciseId(input.dataset.id))?.sets[Number(input.dataset.set)];
+        if (!set) return;
+        rawSets.set(set, {...rawSets.get(set), [input.dataset.field]:input.value});
+        if (input.validity.valid && Number.isFinite(input.valueAsNumber)) set[input.dataset.field] = input.valueAsNumber;
+        changed(); renderBlocks();
+    }
+    function orderMode(value, rebuild = true) {
+        reorder = value; form.classList.toggle('reordering', value);
+        form.querySelector('[data-reorder]').setAttribute('aria-pressed', String(value));
+        form.querySelector('[data-reorder-label]').textContent = value ? 'Готово' : 'Порядок';
+        form.querySelector('[data-reorder-hint]').hidden = !value;
+        if (rebuild) renderExercises();
+        else form.querySelectorAll('.wb-exercise-tools').forEach(el => { el.hidden = !value; });
+    }
     let toastTimer;
-    function toast(message) { $('wb-live').textContent = message; $('wb-live').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('wb-live').hidden = true; }, 4200); }
+    function toast(message, state = 'info') { $('wb-live').textContent = message; window.AppComponents?.setNoticeState($('wb-live'), state); $('wb-live').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('wb-live').hidden = true; }, 4200); }
     const all = () => state.blocks.flatMap(b => b.exercises);
     const find = id => all().find(e => e.exerciseId === id);
     const selected = id => all().some(e => e.exerciseId === id);
+    function selectExercise(id) {
+        selectedExerciseId = id;
+        if (!mobileLayout.matches) return;
+        all().forEach(e => collapsed.add(e.exerciseId));
+        if (id != null) collapsed.delete(id);
+    }
     const emptyInsight = (name, title, text) => `<div class="wb-insight-empty">${icon(name)}<div><strong>${escape(title)}</strong><p>${escape(text)}</p></div></div>`;
     function loadState(value) {
         if (!value || !Array.isArray(value.blocks) || !value.blocks.length || value.blocks.length > 12) return false;
@@ -64,6 +95,7 @@
         for (const b of value.blocks) {
             if (!b || typeof b.name !== 'string' || !b.name.trim() || b.name.length > 60 || !['warmup','strength','superset','cooldown'].includes(b.kind) || !Array.isArray(b.exercises)) return false;
             for (const e of b.exercises) {
+                if (e) e.exerciseId = exerciseId(e.exerciseId);
                 if (!e || ids.has(e.exerciseId) || !byId.has(e.exerciseId) || !Array.isArray(e.sets) || !e.sets.length || e.sets.length > 20) return false;
                 ids.add(e.exerciseId);
                 if (e.sets.some(s => !s || !Number.isFinite(s.weight) || !Number.isInteger(s.reps) || !Number.isInteger(s.restSeconds))) return false;
@@ -84,9 +116,9 @@
     }
     function renderBlocks() {
         $('wb-blocks').innerHTML = state.blocks.map((b,i) => `<div class="wb-block ${i === activeBlock ? 'active' : ''}" data-block="${i}" data-kind="${b.kind}">
-            <div class="wb-block-header"><button type="button" data-select-block="${i}"><span>${i+1}.</span>${escape(b.name)}</button><button type="button" class="wb-icon" data-block-up="${i}" aria-label="Поднять блок ${escape(b.name)}" ${i === 0 ? 'disabled' : ''}>${icon('up')}</button><button type="button" class="wb-icon wb-danger" data-remove-block="${i}" aria-label="Удалить блок ${escape(b.name)}" ${b.exercises.length || state.blocks.length === 1 ? 'disabled' : ''}>${icon('close')}</button></div>
-            <div class="wb-block-meta">${exerciseCount(b.exercises.length)} · ${setCount(b.exercises.reduce((n,e) => n+e.sets.length,0))}</div>
-            ${b.exercises.map(e => `<div class="wb-structure-exercise" draggable="true" data-drag-id="${e.exerciseId}">${icon('grip')}<span>${escape(byId.get(e.exerciseId).name)}</span><small>${setCount(e.sets.length)}</small></div>`).join('')}
+            <div class="wb-block-header"><button type="button" data-select-block="${i}"><span>${i+1}.</span>${escape(b.name)}</button><button type="button" class="wb-icon" data-block-up="${i}" aria-label="Поднять блок ${escape(b.name)}" ${i === 0 ? 'disabled' : ''}>${icon('up')}</button><button type="button" class="wb-icon" data-block-down="${i}" aria-label="Опустить блок ${escape(b.name)}" ${i === state.blocks.length-1 ? 'disabled' : ''}>${icon('down')}</button><button type="button" class="wb-icon wb-danger" data-remove-block="${i}" aria-label="Удалить блок ${escape(b.name)}" ${b.exercises.length || state.blocks.length === 1 ? 'disabled' : ''}>${icon('close')}</button></div>
+            <div class="wb-block-meta">${blockTypes[b.kind]} · ${exerciseCount(b.exercises.length)} · ${setCount(b.exercises.reduce((n,e) => n+e.sets.length,0))}</div>
+            ${b.exercises.map(e => `<div class="wb-structure-exercise" draggable="true" data-order-key="${e.exerciseId}" data-drag-id="${e.exerciseId}">${icon('grip')}<span>${escape(byId.get(e.exerciseId).name)}</span><small>${setCount(e.sets.length)}</small></div>`).join('')}
             <button type="button" class="wb-block-add" data-open-library="${i}">${icon('plus')}Добавить упражнение</button></div>`).join('');
         $('wb-library-target').innerHTML = state.blocks.map((b,i) => `<option value="${i}" ${i === activeBlock ? 'selected' : ''}>${escape(b.name)}</option>`).join('');
         exerciseLibrary?.setContext(`${$('Input_Title').value || 'Новая тренировка'} → ${state.blocks[activeBlock].name}`);
@@ -94,14 +126,14 @@
     function renderExercises() {
         let order = 0;
         if (!all().length) {
-            $('wb-exercises').innerHTML = `<div class="wb-empty"><div class="wb-empty-mark">${icon('workout')}</div><h3>Сильная тренировка<br>начинается здесь</h3><p>Выбери упражнения в библиотеке, настрой подходы и собери свой следующий шаг к цели.</p><button type="button" class="wb-button wb-primary" data-quick-start>${icon('plus')}Быстрый старт · Всё тело</button><small>3 базовых упражнения · веса выбираешь ты</small></div>`;
+            $('wb-exercises').innerHTML = `<div class="wb-empty"><div class="wb-empty-mark">${icon('workout')}</div><h3>Добавьте первое упражнение</h3><p>Выберите одно или несколько упражнений в библиотеке. Подходы и нагрузку можно изменить после добавления.</p><button type="button" class="wb-button" data-quick-start>${icon('plus')}Готовый состав · Всё тело</button><small>3 базовых упражнения · рабочий вес задаёте вы</small></div>`;
             return;
         }
-        $('wb-exercises').innerHTML = state.blocks.map((b,bi) => !b.exercises.length ? '' : `<section class="wb-exercise-group ${b.kind === 'superset' ? 'is-superset' : ''}" aria-label="${escape(b.name)}"><div class="wb-group-title" data-kind="${b.kind}"><span>${escape(b.name)}${b.kind === 'superset' ? ' · суперсет' : ''}</span><span>${exerciseCount(b.exercises.length)}</span></div>${b.exercises.map((e,ei) => {
+        $('wb-exercises').innerHTML = state.blocks.map((b,bi) => !b.exercises.length ? '' : `<section class="wb-exercise-group ${b.kind === 'superset' ? 'is-superset' : ''}" aria-label="${escape(b.name)}"><div class="wb-group-title" data-kind="${b.kind}"><span>${escape(b.name)} · ${blockTypes[b.kind]}</span><span>${exerciseCount(b.exercises.length)}</span></div>${b.exercises.map((e,ei) => {
             const item = byId.get(e.exerciseId), id = e.exerciseId, closed = collapsed.has(id);
-            return `<article class="wb-exercise-card ${closed ? 'collapsed' : ''}" data-exercise="${id}">
+            return `<article class="wb-exercise-card ${closed ? 'collapsed' : ''}" data-exercise="${id}" data-order-key="${id}">
                 <div class="wb-exercise-head"><span class="wb-number">${++order}</span>${thumb(item)}<div class="wb-exercise-copy"><strong>${escape(item.name)}</strong><small>${escape(item.muscleGroup)}${item.equipment ? ' · '+escape(item.equipment) : ''}</small></div><button type="button" class="wb-icon wb-chevron" data-collapse="${id}" aria-expanded="${!closed}" aria-controls="wb-body-${id}" aria-label="Подходы: ${escape(item.name)}">${icon('chevron')}</button><button type="button" class="wb-icon wb-danger" data-remove-exercise="${id}" aria-label="Удалить ${escape(item.name)}">${icon('close')}</button></div>
-                <div class="wb-exercise-body" id="wb-body-${id}"><table class="wb-set-table"><thead><tr><th scope="col">Подход</th><th scope="col">Вес (кг)</th><th scope="col">Повторы</th><th scope="col">Отдых, с</th><th scope="col"><span class="wb-sr-only">Удалить</span></th></tr></thead><tbody>${e.sets.map((s,si) => `<tr><td>${si+1}</td>${[['weight',0,2000,'0.01','Вес'],['reps',1,1000,'1','Повторы'],['restSeconds',0,900,'1','Отдых']].map(([field,min,max,step,label]) => `<td><input type="number" required inputmode="${field === 'weight' ? 'decimal' : 'numeric'}" min="${min}" max="${max}" step="${step}" value="${s[field]}" data-set="${si}" data-field="${field}" data-id="${id}" aria-label="${escape(item.name)}, подход ${si+1}: ${label}" /></td>`).join('')}<td><button type="button" class="wb-icon wb-danger" data-remove-set="${id}:${si}" ${e.sets.length === 1 ? 'disabled' : ''} aria-label="Удалить подход ${si+1}: ${escape(item.name)}">${icon('close')}</button></td></tr>`).join('')}</tbody></table>
+                <div class="wb-exercise-body" id="wb-body-${id}"><table class="wb-set-table"><thead><tr><th scope="col">Подход</th><th scope="col">Вес (кг)</th><th scope="col">Повторы</th><th scope="col">Отдых, с</th><th scope="col"><span class="wb-sr-only">Удалить</span></th></tr></thead><tbody>${e.sets.map((s,si) => `<tr><td>${si+1}</td>${[['weight',0,2000,'0.01','Вес'],['reps',1,1000,'1','Повторы'],['restSeconds',0,900,'1','Отдых']].map(([field,min,max,step,label]) => `<td><input type="number" required inputmode="${field === 'weight' ? 'decimal' : 'numeric'}" min="${min}" max="${max}" step="${step}" value="${escape(setValue(s,field))}" data-set="${si}" data-field="${field}" data-id="${id}" aria-label="${escape(item.name)}, подход ${si+1}: ${label}" /></td>`).join('')}<td><button type="button" class="wb-icon wb-danger" data-remove-set="${id}:${si}" ${e.sets.length === 1 ? 'disabled' : ''} aria-label="Удалить подход ${si+1}: ${escape(item.name)}">${icon('close')}</button></td></tr>`).join('')}</tbody></table>
                 <button type="button" class="wb-add-set" data-add-set="${id}" ${e.sets.length >= 20 ? 'disabled' : ''}>${icon('plus')}Добавить подход</button></div>
                 <div class="wb-exercise-tools" ${reorder ? '' : 'hidden'}><button class="wb-icon" type="button" data-move="${id}:-1" ${ei === 0 ? 'disabled' : ''} aria-label="Поднять ${escape(item.name)}">${icon('up')}</button><button class="wb-icon" type="button" data-move="${id}:1" ${ei === b.exercises.length-1 ? 'disabled' : ''} aria-label="Опустить ${escape(item.name)}">${icon('down')}</button><label>Блок<select data-move-to="${id}">${state.blocks.map((block,i) => `<option value="${i}" ${i === bi ? 'selected' : ''}>${escape(block.name)}</option>`).join('')}</select></label></div></article>`;
         }).join('')}</section>`).join('');
@@ -121,7 +153,11 @@
         $('wb-forecast-count').textContent = entries.length ? `Выбрано: ${exerciseCount(entries.length)}` : 'Начни с первого упражнения';
         $('wb-focus').textContent = muscles.join(', ') || 'Твой выбор';
         $('wb-muscle-tags').innerHTML = muscles.length ? muscles.map(m => `<span class="wb-tag">${escape(m)}</span>`).join('') : '<span>Выбери упражнения — соберём фокус тренировки</span>';
+        $('wb-muscle-tags').hidden = !entries.length;
         $('wb-mobile-summary').textContent = `${plural(state.blocks.length,['блок','блока','блоков'])} · ${setCount(sets.length)} · ~ ${entries.length ? state.durationMinutes : 0} мин`;
+        $('wb-mobile-summary').hidden = !entries.length;
+        $('wb-block-summary').textContent = `${plural(state.blocks.length,['блок','блока','блоков'])} · ${exerciseCount(entries.length)}`;
+        $('wb-plan-brief').textContent = entries.length ? `${setCount(workingSets.length)} · ≈ ${state.durationMinutes} мин` : 'Появится после выбора упражнений';
         const load = Math.min(10, Math.ceil(workingSets.length/3));
         $('wb-difficulty').innerHTML = `${load || '—'}<small>/10</small>`;
         $('wb-difficulty-meter').style.width = `${load*10}%`;
@@ -141,18 +177,22 @@
     }
     function render() { renderBlocks(); renderExercises(); renderLibrary(); updateStats(); }
     function changed() { dirty = true; updateStats(); }
-    function mutate() { dirty = true; render(); }
+    function mutate() {
+        const editor = window.ReorderMotion?.capture($('wb-exercises')), blocks = window.ReorderMotion?.capture($('wb-blocks'));
+        dirty = true; render();
+        window.ReorderMotion?.play($('wb-exercises'),editor); window.ReorderMotion?.play($('wb-blocks'),blocks);
+    }
     function addExercise(id) {
         if (selected(id) || !byId.has(id)) return;
         if (all().length >= 40) { toast('В одной тренировке может быть до 40 упражнений.'); return; }
         state.blocks[activeBlock].exercises.push({exerciseId:id,sets:Array.from({length:3},() => ({weight:0,reps:12,restSeconds:90}))});
-        if (matchMedia('(max-width:760px)').matches && all().length > 1) collapsed.add(id);
+        selectExercise(id);
         mutate(); toast(`${byId.get(id).name} — добавлено`);
     }
     function openLibrary(trigger, index) {
         if (Number.isInteger(index) && state.blocks[index]) activeBlock = index;
         renderBlocks(); lastLibraryTrigger = trigger;
-        if (matchMedia('(max-width:760px)').matches) {
+        if (mobileLayout.matches) {
             $('wb-library').classList.add('open'); $('wb-library').setAttribute('role','dialog'); $('wb-library').setAttribute('aria-modal','true');
             document.body.style.overflow = 'hidden';
             [...form.children].filter(el => !el.contains($('wb-library')) && el.id !== 'wb-live').forEach(el => { el.inert = true; });
@@ -164,28 +204,33 @@
         $('wb-library').classList.remove('open'); $('wb-library').removeAttribute('role'); $('wb-library').removeAttribute('aria-modal'); document.body.style.overflow = '';
         form.querySelectorAll('[inert]').forEach(el => { el.inert = false; }); lastLibraryTrigger?.focus();
     }
-    function moveTo(id, index) {
+    function moveTo(id, index, beforeId = null) {
         const source = state.blocks.find(b => b.exercises.some(e => e.exerciseId === id));
-        if (!source || !state.blocks[index] || source === state.blocks[index]) return;
+        if (!source || !state.blocks[index] || beforeId === id || (source === state.blocks[index] && !beforeId)) return;
         const entry = source.exercises.find(e => e.exerciseId === id);
-        source.exercises = source.exercises.filter(e => e !== entry); state.blocks[index].exercises.push(entry); activeBlock = index; mutate();
+        source.exercises = source.exercises.filter(e => e !== entry);
+        const destination = state.blocks[index], target = destination.exercises.findIndex(e => e.exerciseId === beforeId);
+        destination.exercises.splice(target < 0 ? destination.exercises.length : target, 0, entry); activeBlock = index; mutate();
+        toast(`${byId.get(id).name} → ${destination.name}`);
+        form.querySelector(`[data-move-to="${id}"]`)?.focus();
     }
     form.addEventListener('click', event => {
         const button = event.target.closest('button'); if (!button) return;
         const d = button.dataset;
-        if ('add' in d) addExercise(Number(d.add));
+        if ('add' in d) addExercise(exerciseId(d.add));
         if ('openLibrary' in d) openLibrary(button, d.openLibrary === '' ? undefined : Number(d.openLibrary));
         if ('closeLibrary' in d) closeLibrary();
         if ('selectBlock' in d) { activeBlock = Number(d.selectBlock); renderBlocks(); }
         if ('removeBlock' in d) { const i = Number(d.removeBlock); if (state.blocks.length > 1 && !state.blocks[i].exercises.length) { state.blocks.splice(i,1); activeBlock = Math.min(activeBlock,state.blocks.length-1); mutate(); } }
-        if ('blockUp' in d) { const i = Number(d.blockUp); if (i > 0) { [state.blocks[i-1],state.blocks[i]] = [state.blocks[i],state.blocks[i-1]]; activeBlock = i-1; mutate(); } }
+        if ('blockUp' in d) { const i = Number(d.blockUp); if (i > 0) { [state.blocks[i-1],state.blocks[i]] = [state.blocks[i],state.blocks[i-1]]; activeBlock = i-1; mutate(); form.querySelector(`[data-block-down="${i-1}"]`)?.focus(); toast(`${state.blocks[i-1].name} · блок ${i}`); } }
+        if ('blockDown' in d) { const i = Number(d.blockDown); if (i < state.blocks.length-1) { [state.blocks[i+1],state.blocks[i]] = [state.blocks[i],state.blocks[i+1]]; activeBlock = i+1; mutate(); form.querySelector(`[data-block-up="${i+1}"]`)?.focus(); } }
         if ('addBlock' in d) { if (state.blocks.length >= 12) return toast('Можно добавить до 12 блоков.'); $('wb-block-dialog').showModal(); $('wb-block-name').focus(); }
-        if ('collapse' in d) { const id = Number(d.collapse); collapsed.has(id) ? collapsed.delete(id) : collapsed.add(id); renderExercises(); form.querySelector(`[data-collapse="${id}"]`)?.focus(); }
-        if ('removeExercise' in d) { const id = Number(d.removeExercise); state.blocks.forEach(b => { b.exercises = b.exercises.filter(e => e.exerciseId !== id); }); collapsed.delete(id); mutate(); }
-        if ('addSet' in d) { const e = find(Number(d.addSet)); if (e.sets.length < 20) { e.sets.push({...e.sets.at(-1)}); mutate(); form.querySelector(`[data-add-set="${e.exerciseId}"]`)?.focus(); } }
-        if ('removeSet' in d) { const [id,index] = d.removeSet.split(':').map(Number), e = find(id); if (e.sets.length > 1) { e.sets.splice(index,1); mutate(); } }
-        if ('reorder' in d) { reorder = !reorder; form.classList.toggle('reordering',reorder); button.setAttribute('aria-pressed', String(reorder)); renderExercises(); if (reorder) toast('Используй стрелки и список блоков под упражнением.'); }
-        if ('move' in d) { const [id,delta] = d.move.split(':').map(Number), b = state.blocks.find(b => b.exercises.some(e => e.exerciseId === id)), i = b.exercises.findIndex(e => e.exerciseId === id); if (b.exercises[i+delta]) { [b.exercises[i],b.exercises[i+delta]] = [b.exercises[i+delta],b.exercises[i]]; mutate(); } }
+        if ('collapse' in d) { const id = exerciseId(d.collapse); if (collapsed.has(id)) { selectExercise(id); collapsed.delete(id); } else { collapsed.add(id); selectedExerciseId = null; } renderExercises(); form.querySelector(`[data-collapse="${id}"]`)?.focus(); }
+        if ('removeExercise' in d) { const id = exerciseId(d.removeExercise); state.blocks.forEach(b => { b.exercises = b.exercises.filter(e => e.exerciseId !== id); }); collapsed.delete(id); if (selectedExerciseId === id) selectExercise(all()[0]?.exerciseId ?? null); mutate(); }
+        if ('addSet' in d) { const e = find(exerciseId(d.addSet)); if (e.sets.length < 20) { e.sets.push({...e.sets.at(-1)}); mutate(); form.querySelector(`[data-add-set="${e.exerciseId}"]`)?.focus(); } }
+        if ('removeSet' in d) { const [rawId,rawIndex] = d.removeSet.split(':'), id = exerciseId(rawId), index = Number(rawIndex), e = find(id); if (e.sets.length > 1) { e.sets.splice(index,1); mutate(); } }
+        if ('reorder' in d) { orderMode(!reorder); if (reorder) toast('Изменяйте порядок стрелками и выбирайте блок под упражнением.'); }
+        if ('move' in d) { const [rawId,rawDelta] = d.move.split(':'), id = exerciseId(rawId), delta = Number(rawDelta), b = state.blocks.find(b => b.exercises.some(e => e.exerciseId === id)), i = b.exercises.findIndex(e => e.exerciseId === id); if (b.exercises[i+delta]) { [b.exercises[i],b.exercises[i+delta]] = [b.exercises[i+delta],b.exercises[i]]; mutate(); form.querySelector(`[data-move="${id}:${-delta}"]`)?.focus(); toast(`${byId.get(id).name} · позиция ${all().findIndex(e => e.exerciseId === id)+1}`); } }
         if ('changeCover' in d) { state.cover = state.cover === 'athlete' ? 'summit' : 'athlete'; syncControls(); changed(); }
         if ('quickStart' in d) {
             activeBlock = state.blocks.findIndex(b => b.kind === 'strength'); if (activeBlock < 0) activeBlock = 0;
@@ -193,12 +238,21 @@
             if (!all().length) openLibrary(button); else { if (!$('Input_Title').value) $('Input_Title').value = 'Всё тело'; toast('План готов. Укажи рабочие веса и повторы.'); }
         }
         if ('saveDraft' in d) {
-            const draft = {state, title:$('Input_Title').value, date:$('Input_Date').value, notes:$('Input_Notes').value};
-            if (write(key,draft)) { dirty = false; $('wb-draft-notice').hidden = true; toast('Черновик сохранён на этом устройстве.'); } else toast('Браузер не разрешил сохранить черновик. Не закрывай страницу.');
+            const draft = {state, raw:all().map(e => ({id:e.exerciseId, sets:e.sets.map(s => rawSets.get(s) || {})})), title:$('Input_Title').value, date:$('Input_Date').value, notes:$('Input_Notes').value, selectedExerciseId};
+            if (write(key,draft)) { dirty = false; $('wb-draft-notice').hidden = true; toast('Черновик сохранён на этом устройстве.', 'local'); } else toast('Браузер не разрешил сохранить черновик. Не закрывай страницу.', 'error');
         }
         if ('restoreDraft' in d) {
             const draft = read(key);
-            if (draft && loadState(draft.state)) { $('Input_Title').value = typeof draft.title === 'string' ? draft.title : ''; $('Input_Date').value = typeof draft.date === 'string' ? draft.date : ''; $('Input_Notes').value = typeof draft.notes === 'string' ? draft.notes : ''; syncControls(); render(); dirty = false; $('wb-draft-notice').hidden = true; toast('Черновик восстановлен.'); }
+            if (draft && loadState(draft.state)) {
+                if (Array.isArray(draft.raw)) for (const entry of draft.raw) {
+                    const exercise = find(exerciseId(entry?.id));
+                    if (exercise && Array.isArray(entry.sets)) entry.sets.forEach((values, i) => {
+                        if (!exercise.sets[i] || !values) return;
+                        rawSets.set(exercise.sets[i], Object.fromEntries(['weight','reps','restSeconds'].filter(f => typeof values[f] === 'string' && values[f].length < 24).map(f => [f,values[f]])));
+                    });
+                }
+                $('Input_Title').value = typeof draft.title === 'string' ? draft.title : ''; $('Input_Date').value = typeof draft.date === 'string' ? draft.date : ''; $('Input_Notes').value = typeof draft.notes === 'string' ? draft.notes : ''; selectExercise(find(exerciseId(draft.selectedExerciseId)) ? exerciseId(draft.selectedExerciseId) : all()[0]?.exerciseId ?? null); syncControls(); render(); dirty = false; $('wb-draft-notice').hidden = true; toast('Черновик восстановлен.', 'local');
+            }
             else toast('Черновик устарел: состав библиотеки изменился. Создай новый план.');
         }
         if ('discardDraft' in d) { remove(key); $('wb-draft-notice').hidden = true; }
@@ -207,22 +261,21 @@
         const input = event.target;
         if (input.id === 'wb-search') return;
         if (input.dataset.field) {
-            const value = input.valueAsNumber;
-            if (Number.isFinite(value)) find(Number(input.dataset.id)).sets[Number(input.dataset.set)][input.dataset.field] = value;
-            changed(); renderBlocks(); return;
+            rememberField(input); return;
         }
         if (input.id === 'wb-duration') { const n = input.valueAsNumber; if (Number.isFinite(n)) state.durationMinutes = n; dirty = true; $('BuilderJson').value = JSON.stringify(state); return; }
         if (['Input_Title','Input_Date','Input_Notes'].includes(input.id)) { dirty = true; if (input.id === 'Input_Title') exerciseLibrary?.setContext(`${input.value || 'Новая тренировка'} → ${state.blocks[activeBlock].name}`); }
     });
     form.addEventListener('change', event => {
         const input = event.target;
+        if (input.dataset.field) { rememberField(input); return; }
         if (input.id === 'wb-goal') state.goal = input.value;
         else if (input.id === 'wb-level') state.level = input.value;
         else if (input.id === 'wb-auto-duration') state.autoDuration = input.checked;
         else if (input.id === 'wb-show-records') state.showRecords = input.checked;
         else if (input.id === 'wb-duration') { if (input.validity.valid) updateStats(); return; }
         else if (input.id === 'wb-library-target') { activeBlock = Number(input.value); renderBlocks(); return; }
-        else if (input.dataset.moveTo) return moveTo(Number(input.dataset.moveTo),Number(input.value));
+        else if (input.dataset.moveTo) return moveTo(exerciseId(input.dataset.moveTo),Number(input.value));
         else if (input.id === 'Input_OwnerId') { // Reload owner-specific history without mixing accounts.
             if (dirty && !confirm('Сменить пользователя? Несохранённый план будет сброшен.')) { input.value = data.ownerId; return; }
             dirty = false; location.assign(`/Workouts/Create?userId=${encodeURIComponent(input.value)}`); return;
@@ -236,10 +289,12 @@
     });
     document.querySelector('[data-close-block]').addEventListener('click', () => $('wb-block-dialog').close());
     $('wb-block-kind').addEventListener('change', () => { if (!$('wb-block-name').value) $('wb-block-name').value = $('wb-block-kind').selectedOptions[0].text; });
-    form.addEventListener('dragstart', e => { const row = e.target.closest('[data-drag-id]'); if (row) { dragId = Number(row.dataset.dragId); e.dataTransfer.setData('text/plain',String(dragId)); e.dataTransfer.effectAllowed = 'move'; } });
+    const explainBlock = () => { $('wb-block-help').textContent = blockHelp[$('wb-block-kind').value]; };
+    $('wb-block-kind').addEventListener('change',explainBlock); $('wb-block-form').addEventListener('reset',() => queueMicrotask(explainBlock)); explainBlock();
+    form.addEventListener('dragstart', e => { const row = e.target.closest('[data-drag-id]'); if (row) { dragId = exerciseId(row.dataset.dragId); e.dataTransfer.setData('text/plain',String(dragId)); e.dataTransfer.effectAllowed = 'move'; } });
     form.addEventListener('dragover', e => { const block = e.target.closest('[data-block]'); if (block && dragId) { e.preventDefault(); block.classList.add('drag-over'); } });
     form.addEventListener('dragleave', e => e.target.closest('[data-block]')?.classList.remove('drag-over'));
-    form.addEventListener('drop', e => { const block = e.target.closest('[data-block]'); if (block && dragId) { e.preventDefault(); moveTo(dragId,Number(block.dataset.block)); } dragId = null; });
+    form.addEventListener('drop', e => { const block = e.target.closest('[data-block]'); if (block && dragId) { e.preventDefault(); moveTo(dragId,Number(block.dataset.block),e.target.closest('[data-drag-id]')?.dataset.dragId); } dragId = null; form.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); });
     form.addEventListener('dragend', () => { dragId = null; form.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); });
     document.addEventListener('keydown', e => {
         if (!$('wb-library').classList.contains('open') || $('wb-block-dialog').open) return;
@@ -251,32 +306,39 @@
             else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
         }
     });
-    matchMedia('(max-width:760px)').addEventListener('change', () => { if ($('wb-library').classList.contains('open')) closeLibrary(); });
+    mobileLayout.addEventListener('change', () => { if ($('wb-library').classList.contains('open')) closeLibrary(); syncPanels(); selectExercise(selectedExerciseId ?? all()[0]?.exerciseId ?? null); renderExercises(); });
     window.addEventListener('beforeunload', e => { if (dirty && !saving) { e.preventDefault(); e.returnValue = ''; } });
+    window.addEventListener('pageshow', event => {
+        if (!event.persisted) return;
+        saving = false;
+        form.querySelectorAll('button[type=submit]').forEach(button => { button.disabled = false; button.removeAttribute('aria-busy'); });
+    });
     form.addEventListener('invalid', event => {
+        if (reorder) orderMode(false, false);
+        for (let parent = event.target.parentElement; parent && parent !== form; parent = parent.parentElement) if (parent.tagName === 'DETAILS') parent.open = true;
         const card = event.target.closest('.wb-exercise-card');
-        if (card) { collapsed.delete(Number(card.dataset.exercise)); card.classList.remove('collapsed'); card.querySelector('[data-collapse]').setAttribute('aria-expanded','true'); }
+        if (card) { collapsed.delete(exerciseId(card.dataset.exercise)); card.classList.remove('collapsed'); card.querySelector('[data-collapse]').setAttribute('aria-expanded','true'); }
     }, true);
     form.addEventListener('submit', async event => {
         event.preventDefault(); if (saving) return;
         if (!all().length) { toast('Добавь хотя бы одно упражнение.'); openLibrary(form.querySelector('[data-open-library]')); return; }
         if (!form.reportValidity()) return;
         $('BuilderJson').value = JSON.stringify(state);
-        saving = true; const buttons = form.querySelectorAll('button[type=submit]'); buttons.forEach(b => { b.disabled = true; });
+        saving = true; const buttons = form.querySelectorAll('button[type=submit]'); buttons.forEach(b => { b.disabled = true; b.setAttribute('aria-busy', 'true'); });
         try {
             const response = await fetch(form.action, {method:'POST',body:new FormData(form),credentials:'same-origin'});
             if (response.redirected) {
                 const destination = new URL(response.url);
                 if (destination.origin === location.origin && destination.pathname.startsWith('/Workouts/Details/')) { remove(key); dirty = false; location.assign(destination.href); return; }
-                toast('Сессия завершилась. Сохрани черновик и войди в аккаунт снова.');
+                toast('Сессия завершилась. Сохрани черновик и войди в аккаунт снова.', 'error');
             } else if (response.ok) {
                 const html = new DOMParser().parseFromString(await response.text(),'text/html');
                 const errors = [...html.querySelectorAll('.wb-validation li')].map(el => el.textContent.trim()).filter(Boolean);
                 const summary = form.querySelector('.wb-validation'); summary.classList.remove('validation-summary-valid'); summary.textContent = errors.join(' ') || 'Не удалось сохранить тренировку. Проверь введённые данные.';
-                summary.scrollIntoView({behavior:'smooth',block:'center'}); toast('Проверь параметры тренировки.');
-            } else toast('Не удалось сохранить тренировку. План остался на странице — сохрани черновик.');
-        } catch { toast('Связь прервалась. Сохрани черновик и проверь список тренировок перед повторной отправкой.'); }
-        saving = false; buttons.forEach(b => { b.disabled = false; });
+                summary.scrollIntoView({behavior:'smooth',block:'center'}); toast('Проверь параметры тренировки.', 'error');
+            } else toast('Не удалось сохранить тренировку. План остался на странице — сохрани черновик.', 'error');
+        } catch { toast('Связь прервалась. Сохрани черновик и проверь список тренировок перед повторной отправкой.', 'error'); }
+        saving = false; buttons.forEach(b => { b.disabled = false; b.removeAttribute('aria-busy'); });
     });
     const libraryRoot = $('wb-library');
     if (window.ExerciseLibrary && libraryRoot) {
@@ -285,6 +347,7 @@
             const picks = event.detail.exercises.filter(p => !selected(p.exerciseId) && byId.has(p.exerciseId));
             if (all().length + picks.length > 40) { exerciseLibrary.message('В тренировке может быть до 40 упражнений.'); return; }
             picks.forEach(p => { state.blocks[activeBlock].exercises.push({exerciseId:p.exerciseId,sets:Array.from({length:p.setsCount}, () => ({weight:p.weight,reps:p.reps,restSeconds:p.restSeconds}))}); collapsed.delete(p.exerciseId); });
+            selectExercise(picks[0]?.exerciseId ?? null);
             mutate(); exerciseLibrary.clear(); closeLibrary();
             toast(`${exerciseCount(picks.length)} → ${state.blocks[activeBlock].name}`);
             const card = form.querySelector(`[data-exercise="${picks[0]?.exerciseId}"]`);
@@ -293,5 +356,28 @@
         });
     }
     $('wb-draft-notice').hidden = !read(key) || data.hasErrors;
+    selectExercise(all()[0]?.exerciseId ?? null);
     syncControls(); render();
+    let viewportHeight = window.visualViewport?.height || innerHeight, viewportWidth = innerWidth;
+    const keyboardLayout = () => {
+        const viewport = window.visualViewport; if (!viewport) return;
+        if (viewportWidth !== innerWidth) { viewportWidth = innerWidth; viewportHeight = viewport.height; }
+        const input = document.activeElement;
+        const editing = form.contains(input) && input.matches('input:not([type=hidden]):not([type=checkbox]):not([type=radio]),textarea,select') &&
+            !input.closest('.wb-library,dialog');
+        if (!editing) viewportHeight = viewport.height;
+        const inset = Math.max(0,innerHeight-viewport.height-viewport.offsetTop);
+        const open = mobileLayout.matches && editing && (inset > 120 || viewportHeight - viewport.height > 120);
+        document.body.classList.toggle('wb-keyboard-open',!!open);
+        const box = form.getBoundingClientRect();
+        form.style.setProperty('--wb-keyboard-inset',`${open ? inset : 0}px`);
+        form.style.setProperty('--wb-save-left',`${box.left}px`); form.style.setProperty('--wb-save-width',`${box.width}px`);
+        if (open) {
+            const input = document.activeElement, field = input.getBoundingClientRect(), footer = form.querySelector('.wb-footer').getBoundingClientRect();
+            if (field.bottom > footer.top - 16) window.scrollBy({top:field.bottom-footer.top+16,behavior:'instant'});
+            else if (field.top < viewport.offsetTop + 16) window.scrollBy({top:field.top-viewport.offsetTop-16,behavior:'instant'});
+        }
+    };
+    window.visualViewport?.addEventListener('resize',keyboardLayout); window.visualViewport?.addEventListener('scroll',keyboardLayout);
+    document.addEventListener('focusin',keyboardLayout); document.addEventListener('focusout',() => setTimeout(keyboardLayout,0));
 })();

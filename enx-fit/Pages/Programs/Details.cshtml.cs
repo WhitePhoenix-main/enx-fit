@@ -23,6 +23,7 @@ public sealed class DetailsModel(TrainingProgramService programs, CurrentUser us
     [BindProperty(SupportsGet = true)] public DateOnly? Day { get; set; }
     public ProgramCalendarViewModel Calendar => new(Item, Sessions, Today, Week);
     [BindProperty(SupportsGet = true)] public string? Tab { get; set; } = "overview";
+    // Identifies a ProgramWorkoutExercise entry, whose integer key is separate from the catalog UUID.
     [BindProperty(SupportsGet = true)] public int? ExerciseId { get; set; }
     [BindProperty] public ProgressionRule Rule { get; set; } = new();
     [BindProperty] public ExercisePrescription Prescription { get; set; } = new();

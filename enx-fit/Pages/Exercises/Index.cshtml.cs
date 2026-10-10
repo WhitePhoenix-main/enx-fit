@@ -12,7 +12,7 @@ public class IndexModel(ExerciseService exerciseService) : PageModel
     public IReadOnlyList<Exercise> Exercises { get; private set; } = [];
 
     public IReadOnlyList<string> MuscleGroups { get; private set; } = [];
-    public IReadOnlyList<int> RecentIds { get; private set; } = [];
+    public IReadOnlyList<Guid> RecentIds { get; private set; } = [];
     [BindProperty(SupportsGet = true)] public bool Reference { get; set; }
 
     [BindProperty(SupportsGet = true)]

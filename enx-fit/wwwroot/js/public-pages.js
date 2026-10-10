@@ -45,13 +45,20 @@
   if (copy && address && feedback) {
     copy.hidden = false;
     copy.addEventListener('click', async () => {
+      copy.disabled = true;
+      feedback.textContent = 'Копируем адрес…';
+      window.AppComponents?.setNoticeState(feedback, 'pending');
       try {
         if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
         await navigator.clipboard.writeText(address.value);
         feedback.textContent = 'Адрес скопирован.';
+        window.AppComponents?.setNoticeState(feedback, 'saved');
       } catch {
         address.focus(); address.select();
         feedback.textContent = 'Адрес выделен. Скопируй его вручную.';
+        window.AppComponents?.setNoticeState(feedback, 'error');
+      } finally {
+        copy.disabled = false;
       }
     });
   }

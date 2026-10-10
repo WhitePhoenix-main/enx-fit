@@ -1,0 +1,28 @@
+@model enx_fit.Pages.DashboardModel
+@using enx_fit.Services
+@using enx_fit.ViewModels
+@{
+    var completed = Model.CompletedToday;
+    var upcoming = Model.UpcomingWorkout;
+    var ru = DashboardWorkoutsViewModel.Russian;
+}
+@if (!Model.Reference && !Model.IsCoachView && Model.ActiveWorkout is null && (completed is not null || upcoming is not null))
+{
+    <section class="home-next-step" aria-label="Итог и следующее занятие">
+        @if (completed is not null)
+        {
+            <a class="home-next-row" asp-page="/Workouts/Details" asp-route-id="@completed.Id" data-home-completed>
+                <reference-icon name="check-circle" /><span><small>@(completed.EntryMode == enx_fit.Models.WorkoutEntryMode.Manual ? "Сегодня записано" : "Сегодня выполнено")</small><strong>@completed.Title</strong><span>@DashboardWorkoutsViewModel.ExerciseCount(completed.WorkoutExercises.Count) · Рабочих подходов: @DashboardData.WorkingSets(completed).Count()@if (completed.DurationSeconds is >= 60) { <span> · @(completed.DurationSeconds / 60) мин</span> }</span></span><reference-icon name="chevron" />
+            </a>
+        }
+        @if (upcoming is not null)
+        {
+            var url = upcoming.ProgramId.HasValue
+                ? Url.Page("/Programs/Details", new { id = upcoming.ProgramId, Tab = "schedule", Day = upcoming.Date.ToString("yyyy-MM-dd"), Week = upcoming.Date.ToString("yyyy-MM-dd"), OpenDay = true })
+                : Url.Page("/Workouts/Details", new { id = upcoming.WorkoutId });
+            <a class="home-next-row" href="@url" data-home-upcoming>
+                <reference-icon name="calendar" /><span><small>Следующее занятие · <time datetime="@upcoming.Date.ToString("yyyy-MM-dd")">@(upcoming.Date == Model.Data.Today.AddDays(1) ? "Завтра, " : "")@upcoming.Date.ToString("d MMMM", ru)</time></small><strong>@upcoming.Title</strong><span>@DashboardWorkoutsViewModel.ExerciseCount(upcoming.ExerciseCount)@if (upcoming.EstimatedMinutes is > 0) { <span> · ≈ @upcoming.EstimatedMinutes мин</span> } · Посмотреть план</span></span><reference-icon name="chevron" />
+            </a>
+        }
+    </section>
+}

@@ -1,5 +1,5 @@
 @model string
 @if (!string.IsNullOrEmpty(Model)) {
     var error = Model.StartsWith("Error", StringComparison.OrdinalIgnoreCase) || Model.StartsWith("Ошибка", StringComparison.OrdinalIgnoreCase);
-    <div class="account-status @(error ? "is-error" : "")" role="@(error ? "alert" : "status")"><reference-icon name="@(error ? "shield" : "check-circle")" /><span>@Model</span></div>
+    <div class="account-status app-status app-notice @(error ? "is-error" : "")" data-app-state="@(error ? "error" : "saved")" role="@(error ? "alert" : "status")"><reference-icon name="@(error ? "shield" : "check-circle")" /><span>@Model</span></div>
 }

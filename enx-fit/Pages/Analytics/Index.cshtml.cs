@@ -1,3 +1,4 @@
+using enx_fit.ViewModels;
 using System.Text.Json;
 using enx_fit.Models;
 using enx_fit.Services;
@@ -17,7 +18,7 @@ public class IndexModel(
     public IReadOnlyList<Exercise> Exercises { get; private set; } = [];
 
     [BindProperty(SupportsGet = true)]
-    public int? ExerciseId { get; set; }
+    [ModelBinder(BinderType = typeof(ExerciseIdModelBinder))] public Guid? ExerciseId { get; set; }
 
     [BindProperty(SupportsGet = true)]
     public string? UserId { get; set; }
@@ -33,9 +34,14 @@ public class IndexModel(
     public string ChartDataJson { get; private set; } = "{}";
 
     public bool HasEnoughData { get; private set; }
+    public IReadOnlyList<ExerciseWorkingWeightPoint> WorkoutPoints { get; private set; } = [];
+    public string? OwnerName => Users.FirstOrDefault(user => user.Id == UserId)?.DisplayName;
 
     public async Task OnGetAsync()
     {
+        Response.Headers.CacheControl = "no-cache, no-store";
+        ModelState.Clear();
+        if (!IsAdministrator) UserId = null;
         Exercises = await analyticsDataService.GetExercisesAsync();
 
         if (IsAdministrator)
@@ -56,6 +62,7 @@ public class IndexModel(
 
         var workouts = await analyticsDataService.GetWorkoutsForExerciseAsync(ExerciseId.Value, UserId);
         var workingWeightTrend = trainingAnalyticsService.GetWorkingWeightTrend(workouts, ExerciseId.Value);
+        WorkoutPoints = workingWeightTrend;
         var estimatedOneRepMaxTrend = trainingAnalyticsService.GetEstimatedOneRepMaxTrend(workouts, ExerciseId.Value);
         var volumeTrend = trainingAnalyticsService.GetExerciseVolumeTrend(workouts, ExerciseId.Value);
 
@@ -67,17 +74,20 @@ public class IndexModel(
         {
             workingWeight = new
             {
-                labels = workingWeightTrend.Select(point => point.Date.ToString("yyyy-MM-dd")),
+                labels = workingWeightTrend.Select(point => point.Date.ToString("dd.MM.yyyy")),
+                workoutIds = workingWeightTrend.Select(point => point.WorkoutSessionId),
                 values = workingWeightTrend.Select(point => point.Weight)
             },
             estimatedOneRepMax = new
             {
-                labels = estimatedOneRepMaxTrend.Select(point => point.Date.ToString("yyyy-MM-dd")),
+                labels = estimatedOneRepMaxTrend.Select(point => point.Date.ToString("dd.MM.yyyy")),
+                workoutIds = estimatedOneRepMaxTrend.Select(point => point.WorkoutSessionId),
                 values = estimatedOneRepMaxTrend.Select(point => point.EstimatedOneRepMax)
             },
             volume = new
             {
-                labels = volumeTrend.Select(point => point.Date.ToString("yyyy-MM-dd")),
+                labels = volumeTrend.Select(point => point.Date.ToString("dd.MM.yyyy")),
+                workoutIds = volumeTrend.Select(point => point.WorkoutSessionId),
                 values = volumeTrend.Select(point => point.Volume)
             }
         });

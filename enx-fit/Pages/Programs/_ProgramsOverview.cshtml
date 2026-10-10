@@ -10,8 +10,8 @@
     });
 }
 <partial name="_MobilePrograms" model="Model" />
-@if (TempData["StatusMessage"] is string status) { <div class="program-notice" role="status">@status</div> }
-@if (TempData["ErrorMessage"] is string error) { <div class="program-notice error" role="alert">@error</div> }
+@if (TempData["StatusMessage"] is string status) { <div class="program-notice app-status app-notice" data-app-state="saved" role="status">@status</div> }
+@if (TempData["ErrorMessage"] is string error) { <div class="program-notice error app-status app-notice" data-app-state="error" role="alert">@error</div> }
 <div class="ef-desktop-screen">
 <header class="ep-heading"><div><h1>Программы</h1><p>Ваш план тренировок и готовые шаблоны</p></div><a class="ef-primary ep-create" asp-page="Edit"><reference-icon name="plus-circle" />Создать программу</a></header>
 @if (Model.PageError is not null) { <partial name="_ProgramError" model="Model.PageError" /> }
@@ -22,7 +22,7 @@ else {
         @if (Model.Access.IsCoach && !Model.Reference) { <a class="@(Model.Tab == "assigned" ? "active" : "")" href="@PageUrl(tab: "assigned", archived: false, all: false)" aria-current="@(Model.Tab == "assigned" ? "page" : null)">Назначенные</a> }
         @if (Model.Tab != "templates") { <a class="ep-archive @(Model.Archived ? "is-archived" : "")" href="@PageUrl(archived: !Model.Archived, all: true)" aria-label="@(Model.Archived ? "Текущие программы" : "Архив")"><reference-icon name="calendar" />@(Model.Archived ? "Текущие программы" : "Архив")</a> }
     </nav>
-    <div asp-validation-summary="All" class="program-notice error" role="alert"></div>
+    <div asp-validation-summary="All" class="program-notice error app-status app-notice" data-app-state="error" role="alert"></div>
     @if (Model.ShowUpgrade) { <partial name="_UpgradePrompt" model="@(-1)" /> }
     @if (Model.Tab == "assigned" && !Model.Access.CanUse(Feature.CoachProgramAssignment)) {
         <section class="ef-card ep-empty"><reference-icon name="users" /><h2>Программы ваших клиентов</h2><p>В Coach вы можете назначать программы клиентам и следить за выполнением.</p><a class="ef-primary" asp-page="/Subscription">Посмотреть Coach</a></section>
@@ -92,6 +92,6 @@ else {
 @if (Model.Reference && Model.PageError is null) {
     var previews = overview.Active is { } activePreview ? new[] { activePreview }.Concat(overview.Others) : overview.Others;
     @foreach (var card in previews) {
-        <dialog id="program-preview-@card.Program.Id" class="app-dialog ep-preview-dialog" aria-labelledby="program-preview-title-@card.Program.Id"><div class="dialog-heading"><h2 id="program-preview-title-@card.Program.Id">@card.Program.Name</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>@(card.Program.Description ?? card.Program.Goal)</p><p class="ep-preview-meta">@card.Program.Weeks недель · @card.Program.DaysPerWeek тренировки в неделю</p>@foreach (var workout in card.Program.Workouts) { <div class="ep-preview-workout"><reference-icon name="workout" /><strong>@workout.Name</strong><span>@DashboardWorkoutsViewModel.ExerciseCount(workout.Exercises.Count)</span></div> }<a class="ef-primary" href="@PageUrl(tab: "templates", archived: false)">Выбрать шаблон</a></dialog>
+        <dialog id="program-preview-@card.Program.Id" class="app-dialog ep-preview-dialog app-workspace" aria-labelledby="program-preview-title-@card.Program.Id"><div class="dialog-heading"><h2 id="program-preview-title-@card.Program.Id">@card.Program.Name</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>@(card.Program.Description ?? card.Program.Goal)</p><p class="ep-preview-meta">@card.Program.Weeks недель · @card.Program.DaysPerWeek тренировки в неделю</p>@foreach (var workout in card.Program.Workouts) { <div class="ep-preview-workout"><reference-icon name="workout" /><strong>@workout.Name</strong><span>@DashboardWorkoutsViewModel.ExerciseCount(workout.Exercises.Count)</span></div> }<a class="ef-primary" href="@PageUrl(tab: "templates", archived: false)">Выбрать шаблон</a></dialog>
     }
 }

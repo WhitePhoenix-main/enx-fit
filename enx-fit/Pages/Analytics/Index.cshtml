@@ -1,151 +1,46 @@
 @page
 @model enx_fit.Pages.Analytics.IndexModel
 @{
-    ViewData["Title"] = "Analytics";
+    Layout = Model.IsAdministrator ? "_AdminLayout" : "_DashboardReferenceLayout";
+    ViewData["Title"] = "Аналитика упражнения";
 }
-
-<div class="mb-4">
-    <h1 class="h3 mb-1">Analytics</h1>
-    <p class="text-muted mb-0">Review strength progress for a selected exercise.</p>
-</div>
-
-@if (Model.Exercises.Count == 0)
-{
-    <div class="border rounded-3 p-5 text-center bg-body-tertiary">
-        <h2 class="h5">No exercises available</h2>
-        <p class="text-muted mb-4">Add exercises before opening training analytics.</p>
-        @if (User.IsInRole("Administrator"))
-        {
-            <a class="btn btn-primary" asp-page="/Exercises/Create">Add exercise</a>
+@section Styles { <link rel="stylesheet" href="~/css/exercise-analytics.css" asp-append-version="true" /> }
+<div class="exercise-analytics">
+    <header class="analytics-heading"><a asp-page="@(Model.IsAdministrator ? "/Workouts/Index" : "/Dashboard/Progress")" asp-route-UserId="@(Model.IsAdministrator ? Model.UserId : null)">← @(Model.IsAdministrator ? "Записи пользователя" : "Прогресс")</a><p class="analytics-eyebrow">Результаты упражнения</p><h1>Аналитика упражнения</h1><p>Рабочий вес, лучший подход и объём по завершённым тренировкам.</p></header>
+    <form method="get" class="analytics-filter">
+        @if (Model.IsAdministrator) {
+            <label>Пользователь<select asp-for="UserId"><option value="">Выберите пользователя</option>@foreach (var user in Model.Users) { <option value="@user.Id">@user.DisplayName</option> }</select></label>
         }
-    </div>
-}
-else
-{
-    <form method="get" class="row g-2 align-items-end mb-4">
-        @if (Model.IsAdministrator)
-        {
-            <div class="col-sm-8 col-md-5">
-                <label class="form-label" asp-for="UserId">Пользователь</label>
-                <select class="form-select" asp-for="UserId">
-                    <option value="">Выберите пользователя</option>
-                    @foreach (var user in Model.Users)
-                    {
-                        <option value="@user.Id">@user.DisplayName</option>
-                    }
-                </select>
-            </div>
-        }
-        <div class="col-sm-8 col-md-5">
-            <label class="form-label" asp-for="ExerciseId">Exercise</label>
-            <select class="form-select" asp-for="ExerciseId">
-                <option value="">Select an exercise</option>
-                @foreach (var exercise in Model.Exercises)
-                {
-                    <option value="@exercise.Id">@exercise.Name</option>
-                }
-            </select>
-        </div>
-        <div class="col-auto">
-            <button class="btn btn-primary" type="submit">Show analytics</button>
-        </div>
+        <label>Упражнение<select asp-for="ExerciseId"><option value="">Выберите упражнение</option>@foreach (var exercise in Model.Exercises) { <option value="@exercise.Id">@ExercisePresentation.DisplayName(exercise)</option> }</select></label>
+        <button type="submit">Показать результаты</button>
     </form>
-
-    @if (Model.IsAdministrator && string.IsNullOrWhiteSpace(Model.UserId))
-    {
-        <div class="border rounded-3 p-4 bg-body-tertiary">
-            <p class="text-muted mb-0">Выберите пользователя для просмотра его статистики.</p>
+    @if (Model.IsAdministrator && string.IsNullOrWhiteSpace(Model.UserId)) {
+        <section class="analytics-panel analytics-empty"><h2>Сначала выберите пользователя</h2><p>Графики покажут результаты только его завершённых занятий.</p></section>
+    } else if (Model.Exercises.Count == 0 || !Model.ExerciseId.HasValue) {
+        <section class="analytics-panel analytics-empty"><h2>Выберите упражнение</h2><p>После первых записанных рабочих подходов здесь появятся результаты.</p><a asp-page="/Exercises/Index">Открыть библиотеку →</a></section>
+    } else {
+        @if (Model.IsAdministrator) { <p class="analytics-owner">Пользователь: <strong>@Model.OwnerName</strong></p> }
+        <div class="analytics-summary">
+            <section class="analytics-panel"><h2>Лучший рабочий подход</h2>@if (Model.BestSet is { } best) { <strong class="analytics-result">@best.Weight.ToString("0.##") кг × @best.Reps</strong><p>Расчётный максимум: @best.EstimatedOneRepMax.ToString("0.##") кг<br />@best.Date.ToString("dd.MM.yyyy")</p><details><summary>Как считается максимум</summary><p>Оценка по формуле: вес × (1 + повторения / 30). Это расчёт по записанному подходу, а не измеренный результат одного повторения.</p></details> } else { <p>Выполненных рабочих подходов с весом пока нет.</p> }</section>
+            <section class="analytics-panel"><h2>Изменение рабочего веса</h2><p>@Model.ProgressText</p><p class="analytics-muted">В каждом занятии берётся наибольший вес выполненного рабочего подхода. Разминка не участвует в этом сравнении.</p></section>
         </div>
-    }
-    else if (!Model.ExerciseId.HasValue)
-    {
-        <div class="border rounded-3 p-4 bg-body-tertiary">
-            <p class="text-muted mb-0">Select an exercise to view progress charts and your best set.</p>
-        </div>
-    }
-    else
-    {
-        <div class="row g-3 mb-4">
-            <div class="col-md-5">
-                <section class="card h-100">
-                    <div class="card-body">
-                        <h2 class="h5">Best set</h2>
-                        @if (Model.BestSet is null)
-                        {
-                            <p class="text-muted mb-0">No valid working sets recorded yet.</p>
-                        }
-                        else
-                        {
-                            <p class="display-6 mb-1">@Model.BestSet.Weight kg × @Model.BestSet.Reps</p>
-                            <p class="text-muted mb-0">
-                                Estimated 1RM: <strong>@Model.BestSet.EstimatedOneRepMax kg</strong>
-                                <br />
-                                @Model.BestSet.Date.ToString("yyyy-MM-dd")
-                            </p>
-                        }
-                    </div>
-                </section>
-            </div>
-            <div class="col-md-7">
-                <section class="card h-100">
-                    <div class="card-body">
-                        <h2 class="h5">Progress summary</h2>
-                        <p class="mb-0">@Model.ProgressText</p>
-                    </div>
-                </section>
-            </div>
-        </div>
-
-        @if (!Model.HasEnoughData)
-        {
-            <div class="alert alert-info" role="alert">
-                Add at least two workouts with valid working sets to see progress charts.
-            </div>
-        }
-        else
-        {
+        @if (!Model.HasEnoughData) { <p class="analytics-notice" role="status">Для графиков нужны хотя бы две завершённые тренировки с рабочими подходами выбранного упражнения.</p> }
+        else {
             <script id="training-analytics-chart-data" type="application/json">@Html.Raw(Model.ChartDataJson)</script>
-
-            <div class="row g-3">
-                <div class="col-lg-6">
-                    <section class="card h-100">
-                        <div class="card-body">
-                            <h2 class="h5">Working weight</h2>
-                            <div class="ratio ratio-16x9">
-                                <canvas id="working-weight-chart"></canvas>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-                <div class="col-lg-6">
-                    <section class="card h-100">
-                        <div class="card-body">
-                            <h2 class="h5">Estimated 1RM</h2>
-                            <div class="ratio ratio-16x9">
-                                <canvas id="estimated-one-rep-max-chart"></canvas>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-                <div class="col-12">
-                    <section class="card">
-                        <div class="card-body">
-                            <h2 class="h5">Training volume</h2>
-                            <div class="ratio ratio-21x9">
-                                <canvas id="exercise-volume-chart"></canvas>
-                            </div>
-                        </div>
-                    </section>
-                </div>
+            <fieldset class="analytics-metric-picker"><legend>Что показать</legend><label><input type="radio" name="analytics-metric" value="weight" checked />Рабочий вес</label><label><input type="radio" name="analytics-metric" value="max" />Расчётный максимум</label><label><input type="radio" name="analytics-metric" value="volume" />Объём подходов</label></fieldset>
+            <div class="analytics-charts">
+                <section class="analytics-panel analytics-chart" data-analytics-metric="weight"><h2>Рабочий вес</h2><p>Максимальный вес рабочего подхода в занятии, кг.</p><div><canvas id="working-weight-chart" role="img" aria-label="Рабочий вес по завершённым занятиям"></canvas></div></section>
+                <section class="analytics-panel analytics-chart" data-analytics-metric="max"><h2>Расчётный максимум</h2><p>Лучший расчётный результат в занятии, кг.</p><div><canvas id="estimated-one-rep-max-chart" role="img" aria-label="Расчётный максимум по завершённым занятиям"></canvas></div></section>
+                <section class="analytics-panel analytics-chart" data-analytics-metric="volume"><h2>Объём подходов</h2><p>Вес × повторения всех выполненных подходов, включая разминку, кг.</p><div><canvas id="exercise-volume-chart" role="img" aria-label="Объём подходов по завершённым занятиям"></canvas></div></section>
             </div>
+            <p class="analytics-muted">Нажмите точку графика, чтобы открыть исходную тренировку.</p>
+            <noscript><style>.analytics-charts,.analytics-metric-picker { display:none; }</style><p class="analytics-notice">Исходные результаты доступны в списке ниже. Для интерактивных графиков включите JavaScript.</p></noscript>
+        }
+        @if (Model.WorkoutPoints.Count > 0) {
+            <details class="analytics-panel analytics-sources"><summary>Исходные тренировки · @Model.WorkoutPoints.Count</summary><ol>@foreach (var point in Model.WorkoutPoints) { <li><a asp-page="/Workouts/Details" asp-route-id="@point.WorkoutSessionId"><span>@point.Date.ToString("dd.MM.yyyy")</span><strong>@point.Weight.ToString("0.##") кг</strong><span>Открыть →</span></a></li> }</ol></details>
         }
     }
-}
-
+</div>
 @section Scripts {
-    @if (Model.HasEnoughData)
-    {
-        <script src="~/lib/chart.js/dist/chart.umd.min.js"></script>
-        <script src="~/js/training-analytics.js" asp-append-version="true"></script>
-    }
+    @if (Model.HasEnoughData) { <script src="~/lib/chart.js/dist/chart.umd.min.js"></script><script src="~/js/training-analytics.js" asp-append-version="true"></script> }
 }

@@ -2,8 +2,8 @@ using enx_fit.Models;
 
 namespace enx_fit.Data;
 
-// Stable seed IDs are reserved in negative blocks by muscle group. Append new
-// entries to the end of a block; existing positions are used by saved workouts.
+// Stable catalog UUIDs retain the legacy identity of each seeded exercise.
+// Append entries to a block; changing positions would change saved identities.
 internal static class ExerciseCatalog
 {
     public static IReadOnlyList<Exercise> All { get; } = Build();
@@ -38,7 +38,8 @@ internal static class ExerciseCatalog
             ("Отжимания с руками на возвышении", "Опора"),
             ("Отжимания с эспандером", "Эспандер"),
             ("Отжимания на брусьях с акцентом на грудь", "Брусья"),
-            ("Жим одной рукой в кроссовере", "Кроссовер"));
+            ("Жим одной рукой в кроссовере", "Кроссовер"),
+            ("Отжимания с колен", "Без оборудования"));
 
         Add(-1100, "Спина",
             ("Подтягивания обратным хватом", "Турник"),
@@ -362,7 +363,7 @@ internal static class ExerciseCatalog
             {
                 exercises.Add(new Exercise
                 {
-                    Id = firstId - i,
+                    Id = ExerciseIds.FromLegacy(firstId - i),
                     Name = items[i].Name,
                     MuscleGroup = group,
                     Equipment = items[i].Equipment

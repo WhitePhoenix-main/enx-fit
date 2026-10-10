@@ -11,7 +11,7 @@ public sealed class TrainingRecommendation
     public string UserId { get; set; } = "";
     public int TrainingProgramId { get; set; }
     public int ProgramWorkoutExerciseId { get; set; }
-    public int ExerciseId { get; set; }
+    public Guid ExerciseId { get; set; }
     public RecommendationType Type { get; set; }
     public RecommendationStatus Status { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;

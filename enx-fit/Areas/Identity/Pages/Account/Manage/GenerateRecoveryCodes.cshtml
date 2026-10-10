@@ -2,4 +2,4 @@
 @model GenerateRecoveryCodesModel
 @{ ViewData["Title"] = "Новые резервные коды"; ViewData["ActivePage"] = ManageNavPages.TwoFactorAuthentication; }
 <partial name="_StatusMessage" for="StatusMessage" />
-<div class="alert alert-warning"><strong>Прежние резервные коды перестанут работать</strong><p>После создания сохраните новый набор. Ключ приложения для аутентификации не изменится.</p></div><form method="post"><button class="btn" type="submit">Создать новые коды</button></form><p><a asp-page="./TwoFactorAuthentication">Отмена</a></p>
+<div class="alert alert-warning"><strong>Прежние резервные коды перестанут работать</strong><p>После создания сохраните новый набор. Ключ приложения для аутентификации не изменится.</p></div><form method="post"><button class="btn app-button" type="submit">Создать новые коды</button></form><p><a asp-page="./TwoFactorAuthentication">Отмена</a></p>

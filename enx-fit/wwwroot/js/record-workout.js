@@ -14,11 +14,12 @@
     const number = value => Number(String(value).trim().replace(',', '.'));
     const format = value => new Intl.NumberFormat('ru-RU', {maximumFractionDigits:2}).format(value);
     const blankSet = () => ({weight:'', reps:'', rir:'', isWarmup:false, notes:''});
+    const exerciseId = window.ExerciseIds.normalize;
     const normalize = value => {
         if (!Array.isArray(value) || value.length > 40) throw new Error('Invalid draft');
         return value.map(e => {
-            if (!e || !Number.isInteger(Number(e.exerciseId)) || !Array.isArray(e.sets) || !e.sets.length || e.sets.length > 20) throw new Error('Invalid draft');
-            return {exerciseId:Number(e.exerciseId), sets:e.sets.map(s => {
+            if (!e || !exerciseId(e.exerciseId) || !Array.isArray(e.sets) || !e.sets.length || e.sets.length > 20) throw new Error('Invalid draft');
+            return {exerciseId:exerciseId(e.exerciseId), sets:e.sets.map(s => {
                 if (!s || typeof s !== 'object') throw new Error('Invalid set');
                 return {...blankSet(), weight:s.weight??'', reps:s.reps??'', rir:s.rir??'', isWarmup:!!s.isWarmup, notes:s.notes??''};
             })};
@@ -35,7 +36,7 @@
                 exercises = normalize(draft.exercises);
                 for (const name of ['Title','Date','DurationMinutes','Notes','ClientRequestId'])
                     if (draft.fields[name] != null) field(name).value = draft.fields[name];
-                selectedId = draft.selectedId; sourceNote = draft.sourceNote || ''; restored = true;
+                selectedId = exerciseId(draft.selectedId); sourceNote = draft.sourceNote || ''; restored = true;
             }
         } catch { /* Storage may be unavailable or the draft unreadable. */ }
     }
@@ -62,8 +63,10 @@
         try {
             localStorage.setItem(key, JSON.stringify({viewer:root.dataset.viewer, fields, exercises, selectedId, sourceNote}));
             storageAvailable = true; status.textContent = 'Черновик сохранён на этом устройстве · ещё не в истории';
+            window.AppComponents?.setNoticeState(status, 'local');
         } catch {
             storageAvailable = false; status.textContent = 'Черновик недоступен. Оставьте страницу открытой до сохранения записи.';
+            window.AppComponents?.setNoticeState(status, 'error');
         }
     }
     function summary() {
@@ -77,9 +80,9 @@
             `Упражнений: ${exercises.length} · рабочих подходов: ${working.length}${sets.length > working.length ? ` · разминка: ${sets.length-working.length}` : ''}` : 'Начните с упражнения';
     }
     function select(id) {
-        selectedId = exercises.some(e => e.exerciseId === Number(id)) ? Number(id) : exercises[0]?.exerciseId;
-        [...list.children].forEach(card => { card.hidden = Number(card.dataset.exerciseId) !== selectedId; });
-        outline.querySelectorAll('button').forEach(button => button.setAttribute('aria-current', String(Number(button.dataset.recordSelect) === selectedId)));
+        selectedId = exercises.some(e => e.exerciseId === exerciseId(id)) ? exerciseId(id) : exercises[0]?.exerciseId;
+        [...list.children].forEach(card => { card.hidden = exerciseId(card.dataset.exerciseId) !== selectedId; });
+        outline.querySelectorAll('button').forEach(button => button.setAttribute('aria-current', String(exerciseId(button.dataset.recordSelect) === selectedId)));
         requestAnimationFrame(() => {
             const button = outline.querySelector('[aria-current="true"]'); if (!button) return;
             const bounds = outline.getBoundingClientRect(), item = button.getBoundingClientRect();
@@ -95,14 +98,14 @@
         root.querySelector('[data-record-count]').textContent = exercises.length;
         sourceHint.hidden = !sourceNote; sourceHint.textContent = sourceNote;
         library.setSelected(exercises.map(e => e.exerciseId));
-        outline.innerHTML = exercises.map((e,i) => `<button type="button" data-record-select="${e.exerciseId}"><span>${i+1}</span><strong>${escape(library.byId.get(e.exerciseId)?.dataset.name || 'Упражнение недоступно')}</strong></button>`).join('');
+        outline.innerHTML = exercises.map((e,i) => `<button class="app-item-row" type="button" data-record-select="${e.exerciseId}"><span>${i+1}</span><strong>${escape(library.byId.get(e.exerciseId)?.dataset.name || 'Упражнение недоступно')}</strong></button>`).join('');
         list.innerHTML = exercises.map((exercise,i) => {
             const row = library.byId.get(exercise.exerciseId);
             return `<section class="panel session-exercise record-exercise" data-index="${i}" data-exercise-id="${exercise.exerciseId}">
                 <header><span class="exercise-order">${i+1}</span><div><h2>${escape(row?.dataset.name || 'Упражнение недоступно')}</h2><p>${escape(row?.dataset.group || '')} · подходов: ${exercise.sets.length}</p></div><details class="exercise-menu"><summary aria-label="Действия с упражнением">⋯</summary><div><button type="button" data-move-exercise="-1" ${i===0?'disabled':''}>Выше в списке</button><button type="button" data-move-exercise="1" ${i===exercises.length-1?'disabled':''}>Ниже в списке</button><button type="button" class="danger-text" data-remove-exercise>Удалить упражнение</button></div></details></header>
                 <details class="record-batch"><summary>Одинаковый вес и повторения</summary><div><label>Вес для всех<input type="text" inputmode="decimal" data-batch-weight placeholder="кг" aria-label="Вес для всех подходов" /></label><label>Повторения<input type="number" min="1" max="1000" data-batch-reps placeholder="раз" aria-label="Повторения для всех подходов" /></label><button type="button" class="button secondary" data-apply-batch>Применить</button></div></details>
                 <div class="record-set-labels"><span>№</span><span>Вес, кг</span><span>Повторения</span><span></span></div>
-                ${exercise.sets.map((s,n) => `<div class="record-set" data-set-index="${n}"><div class="record-set-main"><span class="set-number">${n+1}</span><input type="text" inputmode="decimal" data-set-field="weight" value="${escape(s.weight)}" required aria-label="Вес подхода ${n+1}, кг" placeholder="0" /><input type="number" inputmode="numeric" data-set-field="reps" value="${escape(s.reps)}" min="1" max="1000" required aria-label="Повторения подхода ${n+1}" /><button type="button" class="text-button danger-text" data-remove-set aria-label="Удалить подход ${n+1}">×</button></div><details class="set-extra" ${s.isWarmup || s.notes || s.rir!==''?'open':''}><summary>Разминка, усилие и заметка</summary><div><label>Осталось повторов (RIR)<input type="number" min="0" max="10" inputmode="numeric" data-set-field="rir" value="${escape(s.rir)}" /></label><label class="set-note">Заметка<input maxlength="500" data-set-field="notes" value="${escape(s.notes)}" /></label><label class="warmup-check"><input type="checkbox" data-set-field="isWarmup" ${s.isWarmup?'checked':''} />Разминка</label></div></details></div>`).join('')}
+                ${exercise.sets.map((s,n) => `<div class="record-set app-set-row" data-set-index="${n}"><div class="record-set-main"><span class="set-number">${n+1}</span><input type="text" inputmode="decimal" data-set-field="weight" value="${escape(s.weight)}" required aria-label="Вес подхода ${n+1}, кг" placeholder="0" /><input type="number" inputmode="numeric" data-set-field="reps" value="${escape(s.reps)}" min="1" max="1000" required aria-label="Повторения подхода ${n+1}" /><button type="button" class="text-button danger-text" data-remove-set aria-label="Удалить подход ${n+1}">×</button></div><details class="set-extra app-disclosure" ${s.isWarmup || s.notes || s.rir!==''?'open':''}><summary>Разминка, усилие и заметка</summary><div><label>Осталось повторов (RIR)<input type="number" min="0" max="10" inputmode="numeric" data-set-field="rir" value="${escape(s.rir)}" /></label><label class="set-note">Заметка<input maxlength="500" data-set-field="notes" value="${escape(s.notes)}" /></label><label class="warmup-check"><input type="checkbox" data-set-field="isWarmup" ${s.isWarmup?'checked':''} />Разминка</label></div></details></div>`).join('')}
                 <p class="record-weight-hint">Для упражнения с собственным весом укажите 0 кг.</p>
                 <footer class="record-exercise-footer"><button type="button" class="button secondary" data-add-set ${exercise.sets.length>=20?'disabled':''}>+ Подход</button><div>${i>0?`<button type="button" class="button secondary" data-record-neighbor="${exercises[i-1].exerciseId}">Назад</button>`:''}${i<exercises.length-1?`<button type="button" class="button secondary" data-record-neighbor="${exercises[i+1].exerciseId}">Следующее →</button>`:''}</div></footer>
             </section>`;
@@ -230,6 +233,7 @@
             const notice = review.querySelector('[data-record-review-status]'); notice.hidden = false;
             notice.textContent = 'Нет соединения. Черновик сохранён на этом устройстве. Отправьте запись, когда появится сеть.';
             if (!storageAvailable) notice.textContent = 'Нет соединения, и браузер не сохранил черновик. Оставьте страницу открытой и повторите отправку после подключения.';
+            window.AppComponents?.setNoticeState(notice, storageAvailable ? 'pending' : 'error');
             return;
         }
         field('ResultsJson').value = JSON.stringify(payload); field('UtcOffsetMinutes').value = -new Date().getTimezoneOffset(); save();
@@ -239,11 +243,13 @@
     });
     window.addEventListener('beforeunload', event => { if (dirty && !storageAvailable && !submitting) { event.preventDefault(); event.returnValue=''; } });
     window.addEventListener('pageshow', () => { submitting=false; confirm.disabled=false; confirm.textContent='Сохранить в историю'; });
-    let viewportHeight = window.visualViewport?.height || innerHeight;
+    let viewportHeight = window.visualViewport?.height || innerHeight, viewportWidth = innerWidth;
     const keyboardLayout = () => {
         const viewport = window.visualViewport; if (!viewport) return;
+        if (viewportWidth !== innerWidth) { viewportWidth = innerWidth; viewportHeight = viewport.height; }
         const input = document.activeElement;
-        const editing = matchMedia('(max-width:1023px)').matches && form.contains(input) && input?.matches('input:not([type="hidden"]),textarea');
+        const editing = matchMedia('(max-width:1023px)').matches && form.contains(input) && !input?.closest('dialog') &&
+          input?.matches('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),textarea');
         const inset = Math.max(0,innerHeight-viewport.height-viewport.offsetTop);
         const open = editing && (inset>120 || viewportHeight-viewport.height>120);
         document.body.classList.toggle('record-keyboard-open',!!open);

@@ -1,4 +1,4 @@
-@page "{id:int}"
+@page "{id}"
 @model enx_fit.Pages.Exercises.EditModel
 @{
     ViewData["Title"] = "Редактировать упражнение";
@@ -11,12 +11,12 @@
 
 <div class="card">
     <div class="card-body">
-        <form method="post">
+        <form method="post" data-admin-form>
             <input type="hidden" asp-for="Id" />
             <partial name="_ExerciseForm" for="Input" />
             <div class="d-flex gap-2">
-                <button class="btn btn-primary" type="submit">Сохранить изменения</button>
-                <a class="btn btn-outline-secondary" asp-page="./Index">Отмена</a>
+                <button class="btn btn-primary app-button" type="submit">Сохранить изменения</button>
+                <a class="btn btn-outline-secondary app-button secondary" asp-page="/Admin/Exercises/Index">Отмена</a>
             </div>
         </form>
     </div>

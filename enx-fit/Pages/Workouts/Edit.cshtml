@@ -1,17 +1,20 @@
 @page "{id:int}"
 @model enx_fit.Pages.Workouts.EditModel
 @{
+    Layout = Model.IsAdministrator ? "_AdminLayout" : "_DashboardReferenceLayout";
     ViewData["Title"] = "Редактировать тренировку";
 }
 
+@section Styles { <link rel="stylesheet" href="~/css/record-pages.css" asp-append-version="true" /> }
+<div class="record-page app-workspace">
 <div class="mb-4">
     <h1 class="h3 mb-1">Редактировать тренировку</h1>
-    <p class="text-muted mb-0">Измените владельца, дату, название или заметки к тренировке.</p>
+    <p class="text-muted mb-0">@(Model.IsAdministrator ? "Измените владельца, дату, название или заметки к тренировке." : "Измените дату, название или заметки к тренировке.")</p>
 </div>
 
 <div class="card">
     <div class="card-body">
-        <form method="post">
+        <form method="post" data-admin-form>
             <input type="hidden" asp-for="Id" />
             @if (Model.IsAdministrator)
             {
@@ -29,13 +32,16 @@
             }
             <partial name="_WorkoutForm" for="Input" />
             <div class="d-flex gap-2">
-                <button class="btn btn-primary" type="submit">Сохранить изменения</button>
-                <a class="btn btn-outline-secondary" asp-page="./Details" asp-route-id="@Model.Id">Отмена</a>
+                <button class="btn btn-primary app-button" type="submit">Сохранить изменения</button>
+                <a class="btn btn-outline-secondary app-button secondary" asp-page="./Details" asp-route-id="@Model.Id">Отмена</a>
             </div>
         </form>
     </div>
 </div>
 
 @section Scripts {
+    @if (!Model.IsAdministrator) { <script src="~/lib/jquery/dist/jquery.min.js"></script> }
     <partial name="_ValidationScriptsPartial" />
+    @if (!Model.IsAdministrator) { <script src="~/js/admin-workspace.js" asp-append-version="true"></script> }
 }
+</div>

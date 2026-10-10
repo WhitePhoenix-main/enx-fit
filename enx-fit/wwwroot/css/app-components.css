@@ -1,0 +1,94 @@
+/* Shared application controls. Page styles own grids, sticky offsets and keyboard geometry. */
+:root {
+  --app-accent:#91b0ff; --app-focus:#a5c3ff; --app-border:#344b6a;
+  --app-control-size:36px; --app-field-size:44px; --app-field-font:14px;
+  --app-notice-info:#b5ceff; --app-notice-saved:#a8dccd;
+  --app-notice-local:#bbceff; --app-notice-pending:#f0cf88; --app-notice-error:#ffbecd;
+}
+.app-workspace { --app-control-size:44px; }
+:where(.app-button,.button,.wb-button) { display:inline-flex; }
+.app-button,.button,.wb-button { align-items:center; justify-content:center; gap:9px;
+  min-height:var(--app-control-size); padding:9px 16px; border:1px solid var(--app-button-border,#7191ff);
+  border-radius:10px; background:var(--app-button-bg,linear-gradient(110deg,#5b8bff,#4359ed));
+  color:var(--app-button-text,#fff); font-size:13px; line-height:1.45; font-family:inherit; font-weight:600;
+  box-shadow:var(--app-button-shadow,0 4px 20px #1f4dea16,inset 0 1px #ffffff15);
+  cursor:pointer; transition:filter .15s,transform .15s; text-align:center; text-decoration:none;
+}
+.app-button:hover,.button:hover,.wb-button:hover { filter:brightness(1.12); }
+.app-button:active,.button:active,.wb-button:active { transform:scale(.98); }
+.app-button svg,.button svg,.wb-button svg { flex:none; width:17px; height:17px; }
+.app-button.secondary,.button.secondary,.wb-button {
+  --app-button-border:#32425a; --app-button-bg:linear-gradient(110deg,#1e2b40,#1a2537);
+  --app-button-text:#c4d5f7; --app-button-shadow:none;
+}
+.app-button[role=tab][aria-selected=true] { --app-button-border:#7191ff; --app-button-bg:linear-gradient(110deg,#5b8bff,#4359ed); --app-button-text:#fff; --app-button-shadow:inset 0 1px #ffffff15; }
+.wb-button.wb-primary { --app-button-border:#7191ff; --app-button-bg:linear-gradient(110deg,#5b8bff,#4359ed); --app-button-text:#fff; --app-button-shadow:inset 0 1px #ffffff15; }
+.app-button.danger { --app-button-border:#9a5068; --app-button-bg:#552838; --app-button-text:#ffdae3; }
+.app-button:disabled,.button:disabled,.wb-button:disabled { opacity:.45; cursor:default; filter:none; transform:none; }
+:where(.app-icon-button,.icon-button,.wb-icon) { display:inline-grid; }
+.app-icon-button,.icon-button,.wb-icon {
+  width:var(--app-icon-size,40px); height:var(--app-icon-size,40px); min-width:var(--app-icon-size,40px); min-height:var(--app-icon-size,40px);
+  place-items:center; padding:6px; flex:none; background:var(--app-icon-bg,#192b42);
+  border:1px solid var(--app-icon-border,var(--app-border)); border-radius:10px; color:var(--app-icon-text,#b7cbea); cursor:pointer;
+}
+.app-workspace { --app-icon-size:44px; }
+.wb-icon { --app-icon-size:32px; }
+.app-icon-button:disabled,.icon-button:disabled,.wb-icon:disabled { opacity:.4; cursor:default; }
+:is(.app-button,.button,.wb-button,.app-icon-button,.icon-button,.wb-icon,.app-item-row,.app-tabs a,.program-tabs a):focus-visible { outline:2px solid var(--app-focus); outline-offset:3px; }
+.app-field,.app-workspace :is(input,select,textarea):not([type=hidden]):not([type=checkbox]):not([type=radio]),.wb-dialog :is(input,select) {
+  display:block; width:100%; min-width:0; min-height:var(--app-field-size); padding:var(--app-field-padding,10px 12px);
+  border:1px solid var(--app-border); border-radius:9px; background:#101c2d; color:#edf3ff;
+  font-family:inherit; font-size:var(--app-field-font); line-height:1.5; color-scheme:dark;
+}
+.app-field:focus-visible,.app-workspace :is(input,select,textarea):not([type=hidden]):focus-visible,.wb-dialog :is(input,select):focus-visible { outline:2px solid var(--app-focus); outline-offset:3px; }
+.app-workspace :is(input,select,textarea):disabled { opacity:.6; cursor:default; }
+.app-workspace :is(.input-validation-error,[aria-invalid=true]) { border-color:#d889a1; }
+.app-workspace :is(.set-main,.record-set-main) { --app-field-font:17px; }
+.app-disclosure>summary { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:44px; cursor:pointer; list-style:none; color:#b7cbea; font-size:12px; line-height:1.5; }
+.app-disclosure>summary::-webkit-details-marker { display:none; }
+.app-disclosure>summary:focus-visible { outline:2px solid var(--app-focus); outline-offset:3px; }
+.app-disclosure:not(:has(>summary>svg:last-child))>summary::after { content:'›'; margin-left:auto; flex:none; font-size:20px; transition:rotate .18s; }
+.app-disclosure[open]>summary::after { rotate:90deg; }
+.app-disclosure>summary>svg:last-child { width:16px; height:16px; flex:none; transition:rotate .18s; }
+.app-disclosure[open]>summary>svg:last-child { rotate:90deg; }
+.app-tabs,.program-tabs { display:flex; gap:8px; overflow-x:auto; white-space:nowrap; padding:4px 0 12px; margin-bottom:24px; border-bottom:1px solid var(--app-border); }
+.app-tabs a,.program-tabs a { display:inline-flex; align-items:center; min-height:44px; padding:10px 16px; border-radius:9px; color:#a8bdd9; }
+.app-tabs [aria-current=page],.program-tabs .active { color:#f0f5ff; background:#6390ff20; box-shadow:inset 0 -2px #7da0ff; }
+.app-status { --app-status-color:var(--app-notice-info); color:var(--app-status-color); font-size:12px; line-height:1.65; overflow-wrap:anywhere; }
+.app-status[data-app-state] { color:var(--app-status-color); }
+.app-status[data-app-state=saved] { --app-status-color:var(--app-notice-saved); }
+.app-status[data-app-state=local] { --app-status-color:var(--app-notice-local); }
+.app-status[data-app-state=pending] { --app-status-color:var(--app-notice-pending); }
+.app-status[data-app-state=error] { --app-status-color:var(--app-notice-error); }
+.app-notice { padding:12px 14px; border:1px solid #344b6a; border-left:3px solid var(--app-status-color,var(--app-notice-info)); border-radius:10px; background:#15263a; }
+.app-notice.validation-summary-valid { display:none; }
+.app-notice ul { padding-left:20px; margin:0; }
+.app-savebar { border:1px solid #344b6a; border-radius:14px; background:#132237f5; box-shadow:0 8px 28px #0005; backdrop-filter:blur(14px); }
+:is(.button,.wb-button,.app-button)[aria-busy=true]::after { content:''; flex:none; width:12px; height:12px; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:app-control-busy .7s linear infinite; }
+@keyframes app-control-busy { to { rotate:360deg; } }
+.app-item-row { display:flex; align-items:center; gap:10px; min-height:56px; width:100%; min-width:0; padding:12px; text-align:left; border:1px solid #2c4261; border-radius:10px; background:#101e30; color:#b8cbea; cursor:pointer; }
+.app-item-row[aria-current=step],.app-item-row[aria-current=true] { border-color:#7499ff; background:#1b3154; color:#f0f5ff; }
+.app-item-row strong,.app-item-row small { display:block; overflow-wrap:anywhere; }
+.app-item-row small { color:#a7bddb; font-size:11px; line-height:1.5; margin-top:4px; }
+.app-item-row .app-exercise-state { color:#a8bddb; font-size:10px; }
+.app-item-row[data-app-step=done] .app-exercise-state { color:#b8dfd2; }
+.app-item-row:is([data-app-step=paused],[data-app-step=rest],[data-app-step=skipped]) .app-exercise-state { color:#e7c588; }
+.app-item-row[data-app-step=current] .app-exercise-state { color:#c4d6ff; }
+.workout-order-row { position:relative; }
+.workout-order-row:has(+.workout-order-row)::after { content:''; position:absolute; left:27px; bottom:-9px; width:1px; height:9px; background:#3f5778; pointer-events:none; }
+.app-set-row { border-top:1px solid #30445e; padding-block:12px; }
+.session-exercise .set-form.app-set-row { margin-block:0; border-inline:0; border-bottom:0; border-radius:0; }
+.app-workspace .text-button { min-height:44px; }
+@media(max-width:1023px) {
+  .app-workspace,.wb-dialog { --app-control-size:48px; --app-field-size:48px; --app-field-font:16px; --app-icon-size:44px; }
+  .app-workspace :is(.set-main,.record-set-main) { --app-field-font:16px; }
+  .app-workspace .wb-icon,.app-workspace .wb-small { min-width:44px; min-height:44px; }
+  .app-workspace .wb-icon { width:44px; height:44px; }
+  .app-workspace .wb-button { min-height:48px; }
+  .app-workspace .app-disclosure>summary { min-height:48px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .app-button,.button,.wb-button,.app-disclosure>summary::after,.app-disclosure>summary>svg:last-child { transition:none; }
+  .app-button:active,.button:active,.wb-button:active { transform:none; }
+  :is(.button,.wb-button,.app-button)[aria-busy=true]::after { animation:none; }
+}

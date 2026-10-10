@@ -9,9 +9,10 @@
     <partial name="_AppIcons" />
     <link rel="preload" as="image" href="~/images/auth/space.webp" />
     <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app-components.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="auth-page">
+<body class="auth-page app-workspace">
     <div class="auth-universe" aria-hidden="true">
         <div class="auth-space"></div>
         <div class="auth-aurora auth-aurora-one"></div>
@@ -34,13 +35,14 @@
         </nav>
     </footer>
     <dialog class="auth-dialog" id="auth-dialog" aria-labelledby="auth-dialog-title" aria-describedby="auth-dialog-description">
-        <button type="button" class="auth-dialog-close" data-close-auth-dialog aria-label="Закрыть">×</button>
+        <button type="button" class="auth-dialog-close app-icon-button" data-close-auth-dialog aria-label="Закрыть">×</button>
         <p class="auth-eyebrow">Enix Fit</p>
         <h2 id="auth-dialog-title"></h2>
         <p id="auth-dialog-description"></p>
-        <button type="button" class="auth-submit" data-close-auth-dialog>Понятно</button>
+        <button type="button" class="auth-submit app-button" data-close-auth-dialog>Понятно</button>
     </dialog>
     <script src="~/js/vendor/qrcode.js" asp-append-version="true" defer></script>
+    <script src="~/js/app-components.js" asp-append-version="true" defer></script>
     <script src="~/js/auth.js" asp-append-version="true" defer></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

@@ -6,6 +6,7 @@
   const buttons = [...form.querySelectorAll('[data-select-workout]')];
   const selected = form.querySelector('[data-selected-workout]');
   const status = form.querySelector('[data-plan-save-status]');
+  const initialStatus = {text:status.textContent, state:status.dataset.appState};
   const scrollKey = `plan-editor-scroll:${location.pathname}`;
   const about = form.querySelector('[data-plan-about]');
   about.addEventListener('toggle', () => { form.querySelector('[data-about-expanded]').value = String(about.open); });
@@ -54,7 +55,7 @@
     schedule.textContent = repeated ? 'В один день можно назначить одну тренировку. Выберите другой день для повторяющихся.' :
       days.length !== frequency ? `Дней в расписании: ${days.length}, тренировок в неделю: ${frequency}. Согласуйте их перед сохранением.` : `Расписание готово. Тренировочных дней в неделю: ${days.length}. Остальные дни — отдых.`;
   };
-  const setDirty = () => { dirty = true; status.textContent = 'Изменения не сохранены'; status.classList.add('is-dirty'); update(); };
+  const setDirty = () => { dirty = true; status.textContent = 'Изменения не сохранены'; status.classList.add('is-dirty'); window.AppComponents?.setNoticeState(status, 'pending'); update(); };
   form.addEventListener('input', setDirty);
   form.addEventListener('change', setDirty);
   if (dirty) status.classList.add('is-dirty');
@@ -77,12 +78,18 @@
     }
     submitting = true;
     status.textContent = structure ? 'Обновляем состав…' : 'Сохраняем программу…';
+    window.AppComponents?.setNoticeState(status, 'pending');
     if (button) button.setAttribute('aria-busy', 'true');
   });
   window.addEventListener('beforeunload', event => {
     if (dirty && !submitting) { event.preventDefault(); event.returnValue = ''; }
   });
-  window.addEventListener('pageshow', () => { submitting = false; });
+  window.addEventListener('pageshow', () => {
+    submitting = false;
+    form.querySelectorAll('[aria-busy="true"]').forEach(button => button.removeAttribute('aria-busy'));
+    status.textContent = dirty ? 'Изменения не сохранены' : initialStatus.text;
+    window.AppComponents?.setNoticeState(status, dirty ? 'pending' : initialStatus.state);
+  });
   try {
     const previous = JSON.parse(sessionStorage.getItem(scrollKey) || 'null');
     sessionStorage.removeItem(scrollKey);
@@ -97,12 +104,14 @@
   else if (form.querySelector('.validation-summary-errors')) form.querySelector('.validation-summary-errors').scrollIntoView({block:'start',behavior:'instant'});
 
   const savebar = form.querySelector('.plan-savebar');
-  let viewportHeight = window.visualViewport?.height || innerHeight;
+  let viewportHeight = window.visualViewport?.height || innerHeight, viewportWidth = innerWidth;
   const keyboardLayout = () => {
     const viewport = window.visualViewport;
     if (!viewport) return;
+    if (viewportWidth !== innerWidth) { viewportWidth = innerWidth; viewportHeight = viewport.height; }
     const input = document.activeElement;
-    const editing = matchMedia('(max-width:1023px)').matches && form.contains(input) && input?.matches('input:not([type="hidden"]),textarea');
+    const editing = matchMedia('(max-width:1023px)').matches && form.contains(input) && !input?.closest('dialog') &&
+      input?.matches('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),textarea');
     const inset = Math.max(0, innerHeight - viewport.height - viewport.offsetTop);
     const open = editing && (inset > 120 || viewportHeight - viewport.height > 120);
     document.body.classList.toggle('plan-keyboard-open', !!open);

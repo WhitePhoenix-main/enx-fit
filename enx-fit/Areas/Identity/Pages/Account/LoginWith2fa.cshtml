@@ -8,12 +8,12 @@
 <section class="auth-card auth-step-card">
     <p class="auth-step-label"><span>1. Пароль проверен</span><strong>2. Код из приложения</strong></p>
     <form method="post" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe" data-auth-form>
-        <div asp-validation-summary="ModelOnly" class="auth-errors" role="alert"></div>
+        <div asp-validation-summary="ModelOnly" class="auth-errors app-status app-notice" data-app-state="error" role="alert"></div>
         <div class="auth-field"><label asp-for="Input.TwoFactorCode">Код из приложения</label><div class="auth-input auth-code-input"><input asp-for="Input.TwoFactorCode" type="text" autocomplete="one-time-code" inputmode="numeric" placeholder="000 000" maxlength="8" spellcheck="false" aria-describedby="code-error" required /></div><span asp-validation-for="Input.TwoFactorCode" id="code-error" class="auth-field-error"></span></div>
         <div class="auth-options"><label class="auth-remember"><input asp-for="Input.RememberMachine" /><span>Запомнить это устройство</span></label></div>
         <p class="auth-hint">Выбирайте только на своём устройстве.</p>
-        <button type="submit" class="auth-submit"><span>Войти</span><svg class="auth-icon" aria-hidden="true"><use href="#auth-arrow" /></svg></button>
-        <p data-auth-feedback class="auth-form-feedback" role="status" aria-live="polite"></p>
+        <button type="submit" class="auth-submit app-button"><span>Войти</span><svg class="auth-icon" aria-hidden="true"><use href="#auth-arrow" /></svg></button>
+        <p data-auth-feedback class="auth-form-feedback app-status app-notice" data-app-state="info" hidden role="status" aria-live="polite"></p>
     </form>
     <p class="auth-secondary-link"><a asp-page="./LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe">Использовать код восстановления</a></p>
 </section>

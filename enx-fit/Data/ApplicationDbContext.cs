@@ -76,6 +76,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         modelBuilder.Entity<Exercise>(entity =>
         {
+            entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.Name)
                 .HasMaxLength(120)
                 .IsRequired();
@@ -84,14 +85,14 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .IsUnique();
 
             entity.HasData(
-                new Exercise { Id = 1, Name = "Bench Press", MuscleGroup = "Грудь", Equipment = "Штанга, скамья" },
-                new Exercise { Id = 2, Name = "Squat", MuscleGroup = "Квадрицепсы", Equipment = "Штанга" },
-                new Exercise { Id = 3, Name = "Deadlift", MuscleGroup = "Всё тело", Equipment = "Штанга" },
-                new Exercise { Id = 4, Name = "Pull Up", MuscleGroup = "Спина", Equipment = "Турник" },
-                new Exercise { Id = 5, Name = "Overhead Press", MuscleGroup = "Плечи", Equipment = "Штанга" },
-                new Exercise { Id = 6, Name = "Romanian Deadlift", MuscleGroup = "Задняя поверхность бедра", Equipment = "Штанга" },
-                new Exercise { Id = 7, Name = "Leg Press", MuscleGroup = "Квадрицепсы", Equipment = "Тренажёр для жима ногами" },
-                new Exercise { Id = 8, Name = "Barbell Row", MuscleGroup = "Спина", Equipment = "Штанга" });
+                new Exercise { Id = ExerciseIds.FromLegacy(1), Name = "Bench Press", MuscleGroup = "Грудь", Equipment = "Штанга, скамья" },
+                new Exercise { Id = ExerciseIds.FromLegacy(2), Name = "Squat", MuscleGroup = "Квадрицепсы", Equipment = "Штанга" },
+                new Exercise { Id = ExerciseIds.FromLegacy(3), Name = "Deadlift", MuscleGroup = "Всё тело", Equipment = "Штанга" },
+                new Exercise { Id = ExerciseIds.FromLegacy(4), Name = "Pull Up", MuscleGroup = "Спина", Equipment = "Турник" },
+                new Exercise { Id = ExerciseIds.FromLegacy(5), Name = "Overhead Press", MuscleGroup = "Плечи", Equipment = "Штанга" },
+                new Exercise { Id = ExerciseIds.FromLegacy(6), Name = "Romanian Deadlift", MuscleGroup = "Задняя поверхность бедра", Equipment = "Штанга" },
+                new Exercise { Id = ExerciseIds.FromLegacy(7), Name = "Leg Press", MuscleGroup = "Квадрицепсы", Equipment = "Тренажёр для жима ногами" },
+                new Exercise { Id = ExerciseIds.FromLegacy(8), Name = "Barbell Row", MuscleGroup = "Спина", Equipment = "Штанга" });
             entity.HasData(ExerciseCatalog.All);
         });
 

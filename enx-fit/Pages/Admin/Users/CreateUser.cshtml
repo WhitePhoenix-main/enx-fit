@@ -10,7 +10,7 @@
         <h1>Добавить пользователя</h1>
         <p>Создайте аккаунт, чтобы назначать тренировки и вести историю прогресса.</p>
     </div>
-    <a class="btn btn-outline-secondary" asp-page="./Index">
+    <a class="btn btn-outline-secondary app-button secondary" asp-page="./Index">
         <admin-icon name="back" />К списку</a>
 </div>
 <section class="admin-card admin-form-card">
@@ -18,11 +18,11 @@
         <h2>Данные для входа</h2>
         <span class="admin-badge blue">Пользователь</span>
     </div>
-    <form method="post" class="admin-form">
-        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+    <form method="post" class="admin-form" data-admin-form>
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger app-status app-notice" data-app-state="error"></div>
         <div class="mb-3">
             <label asp-for="Input.Email" class="form-label"></label>
-            <input asp-for="Input.Email" class="form-control" autocomplete="off" placeholder="name@example.com" />
+            <input asp-for="Input.Email" class="form-control" type="email" inputmode="email" autocomplete="off" placeholder="name@example.com" />
             <span asp-validation-for="Input.Email" class="text-danger"></span>
         </div>
         <div class="mb-3">
@@ -36,10 +36,11 @@
             <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" />
             <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
         </div>
+        <p class="admin-form-feedback app-status app-notice" data-app-state="info" aria-live="polite" role="status" hidden data-admin-feedback></p>
         <div class="admin-form-actions">
-            <button class="btn btn-primary" type="submit">
+            <button class="btn btn-primary app-button" type="submit">
                 <admin-icon name="plus" />Создать пользователя</button>
-            <a class="btn btn-outline-secondary" asp-page="./Index">Отмена</a>
+            <a class="btn btn-outline-secondary app-button secondary" asp-page="./Index">Отмена</a>
         </div>
     </form>
 </section>

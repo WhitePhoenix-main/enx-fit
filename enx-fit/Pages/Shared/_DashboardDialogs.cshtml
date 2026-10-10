@@ -8,7 +8,7 @@
     string N(decimal value) => value.ToString("N0", ru);
     var next = d.NextWorkout;
 }
-<dialog id="goal-dialog" class="app-dialog">
+<dialog id="goal-dialog" class="app-dialog app-workspace">
 <div class="dialog-heading">
 <h2>@(coach ? "Цель и рекомендации клиента" : "Моя цель")</h2>
 <button class="icon-button" data-close aria-label="Закрыть">
@@ -31,7 +31,7 @@
 </dialog>
 @if (!coach)
 {
-<dialog id="checkin-dialog" class="app-dialog">
+<dialog id="checkin-dialog" class="app-dialog app-workspace">
 <div class="dialog-heading">
 <h2>Показатели на сегодня</h2>
 <button class="icon-button" data-close aria-label="Закрыть">
@@ -65,7 +65,7 @@
 </form>
 </dialog>
 }
-<dialog id="records-dialog" class="app-dialog">
+<dialog id="records-dialog" class="app-dialog app-workspace">
 <div class="dialog-heading">
 <h2>Силовые рекорды</h2>
 <button class="icon-button" data-close aria-label="Закрыть">
@@ -77,7 +77,7 @@
 <span>@record.Name</span>
 <strong>@N(record.Weight) кг</strong>
 </div> }@if (!d.Records.Any()) { <p class="card-empty">Пока нет рабочих подходов с весом.</p> }</dialog>
-<dialog id="workouts-dialog" class="app-dialog wide-dialog">
+<dialog id="workouts-dialog" class="app-dialog app-workspace wide-dialog">
 <div class="dialog-heading">
 <h2>История тренировок</h2>
 <button class="icon-button" data-close aria-label="Закрыть">
@@ -96,7 +96,7 @@
 </button> }@if (!d.PeriodWorkouts.Any()) { <p class="card-empty">В этом периоде тренировок пока нет.</p> }</dialog>
 @foreach (var w in d.PeriodWorkouts.Concat(d.Completed.Take(1)).Concat(next is null ? [] : new[] { next }).DistinctBy(w => w.Id))
 {
-    <dialog id="workout-@w.Id" class="app-dialog wide-dialog">
+    <dialog id="workout-@w.Id" class="app-dialog app-workspace wide-dialog">
 <div class="dialog-heading">
 <h2>@(w.Title ?? "Тренировка")</h2>
 <button class="icon-button" data-close aria-label="Закрыть">

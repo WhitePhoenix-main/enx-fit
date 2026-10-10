@@ -1,2 +1,2 @@
 @model IReadOnlyList<enx_fit.ViewModels.PublicFaq>
-<div class="faq-items">@foreach (var item in Model) { <details id="@item.Id"><summary>@item.Question</summary><p>@item.Answer</p></details> }</div>
+<div class="faq-items">@foreach (var item in Model) { <details id="@item.Id" class="app-disclosure"><summary>@item.Question</summary><p>@item.Answer</p></details> }</div>

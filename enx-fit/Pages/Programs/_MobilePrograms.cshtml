@@ -7,7 +7,7 @@
 <div class="ef-mobile-screen em-programs">
     <header class="em-page-heading"><h1>Программы</h1><a class="em-primary" asp-page="Edit"><reference-icon name="plus" />Создать</a></header>
     <nav class="em-segments" aria-label="Разделы программ"><a href="@PageUrl()" class="@(Model.Tab == "mine" ? "active" : "")">Мои программы</a><a href="@PageUrl("templates")" class="@(Model.Tab == "templates" ? "active" : "")">Готовые планы</a>@if (Model.Access.IsCoach && !Model.Reference) { <a href="@PageUrl("assigned")" class="@(Model.Tab == "assigned" ? "active" : "")">Назначенные</a> }</nav>
-    <div asp-validation-summary="All" class="program-notice error" role="alert"></div>
+    <div asp-validation-summary="All" class="program-notice error app-status app-notice" data-app-state="error" role="alert"></div>
     @if (Model.ShowUpgrade) { <partial name="_UpgradePrompt" model="@(-1)" /> }
     @if (Model.PageError is not null) { <partial name="_ProgramError" model="Model.PageError" /> }
     else {
@@ -21,7 +21,16 @@
         }
         <div class="em-program-list">
             @foreach (var card in Model.Reference && Model.Tab == "mine" && !Model.Archived ? vm.Others.Take(1) : vm.Others) { var p = card.Program;
-                <article class="em-card em-program-card @(p.IsTemplate ? "em-template-card" : "")"><reference-photo image="programs" window="120 1206 157 159" alt="Гантели в тренажёрном зале"/><div><h2>@p.Name</h2><p>@p.Weeks @(p.Weeks == 4 ? "недели" : "недель") · @p.DaysPerWeek раза в неделю</p><span class="em-saved"><reference-icon name="check" />@card.Status</span>@if (p.IsTemplate) { <div class="em-template-actions"><button type="button" class="em-outline" data-dialog="template-preview-@p.Id">Состав</button><form method="post" asp-page-handler="Duplicate" asp-route-id="@p.Id" asp-route-Tab="templates" data-busy><button class="em-outline" type="submit">Выбрать</button></form></div> }</div>@if (!p.IsTemplate) { <a class="em-card-link" href="@(Model.Reference ? "#program-preview-" + p.Id : Url.Page("Details", new { id = p.Id }))" data-dialog="@(Model.Reference ? "program-preview-" + p.Id : null)" aria-label="Открыть программу @p.Name"></a><reference-icon name="chevron" /> }</article>
+                <article class="em-card em-program-card @(p.IsTemplate ? "em-template-card" : "")" data-mobile-program-id="@p.Id">
+                    @if (ProgramTemplatePresentation.IsStarter(p)) { <span class="em-starter-photo" aria-hidden="true"><reference-icon name="workout" /></span> }
+                    else { <reference-photo image="programs" window="120 1206 157 159" alt="Гантели в тренажёрном зале"/> }
+                    <div><h2>@p.Name</h2><p>@p.Weeks @(p.Weeks == 4 ? "недели" : "недель") · @p.DaysPerWeek раза в неделю</p>
+                        @if (ProgramTemplatePresentation.IsStarter(p)) { <span class="plan-starter-label">@ProgramTemplatePresentation.StarterEquipment(p)</span> }
+                        else { <span class="em-saved"><reference-icon name="check" />@card.Status</span> }
+                        @if (p.IsTemplate) { <div class="em-template-actions"><button type="button" class="em-outline" data-dialog="template-preview-@p.Id">Состав</button><form method="post" asp-page-handler="Duplicate" asp-route-id="@p.Id" asp-route-Tab="templates" data-busy><button class="em-outline" type="submit">Выбрать</button></form></div> }
+                    </div>
+                    @if (!p.IsTemplate) { <a class="em-card-link" href="@(Model.Reference ? "#program-preview-" + p.Id : Url.Page("Details", new { id = p.Id }))" data-dialog="@(Model.Reference ? "program-preview-" + p.Id : null)" aria-label="Открыть программу @p.Name"></a><reference-icon name="chevron" /> }
+                </article>
             }
         </div>
         @if (vm.Active is null && vm.Others.Count == 0 && !(Model.Tab == "templates" && Model.MatchPreferences && Model.HasPreferences)) { <section class="em-card em-empty"><reference-icon name="calendar"/><h2>@(Model.Archived ? "Архив пока пуст" : Model.Tab == "templates" ? "Планы не найдены" : "Начните свою программу")</h2><p>@(Model.Tab == "templates" ? "Попробуйте другие фильтры или создайте свой план." : "Выберите готовую программу или создайте свой план.")</p><a class="em-primary" href="@(Model.Tab == "templates" ? Url.Page("Edit") : PageUrl("templates"))">@(Model.Tab == "templates" ? "Создать программу" : "Выбрать план")</a></section> }

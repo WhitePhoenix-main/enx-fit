@@ -64,7 +64,7 @@ public sealed class ProgramWorkoutExercise
 {
     public int Id { get; set; }
     public int ProgramWorkoutId { get; set; }
-    public int ExerciseId { get; set; }
+    public Guid ExerciseId { get; set; }
     public Exercise Exercise { get; set; } = null!;
     public int Order { get; set; }
     public ExercisePrescription Prescription { get; set; } = new();

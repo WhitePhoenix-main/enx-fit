@@ -1,10 +1,15 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using enx_fit.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace enx_fit.ViewModels;
 
 public class AddWorkoutExerciseInputModel
 {
-    [DeniedValues(0, ErrorMessage = "Выберите упражнение.")]
+    [ExerciseIdentifier(ErrorMessage = "Выберите упражнение.")]
     [Display(Name = "Упражнение")]
-    public int ExerciseId { get; set; }
+    [JsonConverter(typeof(ExerciseIdJsonConverter))]
+    [ModelBinder(BinderType = typeof(ExerciseIdModelBinder))]
+    public Guid ExerciseId { get; set; }
 }

@@ -7,7 +7,10 @@
  const steps=[...form.querySelectorAll('[data-setup-step]')],tabs=[...form.querySelectorAll('[data-setup-goto]')];
  const next=form.querySelector('[data-setup-next]'),back=form.querySelector('[data-setup-back]'),save=form.querySelector('[data-setup-save]'),status=form.querySelector('[data-setup-status]');
  const later=form.querySelector('[name="Input.DaysLater"][type="checkbox"]'),dayInputs=[...form.querySelectorAll('[name="Input.Days"]')];
- const revision=form.querySelector('[name="Input.Revision"]').value;let step=0,stored=false;
+ const revision=form.querySelector('[name="Input.Revision"]').value;let step=0,stored=false,busy=false;
+ const notice=state=>window.AppComponents?.setNoticeState(status,state);
+ const buttons=[...form.querySelectorAll('.setup-actions button,.setup-steps button')];
+ const resetBusy=()=>{busy=false;buttons.forEach(button=>{button.disabled=false;button.removeAttribute('aria-busy');});};
  const selected=name=>[...form.querySelectorAll(`[name="${name}"]:checked`)].map(input=>input.value);
  const title=input=>{const label=input?.closest('label');return (label?.querySelector('strong')||label?.querySelector('span'))?.textContent.trim();};
  const data=()=>({version:1,revision,step,goal:selected('Input.Goal')[0],location:selected('Input.Location')[0],equipment:selected('Input.Equipment'),days:selected('Input.Days'),later:later.checked});
@@ -40,7 +43,7 @@
      if(!Array.isArray(values))continue;form.querySelectorAll(`[name="${name}"]`).forEach(input=>input.checked=values.includes(input.value));
     }
     later.checked=draft.later===true;step=Number.isInteger(draft.step)?Math.max(0,Math.min(3,draft.step)):0;
-    status.textContent='Ваш выбор восстановлен в этой вкладке.';
+    status.textContent='Ваш выбор восстановлен в этой вкладке. Он ещё не отправлен.';notice('local');
    }
   }catch{}
  }
@@ -53,15 +56,20 @@
  if(step>1&&!form.querySelector('[name="Input.Location"]:checked'))step=1;
  if(step>2&&!later.checked&&!dayInputs.some(input=>input.checked))step=2;
  show(step);
- form.addEventListener('change',event=>{renderSummary();persist();if(['Input.Days','Input.DaysLater'].includes(event.target.name))form.querySelector('[data-setup-days-error]').hidden=later.checked||dayInputs.some(input=>input.checked);});
+ form.addEventListener('change',event=>{renderSummary();persist();status.textContent=stored?'Ваш выбор сохранён в этой вкладке. Он ещё не отправлен.':'Выбор остался на странице. Сохраните условия, когда будете готовы.';notice(stored?'local':'info');if(['Input.Days','Input.DaysLater'].includes(event.target.name))form.querySelector('[data-setup-days-error]').hidden=later.checked||dayInputs.some(input=>input.checked);});
  next.addEventListener('click',()=>{if(validate(step))show(step+1,true);});back.addEventListener('click',()=>show(step-1,true));
  tabs.forEach((tab,index)=>tab.addEventListener('click',()=>{if(index>step){for(let i=step;i<index;i++)if(!validate(i))return;}show(index,true);}));
  form.addEventListener('submit',event=>{
+  if(busy){event.preventDefault();return;}
   const skip=event.submitter?.matches('[data-setup-skip]');
   if(!skip){for(let i=0;i<3;i++)if(!validate(i)){event.preventDefault();return;}if(step!==3){event.preventDefault();show(3,true);return;}}
-  if(!navigator.onLine){event.preventDefault();persist();status.textContent=stored?'Сейчас нет сети. Ваш выбор сохранён в этой вкладке; повторите после подключения.':'Сейчас нет сети. Оставьте страницу открытой и повторите после подключения.';return;}
+  if(!navigator.onLine){event.preventDefault();persist();status.textContent=stored?'Сейчас нет сети. Ваш выбор сохранён в этой вкладке; повторите после подключения.':'Сейчас нет сети. Оставьте страницу открытой и повторите после подключения.';notice('error');return;}
   if(skip){try{sessionStorage.removeItem(key);}catch{}}else persist();
-  status.textContent=skip?'Откладываем настройку…':'Сохраняем условия…';
+  busy=true;event.submitter?.setAttribute('aria-busy','true');
+  // Preserve the native submitter and its handler until the form is serialized.
+  setTimeout(()=>{if(busy)buttons.forEach(button=>button.disabled=true);},0);
+  status.textContent=skip?'Ожидаем подтверждения переноса настройки…':'Ожидаем подтверждения сохранения…';notice('pending');
  });
- window.addEventListener('online',()=>{status.textContent='Подключение восстановлено. Можно сохранить условия.';});
+ window.addEventListener('online',()=>{if(status.dataset.appState==='error'){status.textContent='Подключение восстановлено. Можно сохранить условия.';notice('local');}});
+ window.addEventListener('pageshow',()=>{const wasBusy=busy;resetBusy();if(wasBusy){persist();status.textContent=stored?'Выбор сохранён в этой вкладке. Проверьте его и повторите сохранение.':'Выбор остался на странице. Повторите сохранение.';notice(stored?'local':'info');}});
 })();

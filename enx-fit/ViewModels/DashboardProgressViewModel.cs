@@ -6,8 +6,8 @@ using enx_fit.Services;
 namespace enx_fit.ViewModels;
 
 public sealed record ProgressPoint(DateOnly Date, decimal Value, int? WorkoutId = null, int? Reps = null);
-public sealed record ProgressExerciseOption(int Id, string Name);
-public sealed record ProgressRecord(int ExerciseId, string Name, decimal Weight, DateOnly Date, int WorkoutId, string Photo);
+public sealed record ProgressExerciseOption(Guid Id, string Name);
+public sealed record ProgressRecord(Guid ExerciseId, string Name, decimal Weight, DateOnly Date, int WorkoutId, string Photo);
 public sealed record ProgressWeek(DateOnly Since, DateOnly Until, int Count);
 public sealed record ProgressChart(string Id, string Label, IReadOnlyList<ProgressPoint> Points, bool Compact = false, bool DecimalLabels = false, (decimal Min, decimal Max, decimal Step)? FixedScale = null, DateOnly? Since = null, DateOnly? Until = null, bool DayHistory = false)
 {
@@ -33,7 +33,7 @@ public sealed class DashboardProgressViewModel
     public DateOnly Since { get; }
     public DateOnly Until { get; }
     public IReadOnlyList<ProgressExerciseOption> Exercises { get; }
-    public int? ExerciseId { get; }
+    public Guid? ExerciseId { get; }
     public string ExerciseName { get; }
     public IReadOnlyList<ProgressPoint> Strength { get; }
     public IReadOnlyList<ProgressPoint> Body { get; }
@@ -59,11 +59,11 @@ public sealed class DashboardProgressViewModel
         ChartSince = chartSince;
         if (model.Reference)
         {
-            Exercises = [new(1, "Жим лёжа"), new(2, "Приседания"), new(3, "Тяга")];
-            ExerciseId = model.ProgressExercise ?? 1;
+            Exercises = [new(ExerciseIds.FromLegacy(1), "Жим лёжа"), new(ExerciseIds.FromLegacy(2), "Приседания"), new(ExerciseIds.FromLegacy(3), "Тяга")];
+            ExerciseId = model.ProgressExercise ?? ExerciseIds.FromLegacy(1);
             ExerciseName = Exercises.FirstOrDefault(e => e.Id == ExerciseId)?.Name ?? "Упражнение не найдено";
             var dates = new[] { new DateOnly(2026, 8, 20), new(2026, 9, 3), new(2026, 9, 10), new(2026, 9, 17), new(2026, 9, 24), new(2026, 9, 30) };
-            var values = ExerciseId switch { 1 => new[] { 55m, 55m, 57.5m, 57.5m, 60m, 60m }, 2 => [70m, 72.5m, 75m, 80m, 80m, 80m], 3 => [85m, 90m, 90m, 90m, 90m, 90m], _ => [] };
+            var values = (ExerciseId.HasValue && ExerciseIds.TryGetLegacy(ExerciseId.Value, out var legacyId) ? legacyId : 0) switch { 1 => new[] { 55m, 55m, 57.5m, 57.5m, 60m, 60m }, 2 => [70m, 72.5m, 75m, 80m, 80m, 80m], 3 => [85m, 90m, 90m, 90m, 90m, 90m], _ => [] };
             var allStrength = dates.Take(values.Length).Select((date, i) => new ProgressPoint(date, values[i])).ToList();
             Strength = allStrength.Where(p => p.Date >= (model.ChartWeeks == 6 && Until == new DateOnly(2026, 10, 2) ? new DateOnly(2026, 8, 20) : chartSince) && p.Date <= Until).ToList();
             WorkingWeight = allStrength.Where(p => p.Date >= Since && p.Date <= Until).Select(p => (decimal?)p.Value).DefaultIfEmpty().Max();
@@ -74,7 +74,7 @@ public sealed class DashboardProgressViewModel
             Latest = allBody.LastOrDefault(); Previous = allBody.SkipLast(1).LastOrDefault();
             Body = allBody.Where(m => m.Date >= Since).Select(m => new ProgressPoint(m.Date, m.WeightKg)).ToList();
             WeightChange = Body.Count > 1 ? Body[^1].Value - Body[0].Value : null;
-            Records = new[] { new ProgressRecord(1, "Жим лёжа", 60, new(2026, 9, 24), -1, "bench"), new(2, "Приседания", 80, new(2026, 9, 17), -2, "squat"), new(3, "Тяга", 90, new(2026, 9, 3), -3, "deadlift") }.Where(r => r.Date <= Until).ToList();
+            Records = new[] { new ProgressRecord(ExerciseIds.FromLegacy(1), "Жим лёжа", 60, new(2026, 9, 24), -1, "bench"), new(ExerciseIds.FromLegacy(2), "Приседания", 80, new(2026, 9, 17), -2, "squat"), new(ExerciseIds.FromLegacy(3), "Тяга", 90, new(2026, 9, 3), -3, "deadlift") }.Where(r => r.Date <= Until).ToList();
             NewRecords = model.ProgressWeeks == 6 ? 1 : Records.Count(r => r.Date >= Since);
             Volume = dates.Select((date, i) => new ProgressPoint(date, 2400 + i * 120)).Where(p => p.Date >= Since && p.Date <= Until).ToList();
             WorkoutCount = Volume.Count; TotalVolume = Volume.Sum(p => p.Value);
@@ -103,7 +103,7 @@ public sealed class DashboardProgressViewModel
         Records = observations.GroupBy(o => o.ExerciseId).Select(g =>
         {
             var best = g.OrderByDescending(o => o.Weight).ThenBy(o => o.Date).ThenBy(o => o.WorkoutId).First();
-            return new ProgressRecord(g.Key, best.Name, best.Weight, best.Date, best.WorkoutId, g.Key == 2 ? "squat" : g.Key == 3 ? "deadlift" : "bench");
+            return new ProgressRecord(g.Key, best.Name, best.Weight, best.Date, best.WorkoutId, g.Key == ExerciseIds.FromLegacy(2) ? "squat" : g.Key == ExerciseIds.FromLegacy(3) ? "deadlift" : "bench");
         }).OrderByDescending(r => r.Date).ThenBy(r => r.ExerciseId).ToList();
         NewRecords = observations.GroupBy(o => o.ExerciseId).Count(g => g.Where(o => o.Date >= Since).Select(o => o.Weight).DefaultIfEmpty().Max() > g.Where(o => o.Date < Since).Select(o => o.Weight).DefaultIfEmpty().Max());
         var periodWorkouts = completed.Where(w => w.Date >= Since).ToList();

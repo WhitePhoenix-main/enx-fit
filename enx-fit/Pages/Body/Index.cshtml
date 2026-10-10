@@ -3,17 +3,17 @@
 @using enx_fit.Pages.Body
 @{ ViewData["Title"] = "Замеры тела"; }
 @section Styles { <link rel="stylesheet" href="~/css/body-workspace.css" asp-append-version="true" /> }
-<div class="body-workspace">
+<div class="body-workspace app-workspace">
     <header class="body-heading">
-        <div><a class="body-back" asp-page="/Dashboard/Progress">← К прогрессу</a><p class="body-eyebrow">Личная динамика</p><h1>Замеры тела</h1><p>Записывайте изменения в своём темпе.</p></div>
-        <a class="body-button" asp-page="./Create" asp-route-ownerId="@Model.UserId"><reference-icon name="plus" />Добавить замер</a>
+        <div><a class="body-back" asp-page="@(Model.IsAdministrator ? "/Admin/Index" : "/Dashboard/Progress")">@(Model.IsAdministrator ? "← Обзор платформы" : "← К прогрессу")</a><p class="body-eyebrow">@(Model.IsAdministrator ? "Данные пользователей" : "Личная динамика")</p><h1>Замеры тела</h1><p>@(Model.IsAdministrator ? "Проверяйте записи выбранного пользователя и добавляйте новые замеры." : "Записывайте изменения в своём темпе.")</p></div>
+        <a class="body-button app-button" asp-page="./Create" asp-route-ownerId="@Model.UserId"><reference-icon name="plus" />Добавить замер</a>
     </header>
-    @if (TempData["StatusMessage"] is string status) { <p class="body-status" role="status">@status</p> }
+    @if (TempData["StatusMessage"] is string status) { <p class="body-status app-status app-notice" data-app-state="saved" role="status">@status</p> }
     @if (Model.IsAdministrator) {
-        <form method="get" class="body-owner-filter body-panel"><label asp-for="UserId">Пользователь</label><select asp-for="UserId"><option value="">Все пользователи</option>@foreach (var user in Model.Users) { <option value="@user.Id">@user.DisplayName</option> }</select><button class="body-button secondary" type="submit">Применить</button></form>
+        <form method="get" class="body-owner-filter body-panel"><label asp-for="UserId">Пользователь</label><select asp-for="UserId"><option value="">Все пользователи</option>@foreach (var user in Model.Users) { <option value="@user.Id">@user.DisplayName</option> }</select><button class="body-button secondary app-button" type="submit">Применить</button></form>
     }
     @if (Model.Measurements.Count == 0) {
-        <section class="body-panel body-empty"><reference-icon name="bars" /><h2>Начните с одного замера</h2><p>Достаточно даты, веса и роста. Обхваты можно добавить позже.</p><a class="body-button" asp-page="./Create" asp-route-ownerId="@Model.UserId">Записать первый замер</a></section>
+        <section class="body-panel body-empty"><reference-icon name="bars" /><h2>Начните с одного замера</h2><p>Достаточно даты, веса и роста. Обхваты можно добавить позже.</p><a class="body-button app-button" asp-page="./Create" asp-route-ownerId="@Model.UserId">Записать первый замер</a></section>
     } else {
         @if (Model.CanShowCharts) {
             <div class="body-overview">
@@ -33,12 +33,12 @@
                         @if (Model.IsAdministrator) { <input type="hidden" asp-for="UserId" /> }
                         <div><label asp-for="Metric">Показатель</label><select asp-for="Metric"><option value="weight">Вес</option><option value="waist">Талия</option><option value="chest">Грудь</option><option value="hip">Ягодицы</option></select></div>
                         <div><label asp-for="Weeks">Период</label><select asp-for="Weeks"><option value="4">4 недели</option><option value="12">12 недель</option><option value="52">Год</option><option value="0">Вся история</option></select></div>
-                        <button type="submit" class="body-button secondary">Показать</button>
+                        <button type="submit" class="body-button secondary app-button">Показать</button>
                     </form>
                     <partial name="_BodyTrend" model="Model" />
                 </section>
             </div>
-        } else { <p class="body-status">Выберите пользователя, чтобы посмотреть его график и последний результат.</p> }
+        } else { <p class="body-status app-status app-notice" data-app-state="saved">Выберите пользователя, чтобы посмотреть его график и последний результат.</p> }
         <section class="body-history" aria-labelledby="body-history-title">
             <header><div><h2 id="body-history-title">История замеров</h2><p>Все @Model.Measurements.Count записей · новые сверху</p></div></header>
             <div class="body-history-table body-panel"><table><thead><tr><th>Дата</th><th>Вес</th><th>Рост</th>@if (Model.IsAdministrator) { <th>Пользователь</th> }<th>Подробности</th><th><span class="body-sr-only">Действия</span></th></tr></thead><tbody>
@@ -48,7 +48,7 @@
             </tbody></table></div>
             <div class="body-history-cards">
                 @foreach (var item in Model.Measurements) {
-                    <details class="body-panel body-history-record" data-body-record="@item.Id"><summary><span><time datetime="@item.Date.ToString("yyyy-MM-dd")">@item.Date.ToString("dd.MM.yyyy")</time>@if (Model.IsAdministrator) { <small>@Model.OwnerName(item.UserId)</small> }</span><strong>@IndexModel.Number(item.WeightKg) <small>кг</small></strong><reference-icon name="chevron" /></summary><div class="body-record-reveal"><p class="body-muted">Рост @IndexModel.Number(item.HeightCm) см · ИМТ @IndexModel.Number(item.Bmi)</p><partial name="_BodyRecordDetails" model="item" /><div class="body-actions"><a class="body-button secondary" asp-page="./Edit" asp-route-id="@item.Id">Изменить</a><a class="body-text-link body-danger-link" asp-page="./Delete" asp-route-id="@item.Id">Удалить</a></div></div></details>
+                    <details class="body-panel body-history-record app-disclosure" data-body-record="@item.Id"><summary><span><time datetime="@item.Date.ToString("yyyy-MM-dd")">@item.Date.ToString("dd.MM.yyyy")</time>@if (Model.IsAdministrator) { <small>@Model.OwnerName(item.UserId)</small> }</span><strong>@IndexModel.Number(item.WeightKg) <small>кг</small></strong><reference-icon name="chevron" /></summary><div class="body-record-reveal"><p class="body-muted">Рост @IndexModel.Number(item.HeightCm) см · ИМТ @IndexModel.Number(item.Bmi)</p><partial name="_BodyRecordDetails" model="item" /><div class="body-actions"><a class="body-button secondary app-button" asp-page="./Edit" asp-route-id="@item.Id">Изменить</a><a class="body-text-link body-danger-link" asp-page="./Delete" asp-route-id="@item.Id">Удалить</a></div></div></details>
                 }
             </div>
         </section>

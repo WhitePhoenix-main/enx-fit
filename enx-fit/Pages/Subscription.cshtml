@@ -8,12 +8,12 @@
     var coach = Model.Access.CanUse(Feature.CoachClientManagement);
 }
 @section Styles { <link rel="stylesheet" href="~/css/body-workspace.css" asp-append-version="true" /> }
-<div class="body-workspace subscription-workspace" data-current-plan="@Model.Access.Plan">
+<div class="body-workspace subscription-workspace app-workspace" data-current-plan="@Model.Access.Plan">
     <header class="body-heading"><div><a class="body-back" asp-page="/Profile">← Профиль</a><p class="body-eyebrow">Enix Fit · возможности</p><h1>Ваш план — @Model.Access.Plan</h1><p>Полноценный дневник доступен на любом плане.</p></div><span class="subscription-plan-badge">Текущий план · @Model.Access.Plan</span></header>
     <section class="body-panel subscription-access"><div><reference-icon name="check-circle" /><h2>Уже доступно вам</h2></div>
         <ul><li>Тренировки, история и замеры тела</li><li>Все шаблоны, программы без лимита и расписание</li><li>Ручной выбор веса и повторений</li>@if (pro) { <li data-feature="recommendations">Рекомендации следующей нагрузки с объяснением</li> }@if (plateau) { <li data-feature="plateau">Сигналы возможного плато</li> }@if (coach) { <li data-feature="clients">Клиенты, назначение программ и сигналы внимания</li> }</ul>
-        @if (coach) { <a class="body-button" asp-page="/Trainer/Clients">Открыть клиентов →</a> } else if (pro) { <a class="body-button" asp-page="/Programs/Index">Открыть программы →</a> } else { <a class="body-button" asp-page="/Dashboard/Workouts">Открыть дневник →</a> }
-        @if (Model.Access.Plan == SubscriptionPlan.Coach && !coach) { <p class="body-status">Для тренерского режима нужна роль тренера. Сейчас доступны возможности для ваших тренировок.</p> }
+        @if (coach) { <a class="body-button app-button" asp-page="/Trainer/Clients">Открыть клиентов →</a> } else if (pro) { <a class="body-button app-button" asp-page="/Programs/Index">Открыть программы →</a> } else { <a class="body-button app-button" asp-page="/Dashboard/Workouts">Открыть дневник →</a> }
+        @if (Model.Access.Plan == SubscriptionPlan.Coach && !coach) { <p class="body-status app-status app-notice" data-app-state="info">Для тренерского режима нужна роль тренера. Сейчас доступны возможности для ваших тренировок.</p> }
     </section>
     <header class="subscription-compare-heading"><h2>Сравнить возможности</h2><p>Выберите план, чтобы узнать больше.</p></header>
     <div class="subscription-plans">
@@ -29,6 +29,6 @@
         }
     </div>
     <section class="body-panel subscription-billing"><reference-icon name="card" /><div><h2>Как изменить план</h2><p>Онлайн-оплата пока не подключена. План назначает администратор. Уточнить доступ можно через <a class="body-text-link" asp-page="/Contact">страницу контактов</a>.</p></div></section>
-    <details class="body-panel subscription-roadmap"><summary>В разработке <reference-icon name="chevron" /></summary><p>Анализ мышечного баланса, эффективности программ и рекомендации разгрузки. AI Insights пока не подключены. Эти функции ещё недоступны.</p></details>
+    <details class="body-panel subscription-roadmap app-disclosure"><summary>В разработке <reference-icon name="chevron" /></summary><p>Анализ мышечного баланса, эффективности программ и рекомендации разгрузки. AI Insights пока не подключены. Эти функции ещё недоступны.</p></details>
 </div>
 @section Scripts { <script src="~/js/body-workspace.js" asp-append-version="true"></script> }

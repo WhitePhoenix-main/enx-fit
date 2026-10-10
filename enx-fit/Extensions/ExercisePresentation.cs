@@ -8,7 +8,7 @@ public sealed record EquipmentDescription(string Name, string Description, strin
 public static class ExercisePresentation
 {
     // Only the original seed names are localized. Administrator renames stay visible everywhere.
-    public static string DisplayName(Exercise exercise) => (exercise.Id, exercise.Name) switch
+    public static string DisplayName(Exercise exercise) => (ExerciseIds.TryGetLegacy(exercise.Id, out var legacyId) ? legacyId : 0, exercise.Name) switch
     {
         (1, "Bench Press") => "Жим лёжа",
         (2, "Squat") => "Приседания со штангой",

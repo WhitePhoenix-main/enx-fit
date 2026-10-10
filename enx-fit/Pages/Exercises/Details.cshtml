@@ -1,21 +1,24 @@
-@page "{id:int}"
+@page "{id}"
 @model enx_fit.Pages.Exercises.DetailsModel
 @{
+    Layout = User.HasMinimumRole(UserRole.Administrator) ? "_AdminLayout" : "_DashboardReferenceLayout";
     ViewData["Title"] = "Детали упражнения";
     var equipmentDetails = ExercisePresentation.EquipmentDetails(Model.Exercise);
+    var technique = ExerciseTechniqueCatalog.Find(Model.Exercise);
 }
 
-<div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
+<div class="record-page app-workspace">
+<div class="record-heading">
     <div>
         <h1 class="h3 mb-1">@ExercisePresentation.DisplayName(Model.Exercise)</h1>
         <p class="text-muted mb-0">Группа мышц, оборудование и описание тренажёров.</p>
     </div>
     <div class="d-flex gap-2">
-        @if (User.IsInRole("Administrator"))
+        @if (User.HasMinimumRole(UserRole.Administrator))
         {
-            <a class="btn btn-primary" asp-page="./Edit" asp-route-id="@Model.Exercise.Id">Изменить</a>
+            <a class="btn btn-primary app-button" asp-page="./Edit" asp-route-id="@Model.Exercise.Id">Изменить</a>
         }
-        <a class="btn btn-outline-secondary" asp-page="./Index">К списку</a>
+        <a class="btn btn-outline-secondary app-button secondary" asp-page="@(User.HasMinimumRole(UserRole.Administrator) ? "/Admin/Exercises/Index" : "/Exercises/Index")">К списку</a>
     </div>
 </div>
 
@@ -32,6 +35,10 @@
         </div>
     </div>
 </section>
+
+@if (technique is not null) {
+    <section class="exercise-guide" aria-labelledby="exercise-technique-heading"><h2 id="exercise-technique-heading">Как выполнять упражнение</h2><partial name="_ExerciseTechnique" model="technique" /></section>
+}
 
 <section class="exercise-guide" aria-labelledby="exercise-guide-heading">
     <h2 id="exercise-guide-heading">Оборудование и тренажёры</h2>
@@ -68,4 +75,7 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/exercises.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/record-pages.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/exercise-library.css" asp-append-version="true" />
 }
+</div>

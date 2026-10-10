@@ -47,6 +47,7 @@
     @await RenderSectionAsync("Styles", required: false)
     <link rel="stylesheet" href="~/css/mobile-shell.css" asp-append-version="true" />
     @if (isTrainer) { <link rel="stylesheet" href="~/css/coach-workspace.css" asp-append-version="true" /> }
+    <link rel="stylesheet" href="~/css/app-components.css" asp-append-version="true" />
 </head>
 <body class="fitness-app em-app-shell @(clientId is not null ? "coach-mode" : "personal-mode") @(activePage == "/Dashboard" ? "dashboard-home" : "")">
 <a class="skip-link" href="#main-content">Перейти к содержимому</a>
@@ -133,7 +134,7 @@
 </details>
         </div>
     </header>
-    <main id="main-content" tabindex="-1"><partial name="_CoachContext" model="mobileNavigation" />@RenderBody()</main>
+    <main id="main-content" class="app-workspace" tabindex="-1"><partial name="_CoachContext" model="mobileNavigation" />@RenderBody()</main>
 </div>
 <nav class="bottom-nav em-tablet-nav" aria-label="Навигация на планшете">
     <a class="@(IsActive("/Dashboard") ? "active" : "")" href="@dashboardUrl" aria-current="@(IsActive("/Dashboard") ? "page" : null)"><admin-icon name="home" /><span>Главная</span></a>
@@ -142,7 +143,7 @@
     <a class="@(IsActive("/Dashboard/Progress") ? "active" : "")" href="@PageUrl("/Dashboard/Progress")" aria-current="@(IsActive("/Dashboard/Progress") ? "page" : null)"><admin-icon name="bars" /><span>Прогресс</span></a>
     <button type="button" data-dialog="navigation-dialog" class="@(IsActive("/Dashboard/Habits") || clientsActive ? "active" : "")" aria-label="Все разделы" aria-haspopup="dialog"><admin-icon name="menu" /><span>Ещё</span></button>
 </nav>
-<dialog id="navigation-dialog" class="app-dialog">
+<dialog id="navigation-dialog" class="app-dialog app-workspace">
     <div class="dialog-heading">
         <h2>Разделы</h2>
         <button class="icon-button" data-close aria-label="Закрыть"><admin-icon name="close" /></button>
@@ -158,7 +159,7 @@
         <a asp-area="Identity" asp-page="/Account/Manage/Index">Профиль <admin-icon name="user" /></a>
     </nav>
 </dialog>
-<dialog id="search-dialog" class="app-dialog">
+<dialog id="search-dialog" class="app-dialog app-workspace">
 <div class="dialog-heading">
 <h2>Быстрый переход</h2>
 <button class="icon-button" data-close aria-label="Закрыть">
@@ -183,7 +184,7 @@
 </a> }<p hidden data-search-empty>Ничего не найдено. Попробуйте другой запрос.</p>
 </div>
 </dialog>
-<dialog id="notifications-dialog" class="app-dialog">
+<dialog id="notifications-dialog" class="app-dialog app-workspace">
 <div class="dialog-heading">
 <h2>Центр уведомлений</h2>
 <button class="icon-button" data-close aria-label="Закрыть">
@@ -199,7 +200,8 @@
 <script src="~/js/workout-time.js" asp-append-version="true"></script>
     <script src="~/js/dashboard.js" asp-append-version="true">
 </script>
-@await RenderSectionAsync("Scripts", required: false)
+    <script src="~/js/app-components.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
 <script src="~/js/dashboard-widgets.js" asp-append-version="true"></script>
 <script src="~/js/mobile-shell.js" asp-append-version="true"></script>
 </body>

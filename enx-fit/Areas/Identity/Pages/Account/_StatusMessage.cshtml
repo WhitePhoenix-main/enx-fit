@@ -1,5 +1,5 @@
 @model string
 @if (!string.IsNullOrEmpty(Model)) {
     var failed = Model.StartsWith("Ошибка") || Model.StartsWith("Error");
-    <div class="auth-notice @(failed ? "is-error" : null)" role="@(failed ? "alert" : "status")">@Model</div>
+    <div class="auth-notice app-status app-notice @(failed ? "is-error" : null)" data-app-state="@(failed ? "error" : ViewData["AuthStatusState"]?.ToString() ?? "info")" role="@(failed ? "alert" : "status")">@Model</div>
 }

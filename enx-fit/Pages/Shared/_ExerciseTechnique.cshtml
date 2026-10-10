@@ -1,0 +1,6 @@
+@model ExerciseTechniqueGuide
+<div class="exercise-technique" data-exercise-technique>
+    <ol>@foreach (var step in Model.Steps) { <li>@step</li> }</ol>
+    <p class="exercise-technique-cue">@Model.Cue</p>
+    <a href="@Model.SourceUrl" target="_blank" rel="noopener noreferrer" aria-label="@Model.SourceName (на английском, новая вкладка)">@Model.SourceName <admin-icon name="arrow" /></a>
+</div>

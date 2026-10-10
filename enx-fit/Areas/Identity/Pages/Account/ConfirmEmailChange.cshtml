@@ -3,12 +3,13 @@
 @{
     ViewData["Title"] = Model.Succeeded ? "Email изменён" : "Изменение email";
     ViewData["AuthDescription"] = "Результат подтверждения нового адреса.";
+    ViewData["AuthStatusState"] = Model.Succeeded ? "saved" : "error";
     ViewData["AuthBackUrl"] = Url.Page("/Profile", new { area = "" });
     ViewData["AuthBackLabel"] = "В профиль";
 }
 <partial name="_AuthStepHeader" />
 <section class="auth-card auth-step-card">
     <partial name="_StatusMessage" model="Model.StatusMessage" />
-    @if (Model.Succeeded) { <a class="auth-submit" asp-area="" asp-page="/TechnicalPages/Login" asp-route-returnUrl="/Profile">Войти в аккаунт</a> }
-    else { <a class="auth-submit" asp-area="Identity" asp-page="/Account/Manage/Email">Открыть настройки email</a> }
+    @if (Model.Succeeded) { <a class="auth-submit app-button" asp-area="" asp-page="/TechnicalPages/Login" asp-route-returnUrl="/Profile">Войти в аккаунт</a> }
+    else { <a class="auth-submit app-button" asp-area="Identity" asp-page="/Account/Manage/Email">Открыть настройки email</a> }
 </section>

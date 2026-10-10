@@ -21,7 +21,7 @@
             { <p>Это тестовый адрес для макета страницы. Отправка обращений пока не подключена.</p> }
             else
             { <p><a class="public-text-link" href="mailto:@Model.Email">Написать на этот адрес →</a></p> }
-            <button class="button button-outline" type="button" data-copy-support hidden>Скопировать адрес</button><p class="public-copy-feedback" data-copy-feedback role="status" aria-live="polite"></p>
+            <button class="button button-outline secondary" type="button" data-copy-support hidden>Скопировать адрес</button><p class="public-copy-feedback app-status" data-app-state="info" data-copy-feedback role="status" aria-live="polite"></p>
         </section>
     </div>
     <div class="public-help-next"><p>Готов продолжить тренировку?</p><a class="button button-primary" href="@PublicPageLinks.Open(Url, User, "/Dashboard")">@(User.Identity?.IsAuthenticated == true ? "Открыть приложение" : "Начать бесплатно")</a></div>

@@ -5,8 +5,10 @@
     var frequency = p.DaysPerWeek == 1 ? "раз" : p.DaysPerWeek is >= 2 and <= 4 ? "раза" : "раз";
 }
 <article class="ef-card ep-program-card @(p.IsArchived ? "is-archived" : "")" data-program-id="@p.Id" data-program-level="@p.Level">
-    <span class="ep-program-photo ep-photo-@Model.Card.Photo" role="img" aria-label="@(Model.Card.Photo == "bench" ? "Штанга и скамья в тренажёрном зале" : "Гантели в тренажёрном зале")"></span>
+    @if (ProgramTemplatePresentation.IsStarter(p)) { <span class="ep-program-photo ep-starter-photo" aria-hidden="true"><reference-icon name="workout" /></span> }
+    else { <span class="ep-program-photo ep-photo-@Model.Card.Photo" role="img" aria-label="@(Model.Card.Photo == "bench" ? "Штанга и скамья в тренажёрном зале" : "Гантели в тренажёрном зале")"></span> }
     <div class="ep-program-copy"><h2>@p.Name</h2><span class="ep-status"><reference-icon name="@(p.IsArchived ? "calendar" : "check")" />@Model.Card.Status</span>
+        @if (ProgramTemplatePresentation.IsStarter(p)) { <span class="plan-starter-label">Короткий старт · @ProgramTemplatePresentation.StarterEquipment(p)</span> }
         <p>@(p.Description ?? p.Goal)</p>
         <div class="ep-program-meta"><span><reference-icon name="calendar" />@p.Weeks @duration</span><span><reference-icon name="workout" />@p.DaysPerWeek @frequency в неделю</span></div>
         @if (p.StartDate.HasValue) { <p class="ep-card-progress">Выполнено @Model.Card.Done из @Model.Card.Total · @Model.Card.Percent%</p> }

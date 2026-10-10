@@ -1,7 +1,7 @@
 @model enx_fit.Pages.DashboardModel
 @if (!Model.IsCoachView)
 {
-<dialog class="app-dialog quick-dialog" id="quick-workout-dialog" aria-labelledby="quick-title">
+<dialog class="app-dialog quick-dialog app-workspace" id="quick-workout-dialog" aria-labelledby="quick-title">
     <div class="dialog-heading"><h2 id="quick-title">Как хотите тренироваться?</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><admin-icon name="close" /></button></div>
     <div class="quick-options">
         <a class="quick-option" asp-page="/Workouts/Record"><admin-icon name="plus" /><span><strong>Записать тренировку</strong><small>Внести уже выполненное занятие без запуска таймера</small></span><admin-icon name="arrow" /></a>
@@ -9,7 +9,7 @@
         <form method="post" asp-page="/Dashboard" asp-page-handler="Start"><input type="hidden" name="source" value="empty" /><button class="quick-option"><admin-icon name="bolt" /><span><strong>Добавлять упражнения на лету</strong><small>Начать свободно и собирать занятие по ходу</small></span><admin-icon name="arrow" /></button></form>
     </div>
 </dialog>
-<dialog class="app-dialog quick-dialog" id="template-start-dialog" aria-labelledby="template-start-title">
+<dialog class="app-dialog quick-dialog app-workspace" id="template-start-dialog" aria-labelledby="template-start-title">
     <div class="dialog-heading"><h2 id="template-start-title">Загрузить шаблон</h2><button class="icon-button" data-close aria-label="Закрыть"><admin-icon name="close" /></button></div>
     <p class="muted">Тренировки из ваших программ и готовых шаблонов. Изменения занятия не затронут оригинал.</p>
     <div class="quick-options">@foreach (var template in Model.Templates)

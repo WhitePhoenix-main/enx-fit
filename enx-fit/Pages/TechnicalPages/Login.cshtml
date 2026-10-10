@@ -12,7 +12,7 @@
 </section>
 
 <section class="auth-card" aria-label="@(Model.IsRegister ? "Создание аккаунта" : "Вход в аккаунт")">
-    <nav class="auth-tabs" aria-label="Вход или регистрация">
+    <nav class="auth-tabs app-tabs" aria-label="Вход или регистрация">
         <a asp-page="/TechnicalPages/Login" asp-page-handler="Login" asp-route-returnUrl="@Model.ReturnUrl"
            class="@(!Model.IsRegister ? "is-active" : null)" aria-current="@(!Model.IsRegister ? "page" : null)">Вход</a>
         <a asp-page="/TechnicalPages/Login" asp-page-handler="Register" asp-route-returnUrl="@Model.ReturnUrl"
@@ -20,7 +20,7 @@
     </nav>
 
     <form id="auth-form" method="post" asp-page-handler="@mode" asp-route-returnUrl="@Model.ReturnUrl" data-auth-form>
-        <div asp-validation-summary="ModelOnly" class="auth-errors" role="alert"></div>
+        <div asp-validation-summary="ModelOnly" class="auth-errors app-status app-notice" data-app-state="error" role="alert"></div>
         <div class="auth-field">
             <label asp-for="Input.Email">Email</label>
             <div class="auth-input">
@@ -36,7 +36,7 @@
                 <input asp-for="Input.Password" placeholder="@(Model.IsRegister ? "Придумайте пароль" : "Введите пароль")"
                        autocomplete="@(Model.IsRegister ? "new-password" : "current-password")" required
                        aria-describedby="@(Model.IsRegister ? "password-error password-hint" : "password-error")" />
-                <button type="button" class="auth-reveal" data-reveal="Input_Password" aria-label="Показать пароль" aria-pressed="false" hidden>
+                <button type="button" class="auth-reveal app-icon-button" data-reveal="Input_Password" aria-label="Показать пароль" aria-pressed="false" hidden>
                     <svg class="auth-icon" aria-hidden="true"><use href="#auth-eye-off" /></svg>
                 </button>
             </div>
@@ -53,7 +53,7 @@
                 <div class="auth-input">
                     <svg class="auth-icon" aria-hidden="true"><use href="#auth-lock" /></svg>
                     <input asp-for="Input.ConfirmPassword" placeholder="Введите пароль ещё раз" autocomplete="new-password" required aria-describedby="confirm-error" />
-                    <button type="button" class="auth-reveal" data-reveal="Input_ConfirmPassword" aria-label="Показать повторный пароль" aria-pressed="false" hidden>
+                    <button type="button" class="auth-reveal app-icon-button" data-reveal="Input_ConfirmPassword" aria-label="Показать повторный пароль" aria-pressed="false" hidden>
                         <svg class="auth-icon" aria-hidden="true"><use href="#auth-eye-off" /></svg>
                     </button>
                 </div>
@@ -67,26 +67,26 @@
                 <a asp-area="Identity" asp-page="/Account/ForgotPassword" asp-route-returnUrl="@Model.ReturnUrl">Забыли пароль?</a>
             </div>
         }
-        <button class="auth-submit" type="submit">
+        <button class="auth-submit app-button" type="submit">
             <span>@(Model.IsRegister ? "Создать аккаунт" : "Войти в Enix Fit")</span>
             <svg class="auth-icon" aria-hidden="true"><use href="#auth-arrow" /></svg>
         </button>
-        <p class="auth-form-feedback" data-auth-feedback role="status" aria-live="polite"></p>
+        <p class="auth-form-feedback app-status app-notice" data-app-state="info" hidden data-auth-feedback role="status" aria-live="polite"></p>
     </form>
 
-    <details class="auth-extra" open="@(Model.ExternalLogins.Count > 0)"><summary>Другие способы входа<svg class="auth-icon" aria-hidden="true"><use href="#auth-chevron" /></svg></summary>
+    <details class="auth-extra app-disclosure" open="@(Model.ExternalLogins.Count > 0)"><summary>Другие способы входа<svg class="auth-icon" aria-hidden="true"><use href="#auth-chevron" /></svg></summary>
     <form class="auth-providers" method="post" asp-page-handler="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl">
         @foreach (var provider in new[] { "Google", "Apple" })
         {
             var available = Model.ExternalLogins.Any(scheme => scheme.Name == provider);
-            <button class="auth-provider" type="submit" name="provider" value="@provider" aria-label="Продолжить с @provider" data-unavailable-provider="@(!available ? provider : null)">
+            <button class="auth-provider app-button secondary" type="submit" name="provider" value="@provider" aria-label="Продолжить с @provider" data-unavailable-provider="@(!available ? provider : null)">
                 <svg class="auth-provider-icon" aria-hidden="true"><use href="@(provider == "Google" ? "#auth-google" : "#auth-apple")" /></svg>
                 <span><span class="auth-provider-prefix">Продолжить с </span>@provider@if (!available) { <small>Пока недоступен</small> }</span>
             </button>
         }
         @foreach (var provider in Model.ExternalLogins.Where(scheme => scheme.Name != "Google" && scheme.Name != "Apple"))
         {
-            <button class="auth-provider" type="submit" name="provider" value="@provider.Name">Продолжить с @provider.DisplayName</button>
+            <button class="auth-provider app-button secondary" type="submit" name="provider" value="@provider.Name">Продолжить с @provider.DisplayName</button>
         }
     </form>
     </details>

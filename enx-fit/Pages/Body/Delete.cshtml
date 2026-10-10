@@ -3,14 +3,14 @@
 @using enx_fit.Pages.Body
 @{ ViewData["Title"] = "Удалить замер"; }
 @section Styles { <link rel="stylesheet" href="~/css/body-workspace.css" asp-append-version="true" /> }
-<div class="body-workspace body-form-workspace">
+<div class="body-workspace body-form-workspace app-workspace">
     <header class="body-heading"><div><a class="body-back" asp-page="./Edit" asp-route-id="@Model.Measurement.Id">← К замеру</a><h1>Удалить замер?</h1><p>Проверьте запись перед удалением.</p></div></header>
     <section class="body-panel body-delete-panel">
         <p class="body-eyebrow">@Model.Measurement.Date.ToString("dd.MM.yyyy")</p><h2>@IndexModel.Number(Model.Measurement.WeightKg) <small>кг</small></h2>
         <p class="body-muted">Рост @IndexModel.Number(Model.Measurement.HeightCm) см</p>
         <partial name="_BodyRecordDetails" model="Model.Measurement" />
         <p class="body-delete-note">Восстановить удалённую запись будет невозможно.</p>
-        <form method="post" data-body-form><input type="hidden" asp-for="Measurement.Id" /><p class="body-feedback" data-body-feedback role="status"></p><div class="body-actions"><button class="body-button danger" type="submit" data-body-save>Удалить замер</button><a class="body-text-link" asp-page="./Edit" asp-route-id="@Model.Measurement.Id">Отмена</a></div></form>
+        <form method="post" data-body-form><input type="hidden" asp-for="Measurement.Id" /><p class="body-feedback app-status" data-body-feedback role="status"></p><div class="body-actions"><button class="body-button danger app-button" type="submit" data-body-save>Удалить замер</button><a class="body-text-link" asp-page="./Edit" asp-route-id="@Model.Measurement.Id">Отмена</a></div></form>
     </section>
 </div>
 @section Scripts { <script src="~/js/body-workspace.js" asp-append-version="true"></script> }

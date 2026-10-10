@@ -9,7 +9,7 @@ public sealed record HomeProgressResult(DateOnly Date, int WorkoutId, decimal We
 public sealed class HomeProgressViewModel
 {
     public IReadOnlyList<ProgressExerciseOption> Exercises { get; }
-    public int? ExerciseId { get; }
+    public Guid? ExerciseId { get; }
     public string ExerciseName { get; }
     public IReadOnlyList<HomeProgressResult> Results { get; }
     public HomeProgressResult? Last => Results.LastOrDefault();
@@ -19,11 +19,11 @@ public sealed class HomeProgressViewModel
     {
         if (model.Reference)
         {
-            Exercises = [new(1, "Жим лёжа"), new(2, "Приседания")];
-            ExerciseId = model.ProgressExercise == 2 ? 2 : 1;
+            Exercises = [new(ExerciseIds.FromLegacy(1), "Жим лёжа"), new(ExerciseIds.FromLegacy(2), "Приседания")];
+            ExerciseId = model.ProgressExercise == ExerciseIds.FromLegacy(2) ? ExerciseIds.FromLegacy(2) : ExerciseIds.FromLegacy(1);
             ExerciseName = Exercises.Single(e => e.Id == ExerciseId).Name;
             Results = Enumerable.Range(0, 6).Select(i => new HomeProgressResult(new DateOnly(2026, 9, 1).AddDays(i * 6), -1,
-                (ExerciseId == 2 ? 70m : 55m) + i / 2 * 2.5m, 10)).ToList();
+                (ExerciseId == ExerciseIds.FromLegacy(2) ? 70m : 55m) + i / 2 * 2.5m, 10)).ToList();
             return;
         }
         var observations = model.Data.Completed.Where(w => w.Date <= model.Data.Until)

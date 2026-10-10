@@ -10,12 +10,13 @@ namespace enx_fit.Pages.Exercises;
 public class EditModel(ExerciseService exerciseService) : PageModel
 {
     [BindProperty]
-    public int Id { get; set; }
+    [ModelBinder(BinderType = typeof(ExerciseIdModelBinder))]
+    public Guid Id { get; set; }
 
     [BindProperty]
     public ExerciseInputModel Input { get; set; } = new();
 
-    public async Task<IActionResult> OnGetAsync(int id)
+    public async Task<IActionResult> OnGetAsync([ModelBinder(BinderType = typeof(enx_fit.ViewModels.ExerciseIdModelBinder))] Guid id)
     {
         var exercise = await exerciseService.FindAsync(id);
 
@@ -50,6 +51,6 @@ public class EditModel(ExerciseService exerciseService) : PageModel
         }
 
         TempData["StatusMessage"] = "Упражнение обновлено.";
-        return RedirectToPage("./Index");
+        return RedirectToPage("/Admin/Exercises/Index");
     }
 }

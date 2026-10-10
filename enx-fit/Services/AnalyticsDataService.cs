@@ -14,7 +14,7 @@ public class AnalyticsDataService(ApplicationDbContext dbContext, CurrentUser cu
             .ToListAsync();
 
     public async Task<IReadOnlyList<WorkoutSession>> GetWorkoutsForExerciseAsync(
-        int exerciseId,
+        Guid exerciseId,
         string? ownerId = null)
     {
         var workouts = currentUser.IsAdministrator

@@ -9,14 +9,16 @@ else
     @if (Model.Clients.Count == 0) { <section class="panel empty-state"><h2>У вас пока нет клиентов</h2><p>Администратор может связать клиента с вашим профилем тренера.</p><a class="button secondary" asp-page="/Trainer/Clients">К клиентам</a></section> }
     else
     {
-        <form method="post" class="program-form panel" data-busy>
-            <div asp-validation-summary="All" class="program-notice error" role="alert"></div>
+        <form method="post" class="program-form panel app-workspace" data-assignment-form>
+            <div asp-validation-summary="All" class="app-status app-notice" data-app-state="error" role="alert"></div>
             <div class="program-fields">@if (Model.TargetLocked) { <div class="coach-locked-recipient"><span>Клиент</span><strong>@Model.TargetName</strong><input asp-for="Input.ClientId" type="hidden" /><small>Получатель выбран в обзоре клиента.</small></div> } else { <label asp-for="Input.ClientId">Клиент<select asp-for="Input.ClientId" required><option value="">Выберите клиента</option>@foreach (var client in Model.Clients) { <option value="@client.Id">@client.Name</option> }</select></label> }<label asp-for="Input.StartDate">Дата начала<input asp-for="Input.StartDate" type="date" required /></label></div>
             <h2>Расписание клиента</h2>
             <div class="program-fields">@{ var workouts = Model.Item.Workouts.OrderBy(w => w.Order).ToList(); }
             @for (var i = 0; i < workouts.Count; i++) { <label for="assignment-day-@i">@workouts[i].Name<select id="assignment-day-@i" name="Input.Days[@i]" required><option value="">Выберите день</option>@for (var d = 1; d <= 7; d++) { <option value="@d" selected="@(Model.Input.Days.ElementAtOrDefault(i) == d)">@ProgramSchedule.DayNames[d-1]</option> }</select></label> }</div>
-            <p class="program-notice">После назначения можно изменить упражнения, рабочие веса и дни в копии клиента. Другие программы не изменятся.</p>
-            <button class="button primary" type="submit">Создать копию и назначить</button>
+            <p class="app-status app-notice" data-app-state="info">После назначения можно изменить упражнения, рабочие веса и дни в копии клиента. Другие программы не изменятся.</p>
+            <button class="button primary" type="submit" data-assignment-save>Создать копию и назначить</button><p class="app-status" role="status" aria-live="polite" data-assignment-feedback data-app-state="info"></p>
         </form>
     }
 }
+
+@section Scripts { <script src="~/js/program-assignment.js" asp-append-version="true"></script> }

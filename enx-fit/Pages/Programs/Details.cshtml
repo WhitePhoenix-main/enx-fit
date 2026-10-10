@@ -2,8 +2,8 @@
 @model DetailsModel
 @using enx_fit.Models
 @{ Layout = "_DashboardReferenceLayout"; ViewData["Title"] = Model.PageError is null ? Model.Item.Name : "Программа недоступна"; }
-<div class="programs-page program-schedule-page">
-@if (TempData["StatusMessage"] is string status) { <div class="program-notice" role="status">@status</div> }
+<div class="programs-page program-schedule-page app-workspace">
+@if (TempData["StatusMessage"] is string status) { <div class="program-notice app-status app-notice" data-app-state="saved" role="status">@status</div> }
 @if (Model.PageError is not null) { <partial name="_ProgramError" model="Model.PageError" /> }
 else
 {
@@ -23,14 +23,14 @@ else
             <form method="post" asp-page-handler="Archive" asp-route-restore="@p.IsArchived"><button>@(p.IsArchived ? "Восстановить" : "Архивировать")</button></form>
         </div></details></div>
     </header>
-    @if (p.IsArchived) { <div class="program-notice">Программа в архиве. Восстановите её через меню, чтобы продолжить занятия.</div> }
+    @if (p.IsArchived) { <div class="program-notice app-status app-notice" data-app-state="info">Программа в архиве. Восстановите её через меню, чтобы продолжить занятия.</div> }
     @if (p.StartDate.HasValue) { <div class="program-top-progress"><span>Неделя @ProgramSchedule.CurrentWeek(p) из @p.Weeks</span><progress max="100" value="@Model.Percent" aria-label="Выполнение программы">@Model.Percent%</progress><strong>@Model.Percent%</strong></div> }
     <nav class="program-tabs" aria-label="Разделы программы">
         @foreach (var tab in new[] { ("overview", "Обзор"), ("schedule", "Расписание"), ("workouts", "Тренировки"), ("progression", "Прогрессия") })
         { <a asp-route-id="@p.Id" asp-route-Tab="@tab.Item1" class="@(Model.Tab == tab.Item1 ? "active" : "")" aria-current="@(Model.Tab == tab.Item1 ? "page" : null)">@tab.Item2</a> }
         @if (Model.Access.IsCoach) { <a asp-route-id="@p.Id" asp-route-Tab="clients" class="@(Model.Tab == "clients" ? "active" : "")" aria-current="@(Model.Tab == "clients" ? "page" : null)">Клиенты</a> }
     </nav>
-    <div asp-validation-summary="All" class="program-notice error" role="alert"></div>
+    <div asp-validation-summary="All" class="program-notice error app-status app-notice" data-app-state="error" role="alert"></div>
     @if (Model.ShowUpgrade) { <partial name="_UpgradePrompt" model="@(-1)" /> }
     @if (Model.Tab == "overview")
     {

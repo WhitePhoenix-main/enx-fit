@@ -3,8 +3,8 @@
 .setup-eyebrow { color:#91a9e0; font-size:11px; letter-spacing:.14em; text-transform:uppercase; font-weight:600; }
 .setup-heading h1 { margin:7px 0 10px; font-size:36px; line-height:1.2; }
 .setup-heading p { color:var(--setup-muted); font-size:14px; line-height:1.6; }
-.setup-heading>a { display:grid; place-items:center; width:44px; height:44px; border:1px solid #304862; border-radius:12px; background:#102032; color:#b9ccef; flex-shrink:0; }
-.setup-heading>a svg { width:20px; height:20px; }
+
+
 .setup-steps { display:none; gap:12px; margin-bottom:20px; }
 .is-enhanced .setup-steps { display:flex; }
 .setup-steps button { display:flex; align-items:center; gap:9px; flex:1; min-height:46px; padding:9px 12px; border:1px solid #263e5a; border-radius:11px; color:#91a8c7; background:#0d1c2b; font:inherit; font-size:13px; cursor:pointer; }
@@ -51,27 +51,28 @@
 .setup-form:not(.is-enhanced) .setup-preview { display:none; }
 .setup-form:not(.is-enhanced) .setup-layout { grid-template-columns:1fr; }
 .setup-actions { display:flex; gap:12px; align-items:center; justify-content:flex-end; margin-top:22px; }
-.setup-actions button { display:flex; align-items:center; justify-content:center; gap:9px; min-height:46px; padding:11px 17px; border:0; border-radius:11px; font-family:inherit; font-size:14px; cursor:pointer; }
-.setup-actions button>svg { width:17px; height:17px; }
-.setup-back,.setup-skip { background:transparent; color:#abc0e1; }
+
+
+
 .setup-back { margin-right:auto; }
 .setup-back svg { transform:rotate(180deg); }
-.setup-errors.validation-summary-valid { display:none; }
-.setup-errors,.setup-field-error,.setup-client-error { color:#efb4bd; font-size:13px; line-height:1.6; }
+
+.setup-field-error { color:#efb4bd; font-size:13px; line-height:1.6; }
 .setup-errors { margin-bottom:17px; }
-.setup-errors ul { margin:0; padding-left:20px; }
+
 .setup-field-error { display:block; margin-top:8px; }
 .setup-conflict { display:inline-flex; color:#b8cfff; padding:12px 0; margin-bottom:15px; }
-.setup-feedback { min-height:18px; color:#afc3e2; font-size:12px; line-height:1.5; margin-top:18px!important; }
+.setup-feedback { min-height:18px; margin-top:18px!important; }
 .setup-saved-summary { padding:24px; }
 .setup-success { display:grid; place-items:center; width:46px; height:46px; border:1px solid #6786ce; border-radius:50%; background:#2f4b8330; color:#c0d0ff; }
 .setup-success svg { width:24px; height:24px; }
 .setup-saved-summary>a { display:flex; gap:8px; align-items:center; font-size:13px; color:#a9c0ff; }
 .setup-saved-summary>a svg { width:16px; height:16px; }
 .setup-next { overflow:hidden; padding:0 23px 24px; }
-.setup-next .ef-primary { display:flex; justify-content:center; margin:21px 0 10px; min-height:46px; }
-.setup-next .ef-primary svg { width:17px; height:17px; }
-.setup-secondary { display:flex; align-items:center; justify-content:center; border:1px solid #435d87; border-radius:10px; padding:13px; color:#bcd0ff; font-size:13px; }
+.setup-next .ef-primary { display:flex; margin:21px 0 10px; }
+.setup-secondary { display:flex; }
+
+
 .setup-next-note { margin-top:16px!important; font-size:12px!important; }
 .setup-return { display:block; margin-top:18px; color:#a6bada; font-size:13px; }
 .training-setup :focus-visible { outline:2px solid #9ab4ff; outline-offset:3px; }
@@ -83,7 +84,7 @@
  .setup-heading { margin-bottom:21px; gap:12px; }
  .setup-heading h1 { font-size:28px; }
  .setup-heading p { font-size:12px; }
- .setup-heading>a { width:36px; height:36px; }
+
  .setup-layout,.setup-saved { grid-template-columns:minmax(0,1fr); gap:16px; }
  .setup-preview { display:none; }
  .setup-steps { gap:6px; }
@@ -99,7 +100,7 @@
  .setup-days { grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
  .setup-day { flex-direction:row; justify-content:center; padding:13px 8px; }
  .setup-actions { position:fixed; z-index:60; bottom:0; left:0; right:0; padding:12px 13px calc(12px + env(safe-area-inset-bottom)); margin:0; border-top:1px solid #2e4665; background:#0b1928f5; backdrop-filter:blur(12px); gap:6px; }
- .setup-actions button { padding:11px 10px; font-size:13px; }
+
  .setup-actions .ef-primary { flex:1; }
  body:has([data-setup-form]) .em-mobile-nav { display:none; }
  .setup-saved-summary { padding:20px; }

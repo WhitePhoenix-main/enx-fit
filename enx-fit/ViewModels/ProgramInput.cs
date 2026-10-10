@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using enx_fit.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace enx_fit.ViewModels;
 
@@ -52,7 +54,10 @@ public sealed class ProgramWorkoutInput : IValidatableObject
 
 public sealed class ProgramExerciseInput : IValidatableObject
 {
-    [DeniedValues(0, ErrorMessage = "Выберите упражнение.")] public int ExerciseId { get; set; }
+    [ExerciseIdentifier(ErrorMessage = "Выберите упражнение.")]
+    [JsonConverter(typeof(ExerciseIdJsonConverter))]
+    [ModelBinder(BinderType = typeof(ExerciseIdModelBinder))]
+    public Guid ExerciseId { get; set; }
     public ExercisePrescription Prescription { get; set; } = new();
     public IEnumerable<ValidationResult> Validate(ValidationContext context)
     {

@@ -8,7 +8,7 @@
         </h1>
         <p>Всё, что происходит в Enix Fit, — в одном месте.</p>
     </div>
-    <a class="btn btn-primary" asp-page="/Workouts/Create">
+    <a class="btn btn-primary app-button" asp-page="/Workouts/Create">
         <admin-icon name="plus" />Новая тренировка</a>
 </div>
 <div class="admin-metrics">
@@ -19,7 +19,7 @@
         </span>
         <strong>@Model.UserCount.ToString("N0")</strong>
         <span class="admin-metric-caption">
-            <span class="admin-dot green"></span>@Model.ActiveUsers тренируются за период</span>
+            <span class="admin-dot green"></span>@Model.ActiveUsers с записями за период</span>
     </a>
     <a class="admin-metric" asp-page="/Workouts/Index">
         <span class="admin-metric-top">Тренировки<span class="admin-metric-icon green">
@@ -53,8 +53,8 @@
     <section class="admin-card admin-chart-card">
         <div class="admin-card-heading">
             <div>
-                <h2>Активность тренировок</h2>
-                <p>Количество тренировок по дням</p>
+                <h2>Записи тренировок</h2>
+                <p>@Model.Since.ToString("dd.MM.yyyy") — @Model.Today.ToString("dd.MM.yyyy") · включая запланированные занятия</p>
             </div>
             <form method="get">
                 <label class="sr-only" for="period">Период</label>
@@ -64,7 +64,7 @@
                     <option value="90">За 90 дней</option>
                 </select>
                 <noscript>
-                    <button class="btn" type="submit">Применить</button>
+                    <button class="btn app-button secondary" type="submit">Применить</button>
                 </noscript>
             </form>
         </div>
@@ -80,6 +80,7 @@
         @if(Model.PeriodWorkouts == 0) {
             <p class="admin-chart-empty">За этот период тренировок пока нет.</p>
         }<script id="admin-chart-data" type="application/json">@Html.Raw(Model.ChartJson)</script>
+        <form method="get" asp-page="/Workouts/Index" class="admin-chart-picker"><label for="admin-activity-date">Записи выбранного дня</label><div><select class="form-select" name="Date" id="admin-activity-date">@foreach (var day in Model.Activity) { <option value="@day.Date.ToString("yyyy-MM-dd")" selected="@(day.Date == Model.Today)">@day.Date.ToString("dd.MM.yyyy") · записей: @day.Count</option> }</select><button class="btn btn-outline-primary app-button secondary" type="submit">Открыть</button></div><p class="admin-field-help">Выберите день здесь или нажмите на график. Отсутствие записей показано нулём.</p></form>
         </section>
         <section class="admin-card admin-quick-card">
             <div class="admin-card-heading">
@@ -99,7 +100,7 @@
                 </span>
                 <admin-icon name="chevron" />
             </a>
-            <a class="admin-quick-link" asp-page="/Admin/Users/Create">
+            <a class="admin-quick-link" asp-page="/Admin/Users/CreateUser">
                 <span class="admin-metric-icon purple">
                     <admin-icon name="users" />
                 </span>
@@ -142,7 +143,7 @@
                 </a>
             </div>
             <div class="table-responsive">
-                <table class="table admin-table">
+                <table class="table admin-table admin-responsive-table">
                     <thead>
                         <tr>
                             <th>Тренировка</th>
@@ -154,16 +155,16 @@
                     <tbody>
                         @foreach(var workout in Model.RecentWorkouts) {
                             <tr>
-                                <td>
+                                <td data-label="Занятие">
                                     <a class="admin-row-title" asp-page="/Workouts/Details" asp-route-id="@workout.Id">@(workout.Title ?? "Тренировка")</a>
                                     <small class="admin-cell-sub">Упражнений: @workout.WorkoutExercises.Count</small>
                                 </td>
-                                <td>
+                                <td data-label="Пользователь">
                                     <span class="admin-ellipsis">@Model.OwnerName(workout.UserId)</span>
                                 </td>
-                                <td class="text-nowrap">@workout.Date.ToString("dd.MM.yyyy")</td>
-                                <td>
-                                    <a class="admin-icon-button" asp-page="/Workouts/Details" asp-route-id="@workout.Id" aria-label="Открыть тренировку @(workout.Title ?? workout.Id.ToString())">
+                                <td class="text-nowrap" data-label="Дата">@workout.Date.ToString("dd.MM.yyyy")</td>
+                                <td data-label="Открыть">
+                                    <a class="admin-icon-button app-icon-button" asp-page="/Workouts/Details" asp-route-id="@workout.Id" aria-label="Открыть тренировку @(workout.Title ?? workout.Id.ToString())">
                                         <admin-icon name="arrow" />
                                     </a>
                                 </td>

@@ -22,7 +22,6 @@
 .pw-result small { color:#c2d1e7; font-size:16px; font-weight:400; }
 .pw-result>span { color:var(--pw-muted); font-size:12px; line-height:1.5; }
 .pw-exercise-form { display:flex; gap:8px; margin:-3px 0 16px; }
-.pw-exercise-form select { width:100%; min-width:0; min-height:44px; padding:9px 12px; border:1px solid #2b4260; border-radius:10px; color:#e4edff; background:#102235; font-size:14px; }
 .pw-exercise-form option { background:#102235; }
 .pw-panel .epr-chart { height:192px; }
 .pw-panel .epr-empty-chart { min-height:192px; padding:20px 0; }
@@ -37,9 +36,6 @@
 .pw-change strong { color:#a6bdff; font-size:18px; white-space:nowrap; }
 .pw-change>span { color:#b1c4dc; font-size:12px; line-height:1.6; }
 .pw-explanation { margin-top:14px; border-top:1px solid #23394f; }
-.pw-explanation summary { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:44px; color:#a8bdd8; font-size:12px; cursor:pointer; list-style:none; }
-.pw-explanation summary svg { width:14px; height:14px; transform:rotate(90deg); }
-.pw-explanation[open] summary svg { transform:rotate(-90deg); }
 .pw-explanation p { color:#b2c4dc; font-size:12px; line-height:1.7; margin:0 0 12px; }
 .pw-explanation a { display:block; color:#9ab7ff; font-size:13px; padding-bottom:10px; }
 .pw-measurements dl { margin-bottom:12px; }
@@ -126,3 +122,6 @@
 }
 @keyframes pw-panel-in { from { opacity:.35; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 @media (prefers-reduced-motion:reduce) { .pw-panel.is-entering { animation:none; } .pw-week-bar { transition:none; } }
+
+/* The shared disclosure owns arrow rotation; the reference page keeps its original menu. */
+.progress-workspace .epr-period>summary>svg:last-child { transform:none; }
