@@ -2,4 +2,4 @@
 @model Disable2faModel
 @{ ViewData["Title"] = "Отключить двухэтапный вход"; ViewData["ActivePage"] = ManageNavPages.TwoFactorAuthentication; }
 <partial name="_StatusMessage" for="StatusMessage" />
-<div class="alert alert-warning"><strong>Для входа останется только пароль</strong><p>Ключ приложения сохраняется. Если нужно заменить его, используйте сброс ключа.</p></div><form method="post"><button class="btn btn-danger" type="submit">Отключить двухэтапный вход</button></form><p><a asp-page="./TwoFactorAuthentication">Оставить включённым</a></p>
+<div class="alert alert-warning"><strong>Для входа останется только пароль</strong><p>Ключ приложения сохраняется. Если нужно заменить его, используйте сброс ключа.</p></div><form method="post"><button class="btn btn-danger app-button danger" type="submit">Отключить двухэтапный вход</button></form><p><a asp-page="./TwoFactorAuthentication">Оставить включённым</a></p>

@@ -1,12 +1,13 @@
 using enx_fit.Data;
 using enx_fit.Extensions;
 using enx_fit.Models;
+using enx_fit.Security;
 using enx_fit.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace enx_fit.Services;
 
-public class ExerciseService(ApplicationDbContext dbContext)
+public class ExerciseService(ApplicationDbContext dbContext, CurrentUser currentUser)
 {
     public async Task<IReadOnlyList<Exercise>> GetAllAsync(string? muscleGroup)
     {
@@ -22,12 +23,19 @@ public class ExerciseService(ApplicationDbContext dbContext)
             StringComparer.Create(System.Globalization.CultureInfo.GetCultureInfo("ru-RU"), true)).ToList();
     }
 
-    public async Task<IReadOnlyList<int>> GetRecentIdsAsync(string ownerId) =>
-        await dbContext.WorkoutSessions.AsNoTracking()
-            .Where(w => w.UserId == ownerId).Where(WorkoutStates.Completed)
-            .OrderByDescending(w => w.Date).ThenByDescending(w => w.Id).Take(5)
-            .SelectMany(w => w.WorkoutExercises.Select(e => e.ExerciseId))
-            .Distinct().ToListAsync();
+    public async Task<IReadOnlyList<Guid>> GetRecentIdsAsync(string ownerId)
+    {
+        var sessions = dbContext.WorkoutSessions.AsNoTracking()
+            .Where(w => w.UserId == ownerId && w.Date <= currentUser.LocalToday).Where(WorkoutStates.Completed)
+            .Where(w => w.WorkoutExercises.Any(e => e.SetEntries.Any(s => s.IsCompleted && !s.IsSkipped && !s.IsWarmup && s.Reps > 0)))
+            .OrderByDescending(w => w.Date).ThenByDescending(w => w.Id).Take(5);
+        var entries = await dbContext.WorkoutExercises.AsNoTracking()
+            .Where(e => sessions.Any(w => w.Id == e.WorkoutSessionId) &&
+                e.SetEntries.Any(s => s.IsCompleted && !s.IsSkipped && !s.IsWarmup && s.Reps > 0))
+            .OrderByDescending(e => e.WorkoutSession.Date).ThenByDescending(e => e.WorkoutSessionId).ThenBy(e => e.Order).ThenBy(e => e.Id)
+            .Select(e => e.ExerciseId).ToListAsync();
+        return entries.Distinct().ToArray();
+    }
 
     public async Task<IReadOnlyList<string>> GetMuscleGroupsAsync() =>
         await dbContext.Exercises
@@ -37,7 +45,7 @@ public class ExerciseService(ApplicationDbContext dbContext)
             .OrderBy(muscleGroup => muscleGroup)
             .ToListAsync();
 
-    public Task<Exercise?> FindAsync(int id) =>
+    public Task<Exercise?> FindAsync(Guid id) =>
         dbContext.Exercises
             .AsNoTracking()
             .SingleOrDefaultAsync(e => e.Id == id);
@@ -58,7 +66,7 @@ public class ExerciseService(ApplicationDbContext dbContext)
         return await SaveAsync();
     }
 
-    public async Task<ExerciseWriteResult> UpdateAsync(int id, ExerciseInputModel input)
+    public async Task<ExerciseWriteResult> UpdateAsync(Guid id, ExerciseInputModel input)
     {
         var exercise = await dbContext.Exercises.FindAsync(id);
 
@@ -78,7 +86,7 @@ public class ExerciseService(ApplicationDbContext dbContext)
         return await SaveAsync();
     }
 
-    public async Task<ExerciseDeleteResult> DeleteAsync(int id)
+    public async Task<ExerciseDeleteResult> DeleteAsync(Guid id)
     {
         var exercise = await dbContext.Exercises.FindAsync(id);
 
@@ -100,7 +108,7 @@ public class ExerciseService(ApplicationDbContext dbContext)
         }
     }
 
-    private Task<bool> NameExistsAsync(string name, int? excludedId = null) =>
+    private Task<bool> NameExistsAsync(string name, Guid? excludedId = null) =>
         dbContext.Exercises.AnyAsync(e =>
             e.Name.ToLower() == name.ToLower() &&
             (!excludedId.HasValue || e.Id != excludedId.Value));

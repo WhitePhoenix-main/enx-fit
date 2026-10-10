@@ -7,12 +7,12 @@
     string N(decimal? value) => value?.ToString("0.#", ru) ?? "—";
     string Delta(decimal? value) => value.HasValue ? (value > 0 ? "+" : value < 0 ? "−" : "") + N(Math.Abs(value.Value)) : "—";
     string WeeksLabel(int weeks) => weeks + (weeks is 2 or 4 ? " недели" : " недель");
-    string? PageUrl(string? tab = null, int? weeks = null, int? chart = null, int? exercise = null) => Url.Page("/Dashboard/Progress", new {
+    string? PageUrl(string? tab = null, int? weeks = null, int? chart = null, Guid? exercise = null) => Url.Page("/Dashboard/Progress", new {
         ClientId = Model.IsCoachView ? Model.Data.Subject.Id : null, Model.Days, Until = Model.Until?.ToString("yyyy-MM-dd"),
         Reference = Model.Reference ? (bool?)true : null, ProgressTab = tab ?? Model.ProgressTab, ProgressWeeks = weeks ?? Model.ProgressWeeks,
         ChartWeeks = chart ?? Model.ChartWeeks, ProgressExercise = exercise ?? progress.ExerciseId
     });
-    var strengthScale = Model.Reference && progress.ExerciseId == 1 ? ((decimal, decimal, decimal)?)(40m,70m,10m) : null;
+    var strengthScale = Model.Reference && progress.ExerciseId == ExerciseIds.FromLegacy(1) ? ((decimal, decimal, decimal)?)(40m,70m,10m) : null;
     var bodyScale = Model.Reference ? ((decimal, decimal, decimal)?)(76m,82m,2m) : null;
 }
 <partial name="_MobileProgress" model="Model" />
@@ -72,9 +72,9 @@
 }
 </div>
 @if (Model.Reference || Model.NextRecommendation is not null) {
-    <dialog id="progress-goal-dialog" class="app-dialog epr-dialog"><div class="dialog-heading"><h2>Следующая цель: @(Model.Reference ? "Жим лёжа" : ExercisePresentation.DisplayName(Model.NextGoalExercise!.Exercise))</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>@(Model.Reference ? "Два полных занятия в верхней границе диапазона. Следующий шаг — увеличить рабочий вес с 60 до 62,5 кг. Изменение нагрузки требует подтверждения в программе." : Model.NextRecommendation!.Reason)</p>@if (!Model.Reference && Model.ActiveProgram is { } active) { <a class="ef-primary" asp-page="/Programs/Details" asp-route-id="@active.Id" asp-route-Tab="progression" asp-route-ExerciseId="@Model.NextGoalExercise!.Id">Рассмотреть в программе</a> }<button type="button" class="epr-dialog-close" data-close>Закрыть</button></dialog>
+    <dialog id="progress-goal-dialog" class="app-dialog epr-dialog app-workspace"><div class="dialog-heading"><h2>Следующая цель: @(Model.Reference ? "Жим лёжа" : ExercisePresentation.DisplayName(Model.NextGoalExercise!.Exercise))</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>@(Model.Reference ? "Два полных занятия в верхней границе диапазона. Следующий шаг — увеличить рабочий вес с 60 до 62,5 кг. Изменение нагрузки требует подтверждения в программе." : Model.NextRecommendation!.Reason)</p>@if (!Model.Reference && Model.ActiveProgram is { } active) { <a class="ef-primary" asp-page="/Programs/Details" asp-route-id="@active.Id" asp-route-Tab="progression" asp-route-ExerciseId="@Model.NextGoalExercise!.Id">Рассмотреть в программе</a> }<button type="button" class="epr-dialog-close" data-close>Закрыть</button></dialog>
 }
 @if (Model.Reference) {
-    <dialog id="progress-measurement-dialog" class="app-dialog epr-dialog"><div class="dialog-heading"><h2>Параметры тела</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>30 сентября 2026: вес 78,2 кг, обхват талии 82 см, обхват груди 101 см.</p><a class="ef-primary" asp-page="/Body/Create">Добавить свой замер</a></dialog>
-    @foreach (var record in progress.Records) { <dialog id="progress-record-@record.ExerciseId" class="app-dialog epr-dialog"><div class="dialog-heading"><h2>@record.Name</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>Личный рекорд: @N(record.Weight) кг · @record.Date.ToString("d MMMM yyyy", ru)</p><a class="ef-primary" href="@PageUrl(tab: "records")">Все рекорды</a></dialog> }
+    <dialog id="progress-measurement-dialog" class="app-dialog epr-dialog app-workspace"><div class="dialog-heading"><h2>Параметры тела</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>30 сентября 2026: вес 78,2 кг, обхват талии 82 см, обхват груди 101 см.</p><a class="ef-primary" asp-page="/Body/Create">Добавить свой замер</a></dialog>
+    @foreach (var record in progress.Records) { <dialog id="progress-record-@record.ExerciseId" class="app-dialog epr-dialog app-workspace"><div class="dialog-heading"><h2>@record.Name</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>Личный рекорд: @N(record.Weight) кг · @record.Date.ToString("d MMMM yyyy", ru)</p><a class="ef-primary" href="@PageUrl(tab: "records")">Все рекорды</a></dialog> }
 }

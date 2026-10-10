@@ -5,7 +5,7 @@
 .record-mode { display:flex; align-items:center; gap:9px; color:#a8bfff; font-size:12px; white-space:nowrap; }
 .record-mode svg { width:18px; height:18px; }
 .record-draft { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:20px; }
-.record-draft p { font-size:11px; line-height:1.6; color:#9bb5df; margin:0; }
+.record-draft p { margin:0; }
 .record-draft .text-button { min-height:44px; flex:none; font-size:11px; color:#adbfdb; }
 .record-workout .record-metadata { display:block; padding:24px; margin-bottom:16px; }
 .record-fields { display:grid; grid-template-columns:minmax(0,2fr) minmax(160px,1fr); gap:18px; }
@@ -32,7 +32,7 @@
 .record-outline h2 { font-size:15px; margin:0; }
 .record-outline>header>span { font-size:11px; color:#8da9d5; }
 .record-outline nav { display:grid; gap:7px; }
-.record-outline nav button { display:flex; text-align:left; align-items:center; gap:10px; min-height:56px; padding:12px; border:1px solid #2d425e; border-radius:10px; color:#a8bedf; background:#0c1725; min-width:0; width:100%; }
+
 .record-outline nav button>span { color:#8ca8e0; font-size:11px; flex:none; }
 .record-outline nav button strong { font-size:12px; font-weight:500; overflow-wrap:anywhere; line-height:1.5; }
 .record-outline nav button[aria-current=true] { border-color:#557aff; background:#557aff20; color:#edf3ff; }
@@ -98,7 +98,7 @@ body:has(.record-sheet[open]) { overflow:hidden; }
   body.record-keyboard-open .em-mobile-nav { display:none; }
   body.record-keyboard-open .record-savebar { position:fixed; left:var(--record-save-left); width:var(--record-save-width); bottom:calc(var(--record-keyboard-inset) + 8px); margin:0; z-index:8; }
   body.record-keyboard-open .record-savebar>p,body.record-keyboard-open .record-savebar>button[data-dialog] { display:none; }
-  body.record-keyboard-open .record-workout { padding-bottom:210px; }
+  body.record-keyboard-open .record-workout { padding-bottom:calc(210px + var(--record-keyboard-inset,0px)); }
 }
 @media(max-width:359px) { .record-fields { grid-template-columns:1fr; } }
 @media(prefers-reduced-motion:reduce) { .record-enhanced .record-exercise:not([hidden]) { animation:none; } }

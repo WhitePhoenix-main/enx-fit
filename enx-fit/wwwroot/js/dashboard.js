@@ -43,15 +43,49 @@
     const fallback = event.target.querySelector('[data-default-period]');
     if (fallback) fallback.disabled = event.submitter?.name === 'Days';
   });
-  document.querySelectorAll('.dashboard-form').forEach(form => form.addEventListener('submit', () => {
+  document.querySelectorAll('.dashboard-form').forEach(form => {
     const button = form.querySelector('button[type="submit"]');
-    button.disabled = true;
-    button.setAttribute('aria-busy', 'true');
-    button.textContent = 'Сохраняем…';
-  }));
-  window.addEventListener('pageshow', () => document.querySelectorAll('[aria-busy="true"]').forEach(button => {
-    button.disabled = false;
-    button.removeAttribute('aria-busy');
-    button.textContent = 'Сохранить';
-  }));
+    if (!button) return;
+    const feedback = document.createElement('p');
+    feedback.className = 'app-status';
+    feedback.setAttribute('role', 'status');
+    feedback.setAttribute('aria-live', 'polite');
+    feedback.dataset.dashboardFeedback = '';
+    feedback.hidden = true;
+    form.append(feedback);
+    let busy = false;
+    const notice = (state, message) => {
+      window.AppComponents?.setNoticeState(feedback, state);
+      feedback.textContent = message;
+      feedback.hidden = false;
+    };
+    form.addEventListener('submit', event => {
+      if (busy) { event.preventDefault(); return; }
+      if (!form.checkValidity()) { event.preventDefault(); form.reportValidity(); return; }
+      if (!navigator.onLine) {
+        event.preventDefault();
+        notice('error', 'Сейчас нет сети. Данные остались в форме; повторите сохранение после подключения.');
+      }
+    });
+    // Run after form/document validators. Disabling is deferred so the native submitter remains in the POST.
+    window.addEventListener('submit', event => {
+      if (event.target !== form || event.defaultPrevented || !form.checkValidity() || busy) return;
+      busy = true;
+      form.setAttribute('aria-busy', 'true');
+      button.setAttribute('aria-busy', 'true');
+      notice('pending', 'Ожидаем подтверждения сохранения…');
+      setTimeout(() => { if (busy) button.disabled = true; }, 0);
+    });
+    window.addEventListener('online', () => {
+      if (feedback.dataset.appState === 'error') notice('pending', 'Подключение восстановлено. Проверьте данные и повторите сохранение.');
+    });
+    window.addEventListener('pageshow', () => {
+      const wasBusy = busy;
+      busy = false;
+      form.removeAttribute('aria-busy');
+      button.removeAttribute('aria-busy');
+      button.disabled = false;
+      if (wasBusy) notice('pending', 'Проверьте данные перед повторным сохранением.');
+    });
+  });
 })();

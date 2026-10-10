@@ -2,7 +2,8 @@ namespace enx_fit.Models;
 
 public class Exercise
 {
-    public int Id { get; set; }
+    [Microsoft.AspNetCore.Mvc.ModelBinder(BinderType = typeof(enx_fit.ViewModels.ExerciseIdModelBinder))]
+    public Guid Id { get; set; } = Guid.NewGuid();
 
     public string Name { get; set; } = string.Empty;
 

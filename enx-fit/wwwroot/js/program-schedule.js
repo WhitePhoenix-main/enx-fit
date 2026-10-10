@@ -44,6 +44,7 @@
   mobile.addEventListener('change', layout);
   window.addEventListener('resize', revealSelectedDay);
   root.classList.add('schedule-enhanced'); select(day); layout();
+  if (root.dataset.selectedDay === day && new URL(location.href).searchParams.get('OpenDay')?.toLowerCase() === 'true' && mobile.matches && canDialog) dialog.showModal();
   document.querySelectorAll('.schedule-move form').forEach(form => {
     const input = form.querySelector('input[name="date"]');
     const choices = [...form.querySelectorAll('[data-date-choice]')];

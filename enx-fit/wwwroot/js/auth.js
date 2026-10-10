@@ -52,22 +52,39 @@
     confirmation.addEventListener('input', validate);
     password.addEventListener('input', validate);
   }
-  const submit = form.querySelector('[type="submit"]'), caption = submit.querySelector('span'), initialCaption = caption?.textContent || submit.textContent;
+  const submit = form.querySelector('[type="submit"]');
   const feedback = form.querySelector('[data-auth-feedback]');
+  let busy = false;
+  const message = (text, state) => {
+    if (!feedback) return;
+    feedback.hidden = false;
+    feedback.textContent = text;
+    window.AppComponents?.setNoticeState(feedback, state);
+  };
   form.addEventListener('submit', event => {
-    if(!navigator.onLine) { event.preventDefault(); if(feedback) feedback.textContent='Сейчас нет сети. Поля остаются в форме; повторите после подключения.'; return; }
-    if(event.defaultPrevented || !form.checkValidity()) return;
-    submit.disabled = true;
+    if (busy) { event.preventDefault(); return; }
+    if (!form.checkValidity()) { event.preventDefault(); form.reportValidity(); return; }
+    if (!navigator.onLine) { event.preventDefault(); message('Сейчас нет сети. Поля остаются в форме; повторите после подключения.', 'error'); }
+  });
+  // All validation handlers on the form must accept the native POST first.
+  window.addEventListener('submit', event => {
+    if (event.target !== form || event.defaultPrevented) return;
+    busy = true;
+    form.setAttribute('aria-busy', 'true');
     submit.setAttribute('aria-busy', 'true');
-    if(caption) caption.textContent = 'Подождите…';
-    if(feedback) feedback.textContent = 'Ожидаем ответа…';
+    message('Ожидаем ответа сервера…', 'pending');
+    setTimeout(() => { if (busy) submit.disabled = true; }, 0);
   });
   window.addEventListener('pageshow', () => {
+    const wasBusy = busy;
+    busy = false; form.removeAttribute('aria-busy');
     submit.disabled = false; submit.removeAttribute('aria-busy');
-    if(caption) caption.textContent = initialCaption;
-    if(feedback) feedback.textContent = '';
+    if (wasBusy) message('Проверьте результат перед повторной отправкой.', 'pending');
+    else if (feedback) { feedback.hidden = true; feedback.textContent = ''; window.AppComponents?.setNoticeState(feedback, 'info'); }
   });
-  window.addEventListener('online',()=>{if(feedback && feedback.textContent.includes('нет сети')) feedback.textContent='Подключение восстановлено. Повторите отправку.';});
+  window.addEventListener('online', () => {
+    if (feedback?.dataset.appState === 'error') message('Подключение восстановлено. Повторите отправку.', 'pending');
+  });
   });
 
   // Encode the public page URL only: no password, session or return URL is shared.

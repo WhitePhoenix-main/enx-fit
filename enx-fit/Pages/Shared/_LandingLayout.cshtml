@@ -18,8 +18,9 @@
     <link rel="stylesheet" href="~/css/landing-motion.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/landing-story.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/public-pages.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app-components.css" asp-append-version="true" />
 </head>
-<body class="enix-landing landing-story @(currentPage == "/Index" ? "public-home-page" : "public-inner-page")">
+<body class="enix-landing landing-story app-workspace @(currentPage == "/Index" ? "public-home-page" : "public-inner-page")">
     <div class="page-atmosphere" aria-hidden="true"></div>
     <a class="skip-link" href="#main-content">Перейти к содержимому</a>
     <partial name="_LandingIcons" /><partial name="_LandingHeader" />
@@ -44,6 +45,7 @@
     </nav>
     <script src="~/js/landing.js" asp-append-version="true" defer></script>
     <script src="~/js/landing-motion.js" asp-append-version="true" defer></script>
+    <script src="~/js/app-components.js" asp-append-version="true" defer></script>
     <script src="~/js/public-pages.js" asp-append-version="true" defer></script>
 </body>
 </html>

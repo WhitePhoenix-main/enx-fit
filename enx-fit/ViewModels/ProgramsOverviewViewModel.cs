@@ -53,7 +53,7 @@ public sealed class ProgramsOverviewViewModel
     {
         var program = new TrainingProgram { Id = -10000, Name = "Сила и баланс", Goal = "Набор силы", Weeks = 6, DaysPerWeek = 3, StartDate = new(2026, 9, 14),
             Workouts = [new() { Name = "Верх тела — сила", DayOfWeek = 1, Order = 0 }, new() { Name = "Верх тела — сила", DayOfWeek = 3, Order = 1 }, new() { Name = "Ноги и кор", DayOfWeek = 5, Order = 2 }] };
-        foreach (var workout in program.Workouts) workout.Exercises = Enumerable.Range(1, 4).Select(id => new ProgramWorkoutExercise { ExerciseId = id }).ToList();
+        foreach (var workout in program.Workouts) workout.Exercises = Enumerable.Range(1, 4).Select(id => new ProgramWorkoutExercise { ExerciseId = ExerciseIds.FromLegacy(id) }).ToList();
         var sessions = ProgramSchedule.Occurrences(program).Where(o => o.Date < new DateOnly(2026, 10, 2)).Select(o => new WorkoutSession { ProgramWorkoutKey = o.Workout.Key,
             ScheduledDate = o.Date, Date = o.Date, CompletedAtUtc = o.Date.ToDateTime(new TimeOnly(12, 0)) }).ToList();
         return [new(program, sessions, "hero"),

@@ -9,14 +9,14 @@
 @if (Model.CanSendEmail) {
     <partial name="_StatusMessage" model="Model.StatusMessage" />
     <form method="post" asp-route-returnUrl="@Model.ReturnUrl" data-auth-form>
-        <div asp-validation-summary="ModelOnly" class="auth-errors" role="alert"></div>
+        <div asp-validation-summary="ModelOnly" class="auth-errors app-status app-notice" data-app-state="error" role="alert"></div>
         <div class="auth-field"><label asp-for="Input.Email">Email аккаунта</label><div class="auth-input"><svg class="auth-icon" aria-hidden="true"><use href="#auth-mail" /></svg><input asp-for="Input.Email" type="email" autocomplete="username" inputmode="email" spellcheck="false" placeholder="name@domain.com" aria-describedby="email-error" required /></div><span asp-validation-for="Input.Email" id="email-error" class="auth-field-error"></span></div>
-        <button type="submit" class="auth-submit"><span>Запросить письмо</span><svg class="auth-icon" aria-hidden="true"><use href="#auth-arrow" /></svg></button>
-        <p data-auth-feedback class="auth-form-feedback" role="status" aria-live="polite"></p>
+        <button type="submit" class="auth-submit app-button"><span>Запросить письмо</span><svg class="auth-icon" aria-hidden="true"><use href="#auth-arrow" /></svg></button>
+        <p data-auth-feedback class="auth-form-feedback app-status app-notice" data-app-state="info" hidden role="status" aria-live="polite"></p>
     </form>
 } else {
-    <div class="auth-notice"><h2>Подтверждение пока недоступно</h2><p>Отправка писем ещё не подключена. Уже подтверждённый аккаунт можно использовать как обычно.</p></div>
-    <div asp-validation-summary="ModelOnly" class="auth-errors" role="alert"></div>
-    <a class="auth-submit" asp-area="" asp-page="/TechnicalPages/Login" asp-route-returnUrl="@Model.ReturnUrl">Вернуться к входу</a>
+    <div class="auth-notice app-status app-notice" data-app-state="info"><h2>Подтверждение пока недоступно</h2><p>Отправка писем ещё не подключена. Уже подтверждённый аккаунт можно использовать как обычно.</p></div>
+    <div asp-validation-summary="ModelOnly" class="auth-errors app-status app-notice" data-app-state="error" role="alert"></div>
+    <a class="auth-submit app-button" asp-area="" asp-page="/TechnicalPages/Login" asp-route-returnUrl="@Model.ReturnUrl">Вернуться к входу</a>
 }
 </section>

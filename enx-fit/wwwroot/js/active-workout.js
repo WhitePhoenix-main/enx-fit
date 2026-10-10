@@ -7,7 +7,7 @@ if (!initialState) return; // An older running server can still render the pre-m
 const key = `enix-session-queue:${root.dataset.viewer}:${root.dataset.sessionId}`;
 const status = root.querySelector('[data-sync-status]');
 let state = JSON.parse(initialState.textContent);
-let revision = state.revision, queue = [], sending = false, conflict = false, storageAvailable = true;
+let revision = state.revision, queue = [], sending = false, refreshing = false, conflict = false, storageAvailable = true;
 let offset = Date.parse(state.serverNowUtc) - Date.now(), sampledAt = Date.now(), soundedRest = null;
 let sound = false, audioContext = null, wakeLock = null;
 const active = () => ['InProgress','Paused'].includes(state.status);
@@ -15,18 +15,37 @@ const token = document.querySelector('input[name="__RequestVerificationToken"]')
 const clock = seconds => `${String(Math.floor(Math.max(0,seconds)/60)).padStart(2,'0')}:${String(Math.floor(Math.max(0,seconds)%60)).padStart(2,'0')}`;
 const scratchKey = `${key}:fields`; let scratch = {}, rejectedOperationId = null; const debounce = new Map();
 const pickerRoot = document.getElementById('workout-library'), picker = pickerRoot?.exerciseLibrary;
-let picking = false, pickAttempt = null;
-if (picker) pickerRoot.addEventListener('exercises-selected', async event => {
- if (picking) return; picking = true; picker.setBusy(true); picker.message('');
+let picking = false, ordering = false, pickAttempt = null, orderAttempt = null;
+async function flushResults() {
+ for (const timeout of debounce.values()) clearTimeout(timeout); debounce.clear();
+ if (state.status !== 'Paused') for (const id of Object.keys(scratch)) {
+  const form = [...root.querySelectorAll('.set-form')].find(f => f.elements.namedItem('setId').value === id);
+  if (form && !saveSet(form)) throw new Error('Заполните результаты подходов перед изменением состава.');
+ }
+ await drain();
+ for (let n = 0; sending && n < 200; n++) await new Promise(resolve => setTimeout(resolve, 25));
+ if (queue.length || sending) throw new Error('Дождитесь сохранения результатов. Ваш выбор остаётся здесь.');
+}
+root.reorderWorkout = async entries => {
+ if (picking || ordering) throw new Error('Дождитесь сохранения состава тренировки.');
+ ordering = true;
  try {
-  for (const timeout of debounce.values()) clearTimeout(timeout); debounce.clear();
-  if (state.status !== 'Paused') for (const id of Object.keys(scratch)) {
-   const form = [...root.querySelectorAll('.set-form')].find(f => f.elements.namedItem('setId').value === id);
-   if (form && !saveSet(form)) throw new Error('Заполните результаты подходов перед добавлением упражнений.');
-  }
-  await drain();
-  for (let n = 0; sending && n < 200; n++) await new Promise(resolve => setTimeout(resolve, 25));
-  if (queue.length || sending) throw new Error('Дождитесь сохранения результатов. Выбор упражнений остаётся здесь.');
+  await flushResults();
+  const signature = JSON.stringify(entries);
+  if (orderAttempt?.signature !== signature) orderAttempt = {signature,id:crypto.randomUUID(),revision};
+  const body = new URLSearchParams({orderJson:signature,operationId:orderAttempt.id,expectedRevision:orderAttempt.revision,__RequestVerificationToken:token});
+  const response = await fetch(`${location.pathname}?handler=Reorder`,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body,redirect:'error'});
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(response.status === 409 ? 'Тренировка изменена в другом окне. Обновите страницу перед перестановкой.' : result.error || 'Не удалось сохранить порядок. Попробуйте ещё раз.');
+  revision = result.state.revision; persist(); update(result.state); orderAttempt = null; syncMessage();
+  return result;
+ } catch (error) { throw new Error(error instanceof TypeError ? 'Нет связи. Порядок остался в этом окне. Подключитесь и нажмите «Сохранить порядок» ещё раз.' : error.message); }
+ finally { ordering = false; }
+};
+if (picker) pickerRoot.addEventListener('exercises-selected', async event => {
+ if (picking || ordering) return; picking = true; picker.setBusy(true); picker.message('');
+ try {
+  await flushResults();
   const entry = document.querySelector('[data-exercise-entry]').value;
   const signature = JSON.stringify([entry, event.detail.exercises]);
   if (pickAttempt?.signature !== signature) pickAttempt = {signature, id:crypto.randomUUID()};
@@ -46,17 +65,17 @@ if (picker) pickerRoot.addEventListener('exercises-selected', async event => {
    document.getElementById(`exercise-${entry}`).replaceWith(nextCard);
   }
   const latest = JSON.parse(nextState.textContent); revision = latest.revision; persist(); update(latest);
-  picker.setSelected([...html.querySelectorAll('#workout-library .is-added')].map(row => Number(row.dataset.exerciseId)));
+  picker.setSelected([...html.querySelectorAll('#workout-library .is-added')].map(row => window.ExerciseIds.normalize(row.dataset.exerciseId)));
   picker.clear(); pickAttempt = null; document.getElementById('exercise-dialog').close();
   const empty = root.querySelector('.workout-empty'); if (empty) empty.hidden = true;
   root.querySelector('[data-dialog="load-template-dialog"]')?.setAttribute('hidden','');
   syncMessage(entry === '0' ? 'Упражнения добавлены · все изменения сохранены' : 'Упражнение заменено · все изменения сохранены');
   const ids = event.detail.exercises.map(p => p.exerciseId);
-  const card = [...root.querySelectorAll('.session-exercise')].find(el => ids.includes(Number(el.dataset.catalogId)));
+  const card = [...root.querySelectorAll('.session-exercise')].find(el => ids.includes(window.ExerciseIds.normalize(el.dataset.catalogId)));
   root.dispatchEvent?.(new CustomEvent('workout-exercises-changed', {detail:{exerciseId:card?.id}}));
   card?.classList.add('exercise-just-added'); card?.scrollIntoView({behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches?'instant':'smooth',block:'start'});
   if (state.status !== 'Paused' && window.matchMedia?.('(min-width:1024px)')?.matches) card?.querySelector('input:not([type="hidden"])')?.focus({preventScroll:true});
- } catch (error) { picker.message(error.message); }
+ } catch (error) { picker.message(error instanceof TypeError ? 'Нет соединения. Выбранные упражнения остались здесь — повторите добавление после восстановления связи.' : error.message); }
  finally { picking = false; picker.setBusy(false); }
 });
 function persist() { try { localStorage.setItem(scratchKey,JSON.stringify(scratch)); localStorage.setItem(key,JSON.stringify({revision,queue})); storageAvailable=true; } catch { storageAvailable=false; } }
@@ -65,7 +84,12 @@ try {
  const saved=JSON.parse(localStorage.getItem(key)); if(Array.isArray(saved?.queue)&&saved.queue.length) { queue=saved.queue; revision=saved.revision; }
  if(root.dataset.recordedRequest) { const draftKey=`enix-record-draft:${root.dataset.viewer}`; const draft=JSON.parse(localStorage.getItem(draftKey)); if(draft?.fields?.ClientRequestId===root.dataset.recordedRequest) localStorage.removeItem(draftKey); }
 } catch { /* Storage may be unavailable. */ }
-function syncMessage(message) { status.textContent=message||(queue.length?`${queue.length} изменений на устройстве · ожидают отправки`:Object.keys(scratch).length?'Незаполненные поля сохранены на устройстве':storageAvailable?'Все изменения сохранены':'Сохранено на сервере. Локальное восстановление недоступно.'); status.classList.toggle('has-pending',queue.length>0); }
+function syncMessage(message, explicitState) {
+ const hasDraft = Object.keys(scratch).length > 0;
+ status.textContent = message || (queue.length ? storageAvailable ? `${queue.length} изменений на устройстве · ожидают отправки` : `${queue.length} изменений ожидают отправки · локальное восстановление недоступно` : hasDraft ? storageAvailable ? 'Черновик полей сохранён на устройстве' : 'Черновик полей остаётся на странице · восстановление недоступно' : storageAvailable ? 'Все изменения сохранены' : 'Сохранено на сервере. Локальное восстановление недоступно.');
+ status.classList.toggle('has-pending', queue.length > 0);
+ window.AppComponents?.setNoticeState(status, explicitState || (queue.length ? 'pending' : hasDraft ? storageAvailable ? 'local' : 'error' : 'saved'));
+}
 function update(data) { state=data; offset=Date.parse(data.serverNowUtc)-Date.now(); sampledAt=Date.now(); queue.forEach(previewOperation); tick(); maintainWakeLock(); }
 function tick() {
  const elapsed=state.elapsedSeconds+(state.status==='InProgress'?(Date.now()-sampledAt)/1000:0);
@@ -85,13 +109,13 @@ function restoreForms() { for(const op of queue.filter(o=>o.kind==='set')) { con
 async function drain() {
  if(sending||conflict||!queue.length)return; sending=true;
  try { while(queue.length) {
-  const op=queue[0]; syncMessage('Сохраняем результаты…'); const body=new URLSearchParams(op.fields); body.set('__RequestVerificationToken',token); body.set('operationId',op.id); body.set('expectedRevision',revision);
+  const op=queue[0]; syncMessage('Сохраняем результаты…', 'pending'); const body=new URLSearchParams(op.fields); body.set('__RequestVerificationToken',token); body.set('operationId',op.id); body.set('expectedRevision',revision);
   const response=await fetch(`${location.pathname}?handler=${op.kind==='set'?'Set':'Control'}`,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body,redirect:'error'}); const data=await response.json().catch(()=>({}));
   if(!response.ok) { if(response.status===400) { rejectedOperationId=op.id; root.querySelector("[data-discard-operation]").hidden=false; } conflict=response.status===409; if(conflict)root.querySelector('[data-reconcile]').hidden=false; throw new Error(data.error||'Не удалось сохранить. Проверьте соединение и вход в аккаунт.'); }
   revision=data.revision; queue.shift(); if(op.kind === "set" && JSON.stringify(scratch[op.setId]) === JSON.stringify(op.fields.filter(([n]) => !["performedAtUtc","skipped","remove"].includes(n)))) delete scratch[op.setId]; persist(); update(data);
   if(op.fields.some(([n,v])=>n==='remove'&&v==='true')) [...root.querySelectorAll('.set-form')].find(f=>f.elements.namedItem('setId')?.value===op.setId)?.remove();
   if(data.status==='Cancelled') { location.reload(); return; }
- } syncMessage(); } catch(error) { syncMessage(`${error.message} Изменения ${storageAvailable?'сохранены на устройстве':'остались в открытой странице'}.`); } finally { sending=false; }
+ } syncMessage(); } catch(error) { syncMessage(`${error.message} Изменения ${storageAvailable?'сохранены на устройстве':'остались в открытой странице'}.`, navigator.onLine ? 'error' : 'pending'); } finally { sending=false; }
 }
 function previewOperation(op) {
  const value = name => op.fields.find(([n])=>n===name)?.[1];
@@ -123,18 +147,19 @@ function saveSet(form,extra=[],quiet=false) {
  const startsRest = form.elements.namedItem("completed").checked && !form.classList.contains("is-completed");
  form.classList.toggle("is-completed",form.elements.namedItem("completed").checked); if(startsRest && state.status === "InProgress") { const rest=Number(form.elements.namedItem("AddSet.RestSeconds").value); state.restEndsAtUtc=rest>0?new Date(Date.now()+offset+rest*1000).toISOString():null; state.restAfterSetId=Number(form.elements.namedItem("setId").value); tick(); } enqueue({kind:"set",setId:form.elements.namedItem("setId").value,fields,startsRest}); return true;
 }
-root.addEventListener("input", event => { const form=event.target.closest(".set-form"); if(!form || !active() || state.status==="Paused") return; const id=form.elements.namedItem("setId").value; scratch[id]=[...new FormData(form).entries()].filter(([n])=>n!=="__RequestVerificationToken"); persist(); clearTimeout(debounce.get(id)); debounce.set(id,setTimeout(()=>saveSet(form,[],true),500)); });
+root.addEventListener("input", event => { const form=event.target.closest(".set-form"); if(!form || !active() || state.status==="Paused") return; const id=form.elements.namedItem("setId").value; scratch[id]=[...new FormData(form).entries()].filter(([n])=>n!=="__RequestVerificationToken"); persist(); syncMessage(); clearTimeout(debounce.get(id)); debounce.set(id,setTimeout(()=>saveSet(form,[],true),500)); });
 root.addEventListener('change',event=>{const form=event.target.closest('.set-form'); if(form&&!event.target.readOnly&&active()){clearTimeout(debounce.get(form.elements.namedItem('setId').value));if(!saveSet(form)&&event.target.name==='completed'){event.target.checked=form.classList.contains('is-completed');scratch[form.elements.namedItem('setId').value]=[...new FormData(form).entries()].filter(([n])=>n!=='__RequestVerificationToken');persist();}}});
 function completionFields(form) { for(const [name,value] of [['operationId',crypto.randomUUID()],['expectedRevision',revision]]) { let input=form.elements.namedItem(name); if(!input) {input=document.createElement('input');input.type='hidden';input.name=name;form.append(input);}input.value=value; } }
+function nativeOrderRevision(form) { if (form.hasAttribute('data-native-order')) form.elements.namedItem('expectedRevision').value = revision; }
 document.addEventListener('submit',async event=>{
  if (event.target.hasAttribute('data-pick-form')) { event.preventDefault(); picker?.commit(); return; }
  const form=event.target; if(form.matches('.set-form')) { event.preventDefault(); clearTimeout(debounce.get(form.elements.namedItem("setId").value)); saveSet(form,event.submitter?.name==='remove'?[['remove','true']]:[]); return; }
  if(!root.contains(form)&&!form.hasAttribute('data-complete-form')&&!form.closest('#exercise-dialog,#load-template-dialog'))return;
  if(form.dataset.flushed)return; for(const [id,pairs] of Object.entries(scratch)) { const pendingForm=[...root.querySelectorAll(".set-form")].find(f=>f.elements.namedItem("setId").value===id); if(pendingForm && state.status!=="Paused" && !saveSet(pendingForm)) { event.preventDefault();return; } }
  for(const setForm of root.querySelectorAll('.set-form:focus-within')) { if(!saveSet(setForm)){event.preventDefault();return;} }
- if(!queue.length&&!sending) {if(form.hasAttribute('data-complete-form'))completionFields(form);return;}
+ if(!queue.length&&!sending) {nativeOrderRevision(form);if(form.hasAttribute('data-complete-form'))completionFields(form);return;}
  event.preventDefault();await drain();if(queue.length||sending){syncMessage('Дождитесь отправки всех изменений перед переходом.');return;}
- form.dataset.flushed='true';if(form.hasAttribute('data-complete-form'))completionFields(form);form.requestSubmit(event.submitter);
+ form.dataset.flushed='true';nativeOrderRevision(form);if(form.hasAttribute('data-complete-form'))completionFields(form);form.requestSubmit(event.submitter);
 });
 document.addEventListener('click',event=>{
  const control=event.target.closest("[data-control]");if(control) { const op={kind:"control",fields:[["action",control.dataset.control],["seconds",control.dataset.seconds||"0"],["performedAtUtc",new Date(Date.now()+offset).toISOString()]]}; previewOperation(op);tick();enqueue(op); }
@@ -145,9 +170,21 @@ document.addEventListener('click',event=>{
 });
 root.querySelector("[data-discard-operation]").addEventListener("click",()=>{if(queue[0]?.id===rejectedOperationId)queue.shift();rejectedOperationId=null;root.querySelector("[data-discard-operation]").hidden=true;persist();drain();});
 root.querySelector('[data-reconcile]').addEventListener('click',async()=>{try{const response=await fetch(`${location.pathname}?handler=State`,{cache:'no-store'});if(!response.ok)throw new Error();const data=await response.json();revision=data.revision;conflict=false;persist();root.querySelector('[data-reconcile]').hidden=true;update(data);await drain();}catch{syncMessage('Не удалось получить текущую версию. Проверьте соединение.');}});
-async function refresh(){if(picking||pickerRoot?.closest('dialog')?.open)return;if(queue.length){drain();return;}if(sending)return;try{const response=await fetch(`${location.pathname}?handler=State`,{cache:'no-store'});if(!response.ok)return;const data=await response.json();if(picking||pickerRoot?.closest('dialog')?.open)return;if(data.revision!==revision){location.reload();return;}update(data);}catch{/* Offline changes remain local. */}}
+async function refresh(){
+ if(picking||ordering||root.dataset.orderEditing==='true'||pickerRoot?.closest('dialog')?.open)return;
+ if(queue.length){drain();return;}if(sending||refreshing)return;
+ refreshing=true;const requestedRevision=revision;
+ try{
+  const response=await fetch(`${location.pathname}?handler=State`,{cache:'no-store'});if(!response.ok)return;
+  const data=await response.json();
+  // A result saved while this GET was in flight owns the newer revision.
+  if(queue.length||sending||revision!==requestedRevision||picking||ordering||root.dataset.orderEditing==='true'||pickerRoot?.closest('dialog')?.open)return;
+  if(data.revision!==revision){location.reload();return;}update(data);
+ }catch{/* Offline changes remain local. */}finally{refreshing=false;}
+}
 document.querySelectorAll('[data-local-time]').forEach(time=>time.textContent=new Date(time.dataset.localTime).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}));
 window.addEventListener('online',drain);window.addEventListener('beforeunload',event=>{if((queue.length||Object.keys(scratch).length)&&!storageAvailable){event.preventDefault();event.returnValue='';}});
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){tick();refresh();maintainWakeLock();}});window.addEventListener('pageshow',refresh);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){tick();refresh();maintainWakeLock();}});
+window.addEventListener('pageshow',()=>{tick();refresh();maintainWakeLock();});
 restoreForms(); queue.forEach(previewOperation); for(const [id,pairs] of Object.entries(scratch)) { const form=[...root.querySelectorAll(".set-form")].find(f=>f.elements.namedItem("setId").value===id); if(!form) continue; for(const input of form.querySelectorAll("input[name]")) { if(input.name==="__RequestVerificationToken")continue; const pair=pairs.find(([n])=>n===input.name); if(input.type==="checkbox")input.checked=!!pair;else if(pair)input.value=pair[1]; } if(active()&&state.status!=="Paused")saveSet(form); } syncMessage();tick();maintainWakeLock();drain();setInterval(tick,1000);setInterval(refresh,15000);
 })();

@@ -1,4 +1,17 @@
 .plan-catalog-intro { padding:18px 0 22px; }
+.plan-starter-label { display:block; margin-top:8px; color:#acc5ff; font-size:11px; line-height:1.5; }
+.ep-starter-photo { display:grid; place-items:center; background:#182a43; border:1px solid #345078; }
+.ep-starter-photo svg { width:70px; height:70px; color:#849fe0; }
+.em-starter-photo { display:grid; place-items:center; flex:none; width:72px; height:80px; border-radius:12px; background:#182a43; border:1px solid #345078; color:#91abe5; }
+.em-starter-photo svg { width:34px; height:34px; }
+.plan-starter-guide { margin:14px 0; padding:0 12px; border:1px solid #345078; border-radius:12px; background:#182a4330; }
+.plan-starter-guide summary { display:flex; justify-content:space-between; align-items:center; gap:8px; min-height:44px; cursor:pointer; list-style:none; color:#b8cfff; font-size:12px; }
+.plan-starter-guide summary::-webkit-details-marker { display:none; }
+.plan-starter-guide summary svg { width:16px; height:16px; }
+.plan-starter-guide p { margin:10px 0; color:#a9bddb; line-height:1.65; font-size:12px; }
+.plan-starter-guide a { display:inline-flex; align-items:center; min-height:44px; font-size:11px; line-height:1.5; color:#acc5ff; }
+.plan-template-workouts .plan-technique-link { display:inline-flex; align-items:center; gap:6px; min-height:44px; color:#acc5ff; font-size:11px; }
+.plan-technique-link svg { width:14px; height:14px; }
 .plan-personal-conditions { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:9px; margin-top:16px; padding:13px 15px; border:1px solid #304862; border-radius:11px; background:#15273c70; color:#b0c5e4; font-size:12px; line-height:1.6; }
 .plan-personal-conditions p { margin:0; flex:1 1 250px; }
 .plan-personal-conditions a { color:#b4caff; }

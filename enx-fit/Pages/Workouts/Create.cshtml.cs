@@ -33,6 +33,7 @@ public class CreateModel(
 
     public async Task<IActionResult> OnGetAsync(string? userId)
     {
+        Input.Date = currentUser.LocalToday;
         Input.OwnerId = currentUser.Id;
         if (IsAdministrator && !string.IsNullOrWhiteSpace(userId))
         {
@@ -99,7 +100,7 @@ public class CreateModel(
         Library = new ExerciseLibraryModel
         {
             Id = "wb-library", ViewerId = currentUser.Id, Exercises = exercises, ForBuilder = true,
-            RecentIds = history.Take(5).SelectMany(w => w.WorkoutExercises).Select(e => e.ExerciseId).Distinct().ToArray()
+            RecentIds = await exerciseService.GetRecentIdsAsync(owner)
         };
         BuilderData = new
         {

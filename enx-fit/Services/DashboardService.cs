@@ -114,7 +114,7 @@ public sealed class DashboardData
     }
     // Observed working weights only: no warmups, unfinished sessions or projected values.
     public DashboardStrengthSeries? Strength => StrengthFor(null);
-    public DashboardStrengthSeries? StrengthFor(int? exerciseId)
+    public DashboardStrengthSeries? StrengthFor(Guid? exerciseId)
     {
         var sessions = Completed.Where(w => w.Date >= Until.AddDays(-41) && w.Date <= Until)
             .OrderByDescending(w => w.Date).ThenByDescending(w => w.Id).ToList();

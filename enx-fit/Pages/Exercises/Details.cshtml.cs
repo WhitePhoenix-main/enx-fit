@@ -11,7 +11,7 @@ public class DetailsModel(ExerciseService exerciseService) : PageModel
 {
     public Exercise Exercise { get; private set; } = null!;
 
-    public async Task<IActionResult> OnGetAsync(int id)
+    public async Task<IActionResult> OnGetAsync([ModelBinder(BinderType = typeof(enx_fit.ViewModels.ExerciseIdModelBinder))] Guid id)
     {
         var exercise = await exerciseService.FindAsync(id);
 

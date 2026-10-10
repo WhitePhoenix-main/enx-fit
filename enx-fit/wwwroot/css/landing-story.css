@@ -18,7 +18,7 @@
 .landing-story .mobile-showcase, .landing-story .planner, .landing-story .analytics, .landing-story .landing-faq { padding-block: 56px; }
 .story-grid .section-copy h2 { font-size: clamp(26px, 2.6vw, 38px); line-height: 1.1; }
 .story-grid .section-copy > p:not(.eyebrow) { max-width: 430px; font-size: 15px; line-height: 1.7; }
-.story-grid .section-copy .button { margin-top: 24px; min-height: 44px; font-size: 13px; white-space: normal; text-align: center; }
+.story-grid .section-copy .button { margin-top: 24px;  font-size: 13px; white-space: normal; text-align: center; }
 .story-points { display: grid; gap: 20px; margin-block: 28px 0; }
 .story-points li { display: flex; gap: 14px; color: #a9b9cd; font-size: 14px; line-height: 1.6; }
 .story-points .icon { flex: 0 0 22px; width: 22px; height: 22px; color: #78b4ff; margin-top: 4px; }
@@ -41,18 +41,14 @@
 .landing-story .pricing-cards { align-items: start; }
 .landing-story .price-card { min-height: 330px; }
 .tier-details { margin-top: auto; }
-.tier-details > summary { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 12px; border: 1px solid #5386bc; border-radius: 7px; list-style: none; font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; }
-.tier-details > summary::-webkit-details-marker, .faq-items summary::-webkit-details-marker { display: none; }
+.tier-details > summary { padding:10px 12px; border:1px solid #5386bc; border-radius:7px; font-size:13px; font-weight:600; }
 .tier-details > summary:hover, .tier-details[open] > summary { background: #1a2b3e; border-color: #81baff; }
 .tier-details > p { padding: 14px 3px 2px; font-size: 13px; line-height: 1.6; color: #b2c2d6; }
 .faq-items { display: grid; gap: 12px; }
-.faq-items details { border: 1px solid #293b4e; border-radius: 10px; background: #101b24; overflow: hidden; scroll-margin-top: 100px; }
-.faq-items summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 58px; padding: 16px 20px; list-style: none; cursor: pointer; font-size: 15px; font-weight: 600; line-height: 1.4; }
-.faq-items summary::after { content: '+'; color: #86baff; font-size: 22px; font-weight: 400; flex: 0 0 16px; text-align: center; transition: rotate .2s; }
-.faq-items details[open] summary::after { rotate: 45deg; }
+.faq-items details { border: 1px solid #293b4e; border-radius: 10px; background: #101b24; scroll-margin-top: 100px; }
+.faq-items summary { gap:16px; min-height:58px; padding:16px 20px; font-size:15px; font-weight:600; }
 .faq-items details[open] { border-color: #527fab; }
 .faq-items p { padding: 0 20px 20px; margin: 0; color: #b1c0d1; font-size: 14px; line-height: 1.7; }
-.tier-details > summary:focus-visible, .faq-items summary:focus-visible { outline: 2px solid #92c5ff; outline-offset: -3px; }
 .landing-story .closing-cta .button-outline { font-size: 13px; }
 
 @media (min-width: 901px) {
@@ -116,12 +112,11 @@
   .landing-story .pricing .section-grid { padding-block: 0; gap: 28px; }
   .landing-story .price-card { min-height: 0; padding: 24px; }
   .landing-story .price-card ul { margin-block: 18px 24px; }
-  .landing-story .price-card .button, .tier-details > summary { min-height: 44px; }
+  .landing-story .price-card .button, .tier-details > summary {  }
   .faq-items summary { padding: 16px; font-size: 14px; }
   .faq-items p { padding: 0 16px 18px; font-size: 13px; }
   .landing-story .closing-cta .cta-inner h2 { font-size: 22px; }
   .landing-story .closing-cta .button-row { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .faq-items summary::after { transition: none; }
 }

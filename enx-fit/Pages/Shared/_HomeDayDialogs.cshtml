@@ -12,7 +12,7 @@
     var completed = Model.Data.Completed.Where(w => w.Date == date).ToList();
     var planned = Model.Data.Workouts.Where(w => w.Date == date && w.State == WorkoutStatus.Planned).ToList();
     var scheduled = Model.ActiveProgram is { } program ? ProgramSchedule.Occurrences(program).Where(o => o.Date == date).ToList() : [];
-    <dialog class="app-dialog home-day-dialog" id="home-day-@date.ToString("yyyy-MM-dd")" aria-labelledby="home-day-title-@i">
+    <dialog class="app-dialog home-day-dialog app-workspace" id="home-day-@date.ToString("yyyy-MM-dd")" aria-labelledby="home-day-title-@i">
         <div class="dialog-heading"><h2 id="home-day-title-@i">@ru.TextInfo.ToTitleCase(date.ToString("dddd, d MMMM", ru))</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
         <div class="home-day-list">
             @foreach (var session in completed.Concat(planned))

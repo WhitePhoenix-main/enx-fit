@@ -2,5 +2,5 @@
 @model PersonalDataModel
 @{ ViewData["Title"] = "Данные аккаунта"; ViewData["ActivePage"] = ManageNavPages.PersonalData; }
 <h2>Скачать свои данные</h2><p>Этот файл содержит сведения аккаунта. Журнал упражнений и подходов можно скачать отдельно из профиля.</p>
-<form id="download-data" asp-page="DownloadPersonalData" method="post"><button class="btn" type="submit">Скачать данные аккаунта</button></form><p><a asp-area="" asp-page="/Profile">К экспорту тренировок</a></p>
-<details class="account-danger"><summary>Закрыть аккаунт</summary><p>Удаление аккаунта необратимо. Перед продолжением можно скачать свои данные.</p><a id="delete" asp-page="DeletePersonalData" class="btn btn-danger">Перейти к удалению</a></details>
+<form id="download-data" asp-page="DownloadPersonalData" method="post"><button class="btn app-button" type="submit">Скачать данные аккаунта</button></form><p><a asp-area="" asp-page="/Profile">К экспорту тренировок</a></p>
+<details class="account-danger"><summary>Закрыть аккаунт</summary><p>Удаление аккаунта необратимо. Перед продолжением можно скачать свои данные.</p><a id="delete" asp-page="DeletePersonalData" class="btn btn-danger app-button danger">Перейти к удалению</a></details>

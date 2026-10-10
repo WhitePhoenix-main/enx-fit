@@ -18,7 +18,7 @@ public class TrainingAnalyticsService
         return Math.Round(weight * (1 + reps / 30m), 2);
     }
 
-    public BestExerciseSet? GetBestSetForExercise(IEnumerable<WorkoutSession> workouts, int exerciseId) =>
+    public BestExerciseSet? GetBestSetForExercise(IEnumerable<WorkoutSession> workouts, Guid exerciseId) =>
         GetExerciseSets(workouts, exerciseId)
             .Select(item => new BestExerciseSet(
                 item.Workout.Date,
@@ -33,7 +33,7 @@ public class TrainingAnalyticsService
 
     public IReadOnlyList<ExerciseWorkingWeightPoint> GetWorkingWeightTrend(
         IEnumerable<WorkoutSession> workouts,
-        int exerciseId) =>
+        Guid exerciseId) =>
         GetExerciseSets(workouts, exerciseId)
             .GroupBy(item => new { item.Workout.Id, item.Workout.Date })
             .Select(group => new ExerciseWorkingWeightPoint(
@@ -46,7 +46,7 @@ public class TrainingAnalyticsService
 
     public IReadOnlyList<ExerciseEstimatedOneRepMaxPoint> GetEstimatedOneRepMaxTrend(
         IEnumerable<WorkoutSession> workouts,
-        int exerciseId) =>
+        Guid exerciseId) =>
         GetExerciseSets(workouts, exerciseId)
             .GroupBy(item => new { item.Workout.Id, item.Workout.Date })
             .Select(group => new ExerciseEstimatedOneRepMaxPoint(
@@ -59,7 +59,7 @@ public class TrainingAnalyticsService
 
     public IReadOnlyList<ExerciseVolumePoint> GetExerciseVolumeTrend(
         IEnumerable<WorkoutSession> workouts,
-        int exerciseId) =>
+        Guid exerciseId) =>
         workouts
             .Select(workout => new ExerciseVolumePoint(
                 workout.Id,
@@ -84,28 +84,28 @@ public class TrainingAnalyticsService
             .ThenBy(point => point.WorkoutSessionId)
             .ToList();
 
-    public string GetExerciseProgressText(IEnumerable<WorkoutSession> workouts, int exerciseId)
+    public string GetExerciseProgressText(IEnumerable<WorkoutSession> workouts, Guid exerciseId)
     {
         var trend = GetWorkingWeightTrend(workouts, exerciseId);
 
         if (trend.Count < 2)
         {
-            return "Not enough workouts to evaluate progress yet.";
+            return "Пока недостаточно тренировок для сравнения рабочего веса.";
         }
 
         var change = trend[^1].Weight - trend[0].Weight;
 
         if (change > 0)
         {
-            return $"Working weight increased by {change:0.##} kg.";
+            return $"Рабочий вес вырос на {change:0.##} кг.";
         }
 
         if (change < 0)
         {
-            return $"Working weight decreased by {Math.Abs(change):0.##} kg.";
+            return $"Рабочий вес снизился на {Math.Abs(change):0.##} кг.";
         }
 
-        return "Working weight is stable.";
+        return "Рабочий вес остаётся на прежнем уровне.";
     }
 
     private static decimal CalculateSetVolume(SetEntry set) =>
@@ -118,7 +118,7 @@ public class TrainingAnalyticsService
 
     private static IEnumerable<(WorkoutSession Workout, SetEntry Set)> GetExerciseSets(
         IEnumerable<WorkoutSession> workouts,
-        int exerciseId) =>
+        Guid exerciseId) =>
         workouts
             .SelectMany(workout => workout.WorkoutExercises
                 .Where(exercise => exercise.ExerciseId == exerciseId)

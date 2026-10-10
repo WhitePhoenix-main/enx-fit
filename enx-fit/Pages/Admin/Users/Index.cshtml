@@ -8,7 +8,7 @@
         </h1>
         <p>Аккаунты, права доступа и история тренировок.</p>
     </div>
-    <a class="btn btn-primary" href="@Url.CreateUserUrl()">
+    <a class="btn btn-primary app-button" asp-page="./CreateUser">
         <admin-icon name="plus" />Добавить пользователя</a>
 </div>
 <partial name="_AdminStatus" />
@@ -38,25 +38,25 @@
             <admin-icon name="search" />
             <input asp-for="Search" class="form-control" type="search" placeholder="Имя или email пользователя" aria-label="Имя или email пользователя" maxlength="256" />
         </div>
-        <select class="form-select" asp-for="Role" aria-label="Роль">
+        <div class="admin-role-filter"><select class="form-select" asp-for="Role" aria-label="Роль">
             <option value="">Все роли</option>
             @foreach (var role in Enum.GetValues<UserRole>())
             {
                 <option value="@((int)role)">@((int)role) — @role.DisplayName()</option>
             }
-        </select>
-        <button class="btn btn-outline-primary" type="submit">Найти</button>
+        </select></div>
+        <button class="btn btn-outline-primary app-button secondary" type="submit">Найти</button>
         @if(!string.IsNullOrEmpty(Model.Search) || Model.Role != null) {
             <a class="admin-text-link" asp-page="./Index">Сбросить</a>
         }
     </form>
     <div class="table-responsive">
-        <table class="table admin-table">
+        <table class="table admin-table admin-responsive-table">
             <thead>
                 <tr>
                     <th>Пользователь</th>
                     <th>Роль</th>
-                    <th>Email</th>
+                    <th>Статус email</th>
                     <th>Тренировки</th>
                     <th>Последняя тренировка</th>
                     <th class="text-end">Действия</th>
@@ -64,14 +64,14 @@
             </thead>
             <tbody>
                 @foreach(var user in Model.Users) {
-                    <tr>
-                        <td>
+                    <tr data-admin-user="@user.Id">
+                        <td data-label="Пользователь">
                             <div class="admin-person">
                                 <span class="admin-avatar @(user.IsAdministrator ? "purple" : "")">@user.Name[..1].ToUpperInvariant()</span>
                                 <div>
                                     @if (User.HasMinimumRole(user.Role))
                                     {
-                                        <a class="admin-row-title" asp-page="./Edit" asp-route-id="@user.Id">@user.Name</a>
+                                        <a class="admin-row-title" asp-page="./Edit" asp-route-id="@user.Id" asp-route-DirectorySearch="@Model.Search" asp-route-DirectoryRole="@Model.Role" asp-route-DirectoryPage="@Model.PageNumber">@user.Name</a>
                                     }
                                     else
                                     {
@@ -81,22 +81,22 @@
                                 </div>
                             </div>
                         </td>
-                        <td>
+                        <td data-label="Роль">
                             <span class="admin-badge @(user.IsAdministrator ? "purple" : "blue")">@((int)user.Role) — @user.Role.DisplayName()</span>
                         </td>
-                        <td>
+                        <td data-label="Статус email">
                             <span class="admin-badge @(user.EmailConfirmed ? "green" : "neutral")">
                                 <span class="admin-dot"></span>@(user.EmailConfirmed ? "Подтверждён" : "Не подтверждён")</span>
                         </td>
-                        <td>
+                        <td data-label="Записи тренировок">
                             <a class="admin-text-link" asp-page="/Workouts/Index" asp-route-userId="@user.Id">@user.Workouts<admin-icon name="arrow" />
                             </a>
                         </td>
-                        <td>@(user.LastWorkout?.ToString("dd.MM.yyyy") ?? "Ещё нет тренировок")</td>
-                        <td class="text-end">
+                        <td data-label="Последняя запись">@(user.LastWorkout?.ToString("dd.MM.yyyy") ?? "Ещё нет тренировок")</td>
+                        <td class="text-end" data-label="Действия">
                             @if (User.HasMinimumRole(user.Role))
                             {
-                                <a class="admin-icon-button" asp-page="./Edit" asp-route-id="@user.Id" aria-label="Редактировать @user.Name" title="Редактировать">
+                                <a class="admin-icon-button app-icon-button" asp-page="./Edit" asp-route-id="@user.Id" asp-route-DirectorySearch="@Model.Search" asp-route-DirectoryRole="@Model.Role" asp-route-DirectoryPage="@Model.PageNumber" aria-label="Редактировать @user.Name" title="Редактировать">
                                     <admin-icon name="edit" />
                                 </a>
                             }
@@ -121,12 +121,12 @@
         <span>@(Model.FilteredCount == 0 ? 0 : (Model.PageNumber - 1) * 12 + 1)–@Math.Min(Model.PageNumber * 12, Model.FilteredCount) из @Model.FilteredCount пользователей</span>
         <nav class="admin-pagination" aria-label="Страницы пользователей">
             @if(Model.PageNumber > 1) {
-                <a class="btn btn-sm" asp-route-PageNumber="@(Model.PageNumber - 1)" asp-route-Search="@Model.Search" asp-route-Role="@Model.Role" aria-label="Предыдущая страница">
+                <a class="btn btn-sm app-button secondary" asp-route-PageNumber="@(Model.PageNumber - 1)" asp-route-Search="@Model.Search" asp-route-Role="@Model.Role" aria-label="Предыдущая страница">
                     <admin-icon name="back" />
                 </a>
             }<span>@Model.PageNumber / @Model.PageCount</span>
                 @if(Model.PageNumber < Model.PageCount) {
-                    <a class="btn btn-sm" asp-route-PageNumber="@(Model.PageNumber + 1)" asp-route-Search="@Model.Search" asp-route-Role="@Model.Role" aria-label="Следующая страница">
+                    <a class="btn btn-sm app-button secondary" asp-route-PageNumber="@(Model.PageNumber + 1)" asp-route-Search="@Model.Search" asp-route-Role="@Model.Role" aria-label="Следующая страница">
                         <admin-icon name="arrow" />
                     </a>
                 }

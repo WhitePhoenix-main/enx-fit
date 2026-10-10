@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="~/css/programs.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/program-editor.css" asp-append-version="true" />
 }
-<div class="programs-page program-builder">
+<div class="programs-page program-builder app-workspace">
 @if (Model.PageError is not null) { <partial name="_ProgramError" model="Model.PageError" /> }
 else {
     @if (ViewData["CoachContext"] is enx_fit.ViewModels.CoachContextViewModel clientContext) { <a class="program-back" asp-page="/Trainer/Client" asp-route-id="@clientContext.Id" asp-fragment="client-programs">← Программы клиента</a> } else { <a class="program-back" asp-page="Index">← Программы</a> }
@@ -17,7 +17,7 @@ else {
         <input asp-for="Input.Revision" type="hidden" />
         <input asp-for="SelectedWorkout" type="hidden" data-selected-workout />
         <input asp-for="AboutExpanded" type="hidden" data-about-expanded />
-        <div asp-validation-summary="All" class="program-notice error" role="alert"></div>
+        <div asp-validation-summary="All" class="program-notice error app-status app-notice" data-app-state="error" role="alert"></div>
         @if (Model.ShowUpgrade) { <partial name="_UpgradePrompt" model="@(-1)" /> }
         <details class="panel plan-about" data-plan-about open="@Model.AboutExpanded">
             <summary class="plan-section-title"><span>01</span><div><h2>Основа программы</h2><p>Название, цель и длительность</p></div><span class="plan-about-chevron" aria-hidden="true">⌄</span></summary>
@@ -28,7 +28,7 @@ else {
                 <label asp-for="Input.DaysPerWeek">Тренировок в неделю<input asp-for="Input.DaysPerWeek" type="number" min="1" max="7" inputmode="numeric" /></label>
                 <label asp-for="Input.Level">Ваш уровень<select asp-for="Input.Level"><option value="Beginner">Начинающий</option><option value="Intermediate">Средний</option><option value="Advanced">Продвинутый</option></select></label>
             </div>
-            <details class="plan-optional"><summary>Добавить описание <span>необязательно</span></summary><label asp-for="Input.Description">Заметки о программе<textarea asp-for="Input.Description" rows="3" maxlength="2000" placeholder="Что важно помнить при выполнении плана"></textarea></label></details>
+            <details class="plan-optional app-disclosure"><summary>Добавить описание <span>необязательно</span></summary><label asp-for="Input.Description">Заметки о программе<textarea asp-for="Input.Description" rows="3" maxlength="2000" placeholder="Что важно помнить при выполнении плана"></textarea></label></details>
         </details>
         <header id="week-structure" class="plan-section-title plan-workouts-heading"><span>02</span><div><h2 id="workout-editor">Расписание и упражнения</h2><p data-plan-summary>Тренировок: @Model.Input.Workouts.Count</p></div></header>
         <p class="plan-schedule-message" data-plan-schedule hidden role="status"></p>
@@ -70,7 +70,7 @@ else {
                                 <label asp-for="Input.Workouts[i].Exercises[j].Prescription.RepsMax">До<input asp-for="Input.Workouts[i].Exercises[j].Prescription.RepsMax" type="number" min="1" max="100" inputmode="numeric" /></label>
                                 <label asp-for="Input.Workouts[i].Exercises[j].Prescription.WeightKg">Вес, кг<input asp-for="Input.Workouts[i].Exercises[j].Prescription.WeightKg" type="number" min="0" max="1500" step="0.01" inputmode="decimal" placeholder="Без веса" /></label>
                             </div>
-                            <details class="plan-optional"><summary>Отдых и дополнительные настройки</summary><div class="program-fields plan-advanced-fields">
+                            <details class="plan-optional app-disclosure"><summary>Отдых и дополнительные настройки</summary><div class="program-fields plan-advanced-fields">
                                 <label asp-for="Input.Workouts[i].Exercises[j].Prescription.RestSeconds">Отдых, с<input asp-for="Input.Workouts[i].Exercises[j].Prescription.RestSeconds" type="number" min="0" max="1800" inputmode="numeric" /></label>
                                 <label asp-for="Input.Workouts[i].Exercises[j].Prescription.Rir">Повторений в запасе (RIR)<input asp-for="Input.Workouts[i].Exercises[j].Prescription.Rir" type="number" min="0" max="10" inputmode="numeric" /></label>
                                 <label asp-for="Input.Workouts[i].Exercises[j].Prescription.Rpe">Оценка усилия (RPE)<input asp-for="Input.Workouts[i].Exercises[j].Prescription.Rpe" type="number" min="1" max="10" step="0.5" inputmode="decimal" /></label>
@@ -84,15 +84,15 @@ else {
                         </fieldset>
                     }
                     @if (Model.Exercises.Count > 0) { <button class="button secondary plan-add-exercise" asp-page-handler="Structure" asp-route-command="add-exercise" asp-route-workout="@i" formnovalidate data-plan-add-exercise disabled="@(Model.Input.Workouts[i].Exercises.Count >= 30)"><reference-icon name="plus" />Выбрать упражнения</button> }
-                    else { <p class="program-notice">В справочнике пока нет упражнений.</p> }
+                    else { <p class="program-notice app-status app-notice" data-app-state="info">В справочнике пока нет упражнений.</p> }
                 </section>
             }
             </div>
         </div>
         @if (Model.Input.Workouts.Count > 0) { <button class="button secondary plan-fallback-add" asp-page-handler="Structure" asp-route-command="add-workout" formnovalidate disabled="@(Model.Input.Workouts.Count >= 14)"><reference-icon name="plus" />Добавить тренировку</button> }
-        <footer class="program-editor-footer plan-savebar"><div><strong data-plan-save-status role="status">@(Model.HasUnsavedChanges ? "Изменения не сохранены" : Model.ProgramId.HasValue ? "Программа сохранена" : "Новый план")</strong><p>Записанные результаты тренировок сохранятся.</p></div><div class="program-actions"><a class="button secondary" asp-page="Index">Отмена</a><button class="button primary" type="submit" data-plan-save>Сохранить</button></div></footer>
+        <footer class="program-editor-footer plan-savebar app-savebar"><div><strong class="app-status" data-app-state="@(Model.HasUnsavedChanges ? "pending" : Model.ProgramId.HasValue ? "saved" : "info")" data-plan-save-status role="status">@(Model.HasUnsavedChanges ? "Изменения не сохранены" : Model.ProgramId.HasValue ? "Программа сохранена" : "Новый план")</strong><p>Записанные результаты тренировок сохранятся.</p></div><div class="program-actions"><a class="button secondary" asp-page="Index">Отмена</a><button class="button primary" type="submit" data-plan-save>Сохранить</button></div></footer>
     </form>
-    <dialog id="plan-exercise-picker" class="app-dialog plan-picker" aria-labelledby="plan-picker-title">
+    <dialog id="plan-exercise-picker" class="app-dialog plan-picker app-workspace" aria-labelledby="plan-picker-title">
         <div class="dialog-heading"><div><span class="plan-kicker" data-picker-day></span><h2 id="plan-picker-title">Выберите упражнения</h2></div><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
         <input type="search" class="dialog-search" data-plan-search placeholder="Название или группа мышц" aria-label="Поиск упражнений" />
         <div class="plan-picker-filters"><label>Оборудование<select data-plan-equipment><option value="">Любое</option>@foreach (var equipment in Model.Exercises.Select(e => e.Equipment).Where(e => !string.IsNullOrWhiteSpace(e)).Distinct().Order()) { <option value="@equipment">@equipment</option> }</select></label><p data-picker-found role="status"></p></div>

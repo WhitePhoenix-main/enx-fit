@@ -2,4 +2,4 @@
 @model ResetAuthenticatorModel
 @{ ViewData["Title"] = "Сбросить ключ приложения"; ViewData["ActivePage"] = ManageNavPages.TwoFactorAuthentication; }
 <partial name="_StatusMessage" for="StatusMessage" />
-<div class="alert alert-warning"><strong>Приложение потребуется подключить заново</strong><p>Старый ключ перестанет работать. Двухэтапный вход будет отключён до подтверждения нового ключа.</p></div><form id="reset-authenticator-form" method="post"><button id="reset-authenticator-button" class="btn btn-danger" type="submit">Сбросить и настроить заново</button></form><p><a asp-page="./TwoFactorAuthentication">Отмена</a></p>
+<div class="alert alert-warning"><strong>Приложение потребуется подключить заново</strong><p>Старый ключ перестанет работать. Двухэтапный вход будет отключён до подтверждения нового ключа.</p></div><form id="reset-authenticator-form" method="post"><button id="reset-authenticator-button" class="btn btn-danger app-button danger" type="submit">Сбросить и настроить заново</button></form><p><a asp-page="./TwoFactorAuthentication">Отмена</a></p>

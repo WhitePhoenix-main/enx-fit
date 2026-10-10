@@ -35,8 +35,8 @@
   const reference = library.dataset.libraryReference === 'true';
   const key = `enix-exercise-favorites:${library.dataset.libraryOwner}:${reference ? 'reference' : 'live'}`;
   let favorites;
-  try { const saved = JSON.parse(localStorage.getItem(key)); favorites = new Set(Array.isArray(saved) ? saved.map(String) : reference ? ['-1'] : []); }
-  catch { favorites = new Set(reference ? ['-1'] : []); }
+  try { const saved = JSON.parse(localStorage.getItem(key)); favorites = new Set((Array.isArray(saved) ? saved : reference ? [-1] : []).map(window.ExerciseIds.normalize).filter(Boolean)); }
+  catch { favorites = new Set(reference ? [window.ExerciseIds.normalize(-1)] : []); }
   let activeTab = 'all';
   const render = () => {
     const query = search.value.trim().toLocaleLowerCase('ru');

@@ -1,4 +1,13 @@
 .home-workout-choices { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:16px; padding-top:14px; border-top:1px solid #799cff44; }
+.home-next-step { margin-top:16px; border:1px solid #3c5b88; border-radius:12px; background:#102137aa; overflow:hidden; }
+.home-next-row { display:flex; align-items:center; gap:12px; min-height:76px; padding:14px; color:#e7efff; text-decoration:none; }
+.home-next-row + .home-next-row { border-top:1px solid #314967; }
+.home-next-row > svg { width:22px; height:22px; flex-shrink:0; color:#a3c2ff; }
+.home-next-row > span { display:grid; gap:6px; flex:1; min-width:0; }
+.home-next-row strong { font-size:15px; line-height:1.4; overflow-wrap:anywhere; }
+.home-next-row small,.home-next-row > span > span { font-size:11px; line-height:1.5; color:#adc6e7; }
+.home-next-row:hover { background:#28447066; }
+.home-next-row:focus-visible { outline:2px solid #a2c3ff; outline-offset:-3px; }
 .ef-workout:has(.home-workout-choices) { padding-bottom:18px; }
 .home-workout-choices>a,.home-workout-choices>button,.home-workout-choices>form>button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; width:100%; min-width:0; min-height:80px; padding:10px 6px; border:1px solid #688be655; border-radius:10px; background:#132b6655; color:#f0f5ff; text-decoration:none; font:inherit; cursor:pointer; transition:background .18s,transform .18s,border-color .18s; }
 .home-workout-choices svg { width:23px; height:23px; color:#b6cdff; }.home-workout-choices strong { font-size:13px; font-weight:600; }.home-workout-choices small { font-size:11px; color:#bad0ef; }.home-workout-choices :is(a,button):hover { background:#335ab166; border-color:#91b0ff; }.home-workout-choices :is(a,button):active { transform:scale(.97); }.home-workout-choices button[aria-busy] { opacity:.65; }
@@ -14,6 +23,7 @@
 .history-peek-exercises { display:grid; gap:10px; margin:18px 0; }.history-peek-exercises>div { display:flex; gap:12px; align-items:center; padding:12px; border:1px solid #2c4661; border-radius:11px; background:#122236; }.history-peek-exercises svg { flex-shrink:0; width:25px; height:25px; color:#a4c2f0; }.history-peek-exercises span { display:grid; gap:7px; }.history-peek-exercises strong { font-size:14px; }.history-peek-exercises small { color:#adc3e6; font-size:12px; }.history-peek-actions { display:flex; gap:10px; flex-wrap:wrap; }.history-peek-actions .button { min-height:46px; }.history-peek-dialog[open] { animation:home-panel-enter .24s ease both; }
 .em-home .em-today { animation:home-panel-enter .3s ease both; }
 .home-interactive-entered { animation:home-panel-enter .35s ease both; }.home-interactive-entered .epr-chart path[stroke] { stroke-dasharray:1200; stroke-dashoffset:0; animation:home-chart-draw .7s ease both; }.em-home-week a,.ef-week-days a { transition:transform .15s,background .15s; }.em-home-week a:active,.ef-week-days a:active { transform:scale(.94); }
+.ef-week-days .ef-day small { width:100%; max-width:100%; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
 @keyframes home-chart-draw { from { stroke-dashoffset:1200; } to { stroke-dashoffset:0; } }
 .home-setup-prompt { display:flex; align-items:flex-start; gap:12px; margin-top:16px; padding:14px 16px; border:1px solid #334d76; border-radius:12px; background:#172c4b55; }
 .home-setup-prompt>svg { width:23px; height:23px; color:#a0b8ff; flex-shrink:0; }

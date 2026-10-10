@@ -1,0 +1,18 @@
+@model enx_fit.ViewModels.MobileAppNavigationViewModel
+@{ string? PageUrl(string page) => Model.PageUrl(Url, page); }
+<nav class="em-mobile-menu-links" aria-label="Все разделы">
+    <a href="@PageUrl("/Exercises/Index")">Библиотека <reference-icon name="book" /></a>
+    <a href="@PageUrl("/Profile")">Профиль <reference-icon name="user" /></a>
+    <a href="@PageUrl("/Dashboard/Habits")">Привычки <reference-icon name="check-circle" /></a>
+    <a href="@PageUrl("/Dashboard/Analytics")">Аналитика <reference-icon name="trend" /></a>
+    <a href="@PageUrl("/Dashboard/Achievements")">Достижения <reference-icon name="trophy" /></a>
+    <a href="@PageUrl("/Subscription")">Подписка <reference-icon name="crown" /></a>
+    @if (Model.IsTrainer) { <a href="@PageUrl("/Trainer/Clients")">Мои клиенты <reference-icon name="users" /></a> }
+    @if (Model.IsAdministrator) {
+        <a href="@PageUrl("/Admin/Index")">Администрирование <reference-icon name="shield" /></a>
+        <a href="@PageUrl("/Admin/Users/Index")">Пользователи <reference-icon name="users" /></a>
+        <a href="@PageUrl("/Workouts/Index")">Управление тренировками <reference-icon name="workout" /></a>
+        <a href="@PageUrl("/Body/Index")">Замеры пользователей <reference-icon name="body-scale" /></a>
+    }
+    <form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })"><button type="submit">Выйти из аккаунта <reference-icon name="arrow" /></button></form>
+</nav>

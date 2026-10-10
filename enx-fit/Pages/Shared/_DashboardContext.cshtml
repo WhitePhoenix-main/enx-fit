@@ -1,3 +1,3 @@
 @model enx_fit.Pages.DashboardModel
-@if (Model.StatusMessage is not null) { <div class="status-message" role="status"><admin-icon name="check" />@Model.StatusMessage</div> }
-<div asp-validation-summary="All" class="validation-message" role="alert"></div>
+@if (Model.StatusMessage is not null) { <div class="status-message app-status app-notice" data-app-state="saved" role="status"><admin-icon name="check" />@Model.StatusMessage</div> }
+<div asp-validation-summary="All" class="validation-message app-status app-notice" data-app-state="error" role="alert"></div>

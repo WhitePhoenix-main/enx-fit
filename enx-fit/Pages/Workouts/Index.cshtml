@@ -1,20 +1,23 @@
 @page
 @model enx_fit.Pages.Workouts.IndexModel
 @{
+    Layout = Model.IsAdministrator ? "_AdminLayout" : "_DashboardReferenceLayout";
     ViewData["Title"] = "Тренировки";
 }
 
-<div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
+@section Styles { <link rel="stylesheet" href="~/css/record-pages.css" asp-append-version="true" /> }
+<div class="record-page app-workspace">
+<div class="record-heading">
     <div>
         <h1 class="h3 mb-1">Тренировки</h1>
-        <p class="text-muted mb-0">Все тренировки пользователей, упражнения и результаты подходов.</p>
+        <p class="text-muted mb-0">@(Model.IsAdministrator ? "Все тренировки пользователей, упражнения и результаты подходов." : "Ваши занятия, упражнения и результаты подходов.")</p>
     </div>
-    <a class="btn btn-primary" asp-page="./Create">Добавить тренировку</a>
+    <a class="btn btn-primary app-button" asp-page="./Create" asp-route-userId="@(Model.IsAdministrator ? Model.UserId : null)">Добавить тренировку</a>
 </div>
 
 @if (TempData["StatusMessage"] is string statusMessage)
 {
-    <div class="alert alert-success" role="alert">@statusMessage</div>
+    <div class="alert alert-success app-status app-notice" data-app-state="saved" role="status">@statusMessage</div>
 }
 
 @if (Model.IsAdministrator)
@@ -31,7 +34,11 @@
             </select>
         </div>
         <div class="col-auto">
-            <button class="btn btn-outline-primary" type="submit">Применить</button>
+            <label class="form-label" asp-for="Date">Дата занятия</label><input class="form-control" asp-for="Date" type="date" />
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-outline-primary app-button secondary" type="submit">Применить</button>
+            @if (Model.UserId is not null || Model.Date is not null) { <a class="btn btn-outline-secondary app-button secondary" asp-page="./Index">Сбросить</a> }
         </div>
     </form>
 }
@@ -40,19 +47,20 @@
 {
     <div class="border rounded-3 p-5 text-center bg-body-tertiary">
         <h2 class="h5">Тренировок пока нет</h2>
-        <p class="text-muted mb-4">Создайте тренировку, чтобы записывать упражнения и результаты.</p>
-        <a class="btn btn-primary" asp-page="./Create">Добавить тренировку</a>
+        <p class="text-muted mb-4">@(Model.IsAdministrator && (Model.UserId is not null || Model.Date is not null) ? "В выбранный день или у этого пользователя нет записей. Измените условия просмотра." : "Создайте тренировку, чтобы записывать упражнения и результаты.")</p>
+        <a class="btn btn-primary app-button" asp-page="./Create" asp-route-userId="@(Model.IsAdministrator ? Model.UserId : null)">Добавить тренировку</a>
     </div>
 }
 else
 {
     <div class="table-responsive border rounded-3">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0 @(Model.IsAdministrator ? "admin-responsive-table" : "")">
             <thead class="table-light">
                 <tr>
                     <th scope="col">Дата</th>
                     <th scope="col">Название</th>
                     <th scope="col">Упражнения</th>
+                    @if (Model.IsAdministrator) { <th scope="col">Состояние</th> }
                     @if (Model.IsAdministrator)
                     {
                         <th scope="col">Пользователь</th>
@@ -63,18 +71,19 @@ else
             <tbody>
                 @foreach (var workout in Model.Workouts)
                 {
-                    <tr>
-                        <td>@workout.Date.ToString("yyyy-MM-dd")</td>
-                        <td class="fw-semibold">@(string.IsNullOrWhiteSpace(workout.Title) ? "Тренировка" : workout.Title)</td>
-                        <td>@workout.WorkoutExercises.Count</td>
+                    <tr data-admin-workout="@workout.Id">
+                        <td data-label="Дата">@workout.Date.ToString("dd.MM.yyyy")</td>
+                        <td class="fw-semibold" data-label="Занятие">@(string.IsNullOrWhiteSpace(workout.Title) ? "Тренировка" : workout.Title)</td>
+                        <td data-label="Упражнения">@workout.WorkoutExercises.Count</td>
+                        @if (Model.IsAdministrator) { <td data-label="Состояние"><span class="admin-badge neutral">@enx_fit.Pages.Workouts.IndexModel.StateName(workout)</span></td> }
                         @if (Model.IsAdministrator)
                         {
-                            <td>@Model.OwnerName(workout.UserId)</td>
+                            <td data-label="Пользователь">@Model.OwnerName(workout.UserId)</td>
                         }
-                        <td class="text-end text-nowrap">
-                            <a class="btn btn-sm btn-outline-secondary" asp-page="./Details" asp-route-id="@workout.Id">Открыть</a>
-                            <a class="btn btn-sm btn-outline-primary" asp-page="./Edit" asp-route-id="@workout.Id">Изменить</a>
-                            <a class="btn btn-sm btn-outline-danger" asp-page="./Delete" asp-route-id="@workout.Id">Удалить</a>
+                        <td class="text-end text-nowrap" data-label="Действия">
+                            <a class="btn btn-sm btn-outline-secondary app-button secondary" asp-page="./Details" asp-route-id="@workout.Id">Открыть</a>
+                            <a class="btn btn-sm btn-outline-primary app-button secondary" asp-page="./Edit" asp-route-id="@workout.Id">Изменить</a>
+                            <a class="btn btn-sm btn-outline-danger app-button danger" asp-page="./Delete" asp-route-id="@workout.Id">Удалить</a>
                         </td>
                     </tr>
                 }
@@ -82,3 +91,7 @@ else
         </table>
     </div>
 }
+@if (Model.IsAdministrator) {
+    <div class="admin-table-footer"><span>Записей: @Model.FilteredCount · на странице @Model.Workouts.Count</span><nav class="admin-pagination" aria-label="Страницы тренировок">@if (Model.PageNumber > 1) { <a class="btn btn-sm app-button secondary" asp-route-PageNumber="@(Model.PageNumber-1)" asp-route-UserId="@Model.UserId" asp-route-Date="@Model.Date?.ToString("yyyy-MM-dd")" aria-label="Предыдущая страница"><admin-icon name="back" /></a> }<span>@Model.PageNumber / @Model.PageCount</span>@if (Model.PageNumber < Model.PageCount) { <a class="btn btn-sm app-button secondary" asp-route-PageNumber="@(Model.PageNumber+1)" asp-route-UserId="@Model.UserId" asp-route-Date="@Model.Date?.ToString("yyyy-MM-dd")" aria-label="Следующая страница"><admin-icon name="arrow" /></a> }</nav></div>
+}
+</div>

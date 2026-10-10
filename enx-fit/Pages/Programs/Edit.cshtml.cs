@@ -54,7 +54,7 @@ public sealed class EditModel(TrainingProgramService programs) : ProgramPageMode
     }
 
     // Structural edits are a preview. Only the main Save button persists the program.
-    public async Task<IActionResult> OnPostStructureAsync(int? id, string command, int workout = -1, int exercise = -1, int[]? selectedExerciseIds = null)
+    public async Task<IActionResult> OnPostStructureAsync(int? id, string command, int workout = -1, int exercise = -1, string[]? selectedExerciseIds = null)
     {
         HasUnsavedChanges = true;
         if (!await LoadAsync(id)) return Page();
@@ -78,7 +78,7 @@ public sealed class EditModel(TrainingProgramService programs) : ProgramPageMode
             case "add-exercise" when w is not null && w.Exercises.Count < 30:
                 if (selectedExerciseIds is { Length: > 0 })
                 {
-                    var ids = selectedExerciseIds.Distinct().ToArray();
+                    var ids = selectedExerciseIds.Select(value => ExerciseIds.TryParse(value, out var parsed) ? parsed : Guid.Empty).Distinct().ToArray();
                     if (ids.Any(id => Exercises.All(e => e.Id != id)) ||
                         ids.Any(id => w.Exercises.Any(e => e.ExerciseId == id)) || w.Exercises.Count + ids.Length > 30)
                         ModelState.AddModelError("", "Выберите до 30 разных упражнений из справочника для одной тренировки.");

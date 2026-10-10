@@ -1,8 +1,8 @@
 @{ Layout = "/Pages/Shared/_DashboardReferenceLayout.cshtml"; }
 @section Styles { <link rel="stylesheet" href="~/css/profile-settings.css" asp-append-version="true" /> @await RenderSectionAsync("Styles", required: false) }
-<div class="account-settings" data-account-settings>
+<div class="account-settings app-workspace" data-account-settings>
     <header class="account-heading"><a asp-area="" asp-page="/Profile"><reference-icon name="chevron" />В профиль</a><span class="profile-eyebrow">Настройки аккаунта</span><h1>@ViewData["Title"]</h1></header>
-    <div class="account-layout"><aside class="ef-card account-navigation"><details class="account-sections" data-settings-sections><summary>Разделы настроек <reference-icon name="chevron" /></summary><partial name="_ManageNav" /></details></aside><section class="ef-card account-panel">@RenderBody()</section></div>
+    <div class="account-layout"><aside class="ef-card account-navigation"><details class="account-sections app-disclosure" data-settings-sections><summary>Разделы настроек <reference-icon name="chevron" /></summary><partial name="_ManageNav" /></details></aside><section class="ef-card account-panel">@RenderBody()</section></div>
 </div>
 @section Scripts {
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

@@ -17,7 +17,7 @@
         <p class="hero-description">Программы, подходы, отдых и прогресс — в одном месте. Тренируйся с телефоном в зале, планируй занятия на компьютере.</p>
         <div class="button-row">
             <a class="button button-primary" href="@startUrl">@startLabel</a>
-            <a class="button button-outline" href="#how-it-works"><svg class="icon"><use href="#i-arrow" /></svg>Как это работает</a>
+            <a class="button button-outline secondary" href="#how-it-works"><svg class="icon"><use href="#i-arrow" /></svg>Как это работает</a>
         </div>
         <ul class="hero-benefits">
             <li><svg class="icon"><use href="#i-check" /></svg>Бесплатный старт</li>
@@ -61,9 +61,9 @@
                     <li><svg class="icon"><use href="#i-check" /></svg><span><b>История после занятия</b>Заверши тренировку и сохрани результаты.</span></li>
                 </ul>
                 @if (signedIn)
-                { <a class="button button-outline" asp-page="/Dashboard/Workouts">К моим тренировкам</a> }
+                { <a class="button button-outline secondary" asp-page="/Dashboard/Workouts">К моим тренировкам</a> }
                 else
-                { <a class="button button-outline" href="#planner">Как выбрать программу <svg class="icon"><use href="#i-arrow" /></svg></a> }
+                { <a class="button button-outline secondary" href="#planner">Как выбрать программу <svg class="icon"><use href="#i-arrow" /></svg></a> }
             </div>
             <partial name="_PublicProductPreview" />
         </div>
@@ -82,9 +82,9 @@
             <p>Выбирай готовую программу по уровню и оборудованию или создавай свою. Переноси занятия в календаре, сохраняя остальное расписание.</p>
             <p>Можно тренироваться свободно, повторить прошлое занятие или записать результат после зала.</p>
             @if (signedIn)
-            { <a class="button button-outline" asp-page="/Programs/Index">Открыть мои программы</a> }
+            { <a class="button button-outline secondary" asp-page="/Programs/Index">Открыть мои программы</a> }
             else
-            { <a class="button button-outline" href="#faq-start">Можно начать без программы? <svg class="icon"><use href="#i-arrow" /></svg></a> }
+            { <a class="button button-outline secondary" href="#faq-start">Можно начать без программы? <svg class="icon"><use href="#i-arrow" /></svg></a> }
         </div>
         <figure class="product-figure" data-reveal>
             <picture>
@@ -103,9 +103,9 @@
             <p>Растёт ли рабочий вес? Как часто ты тренируешься? Сравнивай завершённые занятия по неделям и находи личные рекорды.</p>
             <p>Прогресс строится по выполненным подходам. Планы и незавершённые занятия остаются отдельно.</p>
             @if (signedIn)
-            { <a class="button button-outline" asp-page="/Dashboard/Progress">Открыть мой прогресс</a> }
+            { <a class="button button-outline secondary" asp-page="/Dashboard/Progress">Открыть мой прогресс</a> }
             else
-            { <a class="button button-outline" href="#pricing">Что доступно бесплатно <svg class="icon"><use href="#i-arrow" /></svg></a> }
+            { <a class="button button-outline secondary" href="#pricing">Что доступно бесплатно <svg class="icon"><use href="#i-arrow" /></svg></a> }
         </div>
         <figure class="product-figure" data-reveal>
             <picture>
@@ -131,4 +131,4 @@
     </div>
 </section>
 
-<section class="closing-cta" aria-labelledby="cta-title"><div class="wrap cta-inner"><div><h2 id="cta-title">Следующая тренировка —<br />начало твоей истории</h2><p>Запиши первый подход.<br />Остальное выстроится шаг за шагом.</p></div><div class="button-row"><a class="button button-primary" href="@startUrl">@startLabel</a><a class="button button-outline" href="#how-it-works">Как начать <svg class="icon"><use href="#i-arrow" /></svg></a></div><p class="mountain-quote">Дисциплина<br />сегодня —<br />большие результаты<br />завтра</p></div></section>
+<section class="closing-cta" aria-labelledby="cta-title"><div class="wrap cta-inner"><div><h2 id="cta-title">Следующая тренировка —<br />начало твоей истории</h2><p>Запиши первый подход.<br />Остальное выстроится шаг за шагом.</p></div><div class="button-row"><a class="button button-primary" href="@startUrl">@startLabel</a><a class="button button-outline secondary" href="#how-it-works">Как начать <svg class="icon"><use href="#i-arrow" /></svg></a></div><p class="mountain-quote">Дисциплина<br />сегодня —<br />большие результаты<br />завтра</p></div></section>

@@ -16,8 +16,8 @@
 body:has(.program-builder) .workout-resume { position:static; margin:16px 28px 0; max-width:none; }
 .plan-about-fields { grid-template-columns:1fr 1fr .45fr .7fr .8fr; gap:14px; }
 .program-builder label { line-height:1.45; color:#bdcee5; }
-.program-builder :is(input,select,textarea) { min-height:46px; background:#09131e; border-color:#293e54; border-radius:9px; color:var(--text); }
-.program-builder :is(input,select,textarea):focus { outline:2px solid #557aff; outline-offset:2px; }
+
+
 .program-builder :is(button,a):focus-visible { outline:2px solid #9cb5ff; outline-offset:3px; }
 .program-builder .plan-optional { border-top:1px solid var(--line); margin-top:14px; }
 .program-builder .plan-optional summary { cursor:pointer; min-height:44px; padding:13px 0; color:#adc3e6; font-size:12px; }
@@ -58,10 +58,10 @@ body:has(.program-builder) .workout-resume { position:static; margin:16px 28px 0
 .plan-add-exercise { width:100%; min-height:48px; justify-content:center; border-style:dashed!important; }
 .plan-schedule-message { background:#557aff0b; border:1px solid #557aff30; padding:12px 16px; border-radius:10px; margin-bottom:16px!important; font-size:12px; color:#aac2f6; }
 .plan-schedule-message.is-warning { color:#e2bc8a; border-color:#e2bc8a44; background:#e2bc8a08; }
-.program-builder .plan-savebar { position:sticky; bottom:18px; z-index:6; padding:16px 20px; border:1px solid #2c4160; border-radius:14px; background:#101c29f5; box-shadow:0 10px 40px #0007; backdrop-filter:blur(16px); gap:12px; }
-.plan-savebar strong { color:#adc3e6; font-size:12px; font-weight:400; }
-.plan-savebar strong.is-dirty { color:#d3dfff; }
-.plan-savebar strong.is-dirty::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:#7e9dff; margin-right:8px; }
+.program-builder .plan-savebar { position:sticky; bottom:18px; z-index:6; padding:16px 20px; gap:12px; }
+.plan-savebar strong { font-weight:400; }
+
+
 .plan-savebar p { color:#7e96b6; font-size:10px; margin-top:5px!important; }
 .plan-savebar .button { min-height:44px; }
 .plan-empty { text-align:center; padding:44px 24px!important; }
@@ -111,6 +111,7 @@ body:has(.program-builder) .workout-resume { position:static; margin:16px 28px 0
   .plan-savebar>div.program-actions { display:grid; grid-template-columns:1fr 2fr; width:100%; }
   .plan-savebar p { display:none; }
   .plan-keyboard-open .em-mobile-nav { display:none; }
+  .plan-keyboard-open .program-form { padding-bottom:calc(160px + var(--plan-keyboard-inset,0px)); }
   .plan-keyboard-open .plan-savebar { position:fixed; left:var(--plan-save-left,13px); width:var(--plan-save-width,calc(100% - 26px)); bottom:calc(12px + var(--plan-keyboard-inset,0px)); }
   .plan-keyboard-open .plan-savebar>div:first-child { display:none; }
   .program-builder .plan-prescription-fields>label:first-child { grid-column:auto; }

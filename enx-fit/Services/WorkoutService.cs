@@ -112,7 +112,7 @@ public partial class WorkoutService(ApplicationDbContext dbContext, CurrentUser 
         CheckRevision(workout, expectedRevision);
         if (!workout.WorkoutExercises.Any(e => e.SetEntries.Any(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0))) return CompleteWorkoutResult.Empty;
         if (workout.CompletedAtUtc is null && workout.SourceStructureJson is not null)
-            workout.TemplateDecisionPending = workout.SourceStructureJson != Structure(workout);
+            workout.TemplateDecisionPending = !StructureMatches(workout);
         workout.DurationSeconds = workout.StartedAtUtc.HasValue ? WorkoutStates.ElapsedSeconds(workout, DateTime.UtcNow) : workout.DurationSeconds;
         workout.CompletedAtUtc ??= DateTime.UtcNow;
         workout.Status = WorkoutStatus.Completed;
@@ -122,7 +122,7 @@ public partial class WorkoutService(ApplicationDbContext dbContext, CurrentUser 
         return CompleteWorkoutResult.Success;
     }
 
-    public async Task<AddWorkoutExerciseResult> AddExerciseAsync(int workoutSessionId, int exerciseId)
+    public async Task<AddWorkoutExerciseResult> AddExerciseAsync(int workoutSessionId, Guid exerciseId)
     {
         if (await VisibleWorkouts().AnyAsync(w => w.Id == workoutSessionId && (w.Status == WorkoutStatus.Completed || w.Status == WorkoutStatus.Cancelled || (w.StartedAtUtc != null && w.CompletedAtUtc != null))))
             return AddWorkoutExerciseResult.WorkoutNotFound;

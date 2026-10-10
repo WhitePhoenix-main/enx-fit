@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using enx_fit.Data;
 using enx_fit.Models;
+using enx_fit.ViewModels;
 using enx_fit.Security;
 using enx_fit.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +22,7 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
     [BindProperty(SupportsGet = true)] public int WeekOffset { get; set; }
     [BindProperty(SupportsGet = true)] public int ChartWeeks { get; set; } = 6;
     [BindProperty(SupportsGet = true)] public int ProgressWeeks { get; set; } = 6;
-    [BindProperty(SupportsGet = true)] public int? ProgressExercise { get; set; }
+    [BindProperty(SupportsGet = true)] [ModelBinder(BinderType = typeof(ExerciseIdModelBinder))] public Guid? ProgressExercise { get; set; }
     [BindProperty(SupportsGet = true)] public string? ProgressTab { get; set; } = "overview";
     [BindProperty(SupportsGet = true)] public string? ProgressMetric { get; set; } = "consistency";
     // An explicit visual snapshot reproduces the reference content without altering user records.
@@ -44,6 +45,21 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
     public TrainingRecommendation? NextRecommendation { get; private set; }
     public ProgramWorkoutExercise? NextGoalExercise { get; private set; }
     public WorkoutSession? ActiveWorkout { get; private set; }
+    public WorkoutSession? CompletedToday => Data.Completed.FirstOrDefault(w => w.Date == Data.Today);
+    public HomeNextWorkout? UpcomingWorkout
+    {
+        get
+        {
+            if (Reference || IsCoachView || ActiveWorkout is not null ||
+                Data.NextWorkout?.Date == Data.Today || NextProgramWorkout?.Date == Data.Today) return null;
+            var planned = Data.NextWorkout is { } w && w.Date > Data.Today
+                ? new HomeNextWorkout(w.Title ?? "Запланированная тренировка", w.Date, w.WorkoutExercises.Count, WorkoutId: w.Id) : null;
+            var program = NextProgramWorkout is { } next && next.Date > Data.Today && ActiveProgram is { } p
+                ? new HomeNextWorkout(next.Workout.Name, next.Date, next.Workout.Exercises.Count,
+                    ProgramId: p.Id, EstimatedMinutes: next.Workout.EstimatedMinutes) : null;
+            return planned is not null && (program is null || planned.Date <= program.Date) ? planned : program;
+        }
+    }
     public List<WorkoutTemplateOption> Templates { get; private set; } = [];
     public bool ShowOnboarding => !IsCoachView && ActiveWorkout is null && !Data.Completed.Any() && Data.Measurements.Count == 0;
     public bool ShowSetupPrompt => !Reference && ShowOnboarding && Data.Settings.SetupStatus == SetupStatus.NotStarted;
@@ -179,8 +195,14 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
             if (CurrentPage == "/Dashboard" && !IsCoachView && await features.CanUseAsync(Feature.CoachClientAlerts)) Attention = await attention.LoadAsync(assignedOnly: true);
             if (!IsCoachView)
             {
-                ActiveProgram = (await programs.ListAsync("mine")).FirstOrDefault(p => p.StartDate.HasValue && p.StartDate.Value.AddDays(p.Weeks * 7) > today);
-                if (ActiveProgram is not null) NextProgramWorkout = ProgramSchedule.Next(ActiveProgram, await programs.SessionsAsync(ActiveProgram), today);
+                var candidates = (await programs.ListAsync("mine"))
+                    .Where(p => p.StartDate.HasValue && p.StartDate.Value.AddDays(p.Weeks * 7) > today)
+                    .Select(p => new { Program = p, Next = ProgramSchedule.Next(p, Data.Workouts.Where(w => w.TrainingProgramId == p.Id).ToList(), today) }).ToList();
+                var selectedProgram = candidates.FirstOrDefault(p => p.Program.Id == ActiveWorkout?.TrainingProgramId)
+                    ?? candidates.Where(p => p.Next is not null).OrderBy(p => p.Next!.Date).ThenBy(p => p.Program.Id).FirstOrDefault()
+                    ?? candidates.FirstOrDefault();
+                ActiveProgram = selectedProgram?.Program;
+                NextProgramWorkout = selectedProgram?.Next;
                 CanAnalyzePrograms = await features.CanUseAsync(Feature.ProgressionRecommendations);
                 if (ActiveProgram is { } activeProgram)
                 {

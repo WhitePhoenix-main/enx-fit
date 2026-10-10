@@ -7,7 +7,7 @@
 <partial name="_AuthStepHeader" />
 <section class="auth-card auth-step-card">
     <p class="auth-address">@Model.Email</p>
-    <div class="auth-notice">
+    <div class="auth-notice app-status app-notice" data-app-state="info">
     @if (!Model.CanSendEmail) {
         <h2>Отправка писем не подключена</h2><p>Подтверждение пока недоступно. Сохраните свои данные для входа; подтвердить адрес можно будет после подключения отправки писем.</p>
     } else if (Model.EmailSent) {
@@ -16,6 +16,6 @@
         <h2>Нужна ссылка из письма</h2><p>Если недавно создавали аккаунт, проверьте почту. Можно запросить новое письмо подтверждения.</p>
     }
     </div>
-    @if (Model.CanSendEmail) { <a class="auth-submit" asp-page="./ResendEmailConfirmation" asp-route-returnUrl="@Model.ReturnUrl">Запросить письмо</a> }
+    @if (Model.CanSendEmail) { <a class="auth-submit app-button" asp-page="./ResendEmailConfirmation" asp-route-returnUrl="@Model.ReturnUrl">Запросить письмо</a> }
     <p class="auth-secondary-link"><a asp-area="" asp-page="/TechnicalPages/Login" asp-route-returnUrl="@Model.ReturnUrl">Вернуться к входу</a></p>
 </section>

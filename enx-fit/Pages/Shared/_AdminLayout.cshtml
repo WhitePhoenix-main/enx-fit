@@ -1,29 +1,31 @@
 @using System.Security.Claims
 @{
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
-    var accountName = User.Identity?.Name ?? "Администратор";
+    var accountName = string.IsNullOrWhiteSpace(User.Identity?.Name) ? "Администратор" : User.Identity.Name;
     var initial = accountName[..1].ToUpperInvariant();
-    var links = new[] {
-        (Page: "/Admin/Index", Label: "Обзор", Icon: "grid", Prefix: "/Admin/Index"),
-        (Page: "/Admin/Users/Index", Label: "Пользователи", Icon: "users", Prefix: "/Admin/Users/"),
-        (Page: "/Workouts/Index", Label: "Тренировки", Icon: "workout", Prefix: "/Workouts/"),
-        (Page: "/Exercises/Index", Label: "Упражнения", Icon: "book", Prefix: "/Exercises/"),
-        (Page: "/Body/Index", Label: "Замеры тела", Icon: "activity", Prefix: "/Body/")
-    };
-    var sectionLabel = links.FirstOrDefault(link => currentPage.StartsWith(link.Prefix)).Label ?? "Обзор";
-    var mobileNavigation = enx_fit.ViewModels.MobileAppNavigationViewModel.Create(ViewData, User, currentPage);
+    var links = enx_fit.ViewModels.AdminNavigationViewModel.Sections;
+    var adminNavigation = new enx_fit.ViewModels.AdminNavigationViewModel(currentPage, accountName, initial);
+    var sectionLabel = adminNavigation.SectionLabel;
 }
 <!DOCTYPE html>
 <html lang="ru">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <meta name="color-scheme" content="light" />
+        <meta name="color-scheme" content="dark" />
+        <meta name="theme-color" content="#09131e" />
         <title>@ViewData["Title"] · Администрирование · Enix Fit</title>
         <partial name="_AppIcons" />
+        @if (currentPage.StartsWith("/Workouts/", StringComparison.OrdinalIgnoreCase))
+        {
+            <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+        }
         <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/workout-shared.css" asp-append-version="true" />
         @await RenderSectionAsync("Styles", required: false)
         <link rel="stylesheet" href="~/css/mobile-shell.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/admin-workspace.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/app-components.css" asp-append-version="true" />
     </head>
     <body class="admin-shell em-app-shell">
         <a class="admin-skip" href="#main-content">К содержимому</a>
@@ -51,13 +53,13 @@
                 </div>
                 <span class="admin-online" title="Сеанс активен"></span>
             </div>
-            <a class="admin-new" asp-page="/Workouts/Create">
+            <a class="admin-new app-button" asp-page="/Workouts/Create">
                 <admin-icon name="plus" /> Добавить тренировку</a>
             <p class="admin-nav-label">УПРАВЛЕНИЕ</p>
             <nav class="admin-nav">
                 @foreach (var link in links)
                 {
-                    var active = currentPage.StartsWith(link.Prefix);
+                    var active = link.IsActive(currentPage);
                     <a class="@(active ? "is-active" : "")" asp-page="@link.Page" aria-current="@(active ? "page" : null)">
                         <admin-icon name="@link.Icon" />
                         <span>@link.Label</span>
@@ -83,12 +85,10 @@
                     <span class="admin-online"></span> Всё для уверенного прогресса</div>
             </div>
         </aside>
-        <button type="button" class="admin-backdrop" aria-label="Закрыть меню" tabindex="-1" hidden>
-        </button>
         <div class="admin-workarea">
-            <partial name="_MobileAppShell" model="mobileNavigation" /><partial name="_WorkoutResume" model="mobileNavigation" />
+            <partial name="_AdminMobileShell" model="adminNavigation" />
             <header class="admin-topbar em-desktop-header">
-                <button class="admin-icon-button" id="admin-menu-toggle" type="button" aria-controls="admin-sidebar" aria-expanded="true" aria-label="Переключить меню">
+                <button class="admin-icon-button app-icon-button" id="admin-menu-toggle" type="button" aria-controls="admin-sidebar" aria-expanded="true" aria-label="Переключить меню">
                     <admin-icon name="menu" />
                 </button>
                 <form class="admin-global-search" method="get" asp-page="/Admin/Users/Index" role="search">
@@ -105,13 +105,13 @@
                         </span>
                     </a>
                     <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })" method="post">
-                        <button class="admin-icon-button" type="submit" aria-label="Выйти">
+                        <button class="admin-icon-button app-icon-button" type="submit" aria-label="Выйти">
                             <admin-icon name="logout" />
                         </button>
                     </form>
                 </div>
             </header>
-            <main class="admin-main" id="main-content" tabindex="-1">
+            <main class="admin-main app-workspace" id="main-content" tabindex="-1">
                 <div class="admin-breadcrumb">
                     <a asp-page="/Admin/Index">Панель управления</a>
                     <admin-icon name="chevron" />
@@ -129,6 +129,9 @@
         <script src="~/js/admin.js" asp-append-version="true">
         </script>
         <script src="~/js/mobile-shell.js" asp-append-version="true"></script>
+        <script src="~/js/exercise-ids.js" asp-append-version="true"></script>
+        <script src="~/js/admin-workspace.js" asp-append-version="true"></script>
+        <script src="~/js/app-components.js" asp-append-version="true"></script>
         @await RenderSectionAsync("Scripts", required: false)
     </body>
 </html>

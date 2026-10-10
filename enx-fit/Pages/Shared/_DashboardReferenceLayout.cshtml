@@ -1,6 +1,5 @@
 @using enx_fit.Services
 @inject enx_fit.Security.IFeatureAccessService FeatureAccess
-@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment ReferenceEnvironment
 @{
     var dashboard = ViewData["Dashboard"] as enx_fit.Pages.DashboardModel;
     var reference = dashboard?.Reference == true || ViewData["Reference"] is true;
@@ -9,7 +8,9 @@
     if (reference) viewer = "Алексей";
     var trainer = !reference && (User.GetUserRole() == UserRole.Trainer || User.HasMinimumRole(UserRole.Administrator));
     var activePage = ViewContext.RouteData.Values["page"] as string;
-    bool IsActive(string page) => string.Equals(activePage, page, StringComparison.OrdinalIgnoreCase);
+    bool IsActive(string page) => page == "/Exercises/Index"
+        ? activePage?.StartsWith("/Exercises/", StringComparison.OrdinalIgnoreCase) == true
+        : string.Equals(activePage, page, StringComparison.OrdinalIgnoreCase);
     var settingsActive = string.Equals(ViewContext.RouteData.Values["area"] as string, "Identity", StringComparison.OrdinalIgnoreCase) && activePage?.StartsWith("/Account/Manage/", StringComparison.OrdinalIgnoreCase) == true;
     var mobileNavigation = enx_fit.ViewModels.MobileAppNavigationViewModel.Create(ViewData, User, activePage);
     string? PageUrl(string page) => mobileNavigation.PageUrl(Url, page);
@@ -32,11 +33,10 @@
     <link rel="stylesheet" href="~/css/dashboard-reference.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/workout-shared.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
-    @if (ReferenceEnvironment.WebRootFileProvider.GetFileInfo("css/mobile-reference.css").Exists) {
-        <link rel="stylesheet" href="~/css/mobile-reference.css" asp-append-version="true" />
-    }
+    <link rel="stylesheet" href="~/css/mobile-reference.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/mobile-shell.css" asp-append-version="true" />
     @if (trainer) { <link rel="stylesheet" href="~/css/coach-workspace.css" asp-append-version="true" /> }
+    <link rel="stylesheet" href="~/css/app-components.css" asp-append-version="true" />
 </head>
 <body class="fitness-app dashboard-home em-app-shell @(IsActive("/Dashboard") ? "em-home-page" : "") @(IsActive("/Dashboard/Workouts") ? "ef-workouts-page" : "") @(IsActive("/Programs/Index") ? "ef-programs-page" : "") @(IsActive("/Dashboard/Progress") ? "ef-progress-page" : "") @(IsActive("/Exercises/Index") ? "em-library-page" : "") @(IsActive("/Profile") ? "em-profile-page" : "") @(reference ? "em-reference" : "") @(mobileNavigation.Client is not null ? "coach-mode" : "personal-mode")">
 <a class="skip-link" href="#main-content">Перейти к содержимому</a>
@@ -69,19 +69,21 @@
     </header>
     <main id="main-content" class="ef-main" tabindex="-1"><partial name="_CoachContext" model="mobileNavigation" />@RenderBody()</main>
 </div>
-<dialog id="navigation-dialog" class="app-dialog">
+<dialog id="navigation-dialog" class="app-dialog app-workspace">
     <div class="dialog-heading"><h2>Разделы</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
     <nav class="search-results" aria-label="Все разделы"><a href="@PageUrl("/Exercises/Index")">Библиотека <reference-icon name="book" /></a><a href="@PageUrl("/Profile")">Профиль <reference-icon name="user" /></a><a href="@PageUrl("/Dashboard/Habits")">Привычки <reference-icon name="check-circle" /></a>@if (trainer) { <a asp-area="" asp-page="/Trainer/Clients">Мои клиенты <reference-icon name="users" /></a> }</nav>
 </dialog>
-<dialog id="search-dialog" class="app-dialog">
+<dialog id="search-dialog" class="app-dialog app-workspace">
     <div class="dialog-heading"><h2>Быстрый переход</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
     <input class="dialog-search" type="search" placeholder="Что хотите найти?" aria-label="Поиск раздела" data-section-search />
     <div class="search-results"><a href="@PageUrl("/Dashboard/Workouts")">Тренировки и упражнения <reference-icon name="workout" /></a><a href="@PageUrl("/Programs/Index")">Программы тренировок <reference-icon name="calendar" /></a><a href="@PageUrl("/Dashboard/Progress")">Прогресс, вес и замеры тела <reference-icon name="bars" /></a><a asp-area="" asp-page="/Exercises/Index">Библиотека упражнений <reference-icon name="book" /></a><a href="@PageUrl("/Dashboard/Habits")">Вода, сон и привычки <reference-icon name="check-circle" /></a><a href="@PageUrl("/Dashboard/Achievements")">Достижения и личные рекорды <reference-icon name="trophy" /></a><p hidden data-search-empty>Ничего не найдено. Попробуйте другой запрос.</p></div>
 </dialog>
-<dialog id="notifications-dialog" class="app-dialog">
+<dialog id="notifications-dialog" class="app-dialog app-workspace">
     <div class="dialog-heading"><h2>Центр уведомлений</h2><button class="icon-button" type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><div class="empty-state"><reference-icon name="bell" /><h3>Вы всё посмотрели</h3><p>Новых уведомлений пока нет.</p></div>
 </dialog>
 <script src="~/js/workout-time.js" asp-append-version="true"></script>
+<script src="~/js/app-components.js" asp-append-version="true"></script>
+<script src="~/js/exercise-ids.js" asp-append-version="true"></script>
     <script src="~/js/dashboard.js" asp-append-version="true"></script>
 <script src="~/js/mobile-reference.js" asp-append-version="true"></script>
 <script src="~/js/mobile-shell.js" asp-append-version="true"></script>

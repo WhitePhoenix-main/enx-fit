@@ -4,4 +4,4 @@
     Layout = "_LandingLayout";
     ViewData["Title"] = "Не удалось открыть страницу";
 }
-<div class="public-page wrap public-error-page"><p class="eyebrow">Что-то пошло не так</p><h1>Попробуй ещё раз<br /><span>чуть позже.</span></h1><p>Не удалось выполнить запрос. Можно вернуться на главную или открыть справку.</p><div class="button-row"><a class="button button-primary" asp-page="/Index">На главную</a><a class="button button-outline" asp-page="/Contact">Помощь и контакты</a></div>@if (Model.ShowRequestId) { <p class="public-request-id">Код запроса: <code>@Model.RequestId</code></p> }</div>
+<div class="public-page wrap public-error-page"><p class="eyebrow">Что-то пошло не так</p><h1>Попробуй ещё раз<br /><span>чуть позже.</span></h1><p>Не удалось выполнить запрос. Можно вернуться на главную или открыть справку.</p><div class="button-row"><a class="button button-primary" asp-page="/Index">На главную</a><a class="button button-outline secondary" asp-page="/Contact">Помощь и контакты</a></div>@if (Model.ShowRequestId) { <p class="public-request-id">Код запроса: <code>@Model.RequestId</code></p> }</div>

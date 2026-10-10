@@ -10,8 +10,8 @@
     @if (Model.Is2faEnabled) {
         <p>Осталось резервных кодов: <strong>@Model.RecoveryCodesLeft</strong>.</p>
         @if (Model.RecoveryCodesLeft <= 3) { <div class="alert alert-warning">Сохраните новый набор резервных кодов, чтобы входить при потере доступа к приложению.</div> }
-        <div class="account-button-row"><a asp-page="./GenerateRecoveryCodes" class="btn btn-link">Новые резервные коды</a>@if (Model.IsMachineRemembered) { <form method="post"><button type="submit" class="btn btn-link">Забыть этот браузер</button></form> }</div>
+        <div class="account-button-row"><a asp-page="./GenerateRecoveryCodes" class="btn btn-link app-button secondary">Новые резервные коды</a>@if (Model.IsMachineRemembered) { <form method="post"><button type="submit" class="btn btn-link app-button secondary">Забыть этот браузер</button></form> }</div>
     }
-    <h2>Приложение для аутентификации</h2><a id="enable-authenticator" asp-page="./EnableAuthenticator" class="btn">@(Model.HasAuthenticator ? "Открыть настройку" : "Подключить приложение")</a>
-    @if (Model.Is2faEnabled || Model.HasAuthenticator) { <details class="account-danger"><summary>Дополнительные действия</summary><div class="account-button-row">@if (Model.Is2faEnabled) { <a asp-page="./Disable2fa" class="btn btn-danger">Отключить двухэтапный вход</a> }@if (Model.HasAuthenticator) { <a id="reset-authenticator" asp-page="./ResetAuthenticator" class="btn btn-danger">Сбросить ключ приложения</a> }</div></details> }
+    <h2>Приложение для аутентификации</h2><a id="enable-authenticator" asp-page="./EnableAuthenticator" class="btn app-button">@(Model.HasAuthenticator ? "Открыть настройку" : "Подключить приложение")</a>
+    @if (Model.Is2faEnabled || Model.HasAuthenticator) { <details class="account-danger"><summary>Дополнительные действия</summary><div class="account-button-row">@if (Model.Is2faEnabled) { <a asp-page="./Disable2fa" class="btn btn-danger app-button danger">Отключить двухэтапный вход</a> }@if (Model.HasAuthenticator) { <a id="reset-authenticator" asp-page="./ResetAuthenticator" class="btn btn-danger app-button danger">Сбросить ключ приложения</a> }</div></details> }
 } else { <div class="alert alert-warning">Для подключения двухэтапного входа нужно разрешить использование необходимых cookie.</div> }

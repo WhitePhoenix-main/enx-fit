@@ -7,10 +7,10 @@
 <partial name="_AuthStepHeader" />
 <section class="auth-card auth-step-card">
     <form method="post" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe" data-auth-form>
-        <div asp-validation-summary="ModelOnly" class="auth-errors" role="alert"></div>
-        <div class="auth-field"><label asp-for="Input.RecoveryCode">Код восстановления</label><div class="auth-input auth-code-input"><input asp-for="Input.RecoveryCode" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Введите сохранённый код" aria-describedby="code-error code-hint" required /><button class="auth-reveal" type="button" data-reveal="Input_RecoveryCode" aria-label="Показать код восстановления" aria-pressed="false" hidden><svg class="auth-icon" aria-hidden="true"><use href="#auth-eye-off" /></svg></button></div><span asp-validation-for="Input.RecoveryCode" id="code-error" class="auth-field-error"></span><p id="code-hint" class="auth-hint">Каждый код можно использовать один раз. Устройство не будет запомнено.</p></div>
-        <button type="submit" class="auth-submit"><span>Войти с кодом</span><svg class="auth-icon" aria-hidden="true"><use href="#auth-arrow" /></svg></button>
-        <p data-auth-feedback class="auth-form-feedback" role="status" aria-live="polite"></p>
+        <div asp-validation-summary="ModelOnly" class="auth-errors app-status app-notice" data-app-state="error" role="alert"></div>
+        <div class="auth-field"><label asp-for="Input.RecoveryCode">Код восстановления</label><div class="auth-input auth-code-input"><input asp-for="Input.RecoveryCode" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Введите сохранённый код" aria-describedby="code-error code-hint" required /><button class="auth-reveal app-icon-button" type="button" data-reveal="Input_RecoveryCode" aria-label="Показать код восстановления" aria-pressed="false" hidden><svg class="auth-icon" aria-hidden="true"><use href="#auth-eye-off" /></svg></button></div><span asp-validation-for="Input.RecoveryCode" id="code-error" class="auth-field-error"></span><p id="code-hint" class="auth-hint">Каждый код можно использовать один раз. Устройство не будет запомнено.</p></div>
+        <button type="submit" class="auth-submit app-button"><span>Войти с кодом</span><svg class="auth-icon" aria-hidden="true"><use href="#auth-arrow" /></svg></button>
+        <p data-auth-feedback class="auth-form-feedback app-status app-notice" data-app-state="info" hidden role="status" aria-live="polite"></p>
     </form>
     <p class="auth-secondary-link"><a asp-page="./LoginWith2fa" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe">Вернуться к коду из приложения</a></p>
 </section>

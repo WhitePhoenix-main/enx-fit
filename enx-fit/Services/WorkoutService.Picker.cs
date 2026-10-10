@@ -41,13 +41,14 @@ public partial class WorkoutService
                 if (entry.SetEntries.Any(s => s.Id == session.RestAfterSetId))
                 { session.RestAfterSetId = null; session.RestEndsAtUtc = null; session.RestRemainingSeconds = null; }
                 dbContext.SetEntries.RemoveRange(entry.SetEntries); entry.SetEntries.Clear();
-                entry.Notes = null; entry.TargetRir = null; entry.TargetRpe = null;
+                var block = WorkoutExerciseBlocks.Describe(session)[entry.Id];
+                entry.Notes = block.Key.StartsWith("plan:") || block.Kind != "strength" ? block.Name : null; entry.TargetRir = null; entry.TargetRpe = null;
             }
             entry.ExerciseId = pick.ExerciseId;
             entry.TargetSets = pick.SetsCount; entry.TargetRepsMin = entry.TargetRepsMax = pick.Reps;
             entry.TargetWeightKg = pick.Weight; entry.TargetRestSeconds = pick.RestSeconds;
             for (var n = 1; n <= pick.SetsCount; n++)
-                entry.SetEntries.Add(new SetEntry { SetNumber = n, Weight = pick.Weight, Reps = pick.Reps, RestSeconds = pick.RestSeconds, IsCompleted = false });
+                entry.SetEntries.Add(new SetEntry { SetNumber = n, Weight = pick.Weight, Reps = pick.Reps, RestSeconds = pick.RestSeconds, IsCompleted = false, IsWarmup = entry.BlockKind == "warmup" });
             if (replacement == null) session.WorkoutExercises.Add(entry);
         }
         await SaveCommandAsync(session, operationId);

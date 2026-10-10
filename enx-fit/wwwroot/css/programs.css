@@ -1,3 +1,4 @@
+.program-notice { margin:18px 0; }
 .programs-page { max-width:1260px; margin:auto; }
 .programs-page .panel { margin-bottom:18px; padding:24px; }
 .programs-page h1 { overflow-wrap:anywhere; }
@@ -5,9 +6,7 @@
 .programs-page h3 { font-size:15px; }
 .program-muted,.program-meta,.program-kicker,.program-row p,.program-footnote { color:var(--muted); }
 .program-back { display:inline-block; color:var(--muted); margin-bottom:20px; }
-.program-tabs,.program-filters,.progress-navigation { display:flex; gap:8px; overflow-x:auto; white-space:nowrap; padding:4px 0 12px; margin-bottom:24px; border-bottom:1px solid var(--line); }
-.program-tabs a,.progress-navigation a { padding:12px 16px; border-radius:8px; color:var(--muted); }
-.program-tabs .active,.progress-navigation [aria-current=page] { color:var(--text); background:#6390ff20; box-shadow:inset 0 -2px var(--blue); }
+.program-filters { display:flex; gap:8px; overflow-x:auto; white-space:nowrap; padding:4px 0 12px; margin-bottom:24px; border-bottom:1px solid var(--line); }
 .program-filters a { padding:8px 12px; border:1px solid var(--line); border-radius:20px; }
 .program-filters .selected { border-color:var(--blue); color:var(--blue); }
 .program-actions,.program-toolbar,.program-section-heading { display:flex; gap:12px; align-items:center; justify-content:space-between; }
@@ -56,12 +55,12 @@
 .program-exercise-list>div { padding:16px 0; border-top:1px solid var(--line); display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px; }
 .program-exercise-note { grid-column:1/-1; color:var(--muted); margin:0; }
 .program-workout-footer { border-top:1px solid var(--line); padding-top:20px; }
-.program-notice { border:1px solid var(--line); border-left:3px solid var(--blue); border-radius:8px; padding:16px; margin:18px 0; color:var(--muted); }
-.program-notice.error { border-left-color:#f49b9b; color:#f4bbbb; }
 .validation-summary-valid { display:none; }
 .program-upgrade { display:flex; gap:24px; align-items:center; justify-content:space-between; }
 .program-badge,.pro-badge { display:inline-block; padding:4px 8px; border-radius:5px; font-size:10px; background:#6390ff20; color:#aac3ff; }
 .program-pro-preview { max-width:800px; }
+[data-assignment-form] .app-notice { margin:18px 0; }
+[data-assignment-feedback] { min-height:20px; margin:14px 0 0; }
 .program-form label { display:flex; flex-direction:column; gap:8px; color:var(--muted); font-size:12px; margin:12px 0; }
 .program-form input,.program-form select,.program-form textarea { width:100%; min-width:0; background:var(--bg); border:1px solid var(--line); padding:12px; border-radius:8px; color:var(--text); }
 .program-form input[type=checkbox] { width:18px; height:18px; }

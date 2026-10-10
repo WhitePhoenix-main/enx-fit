@@ -4,9 +4,9 @@
 <partial name="_StatusMessage" for="StatusMessage" />
 <p class="account-intro">Номер телефона необязателен. Для входа используется ваш логин.</p>
 <form id="profile-form" method="post" data-account-form>
-    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <div asp-validation-summary="ModelOnly" class="text-danger app-status app-notice" data-app-state="error" role="alert"></div>
     <div class="account-field"><label asp-for="Username">Логин</label><input asp-for="Username" disabled /><small>Адрес электронной почты можно проверить в разделе Email.</small></div>
     <div class="account-field"><label asp-for="Input.PhoneNumber">Номер телефона</label><input asp-for="Input.PhoneNumber" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 999 123-45-67" /><small>Можно оставить пустым.</small><span asp-validation-for="Input.PhoneNumber" class="text-danger"></span></div>
-    <button id="update-profile-button" class="account-save" type="submit" data-account-save>Сохранить контакты</button><p class="account-feedback" role="status" aria-live="polite" data-account-feedback></p>
+    <button id="update-profile-button" class="account-save app-button" type="submit" data-account-save>Сохранить контакты</button><p class="account-feedback app-status" role="status" aria-live="polite" data-account-feedback></p>
 </form>
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

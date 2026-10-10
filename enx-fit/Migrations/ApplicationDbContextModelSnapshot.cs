@@ -424,11 +424,8 @@ namespace enx_fit.Migrations
 
             modelBuilder.Entity("enx_fit.Models.Exercise", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Equipment")
                         .IsRequired()
@@ -456,2170 +453,2177 @@ namespace enx_fit.Migrations
                     b.HasData(
                         new
                         {
-                            Id = 1,
+                            Id = new Guid("e71c15e5-0000-4000-8000-000000000001"),
                             Equipment = "Штанга, скамья",
                             MuscleGroup = "Грудь",
                             Name = "Bench Press"
                         },
                         new
                         {
-                            Id = 2,
+                            Id = new Guid("e71c15e5-0000-4000-8000-000000000002"),
                             Equipment = "Штанга",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Squat"
                         },
                         new
                         {
-                            Id = 3,
+                            Id = new Guid("e71c15e5-0000-4000-8000-000000000003"),
                             Equipment = "Штанга",
                             MuscleGroup = "Всё тело",
                             Name = "Deadlift"
                         },
                         new
                         {
-                            Id = 4,
+                            Id = new Guid("e71c15e5-0000-4000-8000-000000000004"),
                             Equipment = "Турник",
                             MuscleGroup = "Спина",
                             Name = "Pull Up"
                         },
                         new
                         {
-                            Id = 5,
+                            Id = new Guid("e71c15e5-0000-4000-8000-000000000005"),
                             Equipment = "Штанга",
                             MuscleGroup = "Плечи",
                             Name = "Overhead Press"
                         },
                         new
                         {
-                            Id = 6,
+                            Id = new Guid("e71c15e5-0000-4000-8000-000000000006"),
                             Equipment = "Штанга",
                             MuscleGroup = "Задняя поверхность бедра",
                             Name = "Romanian Deadlift"
                         },
                         new
                         {
-                            Id = 7,
+                            Id = new Guid("e71c15e5-0000-4000-8000-000000000007"),
                             Equipment = "Тренажёр для жима ногами",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Leg Press"
                         },
                         new
                         {
-                            Id = 8,
+                            Id = new Guid("e71c15e5-0000-4000-8000-000000000008"),
                             Equipment = "Штанга",
                             MuscleGroup = "Спина",
                             Name = "Barbell Row"
                         },
                         new
                         {
-                            Id = -1000,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc18"),
                             Equipment = "Гантели, скамья",
                             MuscleGroup = "Грудь",
                             Name = "Жим гантелей лёжа"
                         },
                         new
                         {
-                            Id = -1001,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc17"),
                             Equipment = "Гантели, скамья",
                             MuscleGroup = "Грудь",
                             Name = "Жим гантелей на наклонной скамье"
                         },
                         new
                         {
-                            Id = -1002,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc16"),
                             Equipment = "Штанга, скамья",
                             MuscleGroup = "Грудь",
                             Name = "Жим штанги на наклонной скамье"
                         },
                         new
                         {
-                            Id = -1003,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc15"),
                             Equipment = "Штанга, скамья",
                             MuscleGroup = "Грудь",
                             Name = "Жим штанги на скамье с отрицательным наклоном"
                         },
                         new
                         {
-                            Id = -1004,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc14"),
                             Equipment = "Гантели, скамья",
                             MuscleGroup = "Грудь",
                             Name = "Жим гантелей на скамье с отрицательным наклоном"
                         },
                         new
                         {
-                            Id = -1005,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc13"),
                             Equipment = "Штанга, скамья",
                             MuscleGroup = "Грудь",
                             Name = "Жим штанги узким хватом лёжа"
                         },
                         new
                         {
-                            Id = -1006,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc12"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Грудь",
                             Name = "Жим в тренажёре сидя"
                         },
                         new
                         {
-                            Id = -1007,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc11"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Грудь",
                             Name = "Жим в тренажёре на верх груди"
                         },
                         new
                         {
-                            Id = -1008,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc10"),
                             Equipment = "Тренажёр Смита, скамья",
                             MuscleGroup = "Грудь",
                             Name = "Жим в Смите лёжа"
                         },
                         new
                         {
-                            Id = -1009,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc0f"),
                             Equipment = "Тренажёр Смита, скамья",
                             MuscleGroup = "Грудь",
                             Name = "Жим в Смите на наклонной скамье"
                         },
                         new
                         {
-                            Id = -1010,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc0e"),
                             Equipment = "Гантели",
                             MuscleGroup = "Грудь",
                             Name = "Жим гантелей на полу"
                         },
                         new
                         {
-                            Id = -1011,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc0d"),
                             Equipment = "Штанга",
                             MuscleGroup = "Грудь",
                             Name = "Жим штанги на полу"
                         },
                         new
                         {
-                            Id = -1012,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc0c"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Грудь",
                             Name = "Сведение рук в кроссовере сверху"
                         },
                         new
                         {
-                            Id = -1013,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc0b"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Грудь",
                             Name = "Сведение рук в кроссовере снизу"
                         },
                         new
                         {
-                            Id = -1014,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc0a"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Грудь",
                             Name = "Сведение рук в кроссовере на уровне груди"
                         },
                         new
                         {
-                            Id = -1015,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc09"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Грудь",
                             Name = "Сведение рук в тренажёре бабочка"
                         },
                         new
                         {
-                            Id = -1016,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc08"),
                             Equipment = "Гантели, скамья",
                             MuscleGroup = "Грудь",
                             Name = "Разведение гантелей лёжа"
                         },
                         new
                         {
-                            Id = -1017,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc07"),
                             Equipment = "Гантели, скамья",
                             MuscleGroup = "Грудь",
                             Name = "Разведение гантелей на наклонной скамье"
                         },
                         new
                         {
-                            Id = -1018,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc06"),
                             Equipment = "Гантель, скамья",
                             MuscleGroup = "Грудь",
                             Name = "Пуловер с гантелью лёжа"
                         },
                         new
                         {
-                            Id = -1019,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc05"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Грудь",
                             Name = "Отжимания от пола"
                         },
                         new
                         {
-                            Id = -1020,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc04"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Грудь",
                             Name = "Отжимания от пола широким хватом"
                         },
                         new
                         {
-                            Id = -1021,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc03"),
                             Equipment = "Опора",
                             MuscleGroup = "Грудь",
                             Name = "Отжимания с ногами на возвышении"
                         },
                         new
                         {
-                            Id = -1022,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc02"),
                             Equipment = "Опора",
                             MuscleGroup = "Грудь",
                             Name = "Отжимания с руками на возвышении"
                         },
                         new
                         {
-                            Id = -1023,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc01"),
                             Equipment = "Эспандер",
                             MuscleGroup = "Грудь",
                             Name = "Отжимания с эспандером"
                         },
                         new
                         {
-                            Id = -1024,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffc00"),
                             Equipment = "Брусья",
                             MuscleGroup = "Грудь",
                             Name = "Отжимания на брусьях с акцентом на грудь"
                         },
                         new
                         {
-                            Id = -1025,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffbff"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Грудь",
                             Name = "Жим одной рукой в кроссовере"
                         },
                         new
                         {
-                            Id = -1100,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffbfe"),
+                            Equipment = "Без оборудования",
+                            MuscleGroup = "Грудь",
+                            Name = "Отжимания с колен"
+                        },
+                        new
+                        {
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffbb4"),
                             Equipment = "Турник",
                             MuscleGroup = "Спина",
                             Name = "Подтягивания обратным хватом"
                         },
                         new
                         {
-                            Id = -1101,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffbb3"),
                             Equipment = "Турник",
                             MuscleGroup = "Спина",
                             Name = "Подтягивания нейтральным хватом"
                         },
                         new
                         {
-                            Id = -1102,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffbb2"),
                             Equipment = "Турник",
                             MuscleGroup = "Спина",
                             Name = "Подтягивания широким хватом"
                         },
                         new
                         {
-                            Id = -1103,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffbb1"),
                             Equipment = "Турник, пояс с отягощением",
                             MuscleGroup = "Спина",
                             Name = "Подтягивания с отягощением"
                         },
                         new
                         {
-                            Id = -1104,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffbb0"),
                             Equipment = "Турник, резиновая петля",
                             MuscleGroup = "Спина",
                             Name = "Подтягивания с резиновой петлёй"
                         },
                         new
                         {
-                            Id = -1105,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffbaf"),
                             Equipment = "Гравитрон",
                             MuscleGroup = "Спина",
                             Name = "Подтягивания в гравитроне"
                         },
                         new
                         {
-                            Id = -1106,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffbae"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Спина",
                             Name = "Тяга верхнего блока к груди"
                         },
                         new
                         {
-                            Id = -1107,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffbad"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Спина",
                             Name = "Тяга верхнего блока обратным хватом"
                         },
                         new
                         {
-                            Id = -1108,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffbac"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Спина",
                             Name = "Тяга верхнего блока нейтральным хватом"
                         },
                         new
                         {
-                            Id = -1109,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffbab"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Спина",
                             Name = "Тяга верхнего блока одной рукой"
                         },
                         new
                         {
-                            Id = -1110,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffbaa"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Спина",
                             Name = "Тяга горизонтального блока узким хватом"
                         },
                         new
                         {
-                            Id = -1111,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffba9"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Спина",
                             Name = "Тяга горизонтального блока широким хватом"
                         },
                         new
                         {
-                            Id = -1112,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffba8"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Спина",
                             Name = "Тяга горизонтального блока одной рукой"
                         },
                         new
                         {
-                            Id = -1113,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffba7"),
                             Equipment = "Гантель, скамья",
                             MuscleGroup = "Спина",
                             Name = "Тяга гантели в наклоне одной рукой"
                         },
                         new
                         {
-                            Id = -1114,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffba6"),
                             Equipment = "Гантели",
                             MuscleGroup = "Спина",
                             Name = "Тяга двух гантелей в наклоне"
                         },
                         new
                         {
-                            Id = -1115,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffba5"),
                             Equipment = "Гантели, скамья",
                             MuscleGroup = "Спина",
                             Name = "Тяга гантелей лёжа на наклонной скамье"
                         },
                         new
                         {
-                            Id = -1116,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffba4"),
                             Equipment = "Т-гриф",
                             MuscleGroup = "Спина",
                             Name = "Тяга Т-грифа"
                         },
                         new
                         {
-                            Id = -1117,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffba3"),
                             Equipment = "Т-гриф, тренажёр",
                             MuscleGroup = "Спина",
                             Name = "Тяга Т-грифа с упором грудью"
                         },
                         new
                         {
-                            Id = -1118,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffba2"),
                             Equipment = "Штанга",
                             MuscleGroup = "Спина",
                             Name = "Тяга штанги обратным хватом в наклоне"
                         },
                         new
                         {
-                            Id = -1119,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffba1"),
                             Equipment = "Штанга",
                             MuscleGroup = "Спина",
                             Name = "Тяга Пендлея"
                         },
                         new
                         {
-                            Id = -1120,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffba0"),
                             Equipment = "Тренажёр Смита",
                             MuscleGroup = "Спина",
                             Name = "Тяга штанги к поясу в Смите"
                         },
                         new
                         {
-                            Id = -1121,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb9f"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Спина",
                             Name = "Тяга в тренажёре с упором грудью"
                         },
                         new
                         {
-                            Id = -1122,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb9e"),
                             Equipment = "Рычажный тренажёр",
                             MuscleGroup = "Спина",
                             Name = "Тяга в рычажном тренажёре одной рукой"
                         },
                         new
                         {
-                            Id = -1123,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb9d"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Спина",
                             Name = "Пуловер на верхнем блоке прямыми руками"
                         },
                         new
                         {
-                            Id = -1124,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb9c"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Спина",
                             Name = "Пуловер в тренажёре"
                         },
                         new
                         {
-                            Id = -1125,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb9b"),
                             Equipment = "Низкая перекладина",
                             MuscleGroup = "Спина",
                             Name = "Австралийские подтягивания"
                         },
                         new
                         {
-                            Id = -1126,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb9a"),
                             Equipment = "Эспандер",
                             MuscleGroup = "Спина",
                             Name = "Тяга эспандера к поясу сидя"
                         },
                         new
                         {
-                            Id = -1127,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb99"),
                             Equipment = "Гиря",
                             MuscleGroup = "Спина",
                             Name = "Тяга гири к поясу одной рукой"
                         },
                         new
                         {
-                            Id = -1200,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb50"),
                             Equipment = "Гантели, скамья",
                             MuscleGroup = "Плечи",
                             Name = "Жим гантелей сидя"
                         },
                         new
                         {
-                            Id = -1201,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb4f"),
                             Equipment = "Гантели",
                             MuscleGroup = "Плечи",
                             Name = "Жим гантелей стоя"
                         },
                         new
                         {
-                            Id = -1202,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb4e"),
                             Equipment = "Штанга, скамья",
                             MuscleGroup = "Плечи",
                             Name = "Жим штанги сидя"
                         },
                         new
                         {
-                            Id = -1203,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb4d"),
                             Equipment = "Штанга, скамья",
                             MuscleGroup = "Плечи",
                             Name = "Жим штанги из-за головы сидя"
                         },
                         new
                         {
-                            Id = -1204,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb4c"),
                             Equipment = "Гантели",
                             MuscleGroup = "Плечи",
                             Name = "Жим Арнольда"
                         },
                         new
                         {
-                            Id = -1205,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb4b"),
                             Equipment = "Гиря",
                             MuscleGroup = "Плечи",
                             Name = "Жим гири одной рукой стоя"
                         },
                         new
                         {
-                            Id = -1206,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb4a"),
                             Equipment = "Штанга, лэндмайн",
                             MuscleGroup = "Плечи",
                             Name = "Жим одной рукой в лэндмайне"
                         },
                         new
                         {
-                            Id = -1207,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb49"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Плечи",
                             Name = "Жим в тренажёре на плечи"
                         },
                         new
                         {
-                            Id = -1208,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb48"),
                             Equipment = "Гантели",
                             MuscleGroup = "Плечи",
                             Name = "Разведение гантелей в стороны стоя"
                         },
                         new
                         {
-                            Id = -1209,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb47"),
                             Equipment = "Гантели, скамья",
                             MuscleGroup = "Плечи",
                             Name = "Разведение гантелей в стороны сидя"
                         },
                         new
                         {
-                            Id = -1210,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb46"),
                             Equipment = "Гантель",
                             MuscleGroup = "Плечи",
                             Name = "Подъём гантели в сторону одной рукой"
                         },
                         new
                         {
-                            Id = -1211,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb45"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Плечи",
                             Name = "Подъём руки в сторону на нижнем блоке"
                         },
                         new
                         {
-                            Id = -1212,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb44"),
                             Equipment = "Гантели",
                             MuscleGroup = "Плечи",
                             Name = "Подъём гантелей перед собой"
                         },
                         new
                         {
-                            Id = -1213,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb43"),
                             Equipment = "Блин",
                             MuscleGroup = "Плечи",
                             Name = "Подъём блина перед собой"
                         },
                         new
                         {
-                            Id = -1214,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb42"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Плечи",
                             Name = "Подъём руки перед собой на нижнем блоке"
                         },
                         new
                         {
-                            Id = -1215,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb41"),
                             Equipment = "Гантели",
                             MuscleGroup = "Плечи",
                             Name = "Разведение гантелей в наклоне"
                         },
                         new
                         {
-                            Id = -1216,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb40"),
                             Equipment = "Гантели, скамья",
                             MuscleGroup = "Плечи",
                             Name = "Разведение гантелей лёжа лицом вниз"
                         },
                         new
                         {
-                            Id = -1217,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb3f"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Плечи",
                             Name = "Обратная бабочка"
                         },
                         new
                         {
-                            Id = -1218,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb3e"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Плечи",
                             Name = "Разведение рук в кроссовере на заднюю дельту"
                         },
                         new
                         {
-                            Id = -1219,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb3d"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Плечи",
                             Name = "Тяга каната к лицу"
                         },
                         new
                         {
-                            Id = -1220,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb3c"),
                             Equipment = "Штанга",
                             MuscleGroup = "Плечи",
                             Name = "Тяга штанги к подбородку"
                         },
                         new
                         {
-                            Id = -1221,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb3b"),
                             Equipment = "Гантели",
                             MuscleGroup = "Плечи",
                             Name = "Тяга гантелей к подбородку"
                         },
                         new
                         {
-                            Id = -1222,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb3a"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Плечи",
                             Name = "Пайк-отжимания"
                         },
                         new
                         {
-                            Id = -1223,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffb39"),
                             Equipment = "Стена",
                             MuscleGroup = "Плечи",
                             Name = "Отжимания в стойке на руках"
                         },
                         new
                         {
-                            Id = -1300,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffaec"),
                             Equipment = "Штанга",
                             MuscleGroup = "Бицепс",
                             Name = "Сгибание рук со штангой стоя"
                         },
                         new
                         {
-                            Id = -1301,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffaeb"),
                             Equipment = "EZ-гриф",
                             MuscleGroup = "Бицепс",
                             Name = "Сгибание рук с EZ-грифом стоя"
                         },
                         new
                         {
-                            Id = -1302,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffaea"),
                             Equipment = "Гантели",
                             MuscleGroup = "Бицепс",
                             Name = "Сгибание рук с гантелями стоя"
                         },
                         new
                         {
-                            Id = -1303,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffae9"),
                             Equipment = "Гантели",
                             MuscleGroup = "Бицепс",
                             Name = "Попеременное сгибание рук с супинацией"
                         },
                         new
                         {
-                            Id = -1304,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffae8"),
                             Equipment = "Гантели",
                             MuscleGroup = "Бицепс",
                             Name = "Молотковые сгибания рук"
                         },
                         new
                         {
-                            Id = -1305,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffae7"),
                             Equipment = "Гантели",
                             MuscleGroup = "Бицепс",
                             Name = "Перекрёстные молотковые сгибания"
                         },
                         new
                         {
-                            Id = -1306,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffae6"),
                             Equipment = "Гантели, скамья",
                             MuscleGroup = "Бицепс",
                             Name = "Сгибание рук с гантелями на наклонной скамье"
                         },
                         new
                         {
-                            Id = -1307,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffae5"),
                             Equipment = "Гантель",
                             MuscleGroup = "Бицепс",
                             Name = "Концентрированное сгибание руки"
                         },
                         new
                         {
-                            Id = -1308,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffae4"),
                             Equipment = "EZ-гриф, скамья Скотта",
                             MuscleGroup = "Бицепс",
                             Name = "Сгибание рук на скамье Скотта с EZ-грифом"
                         },
                         new
                         {
-                            Id = -1309,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffae3"),
                             Equipment = "Гантель, скамья Скотта",
                             MuscleGroup = "Бицепс",
                             Name = "Сгибание одной руки на скамье Скотта"
                         },
                         new
                         {
-                            Id = -1310,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffae2"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Бицепс",
                             Name = "Сгибание рук в тренажёре на бицепс"
                         },
                         new
                         {
-                            Id = -1311,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffae1"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Бицепс",
                             Name = "Сгибание рук на нижнем блоке"
                         },
                         new
                         {
-                            Id = -1312,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffae0"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Бицепс",
                             Name = "Сгибание рук с канатом на нижнем блоке"
                         },
                         new
                         {
-                            Id = -1313,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffadf"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Бицепс",
                             Name = "Сгибание рук в кроссовере сверху"
                         },
                         new
                         {
-                            Id = -1314,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffade"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Бицепс",
                             Name = "Сгибание руки на блоке за корпусом"
                         },
                         new
                         {
-                            Id = -1315,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffadd"),
                             Equipment = "Штанга",
                             MuscleGroup = "Бицепс",
                             Name = "Обратное сгибание рук со штангой"
                         },
                         new
                         {
-                            Id = -1316,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffadc"),
                             Equipment = "Эспандер",
                             MuscleGroup = "Бицепс",
                             Name = "Сгибание рук с эспандером"
                         },
                         new
                         {
-                            Id = -1317,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffadb"),
                             Equipment = "Гиря",
                             MuscleGroup = "Бицепс",
                             Name = "Сгибание рук с гирей"
                         },
                         new
                         {
-                            Id = -1400,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa88"),
                             Equipment = "Брусья",
                             MuscleGroup = "Трицепс",
                             Name = "Отжимания на брусьях с акцентом на трицепс"
                         },
                         new
                         {
-                            Id = -1401,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa87"),
                             Equipment = "Скамья",
                             MuscleGroup = "Трицепс",
                             Name = "Обратные отжимания от скамьи"
                         },
                         new
                         {
-                            Id = -1402,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa86"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Трицепс",
                             Name = "Алмазные отжимания"
                         },
                         new
                         {
-                            Id = -1403,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa85"),
                             Equipment = "Штанга, скамья",
                             MuscleGroup = "Трицепс",
                             Name = "Французский жим штанги лёжа"
                         },
                         new
                         {
-                            Id = -1404,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa84"),
                             Equipment = "EZ-гриф, скамья",
                             MuscleGroup = "Трицепс",
                             Name = "Французский жим EZ-грифа лёжа"
                         },
                         new
                         {
-                            Id = -1405,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa83"),
                             Equipment = "Гантели, скамья",
                             MuscleGroup = "Трицепс",
                             Name = "Французский жим гантелей лёжа"
                         },
                         new
                         {
-                            Id = -1406,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa82"),
                             Equipment = "Гантель, скамья",
                             MuscleGroup = "Трицепс",
                             Name = "Французский жим гантели одной рукой сидя"
                         },
                         new
                         {
-                            Id = -1407,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa81"),
                             Equipment = "Гантель",
                             MuscleGroup = "Трицепс",
                             Name = "Разгибание рук с гантелью из-за головы"
                         },
                         new
                         {
-                            Id = -1408,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa80"),
                             Equipment = "EZ-гриф",
                             MuscleGroup = "Трицепс",
                             Name = "Разгибание рук с EZ-грифом из-за головы"
                         },
                         new
                         {
-                            Id = -1409,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa7f"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Трицепс",
                             Name = "Разгибание рук на верхнем блоке с канатом"
                         },
                         new
                         {
-                            Id = -1410,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa7e"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Трицепс",
                             Name = "Разгибание рук на верхнем блоке с прямой рукоятью"
                         },
                         new
                         {
-                            Id = -1411,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa7d"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Трицепс",
                             Name = "Разгибание рук на верхнем блоке обратным хватом"
                         },
                         new
                         {
-                            Id = -1412,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa7c"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Трицепс",
                             Name = "Разгибание одной руки на верхнем блоке"
                         },
                         new
                         {
-                            Id = -1413,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa7b"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Трицепс",
                             Name = "Разгибание рук на блоке из-за головы"
                         },
                         new
                         {
-                            Id = -1414,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa7a"),
                             Equipment = "Гантель",
                             MuscleGroup = "Трицепс",
                             Name = "Разгибание руки с гантелью в наклоне"
                         },
                         new
                         {
-                            Id = -1415,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa79"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Трицепс",
                             Name = "Разгибание рук в тренажёре на трицепс"
                         },
                         new
                         {
-                            Id = -1416,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa78"),
                             Equipment = "Гантели, скамья",
                             MuscleGroup = "Трицепс",
                             Name = "Жим Тейта"
                         },
                         new
                         {
-                            Id = -1417,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa77"),
                             Equipment = "Эспандер",
                             MuscleGroup = "Трицепс",
                             Name = "Разгибание рук с эспандером"
                         },
                         new
                         {
-                            Id = -1500,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa24"),
                             Equipment = "Штанга",
                             MuscleGroup = "Предплечья",
                             Name = "Сгибание запястий со штангой"
                         },
                         new
                         {
-                            Id = -1501,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa23"),
                             Equipment = "Штанга",
                             MuscleGroup = "Предплечья",
                             Name = "Разгибание запястий со штангой"
                         },
                         new
                         {
-                            Id = -1502,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa22"),
                             Equipment = "Гантели",
                             MuscleGroup = "Предплечья",
                             Name = "Сгибание запястий с гантелями"
                         },
                         new
                         {
-                            Id = -1503,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa21"),
                             Equipment = "Гантели",
                             MuscleGroup = "Предплечья",
                             Name = "Разгибание запястий с гантелями"
                         },
                         new
                         {
-                            Id = -1504,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa20"),
                             Equipment = "Гантель",
                             MuscleGroup = "Предплечья",
                             Name = "Пронация предплечья с гантелью"
                         },
                         new
                         {
-                            Id = -1505,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa1f"),
                             Equipment = "Гантель",
                             MuscleGroup = "Предплечья",
                             Name = "Супинация предплечья с гантелью"
                         },
                         new
                         {
-                            Id = -1506,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa1e"),
                             Equipment = "Турник",
                             MuscleGroup = "Предплечья",
                             Name = "Вис на перекладине"
                         },
                         new
                         {
-                            Id = -1507,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa1d"),
                             Equipment = "Турник, полотенца",
                             MuscleGroup = "Предплечья",
                             Name = "Вис на полотенцах"
                         },
                         new
                         {
-                            Id = -1508,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa1c"),
                             Equipment = "Блины",
                             MuscleGroup = "Предплечья",
                             Name = "Удержание блинов пальцами"
                         },
                         new
                         {
-                            Id = -1509,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa1b"),
                             Equipment = "Роллер для предплечий",
                             MuscleGroup = "Предплечья",
                             Name = "Наматывание веса на роллер"
                         },
                         new
                         {
-                            Id = -1510,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa1a"),
                             Equipment = "Кистевой эспандер",
                             MuscleGroup = "Предплечья",
                             Name = "Сжатие кистевого эспандера"
                         },
                         new
                         {
-                            Id = -1511,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffffa19"),
                             Equipment = "Гантели или гири",
                             MuscleGroup = "Предплечья",
                             Name = "Фермерская прогулка"
                         },
                         new
                         {
-                            Id = -1600,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9c0"),
                             Equipment = "Штанга",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Фронтальные приседания со штангой"
                         },
                         new
                         {
-                            Id = -1601,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9bf"),
                             Equipment = "Штанга",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Приседания со штангой на груди со скрещёнными руками"
                         },
                         new
                         {
-                            Id = -1602,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9be"),
                             Equipment = "Тренажёр Смита",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Приседания в Смите"
                         },
                         new
                         {
-                            Id = -1603,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9bd"),
                             Equipment = "Штанга",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Приседания с паузой"
                         },
                         new
                         {
-                            Id = -1604,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9bc"),
                             Equipment = "Гантели",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Приседания с гантелями"
                         },
                         new
                         {
-                            Id = -1605,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9bb"),
                             Equipment = "Гиря или гантель",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Гоблет-приседания"
                         },
                         new
                         {
-                            Id = -1606,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9ba"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Приседания с собственным весом"
                         },
                         new
                         {
-                            Id = -1607,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9b9"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Приседания с прыжком"
                         },
                         new
                         {
-                            Id = -1608,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9b8"),
                             Equipment = "Штанга",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Зерхер-приседания"
                         },
                         new
                         {
-                            Id = -1609,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9b7"),
                             Equipment = "Гакк-тренажёр",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Хакк-приседания"
                         },
                         new
                         {
-                            Id = -1610,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9b6"),
                             Equipment = "Гакк-тренажёр",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Приседания в гакк-тренажёре с обратной постановкой"
                         },
                         new
                         {
-                            Id = -1611,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9b5"),
                             Equipment = "Тренажёр для жима ногами",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Жим ногами узкой постановкой"
                         },
                         new
                         {
-                            Id = -1612,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9b4"),
                             Equipment = "Тренажёр для жима ногами",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Жим ногами одной ногой"
                         },
                         new
                         {
-                            Id = -1613,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9b3"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Разгибание ног сидя"
                         },
                         new
                         {
-                            Id = -1614,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9b2"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Разгибание одной ноги сидя"
                         },
                         new
                         {
-                            Id = -1615,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9b1"),
                             Equipment = "Гантели",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Выпады вперёд с гантелями"
                         },
                         new
                         {
-                            Id = -1616,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9b0"),
                             Equipment = "Гантели",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Выпады назад с гантелями"
                         },
                         new
                         {
-                            Id = -1617,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9af"),
                             Equipment = "Штанга",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Выпады со штангой"
                         },
                         new
                         {
-                            Id = -1618,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9ae"),
                             Equipment = "Скамья, гантели",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Болгарские сплит-приседания"
                         },
                         new
                         {
-                            Id = -1619,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9ad"),
                             Equipment = "Гантели",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Сплит-приседания"
                         },
                         new
                         {
-                            Id = -1620,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9ac"),
                             Equipment = "Платформа, гантели",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Зашагивания на платформу"
                         },
                         new
                         {
-                            Id = -1621,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9ab"),
                             Equipment = "Скамья",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Приседания на одной ноге до скамьи"
                         },
                         new
                         {
-                            Id = -1622,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9aa"),
                             Equipment = "Опора",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Сисси-приседания"
                         },
                         new
                         {
-                            Id = -1623,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff9a9"),
                             Equipment = "Силовые сани",
                             MuscleGroup = "Квадрицепсы",
                             Name = "Обратная тяга саней"
                         },
                         new
                         {
-                            Id = -1700,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff95c"),
                             Equipment = "Штанга",
                             MuscleGroup = "Задняя поверхность бедра",
                             Name = "Становая тяга на прямых ногах"
                         },
                         new
                         {
-                            Id = -1701,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff95b"),
                             Equipment = "Гантели",
                             MuscleGroup = "Задняя поверхность бедра",
                             Name = "Румынская тяга с гантелями"
                         },
                         new
                         {
-                            Id = -1702,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff95a"),
                             Equipment = "Гантель",
                             MuscleGroup = "Задняя поверхность бедра",
                             Name = "Румынская тяга на одной ноге с гантелью"
                         },
                         new
                         {
-                            Id = -1703,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff959"),
                             Equipment = "Гиря",
                             MuscleGroup = "Задняя поверхность бедра",
                             Name = "Румынская тяга с гирей"
                         },
                         new
                         {
-                            Id = -1704,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff958"),
                             Equipment = "Штанга",
                             MuscleGroup = "Задняя поверхность бедра",
                             Name = "Доброе утро со штангой"
                         },
                         new
                         {
-                            Id = -1705,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff957"),
                             Equipment = "Эспандер",
                             MuscleGroup = "Задняя поверхность бедра",
                             Name = "Доброе утро с эспандером"
                         },
                         new
                         {
-                            Id = -1706,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff956"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Задняя поверхность бедра",
                             Name = "Сгибание ног лёжа"
                         },
                         new
                         {
-                            Id = -1707,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff955"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Задняя поверхность бедра",
                             Name = "Сгибание ног сидя"
                         },
                         new
                         {
-                            Id = -1708,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff954"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Задняя поверхность бедра",
                             Name = "Сгибание ног стоя поочерёдно"
                         },
                         new
                         {
-                            Id = -1709,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff953"),
                             Equipment = "Фитбол",
                             MuscleGroup = "Задняя поверхность бедра",
                             Name = "Сгибание ног с фитболом"
                         },
                         new
                         {
-                            Id = -1710,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff952"),
                             Equipment = "Скользящие диски",
                             MuscleGroup = "Задняя поверхность бедра",
                             Name = "Сгибание ног со скользящими дисками"
                         },
                         new
                         {
-                            Id = -1711,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff951"),
                             Equipment = "Фиксация голеней",
                             MuscleGroup = "Задняя поверхность бедра",
                             Name = "Нордические сгибания"
                         },
                         new
                         {
-                            Id = -1712,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff950"),
                             Equipment = "Тренажёр GHD",
                             MuscleGroup = "Задняя поверхность бедра",
                             Name = "Подъём корпуса в тренажёре GHD"
                         },
                         new
                         {
-                            Id = -1713,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff94f"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Задняя поверхность бедра",
                             Name = "Тяга каната между ног"
                         },
                         new
                         {
-                            Id = -1714,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff94e"),
                             Equipment = "Гиря",
                             MuscleGroup = "Задняя поверхность бедра",
                             Name = "Махи гирей"
                         },
                         new
                         {
-                            Id = -1800,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8f8"),
                             Equipment = "Штанга, скамья",
                             MuscleGroup = "Ягодицы",
                             Name = "Ягодичный мост со штангой"
                         },
                         new
                         {
-                            Id = -1801,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8f7"),
                             Equipment = "Гантель, скамья",
                             MuscleGroup = "Ягодицы",
                             Name = "Ягодичный мост с гантелью"
                         },
                         new
                         {
-                            Id = -1802,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8f6"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Ягодицы",
                             Name = "Ягодичный мост на полу"
                         },
                         new
                         {
-                            Id = -1803,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8f5"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Ягодицы",
                             Name = "Ягодичный мост на одной ноге"
                         },
                         new
                         {
-                            Id = -1804,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8f4"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Ягодицы",
                             Name = "Ягодичный мост в тренажёре"
                         },
                         new
                         {
-                            Id = -1805,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8f3"),
                             Equipment = "Тренажёр Смита, скамья",
                             MuscleGroup = "Ягодицы",
                             Name = "Ягодичный мост в Смите"
                         },
                         new
                         {
-                            Id = -1806,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8f2"),
                             Equipment = "Резиновая петля",
                             MuscleGroup = "Ягодицы",
                             Name = "Ягодичный мост с резиновой петлёй"
                         },
                         new
                         {
-                            Id = -1807,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8f1"),
                             Equipment = "Штанга",
                             MuscleGroup = "Ягодицы",
                             Name = "Обратные выпады со штангой"
                         },
                         new
                         {
-                            Id = -1808,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8f0"),
                             Equipment = "Гантели",
                             MuscleGroup = "Ягодицы",
                             Name = "Диагональные выпады"
                         },
                         new
                         {
-                            Id = -1809,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8ef"),
                             Equipment = "Гантель",
                             MuscleGroup = "Ягодицы",
                             Name = "Широкие приседания сумо с гантелью"
                         },
                         new
                         {
-                            Id = -1810,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8ee"),
                             Equipment = "Штанга",
                             MuscleGroup = "Ягодицы",
                             Name = "Становая тяга сумо"
                         },
                         new
                         {
-                            Id = -1811,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8ed"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Ягодицы",
                             Name = "Отведение ноги назад в кроссовере"
                         },
                         new
                         {
-                            Id = -1812,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8ec"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Ягодицы",
                             Name = "Отведение ноги назад в тренажёре"
                         },
                         new
                         {
-                            Id = -1813,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8eb"),
                             Equipment = "Резиновая петля",
                             MuscleGroup = "Ягодицы",
                             Name = "Отведение ноги назад с резиновой петлёй"
                         },
                         new
                         {
-                            Id = -1814,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8ea"),
                             Equipment = "Платформа, гантели",
                             MuscleGroup = "Ягодицы",
                             Name = "Подъём на платформу с акцентом на ягодицы"
                         },
                         new
                         {
-                            Id = -1815,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8e9"),
                             Equipment = "Скамья для гиперэкстензии",
                             MuscleGroup = "Ягодицы",
                             Name = "Гиперэкстензия с акцентом на ягодицы"
                         },
                         new
                         {
-                            Id = -1816,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8e8"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Ягодицы",
                             Name = "Лягушачьи мостики"
                         },
                         new
                         {
-                            Id = -1817,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff8e7"),
                             Equipment = "Резиновая петля",
                             MuscleGroup = "Ягодицы",
                             Name = "Шаги в полуприседе с резиновой петлёй"
                         },
                         new
                         {
-                            Id = -1900,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff894"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Икры",
                             Name = "Подъём на носки стоя в тренажёре"
                         },
                         new
                         {
-                            Id = -1901,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff893"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Икры",
                             Name = "Подъём на носки сидя в тренажёре"
                         },
                         new
                         {
-                            Id = -1902,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff892"),
                             Equipment = "Тренажёр для жима ногами",
                             MuscleGroup = "Икры",
                             Name = "Подъём на носки в жиме ногами"
                         },
                         new
                         {
-                            Id = -1903,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff891"),
                             Equipment = "Тренажёр Смита",
                             MuscleGroup = "Икры",
                             Name = "Подъём на носки в Смите"
                         },
                         new
                         {
-                            Id = -1904,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff890"),
                             Equipment = "Гантели",
                             MuscleGroup = "Икры",
                             Name = "Подъём на носки с гантелями"
                         },
                         new
                         {
-                            Id = -1905,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff88f"),
                             Equipment = "Опора",
                             MuscleGroup = "Икры",
                             Name = "Подъём на носок одной ноги"
                         },
                         new
                         {
-                            Id = -1906,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff88e"),
                             Equipment = "Тренажёр или партнёр",
                             MuscleGroup = "Икры",
                             Name = "Ослиные подъёмы на носки"
                         },
                         new
                         {
-                            Id = -1907,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff88d"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Икры",
                             Name = "Подъём носков стоя у стены"
                         },
                         new
                         {
-                            Id = -1908,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff88c"),
                             Equipment = "Гантель",
                             MuscleGroup = "Икры",
                             Name = "Подъём носков сидя с отягощением"
                         },
                         new
                         {
-                            Id = -1909,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff88b"),
                             Equipment = "Гантели",
                             MuscleGroup = "Икры",
                             Name = "Ходьба на носках с гантелями"
                         },
                         new
                         {
-                            Id = -2000,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff830"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Пресс",
                             Name = "Скручивания лёжа"
                         },
                         new
                         {
-                            Id = -2001,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff82f"),
                             Equipment = "Блин",
                             MuscleGroup = "Пресс",
                             Name = "Скручивания с блином"
                         },
                         new
                         {
-                            Id = -2002,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff82e"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Пресс",
                             Name = "Скручивания на верхнем блоке"
                         },
                         new
                         {
-                            Id = -2003,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff82d"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Пресс",
                             Name = "Скручивания в тренажёре"
                         },
                         new
                         {
-                            Id = -2004,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff82c"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Пресс",
                             Name = "Обратные скручивания"
                         },
                         new
                         {
-                            Id = -2005,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff82b"),
                             Equipment = "Турник",
                             MuscleGroup = "Пресс",
                             Name = "Подъём коленей в висе"
                         },
                         new
                         {
-                            Id = -2006,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff82a"),
                             Equipment = "Турник",
                             MuscleGroup = "Пресс",
                             Name = "Подъём прямых ног в висе"
                         },
                         new
                         {
-                            Id = -2007,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff829"),
                             Equipment = "Стойка для пресса",
                             MuscleGroup = "Пресс",
                             Name = "Подъём коленей в упоре"
                         },
                         new
                         {
-                            Id = -2008,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff828"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Пресс",
                             Name = "Подъём ног лёжа"
                         },
                         new
                         {
-                            Id = -2009,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff827"),
                             Equipment = "Наклонная скамья",
                             MuscleGroup = "Пресс",
                             Name = "Подъём ног на наклонной скамье"
                         },
                         new
                         {
-                            Id = -2010,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff826"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Пресс",
                             Name = "Складка сидя"
                         },
                         new
                         {
-                            Id = -2011,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff825"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Пресс",
                             Name = "V-складка"
                         },
                         new
                         {
-                            Id = -2012,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff824"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Пресс",
                             Name = "Велосипедные скручивания"
                         },
                         new
                         {
-                            Id = -2013,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff823"),
                             Equipment = "Ролик для пресса",
                             MuscleGroup = "Пресс",
                             Name = "Выкатывание ролика с колен"
                         },
                         new
                         {
-                            Id = -2014,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff822"),
                             Equipment = "Ролик для пресса",
                             MuscleGroup = "Пресс",
                             Name = "Выкатывание ролика стоя"
                         },
                         new
                         {
-                            Id = -2015,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff821"),
                             Equipment = "Штанга",
                             MuscleGroup = "Пресс",
                             Name = "Выкатывание штанги"
                         },
                         new
                         {
-                            Id = -2016,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff820"),
                             Equipment = "Брусья",
                             MuscleGroup = "Пресс",
                             Name = "Уголок в упоре"
                         },
                         new
                         {
-                            Id = -2017,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff81f"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Пресс",
                             Name = "Мёртвый жук"
                         },
                         new
                         {
-                            Id = -2100,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff7cc"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Косые мышцы живота",
                             Name = "Боковая планка"
                         },
                         new
                         {
-                            Id = -2101,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff7cb"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Косые мышцы живота",
                             Name = "Боковая планка с подъёмом таза"
                         },
                         new
                         {
-                            Id = -2102,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff7ca"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Косые мышцы живота",
                             Name = "Русские повороты"
                         },
                         new
                         {
-                            Id = -2103,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff7c9"),
                             Equipment = "Медбол",
                             MuscleGroup = "Косые мышцы живота",
                             Name = "Русские повороты с мячом"
                         },
                         new
                         {
-                            Id = -2104,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff7c8"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Косые мышцы живота",
                             Name = "Косые скручивания лёжа"
                         },
                         new
                         {
-                            Id = -2105,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff7c7"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Косые мышцы живота",
                             Name = "Повороты корпуса в кроссовере"
                         },
                         new
                         {
-                            Id = -2106,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff7c6"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Косые мышцы живота",
                             Name = "Дровосек на верхнем блоке"
                         },
                         new
                         {
-                            Id = -2107,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff7c5"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Косые мышцы живота",
                             Name = "Дровосек на нижнем блоке"
                         },
                         new
                         {
-                            Id = -2108,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff7c4"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Косые мышцы живота",
                             Name = "Паллоф-пресс"
                         },
                         new
                         {
-                            Id = -2109,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff7c3"),
                             Equipment = "Эспандер",
                             MuscleGroup = "Косые мышцы живота",
                             Name = "Паллоф-пресс с эспандером"
                         },
                         new
                         {
-                            Id = -2110,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff7c2"),
                             Equipment = "Гантель",
                             MuscleGroup = "Косые мышцы живота",
                             Name = "Наклоны в сторону с гантелью"
                         },
                         new
                         {
-                            Id = -2111,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff7c1"),
                             Equipment = "Турник",
                             MuscleGroup = "Косые мышцы живота",
                             Name = "Подъём коленей к локтям в висе"
                         },
                         new
                         {
-                            Id = -2200,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff768"),
                             Equipment = "Скамья для гиперэкстензии",
                             MuscleGroup = "Поясница",
                             Name = "Гиперэкстензия"
                         },
                         new
                         {
-                            Id = -2201,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff767"),
                             Equipment = "Скамья для гиперэкстензии, блин",
                             MuscleGroup = "Поясница",
                             Name = "Гиперэкстензия с отягощением"
                         },
                         new
                         {
-                            Id = -2202,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff766"),
                             Equipment = "Скамья или тренажёр",
                             MuscleGroup = "Поясница",
                             Name = "Обратная гиперэкстензия"
                         },
                         new
                         {
-                            Id = -2203,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff765"),
                             Equipment = "Тренажёр GHD",
                             MuscleGroup = "Поясница",
                             Name = "Разгибание спины на тренажёре GHD"
                         },
                         new
                         {
-                            Id = -2204,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff764"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Поясница",
                             Name = "Супермен"
                         },
                         new
                         {
-                            Id = -2205,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff763"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Поясница",
                             Name = "Птица-собака"
                         },
                         new
                         {
-                            Id = -2206,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff762"),
                             Equipment = "Штанга",
                             MuscleGroup = "Поясница",
                             Name = "Наклоны со штангой на плечах"
                         },
                         new
                         {
-                            Id = -2207,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff761"),
                             Equipment = "Скамья для гиперэкстензии",
                             MuscleGroup = "Поясница",
                             Name = "Изометрическое удержание корпуса в гиперэкстензии"
                         },
                         new
                         {
-                            Id = -2300,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff704"),
                             Equipment = "Штанга",
                             MuscleGroup = "Трапеции",
                             Name = "Шраги со штангой"
                         },
                         new
                         {
-                            Id = -2301,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff703"),
                             Equipment = "Гантели",
                             MuscleGroup = "Трапеции",
                             Name = "Шраги с гантелями"
                         },
                         new
                         {
-                            Id = -2302,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff702"),
                             Equipment = "Тренажёр Смита",
                             MuscleGroup = "Трапеции",
                             Name = "Шраги в Смите"
                         },
                         new
                         {
-                            Id = -2303,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff701"),
                             Equipment = "Гири",
                             MuscleGroup = "Трапеции",
                             Name = "Шраги с гирями"
                         },
                         new
                         {
-                            Id = -2304,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff700"),
                             Equipment = "Блочный тренажёр",
                             MuscleGroup = "Трапеции",
                             Name = "Шраги на нижнем блоке"
                         },
                         new
                         {
-                            Id = -2305,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff6ff"),
                             Equipment = "Трэп-гриф",
                             MuscleGroup = "Трапеции",
                             Name = "Шраги с трэп-грифом"
                         },
                         new
                         {
-                            Id = -2306,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff6fe"),
                             Equipment = "Гантели, скамья",
                             MuscleGroup = "Трапеции",
                             Name = "Тяга гантелей лёжа на скамье на средние трапеции"
                         },
                         new
                         {
-                            Id = -2307,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff6fd"),
                             Equipment = "Гантели, скамья",
                             MuscleGroup = "Трапеции",
                             Name = "Y-подъёмы лёжа на наклонной скамье"
                         },
                         new
                         {
-                            Id = -2400,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff6a0"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Приводящие мышцы бедра",
                             Name = "Сведение ног в тренажёре"
                         },
                         new
                         {
-                            Id = -2401,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff69f"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Приводящие мышцы бедра",
                             Name = "Приведение ноги в кроссовере"
                         },
                         new
                         {
-                            Id = -2402,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff69e"),
                             Equipment = "Резиновая петля",
                             MuscleGroup = "Приводящие мышцы бедра",
                             Name = "Приведение ноги с резиновой петлёй"
                         },
                         new
                         {
-                            Id = -2403,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff69d"),
                             Equipment = "Гантели",
                             MuscleGroup = "Приводящие мышцы бедра",
                             Name = "Боковые выпады с гантелями"
                         },
                         new
                         {
-                            Id = -2404,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff69c"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Приводящие мышцы бедра",
                             Name = "Казачьи приседания"
                         },
                         new
                         {
-                            Id = -2405,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff69b"),
                             Equipment = "Скамья",
                             MuscleGroup = "Приводящие мышцы бедра",
                             Name = "Копенгагенская планка"
                         },
                         new
                         {
-                            Id = -2406,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff69a"),
                             Equipment = "Штанга",
                             MuscleGroup = "Приводящие мышцы бедра",
                             Name = "Сумо-приседания со штангой"
                         },
                         new
                         {
-                            Id = -2500,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff63c"),
                             Equipment = "Тренажёр",
                             MuscleGroup = "Отводящие мышцы бедра",
                             Name = "Разведение ног в тренажёре"
                         },
                         new
                         {
-                            Id = -2501,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff63b"),
                             Equipment = "Кроссовер",
                             MuscleGroup = "Отводящие мышцы бедра",
                             Name = "Отведение ноги в кроссовере"
                         },
                         new
                         {
-                            Id = -2502,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff63a"),
                             Equipment = "Резиновая петля",
                             MuscleGroup = "Отводящие мышцы бедра",
                             Name = "Отведение ноги с резиновой петлёй"
                         },
                         new
                         {
-                            Id = -2503,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff639"),
                             Equipment = "Резиновая петля",
                             MuscleGroup = "Отводящие мышцы бедра",
                             Name = "Боковые шаги с резиновой петлёй"
                         },
                         new
                         {
-                            Id = -2504,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff638"),
                             Equipment = "Резиновая петля",
                             MuscleGroup = "Отводящие мышцы бедра",
                             Name = "Ракушка с резиновой петлёй"
                         },
                         new
                         {
-                            Id = -2505,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff637"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Отводящие мышцы бедра",
                             Name = "Подъём ноги лёжа на боку"
                         },
                         new
                         {
-                            Id = -2506,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff636"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Отводящие мышцы бедра",
                             Name = "Боковые выпады с собственным весом"
                         },
                         new
                         {
-                            Id = -2600,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff5d8"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Мышцы кора",
                             Name = "Планка на предплечьях"
                         },
                         new
                         {
-                            Id = -2601,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff5d7"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Мышцы кора",
                             Name = "Планка на прямых руках"
                         },
                         new
                         {
-                            Id = -2602,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff5d6"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Мышцы кора",
                             Name = "Планка с касанием плеч"
                         },
                         new
                         {
-                            Id = -2603,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff5d5"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Мышцы кора",
                             Name = "Планка с подъёмом ноги"
                         },
                         new
                         {
-                            Id = -2604,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff5d4"),
                             Equipment = "Гантель",
                             MuscleGroup = "Мышцы кора",
                             Name = "Планка с перетаскиванием гантели"
                         },
                         new
                         {
-                            Id = -2605,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff5d3"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Мышцы кора",
                             Name = "Медвежья планка"
                         },
                         new
                         {
-                            Id = -2606,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff5d2"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Мышцы кора",
                             Name = "Медвежья ходьба"
                         },
                         new
                         {
-                            Id = -2607,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff5d1"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Мышцы кора",
                             Name = "Полый корпус"
                         },
                         new
                         {
-                            Id = -2608,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff5d0"),
                             Equipment = "Гиря",
                             MuscleGroup = "Мышцы кора",
                             Name = "Удержание гири над головой одной рукой"
                         },
                         new
                         {
-                            Id = -2609,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff5cf"),
                             Equipment = "Гантель или гиря",
                             MuscleGroup = "Мышцы кора",
                             Name = "Чемоданная прогулка"
                         },
                         new
                         {
-                            Id = -2610,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff5ce"),
                             Equipment = "Гиря",
                             MuscleGroup = "Мышцы кора",
                             Name = "Турецкий подъём"
                         },
                         new
                         {
-                            Id = -2611,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff5cd"),
                             Equipment = "Фитбол",
                             MuscleGroup = "Мышцы кора",
                             Name = "Планка на фитболе"
                         },
                         new
                         {
-                            Id = -2700,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff574"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Шея",
                             Name = "Сгибание шеи лёжа"
                         },
                         new
                         {
-                            Id = -2701,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff573"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Шея",
                             Name = "Разгибание шеи лёжа"
                         },
                         new
                         {
-                            Id = -2702,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff572"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Шея",
                             Name = "Боковое сгибание шеи лёжа"
                         },
                         new
                         {
-                            Id = -2703,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff571"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Шея",
                             Name = "Изометрическое сгибание шеи с сопротивлением ладони"
                         },
                         new
                         {
-                            Id = -2704,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff570"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Шея",
                             Name = "Изометрическое разгибание шеи с сопротивлением ладони"
                         },
                         new
                         {
-                            Id = -2800,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff510"),
                             Equipment = "Трэп-гриф",
                             MuscleGroup = "Всё тело",
                             Name = "Становая тяга с трэп-грифом"
                         },
                         new
                         {
-                            Id = -2801,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff50f"),
                             Equipment = "Гиря",
                             MuscleGroup = "Всё тело",
                             Name = "Становая тяга с гирей"
                         },
                         new
                         {
-                            Id = -2802,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff50e"),
                             Equipment = "Штанга, плинты",
                             MuscleGroup = "Всё тело",
                             Name = "Тяга штанги с плинтов"
                         },
                         new
                         {
-                            Id = -2803,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff50d"),
                             Equipment = "Штанга",
                             MuscleGroup = "Всё тело",
                             Name = "Рывковая тяга штанги"
                         },
                         new
                         {
-                            Id = -2804,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff50c"),
                             Equipment = "Штанга",
                             MuscleGroup = "Всё тело",
                             Name = "Взятие штанги на грудь"
                         },
                         new
                         {
-                            Id = -2805,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff50b"),
                             Equipment = "Гиря",
                             MuscleGroup = "Всё тело",
                             Name = "Взятие гири на грудь"
                         },
                         new
                         {
-                            Id = -2806,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff50a"),
                             Equipment = "Штанга",
                             MuscleGroup = "Всё тело",
                             Name = "Толчок штанги"
                         },
                         new
                         {
-                            Id = -2807,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff509"),
                             Equipment = "Гиря",
                             MuscleGroup = "Всё тело",
                             Name = "Толчок гири одной рукой"
                         },
                         new
                         {
-                            Id = -2808,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff508"),
                             Equipment = "Штанга",
                             MuscleGroup = "Всё тело",
                             Name = "Трастер со штангой"
                         },
                         new
                         {
-                            Id = -2809,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff507"),
                             Equipment = "Гантели",
                             MuscleGroup = "Всё тело",
                             Name = "Трастер с гантелями"
                         },
                         new
                         {
-                            Id = -2810,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff506"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Всё тело",
                             Name = "Бёрпи"
                         },
                         new
                         {
-                            Id = -2811,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff505"),
                             Equipment = "Платформа",
                             MuscleGroup = "Всё тело",
                             Name = "Бёрпи с прыжком на платформу"
                         },
                         new
                         {
-                            Id = -2812,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff504"),
                             Equipment = "Медбол",
                             MuscleGroup = "Всё тело",
                             Name = "Бросок медбола в стену"
                         },
                         new
                         {
-                            Id = -2813,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff503"),
                             Equipment = "Боевые канаты",
                             MuscleGroup = "Всё тело",
                             Name = "Удары канатами"
                         },
                         new
                         {
-                            Id = -2814,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff502"),
                             Equipment = "Силовые сани",
                             MuscleGroup = "Всё тело",
                             Name = "Толкание силовых саней"
                         },
                         new
                         {
-                            Id = -2815,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff501"),
                             Equipment = "Силовые сани",
                             MuscleGroup = "Всё тело",
                             Name = "Тяга силовых саней"
                         },
                         new
                         {
-                            Id = -2816,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff500"),
                             Equipment = "Гири",
                             MuscleGroup = "Всё тело",
                             Name = "Прогулка с гирями над головой"
                         },
                         new
                         {
-                            Id = -2817,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff4ff"),
                             Equipment = "Мешок с песком",
                             MuscleGroup = "Всё тело",
                             Name = "Переноска мешка с песком"
                         },
                         new
                         {
-                            Id = -2900,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff4ac"),
                             Equipment = "Беговая дорожка",
                             MuscleGroup = "Кардио",
                             Name = "Бег на дорожке"
                         },
                         new
                         {
-                            Id = -2901,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff4ab"),
                             Equipment = "Беговая дорожка",
                             MuscleGroup = "Кардио",
                             Name = "Ходьба на дорожке"
                         },
                         new
                         {
-                            Id = -2902,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff4aa"),
                             Equipment = "Беговая дорожка",
                             MuscleGroup = "Кардио",
                             Name = "Ходьба на дорожке под наклоном"
                         },
                         new
                         {
-                            Id = -2903,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff4a9"),
                             Equipment = "Велотренажёр",
                             MuscleGroup = "Кардио",
                             Name = "Велотренажёр"
                         },
                         new
                         {
-                            Id = -2904,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff4a8"),
                             Equipment = "Гребной тренажёр",
                             MuscleGroup = "Кардио",
                             Name = "Гребля на тренажёре"
                         },
                         new
                         {
-                            Id = -2905,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff4a7"),
                             Equipment = "Эллиптический тренажёр",
                             MuscleGroup = "Кардио",
                             Name = "Эллиптический тренажёр"
                         },
                         new
                         {
-                            Id = -2906,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff4a6"),
                             Equipment = "Степпер",
                             MuscleGroup = "Кардио",
                             Name = "Лестничный тренажёр"
                         },
                         new
                         {
-                            Id = -2907,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff4a5"),
                             Equipment = "Скакалка",
                             MuscleGroup = "Кардио",
                             Name = "Прыжки со скакалкой"
                         },
                         new
                         {
-                            Id = -2908,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff4a4"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Кардио",
                             Name = "Бег на месте с высоким подниманием коленей"
                         },
                         new
                         {
-                            Id = -2909,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff4a3"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Кардио",
                             Name = "Прыжки джампинг-джек"
                         },
                         new
                         {
-                            Id = -2910,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff4a2"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Кардио",
                             Name = "Альпинист"
                         },
                         new
                         {
-                            Id = -2911,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff4a1"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Кардио",
                             Name = "Бег на улице"
                         },
                         new
                         {
-                            Id = -2912,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff4a0"),
                             Equipment = "Без оборудования",
                             MuscleGroup = "Кардио",
                             Name = "Быстрая ходьба"
                         },
                         new
                         {
-                            Id = -2913,
+                            Id = new Guid("e71c15e5-0000-4000-8000-0000fffff49f"),
                             Equipment = "Велосипед",
                             MuscleGroup = "Кардио",
                             Name = "Езда на велосипеде"
@@ -2904,6 +2908,46 @@ namespace enx_fit.Migrations
                             Name = "Legs",
                             Order = 2,
                             TrainingProgramId = -5
+                        },
+                        new
+                        {
+                            Id = -60,
+                            DayOfWeek = 1,
+                            EstimatedMinutes = 20,
+                            Key = new Guid("0000003c-0000-0000-0000-000000000000"),
+                            Name = "Освоить движения",
+                            Order = 0,
+                            TrainingProgramId = -6
+                        },
+                        new
+                        {
+                            Id = -61,
+                            DayOfWeek = 4,
+                            EstimatedMinutes = 20,
+                            Key = new Guid("0000003d-0000-0000-0000-000000000000"),
+                            Name = "Повторить знакомое",
+                            Order = 1,
+                            TrainingProgramId = -6
+                        },
+                        new
+                        {
+                            Id = -70,
+                            DayOfWeek = 1,
+                            EstimatedMinutes = 25,
+                            Key = new Guid("00000046-0000-0000-0000-000000000000"),
+                            Name = "Знакомство с гантелями",
+                            Order = 0,
+                            TrainingProgramId = -7
+                        },
+                        new
+                        {
+                            Id = -71,
+                            DayOfWeek = 4,
+                            EstimatedMinutes = 25,
+                            Key = new Guid("00000047-0000-0000-0000-000000000000"),
+                            Name = "Закрепить движения",
+                            Order = 1,
+                            TrainingProgramId = -7
                         });
                 });
 
@@ -2915,8 +2959,8 @@ namespace enx_fit.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ExerciseId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Order")
                         .HasColumnType("integer");
@@ -2936,331 +2980,429 @@ namespace enx_fit.Migrations
                         new
                         {
                             Id = -1,
-                            ExerciseId = 2,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000002"),
                             Order = 0,
                             ProgramWorkoutId = -10
                         },
                         new
                         {
                             Id = -2,
-                            ExerciseId = 1,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000001"),
                             Order = 1,
                             ProgramWorkoutId = -10
                         },
                         new
                         {
                             Id = -3,
-                            ExerciseId = 8,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000008"),
                             Order = 2,
                             ProgramWorkoutId = -10
                         },
                         new
                         {
                             Id = -4,
-                            ExerciseId = 6,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000006"),
                             Order = 0,
                             ProgramWorkoutId = -11
                         },
                         new
                         {
                             Id = -5,
-                            ExerciseId = 5,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000005"),
                             Order = 1,
                             ProgramWorkoutId = -11
                         },
                         new
                         {
                             Id = -6,
-                            ExerciseId = 4,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000004"),
                             Order = 2,
                             ProgramWorkoutId = -11
                         },
                         new
                         {
                             Id = -7,
-                            ExerciseId = 7,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000007"),
                             Order = 0,
                             ProgramWorkoutId = -12
                         },
                         new
                         {
                             Id = -8,
-                            ExerciseId = 1,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000001"),
                             Order = 1,
                             ProgramWorkoutId = -12
                         },
                         new
                         {
                             Id = -9,
-                            ExerciseId = 8,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000008"),
                             Order = 2,
                             ProgramWorkoutId = -12
                         },
                         new
                         {
                             Id = -10,
-                            ExerciseId = 1,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000001"),
                             Order = 0,
                             ProgramWorkoutId = -20
                         },
                         new
                         {
                             Id = -11,
-                            ExerciseId = 8,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000008"),
                             Order = 1,
                             ProgramWorkoutId = -20
                         },
                         new
                         {
                             Id = -12,
-                            ExerciseId = 5,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000005"),
                             Order = 2,
                             ProgramWorkoutId = -20
                         },
                         new
                         {
                             Id = -13,
-                            ExerciseId = 2,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000002"),
                             Order = 0,
                             ProgramWorkoutId = -21
                         },
                         new
                         {
                             Id = -14,
-                            ExerciseId = 6,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000006"),
                             Order = 1,
                             ProgramWorkoutId = -21
                         },
                         new
                         {
                             Id = -15,
-                            ExerciseId = 7,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000007"),
                             Order = 2,
                             ProgramWorkoutId = -21
                         },
                         new
                         {
                             Id = -16,
-                            ExerciseId = 5,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000005"),
                             Order = 0,
                             ProgramWorkoutId = -22
                         },
                         new
                         {
                             Id = -17,
-                            ExerciseId = 4,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000004"),
                             Order = 1,
                             ProgramWorkoutId = -22
                         },
                         new
                         {
                             Id = -18,
-                            ExerciseId = 1,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000001"),
                             Order = 2,
                             ProgramWorkoutId = -22
                         },
                         new
                         {
                             Id = -19,
-                            ExerciseId = 3,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000003"),
                             Order = 0,
                             ProgramWorkoutId = -23
                         },
                         new
                         {
                             Id = -20,
-                            ExerciseId = 7,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000007"),
                             Order = 1,
                             ProgramWorkoutId = -23
                         },
                         new
                         {
                             Id = -21,
-                            ExerciseId = 2,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000002"),
                             Order = 2,
                             ProgramWorkoutId = -23
                         },
                         new
                         {
                             Id = -22,
-                            ExerciseId = 2,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000002"),
                             Order = 0,
                             ProgramWorkoutId = -30
                         },
                         new
                         {
                             Id = -23,
-                            ExerciseId = 1,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000001"),
                             Order = 1,
                             ProgramWorkoutId = -30
                         },
                         new
                         {
                             Id = -24,
-                            ExerciseId = 8,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000008"),
                             Order = 2,
                             ProgramWorkoutId = -30
                         },
                         new
                         {
                             Id = -25,
-                            ExerciseId = 3,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000003"),
                             Order = 0,
                             ProgramWorkoutId = -31
                         },
                         new
                         {
                             Id = -26,
-                            ExerciseId = 5,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000005"),
                             Order = 1,
                             ProgramWorkoutId = -31
                         },
                         new
                         {
                             Id = -27,
-                            ExerciseId = 4,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000004"),
                             Order = 2,
                             ProgramWorkoutId = -31
                         },
                         new
                         {
                             Id = -28,
-                            ExerciseId = 2,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000002"),
                             Order = 0,
                             ProgramWorkoutId = -32
                         },
                         new
                         {
                             Id = -29,
-                            ExerciseId = 1,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000001"),
                             Order = 1,
                             ProgramWorkoutId = -32
                         },
                         new
                         {
                             Id = -30,
-                            ExerciseId = 6,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000006"),
                             Order = 2,
                             ProgramWorkoutId = -32
                         },
                         new
                         {
                             Id = -31,
-                            ExerciseId = 7,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000007"),
                             Order = 0,
                             ProgramWorkoutId = -40
                         },
                         new
                         {
                             Id = -32,
-                            ExerciseId = 1,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000001"),
                             Order = 1,
                             ProgramWorkoutId = -40
                         },
                         new
                         {
                             Id = -33,
-                            ExerciseId = 8,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000008"),
                             Order = 2,
                             ProgramWorkoutId = -40
                         },
                         new
                         {
                             Id = -34,
-                            ExerciseId = 6,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000006"),
                             Order = 0,
                             ProgramWorkoutId = -41
                         },
                         new
                         {
                             Id = -35,
-                            ExerciseId = 5,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000005"),
                             Order = 1,
                             ProgramWorkoutId = -41
                         },
                         new
                         {
                             Id = -36,
-                            ExerciseId = 4,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000004"),
                             Order = 2,
                             ProgramWorkoutId = -41
                         },
                         new
                         {
                             Id = -37,
-                            ExerciseId = 2,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000002"),
                             Order = 0,
                             ProgramWorkoutId = -42
                         },
                         new
                         {
                             Id = -38,
-                            ExerciseId = 1,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000001"),
                             Order = 1,
                             ProgramWorkoutId = -42
                         },
                         new
                         {
                             Id = -39,
-                            ExerciseId = 8,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000008"),
                             Order = 2,
                             ProgramWorkoutId = -42
                         },
                         new
                         {
                             Id = -40,
-                            ExerciseId = 1,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000001"),
                             Order = 0,
                             ProgramWorkoutId = -50
                         },
                         new
                         {
                             Id = -41,
-                            ExerciseId = 5,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000005"),
                             Order = 1,
                             ProgramWorkoutId = -50
                         },
                         new
                         {
                             Id = -42,
-                            ExerciseId = 8,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000008"),
                             Order = 0,
                             ProgramWorkoutId = -51
                         },
                         new
                         {
                             Id = -43,
-                            ExerciseId = 4,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000004"),
                             Order = 1,
                             ProgramWorkoutId = -51
                         },
                         new
                         {
                             Id = -44,
-                            ExerciseId = 3,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000003"),
                             Order = 2,
                             ProgramWorkoutId = -51
                         },
                         new
                         {
                             Id = -45,
-                            ExerciseId = 2,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000002"),
                             Order = 0,
                             ProgramWorkoutId = -52
                         },
                         new
                         {
                             Id = -46,
-                            ExerciseId = 6,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000006"),
                             Order = 1,
                             ProgramWorkoutId = -52
                         },
                         new
                         {
                             Id = -47,
-                            ExerciseId = 7,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-000000000007"),
                             Order = 2,
                             ProgramWorkoutId = -52
+                        },
+                        new
+                        {
+                            Id = -48,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-0000fffff9ba"),
+                            Order = 0,
+                            ProgramWorkoutId = -60
+                        },
+                        new
+                        {
+                            Id = -49,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-0000fffffbfe"),
+                            Order = 1,
+                            ProgramWorkoutId = -60
+                        },
+                        new
+                        {
+                            Id = -50,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-0000fffff8f6"),
+                            Order = 2,
+                            ProgramWorkoutId = -60
+                        },
+                        new
+                        {
+                            Id = -51,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-0000fffff9ba"),
+                            Order = 0,
+                            ProgramWorkoutId = -61
+                        },
+                        new
+                        {
+                            Id = -52,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-0000fffffbfe"),
+                            Order = 1,
+                            ProgramWorkoutId = -61
+                        },
+                        new
+                        {
+                            Id = -53,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-0000fffff8f6"),
+                            Order = 2,
+                            ProgramWorkoutId = -61
+                        },
+                        new
+                        {
+                            Id = -54,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-0000fffff9bc"),
+                            Order = 0,
+                            ProgramWorkoutId = -70
+                        },
+                        new
+                        {
+                            Id = -55,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-0000fffffba6"),
+                            Order = 1,
+                            ProgramWorkoutId = -70
+                        },
+                        new
+                        {
+                            Id = -56,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-0000fffffbfe"),
+                            Order = 2,
+                            ProgramWorkoutId = -70
+                        },
+                        new
+                        {
+                            Id = -57,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-0000fffff8f6"),
+                            Order = 3,
+                            ProgramWorkoutId = -70
+                        },
+                        new
+                        {
+                            Id = -58,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-0000fffff9bc"),
+                            Order = 0,
+                            ProgramWorkoutId = -71
+                        },
+                        new
+                        {
+                            Id = -59,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-0000fffffba6"),
+                            Order = 1,
+                            ProgramWorkoutId = -71
+                        },
+                        new
+                        {
+                            Id = -60,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-0000fffffbfe"),
+                            Order = 2,
+                            ProgramWorkoutId = -71
+                        },
+                        new
+                        {
+                            Id = -61,
+                            ExerciseId = new Guid("e71c15e5-0000-4000-8000-0000fffff8f6"),
+                            Order = 3,
+                            ProgramWorkoutId = -71
                         });
                 });
 
@@ -3458,6 +3600,38 @@ namespace enx_fit.Migrations
                             RequiresPro = false,
                             Revision = new Guid("00000005-0000-0000-0000-000000000000"),
                             Weeks = 8
+                        },
+                        new
+                        {
+                            Id = -6,
+                            Categories = "Для начинающих|Дом",
+                            CreatedAtUtc = new DateTime(2026, 9, 22, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DaysPerWeek = 2,
+                            Description = "Три движения с собственным весом, два коротких занятия в неделю. Повторяйте знакомые упражнения и осваивайте запись подходов.",
+                            Goal = "Регулярность",
+                            IsArchived = false,
+                            IsTemplate = true,
+                            Level = 0,
+                            Name = "Дом · Первые движения",
+                            RequiresPro = false,
+                            Revision = new Guid("00000006-0000-0000-0000-000000000000"),
+                            Weeks = 4
+                        },
+                        new
+                        {
+                            Id = -7,
+                            Categories = "Для начинающих|Дом|Гантели",
+                            CreatedAtUtc = new DateTime(2026, 9, 22, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DaysPerWeek = 2,
+                            Description = "Четыре движения с парой гантелей и собственным весом. Скамья не нужна; нагрузку выбираете сами.",
+                            Goal = "Общая физическая подготовка",
+                            IsArchived = false,
+                            IsTemplate = true,
+                            Level = 0,
+                            Name = "Гантели · Два занятия",
+                            RequiresPro = false,
+                            Revision = new Guid("00000007-0000-0000-0000-000000000000"),
+                            Weeks = 4
                         });
                 });
 
@@ -3481,8 +3655,8 @@ namespace enx_fit.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<int>("ExerciseId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("ProgramRevision")
                         .HasColumnType("uuid");
@@ -3562,8 +3736,8 @@ namespace enx_fit.Migrations
                     b.Property<string>("BlockKind")
                         .HasColumnType("text");
 
-                    b.Property<int>("ExerciseId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("ExerciseId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Notes")
                         .HasColumnType("text");
@@ -4345,6 +4519,132 @@ namespace enx_fit.Migrations
                                     RestSeconds = 120,
                                     Rir = 2,
                                     Sets = 3
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -48,
+                                    Comment = "Начните с комфортного числа повторений. Можно уменьшить число подходов; при потере техники остановитесь.",
+                                    RepsMax = 12,
+                                    RepsMin = 8,
+                                    RestSeconds = 90,
+                                    Sets = 2
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -49,
+                                    Comment = "Начните с комфортного числа повторений. Можно уменьшить число подходов; при потере техники остановитесь.",
+                                    RepsMax = 12,
+                                    RepsMin = 8,
+                                    RestSeconds = 90,
+                                    Sets = 2
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -50,
+                                    Comment = "Начните с комфортного числа повторений. Можно уменьшить число подходов; при потере техники остановитесь.",
+                                    RepsMax = 12,
+                                    RepsMin = 8,
+                                    RestSeconds = 90,
+                                    Sets = 2
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -51,
+                                    Comment = "Начните с комфортного числа повторений. Можно уменьшить число подходов; при потере техники остановитесь.",
+                                    RepsMax = 12,
+                                    RepsMin = 8,
+                                    RestSeconds = 90,
+                                    Sets = 2
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -52,
+                                    Comment = "Начните с комфортного числа повторений. Можно уменьшить число подходов; при потере техники остановитесь.",
+                                    RepsMax = 12,
+                                    RepsMin = 8,
+                                    RestSeconds = 90,
+                                    Sets = 2
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -53,
+                                    Comment = "Начните с комфортного числа повторений. Можно уменьшить число подходов; при потере техники остановитесь.",
+                                    RepsMax = 12,
+                                    RepsMin = 8,
+                                    RestSeconds = 90,
+                                    Sets = 2
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -54,
+                                    Comment = "Начните с комфортного числа повторений. Можно уменьшить число подходов; при потере техники остановитесь.",
+                                    RepsMax = 12,
+                                    RepsMin = 8,
+                                    RestSeconds = 90,
+                                    Sets = 2
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -55,
+                                    Comment = "Начните с комфортного числа повторений. Можно уменьшить число подходов; при потере техники остановитесь.",
+                                    RepsMax = 12,
+                                    RepsMin = 8,
+                                    RestSeconds = 90,
+                                    Sets = 2
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -56,
+                                    Comment = "Начните с комфортного числа повторений. Можно уменьшить число подходов; при потере техники остановитесь.",
+                                    RepsMax = 12,
+                                    RepsMin = 8,
+                                    RestSeconds = 90,
+                                    Sets = 2
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -57,
+                                    Comment = "Начните с комфортного числа повторений. Можно уменьшить число подходов; при потере техники остановитесь.",
+                                    RepsMax = 12,
+                                    RepsMin = 8,
+                                    RestSeconds = 90,
+                                    Sets = 2
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -58,
+                                    Comment = "Начните с комфортного числа повторений. Можно уменьшить число подходов; при потере техники остановитесь.",
+                                    RepsMax = 12,
+                                    RepsMin = 8,
+                                    RestSeconds = 90,
+                                    Sets = 2
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -59,
+                                    Comment = "Начните с комфортного числа повторений. Можно уменьшить число подходов; при потере техники остановитесь.",
+                                    RepsMax = 12,
+                                    RepsMin = 8,
+                                    RestSeconds = 90,
+                                    Sets = 2
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -60,
+                                    Comment = "Начните с комфортного числа повторений. Можно уменьшить число подходов; при потере техники остановитесь.",
+                                    RepsMax = 12,
+                                    RepsMin = 8,
+                                    RestSeconds = 90,
+                                    Sets = 2
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -61,
+                                    Comment = "Начните с комфортного числа повторений. Можно уменьшить число подходов; при потере техники остановитесь.",
+                                    RepsMax = 12,
+                                    RepsMin = 8,
+                                    RestSeconds = 90,
+                                    Sets = 2
                                 });
                         });
 
@@ -4989,6 +5289,188 @@ namespace enx_fit.Migrations
                                 new
                                 {
                                     ProgramWorkoutExerciseId = -47,
+                                    IncreasePercent = 5m,
+                                    MaxReps = 12,
+                                    Method = 0,
+                                    MinReps = 8,
+                                    OneRepMaxKg = 100m,
+                                    PercentOneRepMax = 75m,
+                                    StepKg = 2.5m,
+                                    TargetRir = 2,
+                                    TargetRpe = 8m
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -48,
+                                    IncreasePercent = 5m,
+                                    MaxReps = 12,
+                                    Method = 0,
+                                    MinReps = 8,
+                                    OneRepMaxKg = 100m,
+                                    PercentOneRepMax = 75m,
+                                    StepKg = 2.5m,
+                                    TargetRir = 2,
+                                    TargetRpe = 8m
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -49,
+                                    IncreasePercent = 5m,
+                                    MaxReps = 12,
+                                    Method = 0,
+                                    MinReps = 8,
+                                    OneRepMaxKg = 100m,
+                                    PercentOneRepMax = 75m,
+                                    StepKg = 2.5m,
+                                    TargetRir = 2,
+                                    TargetRpe = 8m
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -50,
+                                    IncreasePercent = 5m,
+                                    MaxReps = 12,
+                                    Method = 0,
+                                    MinReps = 8,
+                                    OneRepMaxKg = 100m,
+                                    PercentOneRepMax = 75m,
+                                    StepKg = 2.5m,
+                                    TargetRir = 2,
+                                    TargetRpe = 8m
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -51,
+                                    IncreasePercent = 5m,
+                                    MaxReps = 12,
+                                    Method = 0,
+                                    MinReps = 8,
+                                    OneRepMaxKg = 100m,
+                                    PercentOneRepMax = 75m,
+                                    StepKg = 2.5m,
+                                    TargetRir = 2,
+                                    TargetRpe = 8m
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -52,
+                                    IncreasePercent = 5m,
+                                    MaxReps = 12,
+                                    Method = 0,
+                                    MinReps = 8,
+                                    OneRepMaxKg = 100m,
+                                    PercentOneRepMax = 75m,
+                                    StepKg = 2.5m,
+                                    TargetRir = 2,
+                                    TargetRpe = 8m
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -53,
+                                    IncreasePercent = 5m,
+                                    MaxReps = 12,
+                                    Method = 0,
+                                    MinReps = 8,
+                                    OneRepMaxKg = 100m,
+                                    PercentOneRepMax = 75m,
+                                    StepKg = 2.5m,
+                                    TargetRir = 2,
+                                    TargetRpe = 8m
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -54,
+                                    IncreasePercent = 5m,
+                                    MaxReps = 12,
+                                    Method = 0,
+                                    MinReps = 8,
+                                    OneRepMaxKg = 100m,
+                                    PercentOneRepMax = 75m,
+                                    StepKg = 2.5m,
+                                    TargetRir = 2,
+                                    TargetRpe = 8m
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -55,
+                                    IncreasePercent = 5m,
+                                    MaxReps = 12,
+                                    Method = 0,
+                                    MinReps = 8,
+                                    OneRepMaxKg = 100m,
+                                    PercentOneRepMax = 75m,
+                                    StepKg = 2.5m,
+                                    TargetRir = 2,
+                                    TargetRpe = 8m
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -56,
+                                    IncreasePercent = 5m,
+                                    MaxReps = 12,
+                                    Method = 0,
+                                    MinReps = 8,
+                                    OneRepMaxKg = 100m,
+                                    PercentOneRepMax = 75m,
+                                    StepKg = 2.5m,
+                                    TargetRir = 2,
+                                    TargetRpe = 8m
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -57,
+                                    IncreasePercent = 5m,
+                                    MaxReps = 12,
+                                    Method = 0,
+                                    MinReps = 8,
+                                    OneRepMaxKg = 100m,
+                                    PercentOneRepMax = 75m,
+                                    StepKg = 2.5m,
+                                    TargetRir = 2,
+                                    TargetRpe = 8m
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -58,
+                                    IncreasePercent = 5m,
+                                    MaxReps = 12,
+                                    Method = 0,
+                                    MinReps = 8,
+                                    OneRepMaxKg = 100m,
+                                    PercentOneRepMax = 75m,
+                                    StepKg = 2.5m,
+                                    TargetRir = 2,
+                                    TargetRpe = 8m
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -59,
+                                    IncreasePercent = 5m,
+                                    MaxReps = 12,
+                                    Method = 0,
+                                    MinReps = 8,
+                                    OneRepMaxKg = 100m,
+                                    PercentOneRepMax = 75m,
+                                    StepKg = 2.5m,
+                                    TargetRir = 2,
+                                    TargetRpe = 8m
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -60,
+                                    IncreasePercent = 5m,
+                                    MaxReps = 12,
+                                    Method = 0,
+                                    MinReps = 8,
+                                    OneRepMaxKg = 100m,
+                                    PercentOneRepMax = 75m,
+                                    StepKg = 2.5m,
+                                    TargetRir = 2,
+                                    TargetRpe = 8m
+                                },
+                                new
+                                {
+                                    ProgramWorkoutExerciseId = -61,
                                     IncreasePercent = 5m,
                                     MaxReps = 12,
                                     Method = 0,

@@ -9,11 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace enx_fit.Pages.Admin.Users;
 
-public static class CalendarPageUrls
-{
-    public static string CreateUserUrl(this IUrlHelper url)
-        => url.PageUrl("/Admin/Users/CreateUser", nameof(CreateUserModel.OnGet));
-}   
 [MinimumRole(UserRole.Administrator)]
 public class IndexModel(ApplicationDbContext db, CurrentUser currentUser) : PageModel
 {
@@ -32,6 +27,8 @@ public class IndexModel(ApplicationDbContext db, CurrentUser currentUser) : Page
         AdministratorCount = await db.Users.CountAsync(u => u.Role >= UserRole.Administrator);
         var query = db.Users.AsNoTracking();
         Search = Search?.Trim();
+        if (Search?.Length > 256) Search = Search[..256];
+        Response.Headers.CacheControl = "no-cache, no-store";
         if (!string.IsNullOrWhiteSpace(Search))
         {
             var search = Search.ToUpperInvariant();
@@ -46,8 +43,9 @@ public class IndexModel(ApplicationDbContext db, CurrentUser currentUser) : Page
         var ids = users.Select(u => u.Id).ToArray();
         var workouts = await db.WorkoutSessions.Where(w => w.UserId != null && ids.Contains(w.UserId)).GroupBy(w => w.UserId!)
             .Select(g => new { Id = g.Key, Count = g.Count(), Last = g.Max(w => w.Date) }).ToDictionaryAsync(g => g.Id);
-        Users = users.Select(u => new UserRow(u.Id, u.UserName ?? u.Email ?? u.Id, u.Email, u.EmailConfirmed, u.Role, u.Id == currentUser.Id,
+        Users = users.Select(u => new UserRow(u.Id, string.IsNullOrWhiteSpace(u.UserName) ? u.Email ?? u.Id : u.UserName, u.Email, u.EmailConfirmed, u.Role, u.Id == currentUser.Id,
             workouts.GetValueOrDefault(u.Id)?.Count ?? 0, workouts.GetValueOrDefault(u.Id)?.Last)).ToList();
+        ModelState.Clear();
     }
 }
 public sealed record UserRow(string Id, string Name, string? Email, bool EmailConfirmed, UserRole Role, bool IsCurrentUser, int Workouts, DateOnly? LastWorkout)

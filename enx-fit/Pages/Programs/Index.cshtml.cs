@@ -4,6 +4,7 @@ using enx_fit.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using enx_fit.Data;
+using enx_fit.Extensions;
 
 namespace enx_fit.Pages.Programs;
 
@@ -24,7 +25,7 @@ public sealed class IndexModel(TrainingProgramService programs, CurrentUser curr
     public int OwnCount { get; private set; }
     public List<TrainingProgram> Items { get; private set; } = [];
     public Dictionary<int, List<WorkoutSession>> Sessions { get; } = [];
-    public static readonly string[] Categories = ["Для начинающих", "Набор массы", "Сила", "Снижение веса", "Upper / Lower", "Push / Pull / Legs", "Full Body"];
+    public static readonly string[] Categories = ["Для начинающих", "Дом", "Гантели", "Набор массы", "Сила", "Снижение веса", "Upper / Lower", "Push / Pull / Legs", "Full Body"];
     public async Task<IActionResult> OnGetAsync(bool upgrade = false)
     {
         await LoadAsync(); ShowUpgrade = upgrade;
@@ -55,7 +56,7 @@ public sealed class IndexModel(TrainingProgramService programs, CurrentUser curr
         if (Tab == "templates" && Level is { } filter) Items = Items.Where(p => p.Level == filter).ToList();
         if (Tab == "templates" && Days is { } days) Items = Items.Where(p => p.DaysPerWeek == days).ToList();
         if (Tab == "templates" && MatchPreferences && HasPreferences) Items = Items.Where(p => TrainingPreferences.HasEquipment(p, Preferences!.AvailableEquipment)).ToList();
-        if (Tab == "templates") Items = Items.OrderBy(p => p.Level).ThenBy(p => p.DaysPerWeek).ThenBy(p => p.Name).ToList();
+        if (Tab == "templates") Items = Items.OrderBy(p => ProgramTemplatePresentation.IsStarter(p) ? 0 : 1).ThenBy(p => p.Level).ThenBy(p => p.DaysPerWeek).ThenBy(p => p.Name).ToList();
         foreach (var p in Items.Where(p => p.StartDate.HasValue)) Sessions[p.Id] = await Programs.SessionsAsync(p);
     }
     public async Task<IActionResult> OnPostDuplicateAsync(int id)

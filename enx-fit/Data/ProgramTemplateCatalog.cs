@@ -14,14 +14,19 @@ internal static class ProgramTemplateCatalog
             Template(-2, "Upper / Lower", "Набор мышечной массы", "Четыре занятия с чередованием верха и низа тела. Базовая структура для регулярных тренировок.", ProgramLevel.Intermediate, 8, 4, "Набор массы|Upper / Lower"),
             Template(-3, "Силовая база", "Развитие силы", "Три занятия в неделю с акцентом на основные силовые движения и восстановление.", ProgramLevel.Intermediate, 8, 3, "Сила|Full Body"),
             Template(-4, "Движение и тонус", "Снижение веса", "Умеренная силовая нагрузка трижды в неделю. Рабочие веса выбираются индивидуально.", ProgramLevel.Beginner, 6, 3, "Снижение веса|Для начинающих|Full Body"),
-            Template(-5, "Push / Pull / Legs", "Набор мышечной массы", "Разделение по движениям с блоками объёма, нагрузки и облегчённой неделей.", ProgramLevel.Advanced, 8, 3, "Push / Pull / Legs|Набор массы"));
+            Template(-5, "Push / Pull / Legs", "Набор мышечной массы", "Разделение по движениям с блоками объёма, нагрузки и облегчённой неделей.", ProgramLevel.Advanced, 8, 3, "Push / Pull / Legs|Набор массы"),
+            Template(-6, "Дом · Первые движения", "Регулярность", "Три движения с собственным весом, два коротких занятия в неделю. Повторяйте знакомые упражнения и осваивайте запись подходов.", ProgramLevel.Beginner, 4, 2, "Для начинающих|Дом"),
+            Template(-7, "Гантели · Два занятия", "Общая физическая подготовка", "Четыре движения с парой гантелей и собственным весом. Скамья не нужна; нагрузку выбираете сами.", ProgramLevel.Beginner, 4, 2, "Для начинающих|Дом|Гантели"));
         var programs = new[]
         {
             (Id: -1, Names: new[] { "Всё тело A", "Всё тело B", "Всё тело C" }, Days: new[] { 1, 3, 5 }, Exercises: new[] { new[] { 2, 1, 8 }, new[] { 6, 5, 4 }, new[] { 7, 1, 8 } }),
             (Id: -2, Names: new[] { "Верх A", "Низ A", "Верх B", "Низ B" }, Days: new[] { 1, 2, 4, 5 }, Exercises: new[] { new[] { 1, 8, 5 }, new[] { 2, 6, 7 }, new[] { 5, 4, 1 }, new[] { 3, 7, 2 } }),
             (Id: -3, Names: new[] { "Присед и жим", "Тяга и плечи", "Силовая техника" }, Days: new[] { 1, 3, 5 }, Exercises: new[] { new[] { 2, 1, 8 }, new[] { 3, 5, 4 }, new[] { 2, 1, 6 } }),
             (Id: -4, Names: new[] { "Всё тело A", "Всё тело B", "Всё тело C" }, Days: new[] { 1, 3, 5 }, Exercises: new[] { new[] { 7, 1, 8 }, new[] { 6, 5, 4 }, new[] { 2, 1, 8 } }),
-            (Id: -5, Names: new[] { "Push", "Pull", "Legs" }, Days: new[] { 1, 3, 5 }, Exercises: new[] { new[] { 1, 5 }, new[] { 8, 4, 3 }, new[] { 2, 6, 7 } })
+            (Id: -5, Names: new[] { "Push", "Pull", "Legs" }, Days: new[] { 1, 3, 5 }, Exercises: new[] { new[] { 1, 5 }, new[] { 8, 4, 3 }, new[] { 2, 6, 7 } }),
+            // Append only: existing program-exercise keys must retain their identities.
+            (Id: -6, Names: new[] { "Освоить движения", "Повторить знакомое" }, Days: new[] { 1, 4 }, Exercises: new[] { new[] { -1606, -1026, -1802 }, new[] { -1606, -1026, -1802 } }),
+            (Id: -7, Names: new[] { "Знакомство с гантелями", "Закрепить движения" }, Days: new[] { 1, 4 }, Exercises: new[] { new[] { -1604, -1114, -1026, -1802 }, new[] { -1604, -1114, -1026, -1802 } })
         };
         var exerciseKey = -1;
         foreach (var p in programs)
@@ -31,16 +36,17 @@ internal static class ProgramTemplateCatalog
             model.Entity<ProgramWorkout>().HasData(new
             {
                 Id = workoutId, TrainingProgramId = p.Id, Key = new Guid(Math.Abs(workoutId), 0, 0, new byte[8]),
-                Name = p.Names[i], Order = i, DayOfWeek = (int?)p.Days[i], EstimatedMinutes = 50
+                Name = p.Names[i], Order = i, DayOfWeek = (int?)p.Days[i], EstimatedMinutes = p.Id == -6 ? 20 : p.Id == -7 ? 25 : 50
             });
             for (var j = 0; j < p.Exercises[i].Length; j++)
             {
                 var id = exerciseKey--;
-                model.Entity<ProgramWorkoutExercise>().HasData(new { Id = id, ProgramWorkoutId = workoutId, ExerciseId = p.Exercises[i][j], Order = j });
+                model.Entity<ProgramWorkoutExercise>().HasData(new { Id = id, ProgramWorkoutId = workoutId, ExerciseId = ExerciseIds.FromLegacy(p.Exercises[i][j]), Order = j });
                 model.Entity<ProgramWorkoutExercise>().OwnsOne(e => e.Prescription).HasData(new
                 {
-                    ProgramWorkoutExerciseId = id, Sets = p.Id == -3 ? 4 : 3, RepsMin = p.Id == -3 ? 4 : 8,
-                    RepsMax = p.Id == -3 ? 6 : 12, Rir = (int?)2, RestSeconds = (int?)120
+                    ProgramWorkoutExerciseId = id, Sets = p.Id <= -6 ? 2 : p.Id == -3 ? 4 : 3, RepsMin = p.Id == -3 ? 4 : 8,
+                    RepsMax = p.Id == -3 ? 6 : 12, Rir = p.Id <= -6 ? (int?)null : 2, RestSeconds = (int?)(p.Id <= -6 ? 90 : 120),
+                    Comment = p.Id <= -6 ? "Начните с комфортного числа повторений. Можно уменьшить число подходов; при потере техники остановитесь." : null
                 });
                 model.Entity<ProgramWorkoutExercise>().OwnsOne(e => e.Progression).HasData(new
                 {

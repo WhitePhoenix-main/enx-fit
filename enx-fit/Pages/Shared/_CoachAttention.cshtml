@@ -12,7 +12,7 @@
         <div class="coach-attention-groups">
         @foreach (var group in groups)
         {
-            <details class="coach-alert-group" data-client-alert="@group.Key">
+            <details class="coach-alert-group app-disclosure" data-client-alert="@group.Key">
                 <summary><span><strong>@group.First().Name</strong><small>Сигналов: @group.Count() · @string.Join(", ", group.Select(a => Label(a.Kind)).Distinct())</small></span><reference-icon name="chevron" /></summary>
                 <div class="coach-detail-body"><a class="coach-text-link" asp-page="/Trainer/Client" asp-route-id="@group.Key">Открыть клиента →</a><ul>
                 @foreach (var alert in group) { <li><span class="coach-alert-kind">@Label(alert.Kind)</span><p>@alert.Reason</p><a class="coach-text-link" asp-page="/Programs/Details" asp-route-id="@alert.ProgramId" asp-route-Tab="@(alert.Kind is ClientAttentionKind.Ending or ClientAttentionKind.Missed ? "schedule" : "progression")">@(alert.Kind is ClientAttentionKind.Ending or ClientAttentionKind.Missed ? "Проверить расписание" : "Посмотреть нагрузку") →</a></li> }

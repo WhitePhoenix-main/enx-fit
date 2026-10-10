@@ -13,6 +13,10 @@ public class EditModel(UserManager<ApplicationUser> users, SignInManager<Applica
 {
     [BindProperty(SupportsGet = true)] public string Id { get; set; } = "";
     [BindProperty] public UserEditInput Input { get; set; } = new();
+    [BindProperty(SupportsGet = true)] public string? DirectorySearch { get; set; }
+    [BindProperty(SupportsGet = true)] public UserRole? DirectoryRole { get; set; }
+    [BindProperty(SupportsGet = true)] public int DirectoryPage { get; set; } = 1;
+    public bool AccessExpanded => ModelState.Any(pair => pair.Key is "Input.Role" or "Input.TrainerId" or "Input.SubscriptionPlan" && pair.Value?.Errors.Count > 0);
     public bool IsCurrentUser => Id == currentUser.Id;
     public IEnumerable<UserRole> AvailableRoles => Enum.GetValues<UserRole>().Where(currentUser.HasMinimumRole);
     public int WorkoutCount { get; private set; }
@@ -20,6 +24,7 @@ public class EditModel(UserManager<ApplicationUser> users, SignInManager<Applica
     public IReadOnlyList<ApplicationUser> Trainers { get; private set; } = [];
     public async Task<IActionResult> OnGetAsync()
     {
+        NormalizeDirectory();
         var user = await users.FindByIdAsync(Id);
         if (user is null) return NotFound();
         if (!currentUser.HasMinimumRole(user.Role)) return Forbid();
@@ -29,6 +34,7 @@ public class EditModel(UserManager<ApplicationUser> users, SignInManager<Applica
     }
     public async Task<IActionResult> OnPostAsync()
     {
+        NormalizeDirectory();
         var user = await users.FindByIdAsync(Id);
         if (user is null) return NotFound();
         if (!currentUser.HasMinimumRole(user.Role)) return Forbid();
@@ -41,7 +47,7 @@ public class EditModel(UserManager<ApplicationUser> users, SignInManager<Applica
         var duplicate = await users.FindByEmailAsync(Input.Email);
         if (duplicate is not null && duplicate.Id != Id) ModelState.AddModelError("Input.Email", "Этот email уже используется другим пользователем.");
         if (!string.IsNullOrWhiteSpace(Input.TrainerId) && (Input.TrainerId == Id ||
-            !await db.Users.AnyAsync(trainer => trainer.Id == Input.TrainerId && trainer.Role >= UserRole.Trainer)))
+            !await db.Users.AnyAsync(trainer => trainer.Id == Input.TrainerId && (trainer.Role == UserRole.Trainer || trainer.Role >= UserRole.Administrator))))
             ModelState.AddModelError("Input.TrainerId", "Выберите тренера из списка. Нельзя назначить пользователя самому себе.");
         if (!ModelState.IsValid) { await LoadCountsAsync(); return Page(); }
         await using var transaction = await db.Database.BeginTransactionAsync();
@@ -72,14 +78,21 @@ public class EditModel(UserManager<ApplicationUser> users, SignInManager<Applica
         await transaction.CommitAsync();
         if (IsCurrentUser) await signIn.RefreshSignInAsync(user);
         TempData["StatusMessage"] = "Данные пользователя сохранены.";
-        return RedirectToPage(new { id = Id });
+        return RedirectToPage(new { id = Id, DirectorySearch, DirectoryRole, DirectoryPage });
     }
     private async Task LoadCountsAsync()
     {
         WorkoutCount = await db.WorkoutSessions.CountAsync(w => w.UserId == Id);
         MeasurementCount = await db.BodyMeasurements.CountAsync(m => m.UserId == Id);
-        Trainers = await db.Users.AsNoTracking().Where(user => user.Role >= UserRole.Trainer && user.Id != Id)
+        Trainers = await db.Users.AsNoTracking().Where(user => (user.Role == UserRole.Trainer || user.Role >= UserRole.Administrator) && user.Id != Id)
             .OrderBy(user => user.UserName).ToListAsync();
+    }
+    private void NormalizeDirectory()
+    {
+        Response.Headers.CacheControl = "no-cache, no-store";
+        DirectorySearch = DirectorySearch?.Trim(); if (DirectorySearch?.Length > 256) DirectorySearch = DirectorySearch[..256];
+        if (DirectoryRole is { } role && !Enum.IsDefined(role)) DirectoryRole = null;
+        DirectoryPage = Math.Clamp(DirectoryPage, 1, 1000000);
     }
 }
 public sealed class UserEditInput

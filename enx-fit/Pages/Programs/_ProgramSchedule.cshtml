@@ -17,7 +17,7 @@
             <form method="post" asp-page-handler="Activate" asp-route-id="@p.Id" data-busy><label>Дата начала<input type="date" name="startDate" value="@Iso(Model.Today)" min="@Iso(Model.Today.AddYears(-1))" max="@Iso(Model.Today.AddYears(2))" required /></label><button class="button primary" type="submit"><reference-icon name="calendar" />Запланировать программу</button></form>
         }
         <div class="schedule-pattern">@foreach (var workout in p.Workouts.Where(w => w.DayOfWeek.HasValue).OrderBy(w => w.DayOfWeek)) { <div><span>@ProgramSchedule.DayNames[workout.DayOfWeek!.Value - 1]</span><strong>@workout.Name</strong><small>@workout.Exercises.Count упр. · @workout.EstimatedMinutes мин</small></div> }</div>
-        @if (p.Workouts.Count(w => w.DayOfWeek.HasValue) != p.DaysPerWeek || p.Workouts.Any(w => w.Exercises.Count == 0)) { <p class="program-notice">Перед стартом добавьте упражнения и согласуйте дни с частотой тренировок.</p><a class="button secondary" asp-page="Edit" asp-route-id="@p.Id">Настроить программу</a> }
+        @if (p.Workouts.Count(w => w.DayOfWeek.HasValue) != p.DaysPerWeek || p.Workouts.Any(w => w.Exercises.Count == 0)) { <p class="program-notice app-status app-notice" data-app-state="info">Перед стартом добавьте упражнения и согласуйте дни с частотой тренировок.</p><a class="button secondary" asp-page="Edit" asp-route-id="@p.Id">Настроить программу</a> }
     </section>
 } else {
     <div class="schedule-workspace" data-program-calendar data-today="@Iso(Model.Today)" data-selected-day="@(Model.Day.HasValue ? Iso(Model.Day.Value) : "")">
@@ -74,5 +74,5 @@
             </div>
         </aside>
     </div>
-    <dialog id="schedule-day-dialog" class="app-dialog schedule-day-dialog" aria-labelledby="schedule-dialog-title"><div class="dialog-heading"><h2 id="schedule-dialog-title">День программы</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><div data-schedule-dialog-host></div></dialog>
+    <dialog id="schedule-day-dialog" class="app-dialog schedule-day-dialog app-workspace" aria-labelledby="schedule-dialog-title"><div class="dialog-heading"><h2 id="schedule-dialog-title">День программы</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><div data-schedule-dialog-host></div></dialog>
 }

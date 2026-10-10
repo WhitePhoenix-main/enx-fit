@@ -1,9 +1,12 @@
 @page "{id:int}"
 @model enx_fit.Pages.Workouts.DeleteModel
 @{
+    Layout = User.HasMinimumRole(UserRole.Administrator) ? "_AdminLayout" : "_DashboardReferenceLayout";
     ViewData["Title"] = "Удалить тренировку";
 }
 
+@section Styles { <link rel="stylesheet" href="~/css/record-pages.css" asp-append-version="true" /> }
+<div class="record-page app-workspace">
 <div class="mb-4">
     <h1 class="h3 mb-1">Удалить тренировку</h1>
     <p class="text-muted mb-0">Проверьте тренировку перед удалением.</p>
@@ -14,12 +17,15 @@
         <h2 class="h5">@(string.IsNullOrWhiteSpace(Model.Workout.Title) ? "Тренировка" : Model.Workout.Title)</h2>
         <p class="text-muted">@Model.Workout.Date.ToString("yyyy-MM-dd")</p>
         <p>Будут удалены тренировка, её упражнения и все записанные подходы.</p>
-        <form method="post">
+        <form method="post" data-admin-form>
             <input type="hidden" asp-for="Workout.Id" />
             <div class="d-flex gap-2">
-                <button class="btn btn-danger" type="submit">Удалить тренировку</button>
-                <a class="btn btn-outline-secondary" asp-page="./Details" asp-route-id="@Model.Workout.Id">Отмена</a>
+                <button class="btn btn-danger app-button danger" type="submit">Удалить тренировку</button>
+                <a class="btn btn-outline-secondary app-button secondary" asp-page="./Details" asp-route-id="@Model.Workout.Id">Отмена</a>
             </div>
         </form>
     </div>
 </div>
+</div>
+
+@section Scripts { @if (!User.HasMinimumRole(UserRole.Administrator)) { <script src="~/js/admin-workspace.js" asp-append-version="true"></script> } }

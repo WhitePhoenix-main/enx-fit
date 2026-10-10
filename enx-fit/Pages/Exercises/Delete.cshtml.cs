@@ -12,7 +12,7 @@ public class DeleteModel(ExerciseService exerciseService) : PageModel
     [BindProperty]
     public Exercise Exercise { get; set; } = null!;
 
-    public async Task<IActionResult> OnGetAsync(int id) =>
+    public async Task<IActionResult> OnGetAsync([ModelBinder(BinderType = typeof(enx_fit.ViewModels.ExerciseIdModelBinder))] Guid id) =>
         await LoadPageAsync(id);
 
     public async Task<IActionResult> OnPostAsync()
@@ -31,10 +31,10 @@ public class DeleteModel(ExerciseService exerciseService) : PageModel
         }
 
         TempData["StatusMessage"] = "Упражнение удалено.";
-        return RedirectToPage("./Index");
+        return RedirectToPage("/Admin/Exercises/Index");
     }
 
-    private async Task<IActionResult> LoadPageAsync(int id)
+    private async Task<IActionResult> LoadPageAsync(Guid id)
     {
         var exercise = await exerciseService.FindAsync(id);
 

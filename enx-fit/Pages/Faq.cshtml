@@ -13,7 +13,7 @@
             <p>Не нашёл ответ?</p><a class="public-text-link" asp-page="/Contact">Помощь и контакты →</a>
         </aside>
         <section aria-label="Ответы">
-            @if (!string.IsNullOrEmpty(Model.Search)) { <p class="public-search-status" role="status">Найдено ответов: @Model.Questions.Count</p> }
+            @if (!string.IsNullOrEmpty(Model.Search)) { <p class="public-search-status app-status" data-app-state="info" role="status">Найдено ответов: @Model.Questions.Count</p> }
             @if (Model.Questions.Count > 0) { <partial name="_PublicFaq" model="Model.Questions" /> }
             else { <div class="public-panel"><h2>По этому запросу ответов нет</h2><p>Попробуй слово «программа», «пароль» или «отдых».</p><a class="public-text-link" asp-page="/Faq">Показать все ответы →</a></div> }
         </section>

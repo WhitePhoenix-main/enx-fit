@@ -3,16 +3,19 @@
 @{
     var equipment = Model.Workouts.SelectMany(w => w.Exercises).Select(e => e.Exercise.Equipment).Where(e => !string.IsNullOrWhiteSpace(e)).Distinct().ToList();
 }
-<dialog id="template-preview-@Model.Id" class="app-dialog plan-template-preview" aria-labelledby="template-title-@Model.Id">
+<dialog id="template-preview-@Model.Id" class="app-dialog plan-template-preview app-workspace" aria-labelledby="template-title-@Model.Id">
     <div class="dialog-heading"><div><span class="plan-template-kicker">ГОТОВАЯ ПРОГРАММА</span><h2 id="template-title-@Model.Id">@Model.Name</h2></div><button type="button" class="icon-button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
     <p class="plan-template-description">@(Model.Description ?? Model.Goal)</p>
     <dl class="plan-template-facts"><div><dt>Уровень</dt><dd>@ProgramSchedule.LevelName(Model.Level)</dd></div><div><dt>Длительность</dt><dd>@Model.Weeks нед.</dd></div><div><dt>В неделю</dt><dd>@Model.DaysPerWeek трен.</dd></div></dl>
     @if (equipment.Count > 0) { <p class="plan-template-equipment">Оборудование: @string.Join(", ", equipment)</p> }
+    @if (ProgramTemplatePresentation.IsStarter(Model)) {
+        <details class="plan-starter-guide"><summary>Как начать первое занятие <reference-icon name="chevron" /></summary><div><p>Перед подходами несколько минут спокойно подвигайтесь. В плане два подхода по 8–12 повторений с отдыхом 90 секунд; это стартовые значения, их можно уменьшить.</p><p>Между занятиями оставьте день отдыха. @(Model.Id == -7 ? "Вес гантелей выбирайте после знакомства с движением, начиная с лёгких." : "Для движений с собственным весом оставьте вес 0 кг.") При потере техники остановитесь; боль — повод прекратить упражнение.</p><a href="https://sportsmedicine.mayoclinic.org/news/weight-training-dos-and-donts-of-proper-technique/" target="_blank" rel="noopener noreferrer">Основы силовой тренировки · Mayo Clinic (англ.)</a></div></details>
+    }
     <div class="plan-template-workouts">
         @foreach (var workout in Model.Workouts.OrderBy(w => w.Order)) {
             <details open="@(workout.Order == Model.Workouts.Min(w => w.Order))"><summary><span><strong>@workout.Name</strong><small>@(workout.DayOfWeek is { } day ? ProgramSchedule.DayNames[day - 1] + " · " : "")@workout.EstimatedMinutes мин · @workout.Exercises.Count упр.</small></span><reference-icon name="chevron" /></summary>
                 @if (workout.Exercises.Count == 0) { <p class="plan-template-description">Упражнения пока не добавлены.</p> }
-                else { <ol>@foreach (var exercise in workout.Exercises.OrderBy(e => e.Order)) { <li><span>@exercise.Exercise.Name<small>@exercise.Exercise.MuscleGroup</small></span><strong>@exercise.Prescription.Summary@if (exercise.Prescription.WeightKg is { } weight) { <small>@weight.ToString("0.##", CultureInfo.GetCultureInfo("ru-RU")) кг</small> }</strong></li> }</ol> }
+                else { <ol>@foreach (var exercise in workout.Exercises.OrderBy(e => e.Order)) { <li><span>@ExercisePresentation.DisplayName(exercise.Exercise)<small>@exercise.Exercise.MuscleGroup</small>@if (ExerciseTechniqueCatalog.Find(exercise.Exercise) is not null) { <a class="plan-technique-link" asp-page="/Exercises/Details" asp-route-id="@exercise.ExerciseId" target="_blank" rel="noopener" aria-label="Техника: @exercise.Exercise.Name (новая вкладка)">Как выполнять <reference-icon name="arrow" /></a> }</span><strong>@exercise.Prescription.Summary@if (exercise.Prescription.WeightKg is { } weight) { <small>@weight.ToString("0.##", CultureInfo.GetCultureInfo("ru-RU")) кг</small> }</strong></li> }</ol> }
             </details>
         }
         @if (Model.Workouts.Count == 0) { <p class="plan-template-description">Тренировки можно добавить после выбора программы.</p> }

@@ -1,7 +1,7 @@
 @page
 @model enx_fit.Pages.Trainer.ClientsModel
 @{ Layout = "_DashboardReferenceLayout"; ViewData["Title"] = "Мои клиенты"; }
-<div class="coach-workspace coach-directory">
+<div class="coach-workspace app-workspace coach-directory">
     <header class="coach-page-heading"><div><p class="eyebrow">Кабинет тренера</p><h1>Мои клиенты <span class="coach-count">@Model.Total</span></h1><p>Выберите человека, чтобы посмотреть результаты и подготовить следующий шаг.</p></div><a class="button secondary" asp-page="/Dashboard">Личные тренировки <reference-icon name="arrow" /></a></header>
     @if (Model.Attention is { } attention)
     {

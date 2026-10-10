@@ -20,6 +20,8 @@ public class DetailsModel(
 
     public WorkoutBuilderInput? Blueprint { get; private set; }
 
+    public IReadOnlyDictionary<Guid, PreviousExerciseResult> PreviousResults { get; private set; } = new Dictionary<Guid, PreviousExerciseResult>();
+
     public ExerciseLibraryModel Library { get; private set; } = null!;
 
     public bool IsAdministrator => currentUser.IsAdministrator;
@@ -48,7 +50,23 @@ public class DetailsModel(
     }
 
     public Task<IActionResult> OnPostLoadTemplateAsync(int id, int templateId) => MutateAsync(id, () => workoutService.LoadTemplateAsync(id, templateId));
-    public Task<IActionResult> OnPostExerciseAsync(int id, string action) => MutateAsync(id, () => workoutService.ChangeExerciseAsync(id, ExerciseEntryId, action));
+    public Task<IActionResult> OnPostExerciseAsync(int id, string action, Guid? operationId, Guid? expectedRevision) =>
+        MutateAsync(id, () => workoutService.ChangeExerciseAsync(id, ExerciseEntryId, action, operationId: operationId, expectedRevision: expectedRevision));
+    public async Task<IActionResult> OnPostReorderAsync(int id, string orderJson, Guid? operationId, Guid? expectedRevision)
+    {
+        ModelState.Clear();
+        try
+        {
+            if (orderJson is null || orderJson.Length > 1000) return BadRequest(new { error = "Проверьте порядок упражнений." });
+            var ids = JsonSerializer.Deserialize<List<int>>(orderJson);
+            if (ids is null) return BadRequest(new { error = "Проверьте порядок упражнений." });
+            return new JsonResult(await workoutService.ReorderExercisesAsync(id, ids, operationId, expectedRevision));
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (WorkoutConflictException ex) { return StatusCode(409, new { error = ex.Message }); }
+        catch (JsonException) { return BadRequest(new { error = "Проверьте порядок упражнений." }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
     public Task<IActionResult> OnPostTemplateDecisionAsync(int id, string choice, string? templateName, Guid? operationId) => MutateAsync(id, async () =>
     {
         await workoutService.DecideTemplateAsync(id, choice, templateName, operationId);
@@ -204,6 +222,7 @@ public class DetailsModel(
         }
 
         Workout = workout;
+        PreviousResults = await workoutService.PreviousExerciseResultsAsync(workout);
         Execution = WorkoutService.State(workout);
         Templates = await workoutService.TemplatesAsync();
         CanUpdateTemplate = await workoutService.CanUpdateTemplateAsync(workout);

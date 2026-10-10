@@ -27,7 +27,7 @@ public partial class WorkoutService
             if (!Validator.TryValidateObject(value, new ValidationContext(value), errors, true))
                 throw new InvalidOperationException($"{location}: {string.Join(" ", errors.Select(e => e.ErrorMessage))}");
         }
-        HashSet<int> seen = [];
+        HashSet<Guid> seen = [];
         for (var i = 0; i < exercises.Count; i++)
         {
             var exercise = exercises[i];
@@ -50,11 +50,25 @@ public partial class WorkoutService
         var payload = JsonSerializer.Serialize(new { input.Date, Title = input.Title.Trim(), input.DurationMinutes,
             Notes = input.Notes?.Trim(), input.UtcOffsetMinutes, Exercises = exercises }, WorkoutBuilderInput.JsonOptions);
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload)));
+        // Existing manual entries hashed the numeric IDs. Accept that same canonical
+        // payload after conversion, while still rejecting any changed results.
+        string? legacyHash = null;
+        if (exercises.All(e => ExerciseIds.TryGetLegacy(e.ExerciseId, out _)))
+        {
+            var legacyPayload = JsonSerializer.Serialize(new { input.Date, Title = input.Title.Trim(), input.DurationMinutes,
+                Notes = input.Notes?.Trim(), input.UtcOffsetMinutes, Exercises = exercises.Select(e => new
+                {
+                    ExerciseId = ExerciseIds.TryGetLegacy(e.ExerciseId, out var legacyId) ? legacyId : 0,
+                    e.Sets
+                }) }, WorkoutBuilderInput.JsonOptions);
+            legacyHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(legacyPayload)));
+        }
         async Task<int?> ExistingAsync()
         {
             var existing = await dbContext.WorkoutSessions.AsNoTracking().SingleOrDefaultAsync(w => w.UserId == currentUser.Id && w.ClientRequestId == input.ClientRequestId);
             if (existing is null) return null;
-            if (existing.ManualPayloadHash != hash) throw new WorkoutConflictException("Эта запись уже сохранена с другими результатами. Откройте её в истории.");
+            if (existing.ManualPayloadHash != hash && (legacyHash is null || existing.ManualPayloadHash != legacyHash))
+                throw new WorkoutConflictException("Эта запись уже сохранена с другими результатами. Откройте её в истории.");
             return existing.Id;
         }
         if (await ExistingAsync() is { } saved) return saved;

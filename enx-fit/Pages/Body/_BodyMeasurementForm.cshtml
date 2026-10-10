@@ -5,14 +5,14 @@
         || ViewData.ModelState.Any(e => e.Value?.Errors.Count > 0 && e.Key is not ("Input.Date" or "Input.WeightKg" or "Input.HeightCm" or "Input.OwnerId"));
     var today = ViewData["BodyToday"] as string;
 }
-<div asp-validation-summary="ModelOnly" class="body-error-summary"></div>
+<div asp-validation-summary="ModelOnly" class="body-error-summary app-status app-notice" data-app-state="error" role="alert"></div>
 <div class="body-primary-fields">
     <div class="body-field"><label asp-for="Date"></label><input asp-for="Date" type="date" required max="@today" /><span asp-validation-for="Date"></span></div>
     <div class="body-field"><label asp-for="WeightKg"></label><input asp-for="WeightKg" type="text" inputmode="decimal" required value="@(Model.WeightKg == 0 ? "" : Model.WeightKg.ToString("G29", CultureInfo.InvariantCulture))" placeholder="Например, 80,5" data-body-number data-min="1" data-max="500" /><span asp-validation-for="WeightKg"></span></div>
     <div class="body-field"><label asp-for="HeightCm"></label><input asp-for="HeightCm" type="text" inputmode="decimal" required value="@(Model.HeightCm == 0 ? "" : Model.HeightCm.ToString("G29", CultureInfo.InvariantCulture))" placeholder="Например, 180" data-body-number data-min="50" data-max="300" /><span asp-validation-for="HeightCm"></span></div>
 </div>
 <p class="body-muted body-form-hint">Дробные значения можно вводить через запятую или точку.</p>
-<details class="body-extra-fields" open="@extra">
+<details class="body-extra-fields app-disclosure" open="@extra">
     <summary><span><strong>Дополнительные показатели</strong><small>Обхваты, процент жира и заметка · необязательно</small></span><reference-icon name="chevron" /></summary>
     <div class="body-extra-content">
         <div class="body-optional-grid">

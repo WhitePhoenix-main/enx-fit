@@ -36,6 +36,8 @@
         const feedback = form.querySelector('[data-body-feedback]');
         const save = form.querySelector('[data-body-save]');
         const caption = save.textContent;
+        let awaiting = false;
+        const notice = state => window.AppComponents?.setNoticeState(feedback,state);
         const numbers = [...form.querySelectorAll('[data-body-number]')];
         const validate = field => {
             const value = field.value.trim().replace(',', '.');
@@ -46,10 +48,10 @@
             field.setCustomValidity(error);
             return !error;
         };
-        numbers.forEach(field => field.addEventListener('input', () => { validate(field); feedback.textContent = ''; }));
+        numbers.forEach(field => field.addEventListener('input', () => { validate(field); feedback.textContent = ''; notice('info'); }));
         const notes = form.querySelector('[data-body-notes]');
         notes?.addEventListener('input', () => { form.querySelector('[data-body-note-count]').textContent = notes.value.length + ' / 1000'; });
-        const recover = () => { save.disabled = false; save.removeAttribute('aria-busy'); save.textContent = caption; };
+        const recover = () => { save.disabled = false; save.removeAttribute('aria-busy'); save.textContent = caption; if (awaiting) { feedback.textContent = ''; notice('info'); awaiting = false; } };
         form.addEventListener('submit', event => {
             numbers.forEach(validate);
             const invalid = [...form.querySelectorAll('input,select,textarea')].find(field => !field.checkValidity());
@@ -58,12 +60,13 @@
                 const details = invalid.closest('details'); if (details) details.open = true;
                 invalid.focus(); invalid.reportValidity(); return;
             }
-            if (!navigator.onLine) { event.preventDefault(); recover(); feedback.textContent = 'Сейчас нет сети. Данные остались в форме; повторите сохранение после подключения.'; return; }
+            if (!navigator.onLine) { event.preventDefault(); recover(); feedback.textContent = 'Сейчас нет сети. Данные остались в форме; повторите сохранение после подключения.'; notice('error'); return; }
+            awaiting = true; feedback.textContent = 'Ожидаем подтверждения…'; notice('pending');
             save.disabled = true; save.setAttribute('aria-busy', 'true'); save.textContent = save.classList.contains('danger') ? 'Удаляем…' : 'Сохраняем…';
         });
         // Validate hidden optional inputs before native constraint validation tries to focus them.
         form.addEventListener('invalid', event => { const details = event.target.closest('details'); if (details) details.open = true; }, true);
-        window.addEventListener('online', () => { if (feedback.textContent) feedback.textContent = 'Соединение восстановлено. Повторите сохранение.'; });
+        window.addEventListener('online', () => { if (feedback.textContent) { feedback.textContent = 'Соединение восстановлено. Повторите сохранение.'; notice('pending'); } });
         window.addEventListener('pageshow', recover);
     }
     const plans = [...root.querySelectorAll('[data-plan]')];

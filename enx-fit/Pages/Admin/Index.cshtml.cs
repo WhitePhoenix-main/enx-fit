@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace enx_fit.Pages.Admin;
 
 [MinimumRole(UserRole.Administrator)]
-public class IndexModel(ApplicationDbContext db, UserDirectoryService directory) : PageModel
+public class IndexModel(ApplicationDbContext db, UserDirectoryService directory, CurrentUser user) : PageModel
 {
     [BindProperty(SupportsGet = true)] public int Days { get; set; } = 30;
     public int UserCount { get; private set; }
@@ -24,11 +24,15 @@ public class IndexModel(ApplicationDbContext db, UserDirectoryService directory)
     public IReadOnlyList<WorkoutSession> RecentWorkouts { get; private set; } = [];
     public IReadOnlyList<PopularExercise> PopularExercises { get; private set; } = [];
     public IReadOnlyDictionary<string, string> OwnerNames { get; private set; } = new Dictionary<string, string>();
-    public DateOnly Today => DateOnly.FromDateTime(DateTime.Today);
+    public DateOnly Today => user.LocalToday;
+    public DateOnly Since => Today.AddDays(1 - Days);
+    public IReadOnlyList<AdminActivityDay> Activity { get; private set; } = [];
 
     public async Task OnGetAsync()
     {
         Days = Days is 7 or 30 or 90 ? Days : 30;
+        ModelState.Clear();
+        Response.Headers.CacheControl = "no-cache, no-store";
         var start = Today.AddDays(1 - Days);
         var previousStart = start.AddDays(-Days);
         UserCount = await db.Users.CountAsync();
@@ -42,9 +46,10 @@ public class IndexModel(ApplicationDbContext db, UserDirectoryService directory)
         var daily = await period.GroupBy(w => w.Date).Select(g => new { Date = g.Key, Count = g.Count() })
             .ToDictionaryAsync(g => g.Date, g => g.Count);
         var dates = Enumerable.Range(0, Days).Select(i => start.AddDays(i)).ToArray();
+        Activity = dates.Select(d => new AdminActivityDay(d, daily.GetValueOrDefault(d))).ToList();
         ChartJson = JsonSerializer.Serialize(new
         {
-            labels = dates.Select(d => d.ToString("dd.MM")), values = dates.Select(d => daily.GetValueOrDefault(d))
+            labels = dates.Select(d => d.ToString("dd.MM")), dates = dates.Select(d => d.ToString("yyyy-MM-dd")), values = dates.Select(d => daily.GetValueOrDefault(d))
         });
         RecentWorkouts = await db.WorkoutSessions.AsNoTracking().Include(w => w.WorkoutExercises)
             .OrderByDescending(w => w.CreatedAtUtc).ThenByDescending(w => w.Id).Take(5).ToListAsync();
@@ -65,3 +70,4 @@ public class IndexModel(ApplicationDbContext db, UserDirectoryService directory)
 }
 
 public sealed record PopularExercise(string Name, string MuscleGroup, int Count);
+public sealed record AdminActivityDay(DateOnly Date, int Count);

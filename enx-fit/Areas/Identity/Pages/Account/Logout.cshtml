@@ -7,6 +7,6 @@
 <partial name="_AuthStepHeader" />
 <section class="auth-card auth-step-card">
     @if (User.Identity?.IsAuthenticated == true) {
-        <form method="post" asp-route-returnUrl="/" data-auth-form><button type="submit" class="auth-submit"><span>Выйти</span></button><p data-auth-feedback class="auth-form-feedback" role="status" aria-live="polite"></p></form>
-    } else { <a class="auth-submit" asp-area="" asp-page="/TechnicalPages/Login">Войти в Enix Fit</a> }
+        <form method="post" asp-route-returnUrl="/" data-auth-form><button type="submit" class="auth-submit app-button"><span>Выйти</span></button><p data-auth-feedback class="auth-form-feedback app-status app-notice" data-app-state="info" hidden role="status" aria-live="polite"></p></form>
+    } else { <a class="auth-submit app-button" asp-area="" asp-page="/TechnicalPages/Login">Войти в Enix Fit</a> }
 </section>

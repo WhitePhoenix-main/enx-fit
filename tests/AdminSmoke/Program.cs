@@ -14,6 +14,8 @@ using Microsoft.EntityFrameworkCore;
 
 // Isolated test host: real compiled Razor pages, Identity cookies and one in-memory database.
 // It never reads the application's connection string or creates data in its database.
+if (args.Contains("--preview-options-checks")) { PreviewHostOptions.Verify(); return; }
+var previewOptions = PreviewHostOptions.Parse(args);
 var repository = new DirectoryInfo(AppContext.BaseDirectory);
 while (repository is not null && !File.Exists(Path.Combine(repository.FullName, "enx-fit", "enx-fit.csproj"))) repository = repository.Parent;
 var root = Path.Combine(repository?.FullName ?? throw new DirectoryNotFoundException("Repository root not found."), "enx-fit");
@@ -23,9 +25,7 @@ builder.Configuration.AddInMemoryCollection();
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Warning);
-var portIndex = Array.IndexOf(args, "--port");
-var port = portIndex >= 0 ? int.Parse(args[portIndex + 1]) : 5187;
-var baseUrl = $"http://localhost:{port}";
+var baseUrl = previewOptions.BaseUrl;
 builder.WebHost.UseUrls(baseUrl);
 await using var dataConnection = new SqliteConnection("Data Source=:memory:");
 await dataConnection.OpenAsync();
@@ -62,6 +62,8 @@ app.UseRouting();
 var rejectWorkoutWrites = false;
 app.Use(async (context, next) =>
 {
+    if (previewOptions.PhonePreview && (context.Request.Path.StartsWithSegments("/__tests") || context.Request.Path.StartsWithSegments("/RoleChecks")))
+    { context.Response.StatusCode = 404; return; }
     if (rejectWorkoutWrites && context.Request.Method == "POST" && context.Request.Path.StartsWithSegments("/Workouts") &&
         context.Request.Query["handler"].ToString() is "Set" or "Control")
     { context.Response.StatusCode = 503; await context.Response.WriteAsJsonAsync(new { error = "Тестовая потеря соединения." }); return; }
@@ -79,10 +81,24 @@ app.UseAuthorization();
 app.MapRazorPages();
 string adminId, memberId;
 const string password = "TestOnly!2026";
+var checks = 0;
+if (previewOptions.PhonePreview)
+{
+    await PhonePreview.RunAsync(app, repository!.FullName, new Uri(baseUrl));
+    return;
+}
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await db.Database.EnsureCreatedAsync();
+    Check(db.Model.GetEntityTypes().SelectMany(entity => entity.GetForeignKeys()).All(foreignKey =>
+        foreignKey.Properties.Zip(foreignKey.PrincipalKey.Properties).All(pair =>
+            (Nullable.GetUnderlyingType(pair.First.ClrType) ?? pair.First.ClrType) ==
+            (Nullable.GetUnderlyingType(pair.Second.ClrType) ?? pair.Second.ClrType))),
+        "All foreign-key ID types match their principal keys");
+    Check(db.Model.FindEntityType(typeof(Exercise))!.FindPrimaryKey()!.Properties.Single().ClrType == typeof(Guid) &&
+        !await db.Exercises.AnyAsync(exercise => exercise.Id == Guid.Empty),
+        "Exercise catalog uses nonempty UUID keys");
     var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     foreach (var role in AppRoles.All) await roles.CreateAsync(new IdentityRole(role));
     var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
@@ -99,7 +115,7 @@ await using (var scope = app.Services.CreateAsyncScope())
     for (var i = 0; i < 24; i++)
     {
         var workout = new WorkoutSession { UserId = member.Id, Title = new[] { "Силовая · Верх тела", "Ноги и кор", "Спина и плечи" }[i % 3], Date = DateOnly.FromDateTime(DateTime.Today).AddDays(-i), CreatedAtUtc = DateTime.UtcNow.AddDays(-i) };
-        for (var e = 1; e <= 1 + i % 4; e++) workout.WorkoutExercises.Add(new WorkoutExercise { ExerciseId = e, Order = e });
+        for (var e = 1; e <= 1 + i % 4; e++) workout.WorkoutExercises.Add(new WorkoutExercise { ExerciseId = ExerciseIds.FromLegacy(e), Order = e });
         db.WorkoutSessions.Add(workout);
     }
     db.BodyMeasurements.Add(new BodyMeasurement { UserId = member.Id, WeightKg = 80, HeightCm = 180 });
@@ -136,10 +152,18 @@ await ProfileSettingsChecks.RunAsync(app.Services, new Uri(baseUrl));
 await BodySubscriptionChecks.RunAsync(app.Services, new Uri(baseUrl));
 await PublicPageChecks.RunAsync(app.Services, new Uri(baseUrl));
 await CoachWorkspaceChecks.RunAsync(app.Services, new Uri(baseUrl));
+await AdminWorkspaceChecks.RunAsync(app.Services, new Uri(baseUrl));
+await FinalNavigationChecks.RunAsync(app.Services, new Uri(baseUrl));
+await HomeBuilderChecks.RunAsync(app.Services, new Uri(baseUrl));
+await SetGuidanceChecks.RunAsync(app.Services, new Uri(baseUrl));
+await ExercisePickerChecks.RunAsync(app.Services, new Uri(baseUrl));
+await WorkoutOrderChecks.RunAsync(app.Services, new Uri(baseUrl));
+await StarterContentChecks.RunAsync(app.Services, new Uri(baseUrl));
+await SharedComponentPreview.SeedAsync(app.Services);
+await MobileReturnPreview.SeedAsync(app.Services);
 using var adminClient = Client();
 using var memberClient = Client();
 using var anonymous = Client();
-var checks = 0;
 try
 {
     Check((await anonymous.GetAsync("/Admin")).StatusCode == HttpStatusCode.Redirect, "Anonymous admin access requires login");

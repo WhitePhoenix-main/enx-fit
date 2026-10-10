@@ -1,0 +1,10 @@
+@model enx_fit.ViewModels.AdminNavigationViewModel
+<header class="admin-mobile-header em-mobile-header">
+    <a class="admin-mobile-brand" asp-page="/Admin/Index"><span class="admin-brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>Enix Fit<small>Администрирование</small></span></a>
+    <details class="admin-mobile-account app-disclosure"><summary aria-label="Мой аккаунт"><span class="admin-avatar">@Model.Initial</span><admin-icon name="chevron" /></summary><div><strong>@Model.AccountName</strong><a asp-page="/Dashboard"><admin-icon name="back" />В приложение</a><a asp-page="/Profile"><admin-icon name="users" />Мой профиль</a><a asp-area="Identity" asp-page="/Account/Manage/Index"><admin-icon name="shield" />Настройки аккаунта</a><form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/"><button type="submit"><admin-icon name="logout" />Выйти</button></form></div></details>
+</header>
+<nav class="em-mobile-nav admin-mobile-nav" aria-label="Разделы администрирования">
+    @foreach (var link in enx_fit.ViewModels.AdminNavigationViewModel.Sections) {
+        <a class="@(link.IsActive(Model.Page) ? "active" : "")" asp-page="@link.Page" aria-current="@(link.IsActive(Model.Page) ? "page" : null)"><admin-icon name="@link.Icon" /><span>@link.Label</span></a>
+    }
+</nav>
