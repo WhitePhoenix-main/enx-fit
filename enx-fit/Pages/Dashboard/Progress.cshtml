@@ -7,6 +7,3 @@
 }
 @if (Model.Reference) { <partial name="_DashboardProgress" model="Model" /> }
 else { <partial name="_ProgressWorkspace" model="Model" /> }
-@section Scripts {
-    <script src="~/js/progress-reference.js" asp-append-version="true"></script>
-}

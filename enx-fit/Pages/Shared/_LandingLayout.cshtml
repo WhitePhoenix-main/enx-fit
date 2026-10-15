@@ -43,9 +43,7 @@
         <a asp-page="/Faq" aria-current="@(currentPage == "/Faq" ? "page" : null)"><svg class="icon"><use href="#i-question" /></svg><span>Вопросы</span></a>
         <a class="public-dock-start" href="@PublicPageLinks.Open(Url, User, "/Dashboard")"><svg class="icon"><use href="#i-arrow" /></svg><span>@(signedIn ? "Открыть" : "Начать")</span></a>
     </nav>
-    <script src="~/js/landing.js" asp-append-version="true" defer></script>
-    <script src="~/js/landing-motion.js" asp-append-version="true" defer></script>
-    <script src="~/js/app-components.js" asp-append-version="true" defer></script>
-    <script src="~/js/public-pages.js" asp-append-version="true" defer></script>
+    <script src="~/js/site.js" asp-append-version="true" defer></script>
+    <script src="~/js/public.js" asp-append-version="true" defer></script>
 </body>
 </html>

@@ -197,12 +197,8 @@
 <p>Новых уведомлений пока нет.</p>
 </div>
 </dialog>
-<script src="~/js/workout-time.js" asp-append-version="true"></script>
-    <script src="~/js/dashboard.js" asp-append-version="true">
-</script>
-    <script src="~/js/app-components.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
-<script src="~/js/dashboard-widgets.js" asp-append-version="true"></script>
-<script src="~/js/mobile-shell.js" asp-append-version="true"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+<script src="~/js/dashboard.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

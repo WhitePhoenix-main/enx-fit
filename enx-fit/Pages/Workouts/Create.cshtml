@@ -93,7 +93,5 @@
 <dialog id="wb-block-dialog" class="wb-dialog"><form id="wb-block-form"><div class="wb-heading"><h2>Новый блок</h2><button type="button" class="wb-icon" data-close-block aria-label="Закрыть"><admin-icon name="close" /></button></div><label>Название<input id="wb-block-name" maxlength="60" required placeholder="Например, Силовой блок" /></label><label>Тип блока<select id="wb-block-kind" aria-describedby="wb-block-help"><option value="strength">Силовой блок</option><option value="warmup">Разминка</option><option value="superset">Суперсет</option><option value="cooldown">Заминка</option></select></label><p class="wb-hint" id="wb-block-help"></p><button type="submit" class="wb-button wb-primary">Добавить блок</button></form></dialog>
 <script id="wb-data" type="application/json">@Html.Raw(JsonSerializer.Serialize(Model.BuilderData, WorkoutBuilderInput.JsonOptions))</script>
 @section Scripts {
-    <script src="~/js/reorder-motion.js" asp-append-version="true"></script>
-    <script src="~/js/exercise-library.js" asp-append-version="true"></script>
-    <script src="~/js/workout-builder.js" asp-append-version="true"></script>
+    <script src="~/js/training.js" asp-append-version="true"></script>
 }

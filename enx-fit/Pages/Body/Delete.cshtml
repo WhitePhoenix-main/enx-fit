@@ -13,4 +13,3 @@
         <form method="post" data-body-form><input type="hidden" asp-for="Measurement.Id" /><p class="body-feedback app-status" data-body-feedback role="status"></p><div class="body-actions"><button class="body-button danger app-button" type="submit" data-body-save>Удалить замер</button><a class="body-text-link" asp-page="./Edit" asp-route-id="@Model.Measurement.Id">Отмена</a></div></form>
     </section>
 </div>
-@section Scripts { <script src="~/js/body-workspace.js" asp-append-version="true"></script> }
