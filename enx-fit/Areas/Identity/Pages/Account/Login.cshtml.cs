@@ -8,8 +8,8 @@ namespace enx_fit.Areas.Identity.Pages.Account;
 public class LoginModel : PageModel
 {
     public IActionResult OnGet(string? returnUrl = null)
-        => RedirectToPage("/TechnicalPages/Login", "Login", new { area = "", returnUrl });
+        => RedirectToPage("/Account/Login", "Login", new { area = "", returnUrl });
 
     public IActionResult OnPost(string? returnUrl = null)
-        => RedirectToPagePreserveMethod("/TechnicalPages/Login", "Login", new { area = "", returnUrl });
+        => RedirectToPagePreserveMethod("/Account/Login", "Login", new { area = "", returnUrl });
 }

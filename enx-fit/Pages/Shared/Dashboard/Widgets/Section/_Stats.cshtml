@@ -1,0 +1,45 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string N(decimal? value, string format = "N0") => value?.ToString(format, ru) ?? "—";
+    string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+    string? PageUrl(string page) => Url.Page(page, dashboard.NavigationValues);
+}
+@switch (Model.WidgetId)
+{
+    case "stat-volume":
+        <a class="panel stat-card stat-volume" href="@PageUrl("/Progress/Analytics")"><span class="stat-label"><admin-icon name="bars" />Объём</span><strong>@(d.VolumeChange is { } delta ? $"{(delta >= 0 ? "+" : "")}{N(delta)}%" : "—")</strong><small>к предыдущим @d.Days дням</small><span class="mini-bars" aria-hidden="true">@foreach (var point in d.Chart) { <i style="height:@F((double)(point.Volume / Math.Max(1, d.Chart.Max(p => p.Volume)) * 45))px"></i> }</span></a>
+        break;
+    case "stat-workouts":
+        <a class="panel stat-card stat-workouts" href="@PageUrl("/Training/Index")"><span class="stat-label"><admin-icon name="workout" />Тренировки</span><strong>@d.ThisWeek.Count() <small>/ @d.Settings.WeeklyWorkoutGoal</small></strong><small>на этой неделе</small><span class="weekly-segments" aria-hidden="true">@for (var i = 0; i < d.Settings.WeeklyWorkoutGoal; i++) { <i class="@(i < d.ThisWeek.Count() ? "done" : "")"></i> }</span></a>
+        break;
+    case "stat-weight":
+        <a class="panel stat-card stat-weight" href="@PageUrl("/Progress/Index")">
+        <span class="stat-label">
+        <span class="icon-tile">
+        <admin-icon name="scale" />
+        </span>Текущий вес</span>
+        <strong>@N(d.Weight, "N1") <small>кг</small>
+        </strong>
+        <span class="stat-delta">@(d.WeightChange is null ? "Добавьте первый замер" : $"{(d.WeightChange >= 0 ? "+" : "")}{N(d.WeightChange, "N1")} кг")</span>
+        <small>изменение за 4 недели</small>
+        </a>
+        break;
+    case "stat-streak":
+        <a class="panel stat-card stat-streak" href="@PageUrl("/Progress/Achievements")">
+        <span class="stat-label">
+        <span class="icon-tile orange">
+        <admin-icon name="flame" />
+        </span>Серия</span>
+        <strong>@d.Streak <small>дн.</small>
+        </strong>
+        <span class="stat-delta green">День за днём</span>
+        <small>тренировочные дни подряд</small>
+        </a>
+        break;
+    case "stat-goal":
+        <a class="panel stat-card stat-goal" href="@PageUrl("/Progress/Achievements")"><span class="stat-label"><admin-icon name="trophy" />Рекорды</span><strong>@d.NewRecords <small>новых</small></strong><small>за последние 30 дней</small><span class="record-kpi-link"><admin-icon name="arrow" /></span></a>
+        break;
+}

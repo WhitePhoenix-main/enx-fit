@@ -4,7 +4,7 @@
     ViewData["Title"] = "Подтвердить email";
     ViewData["AuthDescription"] = "Запросите новую ссылку подтверждения для своего аккаунта.";
 }
-<partial name="_AuthStepHeader" />
+<partial name="/Pages/Shared/Account/_AuthStepHeader.cshtml" />
 <section class="auth-card auth-step-card">
 @if (Model.CanSendEmail) {
     <partial name="_StatusMessage" model="Model.StatusMessage" />
@@ -17,6 +17,6 @@
 } else {
     <div class="auth-notice app-status app-notice" data-app-state="info"><h2>Подтверждение пока недоступно</h2><p>Отправка писем ещё не подключена. Уже подтверждённый аккаунт можно использовать как обычно.</p></div>
     <div asp-validation-summary="ModelOnly" class="auth-errors app-status app-notice" data-app-state="error" role="alert"></div>
-    <a class="auth-submit app-button" asp-area="" asp-page="/TechnicalPages/Login" asp-route-returnUrl="@Model.ReturnUrl">Вернуться к входу</a>
+    <a class="auth-submit app-button" asp-area="" asp-page="/Account/Login" asp-route-returnUrl="@Model.ReturnUrl">Вернуться к входу</a>
 }
 </section>

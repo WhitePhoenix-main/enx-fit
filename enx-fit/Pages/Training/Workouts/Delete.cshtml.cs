@@ -1,0 +1,41 @@
+using enx_fit.Models;
+using enx_fit.Security;
+using enx_fit.Services.Workouts;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace enx_fit.Pages.Training.Workouts;
+
+[MinimumRole(UserRole.User)]
+public class DeleteModel(WorkoutService workoutService) : PageModel
+{
+    [BindProperty]
+    public WorkoutSession Workout { get; set; } = null!;
+
+    public async Task<IActionResult> OnGetAsync(int id) =>
+        await LoadPageAsync(id);
+
+    public async Task<IActionResult> OnPostAsync()
+    {
+        if (!await workoutService.DeleteAsync(Workout.Id))
+        {
+            return NotFound();
+        }
+
+        TempData["StatusMessage"] = "Тренировка удалена.";
+        return RedirectToPage("./Index");
+    }
+
+    private async Task<IActionResult> LoadPageAsync(int id)
+    {
+        var workout = await workoutService.FindAsync(id);
+
+        if (workout is null)
+        {
+            return NotFound();
+        }
+
+        Workout = workout;
+        return Page();
+    }
+}

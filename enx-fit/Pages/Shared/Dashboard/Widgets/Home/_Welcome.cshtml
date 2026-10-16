@@ -1,0 +1,11 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var reference = dashboard.Reference;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+}
+<section class="ef-welcome">
+    <h1>@(reference ? "Привет, Алексей!" : dashboard.IsCoachView ? d.Name : $"Привет, {d.Name}!")</h1>
+    <p><time datetime="@(reference ? "2026-10-01" : d.Today.ToString("yyyy-MM-dd"))">@(reference ? "1 октября, четверг" : d.Today.ToString("d MMMM, dddd", ru))</time></p>
+</section>

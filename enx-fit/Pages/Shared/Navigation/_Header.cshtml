@@ -1,0 +1,71 @@
+@{
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var brandPage = isAuthenticated ? "/Dashboard/Index" : "/Public/Index";
+}
+
+<header class="app-header">
+    <nav class="navbar navbar-expand-lg navbar-dark app-navbar" aria-label="Основная навигация">
+        <div class="container">
+            
+            <a class="navbar-brand" asp-page="@brandPage" aria-label="Enix Fit — главная">
+                <span class="app-brand-mark" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </span>
+                <span class="app-brand-copy">
+                    <span class="app-brand-name">Enix Fit</span>
+                    <span class="app-brand-tagline">Fitness &amp; progress</span>
+                </span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavigation" 
+                    aria-controls="mainNavigation" aria-expanded="false" aria-label="Открыть навигацию">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="mainNavigation">
+                @if (isAuthenticated)
+                {
+                    <ul class="navbar-nav app-primary-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Dashboard/Index">Сводка</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Training/Workouts/Index">Тренировки</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Training/Exercises/Index">Упражнения</a>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" asp-page="/Training/Programs/Index">Программы</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Progress/Measurements/Index">Тело</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Progress/ExerciseAnalytics/Index">Аналитика</a>
+                        </li>
+                        @if (User.HasMinimumRole(UserRole.Administrator))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-page="/Admin/Index">Администрирование</a>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <ul class="navbar-nav app-primary-nav app-primary-nav--public">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Public/Index" asp-fragment="features">Возможности</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Public/Index" asp-fragment="analytics">Аналитика</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Public/Index" asp-fragment="how-it-works">Как это работает</a>
+                        </li>
+                    </ul>
+                }
+                <partial name="/Pages/Shared/Navigation/_LoginPartial.cshtml"/>
+            </div>
+        </div>
+    </nav>
+</header>

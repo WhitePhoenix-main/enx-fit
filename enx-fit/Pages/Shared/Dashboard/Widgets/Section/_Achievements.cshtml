@@ -1,0 +1,32 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string N(decimal? value, string format = "N0") => value?.ToString(format, ru) ?? "—";
+    var hasData = d.Completed.Any();
+}
+<section class="panel achievements-card" id="achievements">
+<div class="card-heading">
+<h2>
+<admin-icon name="trophy" />Последние достижения</h2>
+</div>
+<div class="achievement">
+<span class="medal gold">
+<admin-icon name="@(hasData ? "flame" : "target")" />
+</span>
+<div>
+<h3>@(d.Streak > 1 ? $"{d.Streak} дней подряд" : hasData ? "Первый шаг сделан" : "Всё впереди")</h3>
+<p>@(hasData ? $"{d.Completed.Count()} тренировок записано" : "Запишите первую тренировку")</p>
+</div>
+</div>
+<div class="achievement">
+<span class="medal purple">
+<admin-icon name="workout" />
+</span>
+<div>
+<h3>@(d.Records.Any() ? "Личный рекорд" : "На пути к рекорду")</h3>
+<p>@(d.Records.Any() ? $"{d.Records.First().Name} · {N(d.Records.First().Weight)} кг" : "Ваш лучший подход появится здесь")</p>
+</div>
+</div>
+</section>

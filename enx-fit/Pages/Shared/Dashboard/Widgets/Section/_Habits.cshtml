@@ -1,0 +1,20 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var coach = dashboard.IsCoachView;
+    var today = d.TodayCheckIn;
+}
+<section class="panel habits-card" id="habits">
+<div class="card-heading">
+<h2>
+<admin-icon name="activity" />Привычки</h2>
+<span class="count-pill">@d.HabitsDone / 4</span>@if (!coach) { <button class="text-button" data-dialog="checkin-dialog" aria-label="Записать показатели дня">
+<admin-icon name="plus" />
+</button> }</div>
+<div class="habit-list">@foreach (var habit in new[] { ("water", "Выпить 2 л воды", today.WaterMl >= 2000), ("shoe", "Пройти 8 000 шагов", today.Steps >= 8000), ("nutrition", "Дневник питания", today.NutritionLogged), ("activity", "Растяжка 10 минут", today.StretchingDone) }) { <div class="habit-row">
+<span class="habit-check @(habit.Item3 ? "done" : "")" aria-label="@(habit.Item3 ? "Выполнено" : "Не выполнено")">@if (habit.Item3) { <admin-icon name="check" /> }</span>
+<admin-icon name="@habit.Item1" />
+<span>@habit.Item2</span>
+</div> }</div>@if (!coach) { <button class="text-button habit-edit" data-dialog="checkin-dialog">Отметить привычки <admin-icon name="arrow" />
+</button> }</section>

@@ -2,7 +2,7 @@
 @model enx_fit.Pages.Admin.Users.EditModel
 @{ ViewData["Title"] = "Профиль пользователя"; }
 <header class="admin-page-heading"><div><p class="admin-eyebrow">ПОЛЬЗОВАТЕЛИ / ПРОФИЛЬ</p><h1>Редактирование профиля</h1><p>Контакты, доступ и назначенный тренер.</p></div><a class="btn btn-outline-secondary app-button secondary" asp-page="./Index" asp-route-Search="@Model.DirectorySearch" asp-route-Role="@Model.DirectoryRole" asp-route-PageNumber="@Model.DirectoryPage"><admin-icon name="back" />К списку</a></header>
-<partial name="_AdminStatus" />
+<partial name="/Pages/Shared/Admin/_AdminStatus.cshtml" />
 <div class="admin-edit-grid">
 <section class="admin-card"><div class="admin-card-heading"><div><h2>@Model.Input.UserName</h2><p>@(Model.IsCurrentUser ? "Ваш аккаунт" : "Выбранный пользователь")</p></div><admin-icon name="users" /></div>
 <form method="post" class="admin-form" data-admin-form>
@@ -22,6 +22,6 @@ else { <select class="form-select" asp-for="Input.Role">@foreach (var role in Mo
 <p class="admin-form-feedback app-status app-notice" data-app-state="info" aria-live="polite" role="status" hidden data-admin-feedback></p>
 <div class="admin-form-actions"><button class="btn btn-primary app-button" type="submit"><admin-icon name="check" />Сохранить изменения</button><a class="btn btn-outline-secondary app-button secondary" asp-page="./Index" asp-route-Search="@Model.DirectorySearch" asp-route-Role="@Model.DirectoryRole" asp-route-PageNumber="@Model.DirectoryPage">Отмена</a></div>
 </form></section>
-<aside class="admin-card admin-profile-data"><span class="admin-empty-icon"><admin-icon name="activity" /></span><h2>Данные пользователя</h2><p>История и новые записи выбранного аккаунта.</p><a class="admin-data-link" asp-page="/Dashboard" asp-route-ClientId="@Model.Id"><span>Обзор результатов</span><admin-icon name="arrow" /></a><a class="admin-data-link" asp-page="/Workouts/Index" asp-route-UserId="@Model.Id"><span>Записи тренировок</span><strong>@Model.WorkoutCount</strong><admin-icon name="arrow" /></a><a class="admin-data-link" asp-page="/Body/Index" asp-route-UserId="@Model.Id"><span>Замеры тела</span><strong>@Model.MeasurementCount</strong><admin-icon name="arrow" /></a><a class="btn btn-primary app-button" asp-page="/Workouts/Create" asp-route-userId="@Model.Id"><admin-icon name="plus" />Добавить тренировку</a></aside>
+<aside class="admin-card admin-profile-data"><span class="admin-empty-icon"><admin-icon name="activity" /></span><h2>Данные пользователя</h2><p>История и новые записи выбранного аккаунта.</p><a class="admin-data-link" asp-page="/Dashboard/Index" asp-route-ClientId="@Model.Id"><span>Обзор результатов</span><admin-icon name="arrow" /></a><a class="admin-data-link" asp-page="/Training/Workouts/Index" asp-route-UserId="@Model.Id"><span>Записи тренировок</span><strong>@Model.WorkoutCount</strong><admin-icon name="arrow" /></a><a class="admin-data-link" asp-page="/Progress/Measurements/Index" asp-route-UserId="@Model.Id"><span>Замеры тела</span><strong>@Model.MeasurementCount</strong><admin-icon name="arrow" /></a><a class="btn btn-primary app-button" asp-page="/Training/Workouts/Create" asp-route-userId="@Model.Id"><admin-icon name="plus" />Добавить тренировку</a></aside>
 </div>
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -1,0 +1,82 @@
+@model enx_fit.Pages.Training.Workouts.DetailsModel
+<dialog class="app-dialog workout-outline-dialog interactive-sheet app-workspace" id="workout-outline-dialog"
+        aria-labelledby="workout-outline-title">
+    <div class="dialog-heading"><h2 id="workout-outline-title">Состав занятия</h2>
+        <button class="icon-button" type="button" data-close aria-label="Закрыть">
+            <admin-icon name="close"/>
+        </button>
+    </div>
+    <button type="button" class="button secondary" data-order-edit>Изменить порядок</button>
+    <p class="muted" data-order-help hidden>Меняйте порядок стрелками внутри блока. На компьютере строки можно
+        перетаскивать. Изменения применятся после сохранения.</p>
+    <div data-app-outline></div>
+    <p class="order-status" data-order-status role="status" aria-live="polite" hidden></p>
+    <div class="workout-order-actions" data-order-actions hidden>
+        <button type="button" class="button secondary" data-order-cancel>Отмена</button>
+        <button type="button" class="button" data-order-save>Сохранить порядок</button>
+    </div>
+    <button type="button" class="button secondary" data-dialog="exercise-dialog" data-add-exercise>
+        <admin-icon name="plus"/>
+        Добавить упражнение
+    </button>
+</dialog>
+<dialog class="app-dialog app-workspace" id="finish-workout-dialog">
+    <div class="dialog-heading"><h2>Завершить тренировку</h2>
+        <button type="button" class="icon-button" data-close aria-label="Закрыть">
+            <admin-icon name="close"/>
+        </button>
+    </div>
+    <p data-finish-summary></p>
+    <p class="muted">Невыполненные подходы будут отмечены как пропущенные. В статистику войдут только рабочие
+        результаты.</p>
+    <form method="post" asp-page-handler="Complete" data-complete-form>
+        <button class="button">Сохранить в историю</button>
+    </form>
+</dialog>
+<dialog class="app-dialog app-workspace" id="cancel-workout-dialog">
+    <div class="dialog-heading"><h2>Отменить занятие</h2>
+        <button type="button" class="icon-button" data-close aria-label="Закрыть">
+            <admin-icon name="close"/>
+        </button>
+    </div>
+    <p>Занятие сохранится как отменённое и освободит место для новой тренировки. Оно не войдёт в статистику.</p>
+    <button class="button secondary" type="button" data-control="cancel">Отменить тренировку</button>
+</dialog>
+<dialog class="app-dialog exercise-picker-dialog app-workspace" id="exercise-dialog"
+        aria-labelledby="exercise-dialog-title">
+    <div class="dialog-heading"><h2 id="exercise-dialog-title">Добавить упражнения</h2>
+        <button type="button" class="icon-button" data-close aria-label="Закрыть">
+            <admin-icon name="close"/>
+        </button>
+    </div>
+    <form method="post" asp-page-handler="PickExercises" data-pick-form><input name="ExerciseEntryId" type="hidden"
+                                                                               value="0" data-exercise-entry/>
+        <partial name="/Pages/Shared/Exercises/_ExerciseLibrary.cshtml" model="Model.Library"/>
+    </form>
+</dialog>
+<dialog class="app-dialog quick-dialog app-workspace" id="load-template-dialog" aria-labelledby="load-template-title">
+    <div class="dialog-heading"><h2 id="load-template-title">Загрузить шаблон</h2>
+        <button type="button" class="icon-button" data-close aria-label="Закрыть">
+            <admin-icon name="close"/>
+        </button>
+    </div>
+    <p class="muted">Упражнения и подходы копируются в текущее занятие. Оригинал сохраняется.</p>
+    <div class="quick-options">
+        @foreach (var template in Model.Templates)
+        {
+            <form method="post" asp-page-handler="LoadTemplate"><input type="hidden" name="templateId"
+                                                                       value="@template.Id"/>
+                <button class="quick-option">
+                    <admin-icon name="workout"/>
+                    <span><strong>@template.Name</strong><small>@template.ProgramName · @template.Exercises упражнений</small></span>
+                    <admin-icon name="arrow"/>
+                </button>
+            </form>
+        }
+        @if (Model.Templates.Count == 0)
+        {
+            <a class="button secondary" asp-page="/Training/Programs/Index">Создать шаблон в программе</a>
+        }
+    </div>
+</dialog>
+

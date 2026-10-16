@@ -1,0 +1,38 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string N(decimal? value, string format = "N0") => value?.ToString(format, ru) ?? "—";
+    string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+    var chart = d.Chart.ToList();
+    var chartMax = chart.Count > 0 ? Math.Max(1, chart.Max(p => p.Volume)) : 1;
+}
+<section class="panel volume-card" id="progress">
+<div class="card-heading">
+<h2>
+<admin-icon name="bars" />Прогресс по объёму</h2>
+<span class="muted">@d.Days дней</span>
+</div>
+<div class="chart-summary">
+<strong>@N(d.TotalVolume) <small>кг</small>
+</strong>
+<span class="green">@(d.VolumeChange is null ? "Ваши тренировки в цифрах" : $"{(d.VolumeChange >= 0 ? "+" : "")}{N(d.VolumeChange)}% к предыдущему периоду")</span>
+</div>
+<div class="volume-chart">
+<div class="chart-axis">
+<span>@N(chartMax / 1000, "0.#")K</span>
+<span>@N(chartMax / 2000, "0.#")K</span>
+<span>0</span>
+</div>
+<div class="chart-columns">@foreach (var point in chart) { <button class="chart-column" type="button" aria-label="@point.Date.ToString("d MMM", ru): @N(point.Volume) кг, тренировок: @point.Count">
+<span class="chart-tooltip">@point.Date.ToString("d MMM", ru)<strong>@N(point.Volume) кг</strong>
+<small>@point.Count тренировок</small>
+</span>
+<span class="column-track">
+<i style="height: @F((double)(point.Volume / chartMax * 100))%">
+</i>
+</span>
+<small>@point.Date.ToString(d.Days == 365 ? "MMM" : "dd.MM", ru)</small>
+</button> }</div>
+</div>@if (!d.PeriodWorkouts.Any()) { <p class="chart-empty">За этот период нет записанных рабочих подходов.</p> }</section>

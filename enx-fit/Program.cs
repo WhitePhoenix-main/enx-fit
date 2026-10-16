@@ -1,11 +1,18 @@
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.EntityFrameworkCore;
-using enx_fit.Extensions;
-using enx_fit.Data;
-using enx_fit.Services;
+using enx_fit.Routing;
 using enx_fit.Areas.Identity.Data;
+using enx_fit.Data;
+using enx_fit.Extensions;
+using enx_fit.Middleware;
 using enx_fit.Security;
+using enx_fit.Services.Accounts;
+using enx_fit.Services.Analytics;
+using enx_fit.Services.Body;
+using enx_fit.Services.Dashboard;
+using enx_fit.Services.Exercises;
+using enx_fit.Services.Workouts;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 if (builder.Environment.IsDevelopment())
@@ -31,7 +38,7 @@ builder.Services
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.ConfigureApplicationCookie(options => options.LoginPath = "/TechnicalPages/Login");
 builder.Services.AddUserRoleAuthorization();
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(PageRouteAliases.Configure);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<ExerciseService>();

@@ -1,0 +1,13 @@
+@{
+    Layout = "/Pages/Shared/Layouts/_DashboardLayout.cshtml";
+}
+@section Styles { <link rel="stylesheet" href="~/css/programs.css" asp-append-version="true" /> }
+<div class="programs-page app-workspace">
+    @if (TempData["StatusMessage"] is string status) { <div class="program-notice app-status app-notice" data-app-state="saved" role="status">@status</div> }
+    @if (TempData["ErrorMessage"] is string error) { <div class="program-notice error app-status app-notice" data-app-state="error" role="alert">@error</div> }
+    @RenderBody()
+</div>
+@section Scripts {
+    <script src="~/js/training.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+}

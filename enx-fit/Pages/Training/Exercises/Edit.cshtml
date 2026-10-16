@@ -1,0 +1,27 @@
+@page "/Exercises/Edit/{id}"
+@model enx_fit.Pages.Training.Exercises.EditModel
+@{
+    ViewData["Title"] = "Редактировать упражнение";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-1">Редактировать упражнение</h1>
+    <p class="text-muted mb-0">Обновите название, группу мышц, оборудование и заметки.</p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" data-admin-form>
+            <input type="hidden" asp-for="Id" />
+            <partial name="_ExerciseForm" for="Input" />
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary app-button" type="submit">Сохранить изменения</button>
+                <a class="btn btn-outline-secondary app-button secondary" asp-page="/Admin/Exercises/Index">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

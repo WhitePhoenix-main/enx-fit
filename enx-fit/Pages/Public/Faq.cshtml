@@ -1,0 +1,23 @@
+@page "/faq"
+@using enx_fit.Pages.Public
+
+@model enx_fit.Pages.Public.FaqModel
+@{
+    Layout = "/Pages/Shared/Layouts/_LandingLayout.cshtml";
+    ViewData["Title"] = "Вопросы и ответы";
+    ViewData["Description"] = "Как начать тренировку, выбрать программу, сохранить подходы и разобраться с аккаунтом Enix Fit.";
+}
+<div class="public-page wrap">
+    <header class="public-page-heading"><a class="public-back" asp-page="/Public/Index">← Главная</a><p class="eyebrow">Справка</p><h1>Меньше вопросов.<br /><span>Больше уверенности.</span></h1><p>Про тренировки, программы, результаты и аккаунт. Открой нужный ответ или найди его по слову.</p></header>
+    <div class="public-faq-layout">
+        <aside class="public-panel public-faq-search"><form method="get"><label asp-for="Search">Что ищем?</label><input asp-for="Search" type="search" maxlength="100" placeholder="Например, шаблон" /><button class="button button-primary" type="submit">Найти</button></form>
+            @if (!string.IsNullOrEmpty(Model.Search)) { <a class="public-text-link" asp-page="/Public/Faq">Сбросить поиск</a> }
+            <p>Не нашёл ответ?</p><a class="public-text-link" asp-page="/Public/Contact">Помощь и контакты →</a>
+        </aside>
+        <section aria-label="Ответы">
+            @if (!string.IsNullOrEmpty(Model.Search)) { <p class="public-search-status app-status" data-app-state="info" role="status">Найдено ответов: @Model.Questions.Count</p> }
+            @if (Model.Questions.Count > 0) { <partial name="/Pages/Shared/Public/_PublicFaq.cshtml" model="Model.Questions" /> }
+            else { <div class="public-panel"><h2>По этому запросу ответов нет</h2><p>Попробуй слово «программа», «пароль» или «отдых».</p><a class="public-text-link" asp-page="/Public/Faq">Показать все ответы →</a></div> }
+        </section>
+    </div>
+</div>

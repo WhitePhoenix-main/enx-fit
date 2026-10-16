@@ -1,0 +1,27 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var coach = dashboard.IsCoachView;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    var today = d.TodayCheckIn;
+    var chart = Model.WidgetId == "volume" ? d.Chart.ToList() : [];
+    var weekDays = new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" };
+}
+<section class="panel sleep-card" id="sleep">
+<div class="card-heading">
+<h2>
+<admin-icon name="moon" />Сон и восстановление</h2>@if (!coach) { <button class="text-button" data-dialog="checkin-dialog">Записать <admin-icon name="plus" />
+</button> }</div>
+<div class="sleep-value">
+<strong>@(today.SleepMinutes > 0 ? $"{today.SleepMinutes / 60} ч {today.SleepMinutes % 60} мин" : "—")</strong>
+<small>сегодня</small>
+</div>
+<div class="sleep-chart" role="img" aria-label="Продолжительность сна за последние 7 дней">@for (var i = 6; i >= 0; i--) { var day = d.Today.AddDays(-i); var minutes = d.CheckIns.FirstOrDefault(c => c.Date == day)?.SleepMinutes ?? 0; <div title="@day.ToString("d MMM", ru): @(minutes > 0 ? $"{minutes / 60} ч {minutes % 60} мин" : "нет записи")">
+<span>
+<i style="height: @(Math.Min(100, minutes * 100 / 720))%">
+</i>
+</span>
+<small>@weekDays[((int)day.DayOfWeek + 6) % 7]</small>
+</div> }</div>
+</section>

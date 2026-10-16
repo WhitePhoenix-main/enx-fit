@@ -1,0 +1,37 @@
+@using enx_fit.ViewModels.Navigation
+@model enx_fit.ViewModels.Navigation.MobileAppNavigationViewModel
+@{
+    string? PageUrl(string page) => Model.PageUrl(Url, page);
+}
+@if (Model.Reference)
+{
+    <div class="em-mobile-statusbar" aria-hidden="true"><span>9:41</span><div><svg viewBox="0 0 20 16"><rect x="0" y="10" width="3" height="6" rx="1"/><rect x="5" y="7" width="3" height="9" rx="1"/><rect x="10" y="4" width="3" height="12" rx="1"/><rect x="15" width="3" height="16" rx="1"/></svg><svg viewBox="0 0 24 18" fill="none"><path d="M2 5a16 16 0 0 1 20 0M6 10a10 10 0 0 1 12 0M10 15a3 3 0 0 1 4 0" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg><svg viewBox="0 0 29 15"><rect x="1" y="1" width="24" height="13" rx="3" fill="none" stroke="currentColor"/><rect x="3" y="3" width="20" height="9" rx="1"/><path d="M27 5v5" stroke="currentColor" stroke-width="2"/></svg></div></div>
+}
+<header class="em-mobile-header">
+    <div class="em-mobile-header-inner">
+        <a class="em-mobile-brand" href="@PageUrl("/Dashboard/Index")" aria-label="Enix Fit — главная"><span class="ef-brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>Enix Fit</span></a>
+        <div class="em-mobile-actions">
+            <button class="em-mobile-notification" type="button" data-mobile-dialog="mobile-notifications-dialog" aria-label="Уведомления" aria-haspopup="dialog"><reference-icon name="bell" /></button>
+            <a class="em-mobile-avatar" href="@PageUrl("/Account/Profile")" aria-label="Профиль"><reference-photo image="overview" window="341 130 36 36" /></a>
+        </div>
+    </div>
+</header>
+<noscript>
+    <style>.em-mobile-nav > button, .em-mobile-header .em-mobile-notification { display:none; } .em-mobile-nav { grid-template-columns:repeat(4,minmax(0,1fr)); }</style>
+    <details class="em-mobile-native-menu app-disclosure"><summary>Все разделы</summary><partial name="/Pages/Shared/Navigation/_MobileMenuLinks.cshtml" model="Model" /></details>
+</noscript>
+<nav class="em-mobile-nav" aria-label="Мобильная навигация">
+    <a class="@(Model.IsActive("home") ? "active" : "")" href="@PageUrl("/Dashboard/Index")" aria-current="@(Model.IsActive("home") ? "page" : null)"><reference-icon name="home" /><span>Главная</span></a>
+    <a class="@(Model.IsActive("workouts") ? "active" : "")" href="@PageUrl("/Training/Index")" aria-current="@(Model.IsActive("workouts") ? "page" : null)"><reference-icon name="workout" /><span>Тренировки</span></a>
+    <a class="@(Model.IsActive("programs") ? "active" : "")" href="@PageUrl("/Training/Programs/Index")" aria-current="@(Model.IsActive("programs") ? "page" : null)"><reference-icon name="calendar" /><span>Программы</span></a>
+    <a class="@(Model.IsActive("progress") ? "active" : "")" href="@PageUrl("/Progress/Index")" aria-current="@(Model.IsActive("progress") ? "page" : null)"><reference-icon name="bars" /><span>Прогресс</span></a>
+    <button class="@(Model.IsActive("more") ? "active" : "")" type="button" data-mobile-dialog="mobile-navigation-dialog" aria-label="Все разделы" aria-current="@(Model.IsActive("more") ? "page" : null)" aria-haspopup="dialog"><reference-icon name="menu" /><span>Ещё</span></button>
+</nav>
+<dialog id="mobile-navigation-dialog" class="em-mobile-dialog app-workspace">
+    <div class="em-mobile-dialog-heading"><h2>Разделы</h2><button class="app-icon-button" type="button" data-mobile-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
+    <partial name="/Pages/Shared/Navigation/_MobileMenuLinks.cshtml" model="Model" />
+</dialog>
+<dialog id="mobile-notifications-dialog" class="em-mobile-dialog app-workspace">
+    <div class="em-mobile-dialog-heading"><h2>Центр уведомлений</h2><button class="app-icon-button" type="button" data-mobile-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
+    <div class="em-mobile-notifications-empty"><reference-icon name="bell" /><h3>Вы всё посмотрели</h3><p>Новых уведомлений пока нет.</p></div>
+</dialog>

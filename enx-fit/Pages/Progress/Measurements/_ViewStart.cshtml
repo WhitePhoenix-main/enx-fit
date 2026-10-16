@@ -1,0 +1,3 @@
+@{
+    Layout = User.HasMinimumRole(UserRole.Administrator) ? "/Pages/Shared/Layouts/_AdminLayout.cshtml" : "/Pages/Shared/Layouts/_DashboardReferenceLayout.cshtml";
+}

@@ -1,0 +1,33 @@
+@using enx_fit.Presentation.Navigation
+@{
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
+    string Section(string id) => Url.Page("/Public/Index") + "#" + id;
+}
+<header class="landing-header wrap">
+    <a class="brand" asp-page="/Public/Index" aria-label="Enix Fit — главная"><partial name="/Pages/Shared/Public/_LandingBrand.cshtml" /></a>
+    <nav class="landing-nav landing-desktop-nav" aria-label="Основная навигация">
+        <a asp-page="/Public/Features" aria-current="@(currentPage == "/Public/Features" ? "page" : null)">Возможности</a>
+        <a href="@Section("planner")">Программы</a>
+        <a href="@Section("analytics")">Прогресс</a>
+        <a asp-page="/Public/Pricing" aria-current="@(currentPage == "/Public/Pricing" ? "page" : null)">Тарифы</a>
+    </nav>
+    <div class="header-actions">
+        @if (!signedIn)
+        { <a class="header-login" asp-page="/Account/Login" asp-page-handler="Login" asp-route-returnUrl="@Url.Page("/Dashboard/Index")">Войти</a> }
+        <a class="button button-primary" href="@PublicPageLinks.Open(Url, User, "/Dashboard/Index")">@(signedIn ? "Открыть приложение" : "Начать бесплатно")</a>
+    </div>
+    <details class="landing-menu" data-public-menu>
+        <summary class="menu-toggle" aria-label="Меню сайта"><span>Ещё</span><svg class="icon"><use href="#i-menu" /></svg></summary>
+        <nav class="landing-menu-nav" aria-label="Все страницы">
+            <a asp-page="/Public/Index" aria-current="@(currentPage == "/Public/Index" ? "page" : null)">Главная</a>
+            <a asp-page="/Public/Features" aria-current="@(currentPage == "/Public/Features" ? "page" : null)">Возможности</a>
+            <a href="@Section("planner")">Программы</a><a href="@Section("analytics")">Прогресс</a>
+            <a asp-page="/Public/Pricing" aria-current="@(currentPage == "/Public/Pricing" ? "page" : null)">Тарифы</a>
+            <a asp-page="/Public/About" aria-current="@(currentPage == "/Public/About" ? "page" : null)">О проекте</a>
+            <a asp-page="/Public/Faq" aria-current="@(currentPage == "/Public/Faq" ? "page" : null)">Вопросы</a>
+            <a asp-page="/Public/Contact" aria-current="@(currentPage == "/Public/Contact" ? "page" : null)">Контакты</a>
+            <a class="public-menu-start" href="@PublicPageLinks.Open(Url, User, "/Dashboard/Index")">@(signedIn ? "Открыть приложение" : "Начать бесплатно") <svg class="icon"><use href="#i-arrow" /></svg></a>
+        </nav>
+    </details>
+</header>

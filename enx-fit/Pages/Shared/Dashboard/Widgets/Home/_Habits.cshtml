@@ -1,0 +1,14 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var reference = dashboard.Reference;
+    string? PageUrl(string page) => Url.Page(page, dashboard.NavigationValues);
+    var today = d.TodayCheckIn;
+    var habits = new[] { ("Сон 7–9 часов", today.SleepMinutes is >= 420 and <= 540, today.SleepMinutes > 0 ? $"{today.SleepMinutes / 60} ч {today.SleepMinutes % 60} мин" : "—"), ("Вода", today.WaterMl >= 2000, $"{today.WaterMl / 250} / 8"), ("Растяжка", today.StretchingDone, today.StretchingDone ? "10 мин" : "0 / 10 мин"), ("Чтение", today.ReadingMinutes >= 20, $"{today.ReadingMinutes} / 20 мин") };
+    if (reference) habits = [("Сон 7–9 часов", true, "7 ч 30 мин"), ("Вода", false, "4 / 8"), ("Растяжка", true, "10 мин"), ("Чтение", false, "0 / 20 мин")];
+}
+<section class="ef-card ef-habits" id="habits">
+    <header class="ef-card-heading"><h2><reference-icon name="check-circle" />Привычки</h2><a class="ef-chevron" href="@PageUrl("/Dashboard/Habits")" aria-label="Все привычки"><reference-icon name="chevron" /></a></header>
+    <div class="ef-habit-list">@foreach (var habit in habits) { <button class="ef-habit" type="button" data-dialog="@(dashboard.IsCoachView ? null : "checkin-dialog")" disabled="@dashboard.IsCoachView" aria-label="@habit.Item1: @habit.Item3, @(habit.Item2 ? "выполнено" : "не выполнено")"><span class="ef-habit-check @(habit.Item2 ? "is-complete" : "")">@if (habit.Item2) { <reference-icon name="check" /> }</span><span class="ef-habit-name">@habit.Item1</span><span class="ef-habit-value">@habit.Item3</span><reference-icon name="chevron" /></button> }</div>
+</section>

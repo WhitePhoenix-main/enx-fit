@@ -1,6 +1,7 @@
+@using enx_fit.ViewModels.Navigation
 @{
     var authenticated = User.Identity?.IsAuthenticated == true;
-    var mobileNavigation = enx_fit.ViewModels.MobileAppNavigationViewModel.Create(ViewData, User, ViewContext.RouteData.Values["page"] as string);
+    var mobileNavigation = enx_fit.ViewModels.Navigation.MobileAppNavigationViewModel.Create(ViewData, User, ViewContext.RouteData.Values["page"] as string);
 }
 <!DOCTYPE html>
 <html lang="ru">
@@ -14,15 +15,15 @@
     <link rel="stylesheet" href="~/enx-fit.styles.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
     @if (authenticated) {
-        <partial name="_AppIcons" />
+        <partial name="/Pages/Shared/Icons/_AppIcons.cshtml" />
         <link rel="stylesheet" href="~/css/mobile-shell.css" asp-append-version="true" />
         <link rel="stylesheet" href="~/css/app-components.css" asp-append-version="true" />
     }
 </head>
 <body class="@(authenticated ? "em-app-shell" : "")">
     <a class="skip-link" href="#main-content">Перейти к основному содержимому</a>
-    <partial name="_Header" />
-    @if (authenticated) { <partial name="_MobileAppShell" model="mobileNavigation" /><partial name="_WorkoutResume" model="mobileNavigation" /> }
+    <partial name="/Pages/Shared/Navigation/_Header.cshtml" />
+    @if (authenticated) { <partial name="/Pages/Shared/Navigation/_MobileAppShell.cshtml" model="mobileNavigation" /><partial name="/Pages/Shared/Workouts/_WorkoutResume.cshtml" model="mobileNavigation" /> }
 
     <main id="main-content" class="container py-4" role="main" tabindex="-1">
         @RenderBody()

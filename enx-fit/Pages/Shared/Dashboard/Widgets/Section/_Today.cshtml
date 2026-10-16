@@ -1,0 +1,15 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string N(decimal? value, string format = "N0") => value?.ToString(format, ru) ?? "—";
+    var today = d.TodayCheckIn;
+    string? PageUrl(string page) => Url.Page(page, dashboard.NavigationValues);
+}
+<section class="panel today-card compact-today" aria-label="Показатели дня">
+    @foreach (var item in new[] { ("shoe", today.Steps > 0 ? N(today.Steps) : "—", "шагов сегодня", Math.Min(100, today.Steps * 100 / 8000), "green"), ("water", today.WaterMl > 0 ? N(today.WaterMl / 1000m, "0.#") + " л" : "—", "воды", Math.Min(100, today.WaterMl * 100 / 2000), "blue"), ("moon", today.SleepMinutes > 0 ? $"{today.SleepMinutes / 60} ч {today.SleepMinutes % 60} мин" : "—", "сон", Math.Min(100, today.SleepMinutes * 100 / 480), "blue"), ("flame", d.Streak.ToString() + " дн.", "подряд", Math.Min(100, d.Streak * 100 / 7), "orange") })
+    {
+        <a class="day-metric @item.Item5" href="@PageUrl("/Dashboard/Habits")"><admin-icon name="@item.Item1" /><span><strong>@item.Item2</strong><small>@item.Item3</small></span><span class="metric-ring" style="--ring:@item.Item4" aria-hidden="true"></span></a>
+    }
+</section>

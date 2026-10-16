@@ -1,0 +1,46 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var reference = dashboard.Reference;
+    string? PageUrl(string page) => Url.Page(page, dashboard.NavigationValues);
+    var active = dashboard.ActiveWorkout;
+    var planned = d.NextWorkout?.Date == d.Today ? d.NextWorkout : null;
+    var program = dashboard.NextProgramWorkout?.Date == d.Today ? dashboard.NextProgramWorkout : null;
+    var title = active?.Title ?? planned?.Title ?? program?.Workout.Name ?? "Начать тренировку";
+    if (reference) title = "Верх тела — сила";
+    var count = active?.WorkoutExercises.Count ?? planned?.WorkoutExercises.Count ?? program?.Workout.Exercises.Count;
+    var word = count % 100 is >= 11 and <= 14 || count % 10 is 0 or >= 5 ? "упражнений" : count % 10 == 1 ? "упражнение" : "упражнения";
+}
+<section class="ef-card ef-workout" id="next-workout">
+    <div class="ef-workout-photo" aria-hidden="true"></div>
+    <p class="ef-eyebrow"><reference-icon name="calendar" />@(reference ? "Сегодня по программе" : active is not null ? "Тренировка продолжается" : planned is not null || program is not null ? "Сегодня по программе" : "В вашем темпе")</p>
+    <h2>@title</h2>
+    <p class="ef-workout-description">@if (reference) { <span>4 упражнения · Неделя 3 из 6</span> } else { @if (count is not null) { <span>@count @word</span> } else { <span>Добавляйте упражнения по ходу занятия</span> }@if (dashboard.ActiveProgram is { StartDate: { } startDate } currentProgram) { <span> · Неделя @Math.Clamp((d.Today.DayNumber - startDate.DayNumber) / 7 + 1, 1, currentProgram.Weeks) из @currentProgram.Weeks</span> } }</p>
+    @if (reference)
+    {
+        <button class="ef-primary ef-start" type="button" data-dialog="quick-workout-dialog"><reference-icon name="play" />Начать тренировку</button>
+    }
+    else if (dashboard.IsCoachView)
+    {
+        <a class="ef-primary ef-start" href="@PageUrl("/Training/Plans")"><reference-icon name="calendar" />План тренировок</a>
+    }
+    else if (active is not null)
+    {
+        <a class="ef-primary ef-start" asp-page="/Training/Workouts/Details" asp-route-id="@active.Id"><reference-icon name="play" />Продолжить тренировку</a>
+    }
+    else if (planned is not null || program is not null)
+    {
+        <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="@(planned is not null ? "planned" : "program")" /><input type="hidden" name="plannedId" value="@planned?.Id" /><input type="hidden" name="programId" value="@dashboard.ActiveProgram?.Id" /><button class="ef-primary ef-start" type="submit"><reference-icon name="play" />Начать тренировку</button></form>
+    }
+    else
+    {
+        <button class="ef-primary ef-start" type="button" data-dialog="quick-workout-dialog"><reference-icon name="play" />@(dashboard.ShowOnboarding ? "Начать первую тренировку" : "Начать тренировку")</button>
+    }
+    @if (reference || !dashboard.IsCoachView && active is null)
+    {
+        <partial name="/Pages/Shared/Dashboard/_HomeWorkoutChoices.cshtml" model="dashboard" />
+    }
+    <partial name="/Pages/Shared/Dashboard/_TrainingSetupPrompt.cshtml" model="dashboard" />
+    <partial name="/Pages/Shared/Dashboard/_HomeNextStep.cshtml" model="dashboard" />
+</section>

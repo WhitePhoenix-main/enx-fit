@@ -1,0 +1,40 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var coach = dashboard.IsCoachView;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string N(decimal? value, string format = "N0") => value?.ToString(format, ru) ?? "—";
+    string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+    var weightPoints = d.Measurements.Where(m => m.Date >= d.Until.AddDays(-28)).ToList();
+    var minWeight = weightPoints.Count > 0 ? weightPoints.Min(m => m.WeightKg) - 1 : 60;
+    var maxWeight = weightPoints.Count > 0 ? weightPoints.Max(m => m.WeightKg) + 1 : 100;
+    var weightPath = string.Join(" ", weightPoints.Select(m => $"{F(34 + (m.Date.DayNumber - d.Until.AddDays(-28).DayNumber) * 236d / 28)},{F(127 - (double)((m.WeightKg - minWeight) / (maxWeight - minWeight)) * 105)}"));
+}
+<section class="panel weight-card" id="weight">
+<div class="card-heading">
+<h2>
+<admin-icon name="bars" />Динамика веса</h2>@if (!coach) { <a asp-page="/Progress/Measurements/Index">Подробнее <admin-icon name="arrow" />
+</a> } else { <span class="muted">4 недели</span> }</div>
+<div class="weight-value">
+<strong>@N(d.Weight, "N1") <small>кг</small>
+</strong>
+<span>@(d.WeightChange is null ? "Нет замеров" : $"{(d.WeightChange >= 0 ? "+" : "")}{N(d.WeightChange, "N1")} кг")<small>за 4 недели</small>
+</span>
+</div>
+        <svg class="weight-chart" viewBox="0 0 290 165" role="img" aria-label="График веса за 4 недели">
+<defs>
+<linearGradient id="weight-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#497cff" stop-opacity=".3" /><stop offset="100%" stop-color="#497cff" stop-opacity="0" />
+</linearGradient>
+</defs>@for (var i = 0; i < 4; i++) { var y = 22 + 35 * i; <g>
+<line x1="34" y1="@y" x2="275" y2="@y" stroke="#253142" />
+<text x="2" y="@(y+4)">@N(maxWeight - (maxWeight - minWeight) * i / 3)</text>
+</g> }@if (weightPoints.Count > 0) { <polygon points="34,140 @weightPath 270,140" fill="url(#weight-fill)" />
+<polyline points="@weightPath" fill="none" stroke="#5984ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />@foreach (var m in weightPoints) { <circle cx="@F(34 + (m.Date.DayNumber - d.Until.AddDays(-28).DayNumber) * 236d / 28)" cy="@F(127 - (double)((m.WeightKg - minWeight) / (maxWeight - minWeight)) * 105)" r="3" fill="#6895ff"><title>@m.Date.ToString("d MMM", ru): @N(m.WeightKg, "N1") кг</title>
+</circle> } }<text x="34" y="160">@d.Until.AddDays(-28).ToString("d MMM", ru)</text>
+<text x="133" y="160">@d.Until.AddDays(-14).ToString("d MMM", ru)</text>
+<text x="235" y="160">@d.Until.ToString("d MMM", ru)</text>
+</svg>
+        @if (!coach && d.Measurements.Count == 0) { <a class="empty-link" asp-page="/Progress/Measurements/Create">Добавить первый замер <admin-icon name="plus" />
+</a> }
+    </section>

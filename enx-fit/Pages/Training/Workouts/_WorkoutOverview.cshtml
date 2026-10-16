@@ -1,0 +1,107 @@
+@using enx_fit.Services.Dashboard
+@model enx_fit.Pages.Training.Workouts.DetailsModel
+@{
+    var workout = Model.Workout;
+    var locked = workout.IsFinished;
+    var templateOperationId = Guid.NewGuid();
+}
+@if (workout.IsActive)
+{
+    <section class="workout-app-overview" data-app-overview hidden aria-label="Выполнение тренировки">
+        <div class="workout-app-progress"><span>Ваше занятие</span><strong data-app-count>0 подходов</strong>
+            <progress data-app-progress max="1" value="0" aria-label="Выполнение подходов"></progress>
+        </div>
+        <button type="button" class="button secondary" data-dialog="workout-outline-dialog">
+            <admin-icon name="layers"/>
+            <span data-app-outline-count>Состав занятия</span></button>
+    </section>
+    <section class="panel rest-panel" data-rest-panel aria-labelledby="rest-title" hidden>
+        <div><p class="eyebrow" id="rest-title">ОТДЫХ ПОСЛЕ ПОДХОДА</p><strong class="rest-clock" data-rest-clock>01:30</strong>
+            <p class="muted" data-rest-caption>Восстановитесь перед следующим подходом</p></div>
+        <div class="rest-controls">
+            <button type="button" class="button secondary" data-control="adjust-rest" data-seconds="-15">−15 с
+            </button>
+            <button type="button" class="button secondary" data-control="adjust-rest" data-seconds="30">+30 с
+            </button>
+            <button type="button" class="button" data-control="skip-rest">Пропустить отдых</button>
+            <button type="button" class="text-button" data-sound aria-pressed="false">Звук: выкл.</button>
+        </div>
+    </section>
+    <p class="pause-notice" data-pause-notice hidden>Тренировка на паузе. Время занятия и отдыха остановлено.</p>
+}
+@if (locked)
+{
+    <section class="panel execution-summary">
+        <div><span>Рабочие подходы</span><strong>@DashboardData.WorkingSets(workout).Count()</strong></div>
+        <div><span>Объём</span><strong>@DashboardData.Volume(workout).ToString("0.##") кг</strong></div>
+        <div>
+            <span>Длительность</span><strong>@(workout.DurationSeconds is { } duration ? $"{duration / 60} мин" : "Не указана")</strong>
+        </div>
+        <div>
+            <span>Источник</span><strong>@(workout.EntryMode == WorkoutEntryMode.Manual ? "Внесена вручную" : "Выполнена в приложении")</strong>
+        </div>
+    </section>
+}
+@if (workout.TemplateDecisionPending)
+{
+    <section class="panel template-decision" aria-labelledby="template-decision-title"><h2
+            id="template-decision-title">Вы изменили тренировку относительно шаблона</h2>
+        <p class="muted">Результаты уже сохранены. Исходный шаблон пока без изменений.</p>
+        <form method="post" asp-page-handler="TemplateDecision">
+            <button name="choice" value="keep" class="button">Оставить шаблон без изменений</button>
+            @if (Model.CanUpdateTemplate)
+            {
+                <button name="choice" value="update" class="button secondary">Обновить шаблон</button>
+            }
+        </form>
+        <details>
+            <summary>Сохранить как новый шаблон</summary>
+            <form method="post" asp-page-handler="TemplateDecision"><input name="operationId" type="hidden"
+                                                                           value="@templateOperationId"/><label>Название
+                    шаблона<input name="templateName" required maxlength="120" value="@workout.Title"/></label>
+                <button class="button secondary" name="choice" value="new">Сохранить как новый шаблон</button>
+            </form>
+        </details>
+    </section>
+}
+@if (workout.CompletedAtUtc.HasValue && !workout.TemplateDecisionPending && workout.UserId == Model.ViewerId)
+{
+    <section class="panel template-decision workout-save-template">
+        <details>
+            <summary>Сохранить как шаблон</summary>
+            <p class="muted">Сохраните выполненные упражнения и подходы, чтобы повторить занятие. Результат
+                останется в истории.</p>
+            <form method="post" asp-page-handler="TemplateDecision">
+                <input name="operationId" type="hidden" value="@templateOperationId"/>
+                <input name="choice" type="hidden" value="new"/>
+                <label>Название шаблона<input name="templateName" required maxlength="120" value="@workout.Title"/></label>
+                <button class="button" type="submit">Сохранить шаблон</button>
+            </form>
+        </details>
+    </section>
+}
+@if (Model.Blueprint is { } blueprint)
+{
+    <details class="panel workout-blueprint">
+        <summary>План тренировки · @blueprint.Goal · ~ @blueprint.DurationMinutes мин</summary>
+        @foreach (var block in blueprint.Blocks)
+        {
+            <p>@block.Name</p> @foreach (var e in block.Exercises)
+            {
+                <p class="muted">@string.Join(" · ", e.Sets.Select(s => $"{s.Weight} кг × {s.Reps}, отдых {s.RestSeconds} с"))</p>
+            }
+        }
+    </details>
+}
+@if (workout.WorkoutExercises.Count == 0)
+{
+    <section class="panel workout-empty"><span class="start-icon"><admin-icon name="workout"/></span>
+        <h2>Всё начинается с первого упражнения</h2>
+        <p>Добавляйте упражнения и записывайте подходы в своём темпе.</p>
+        <button class="button" data-dialog="exercise-dialog" data-add-exercise>
+            <admin-icon name="plus"/>
+            Добавить упражнение
+        </button>
+        <button class="text-button" data-dialog="load-template-dialog">Или загрузить шаблон</button>
+    </section>
+}

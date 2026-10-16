@@ -1,4 +1,7 @@
 using enx_fit.Data;
+using enx_fit.Services.Analytics;
+using enx_fit.Services.Coaching;
+using enx_fit.Services.Programs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -73,14 +76,14 @@ public static class ProgramServiceRegistration
     {
         services.AddOptions<FeatureOptions>().Bind(configuration.GetSection("ProgramFeatures"));
         services.AddScoped<IFeatureAccessService, FeatureAccessService>();
-        services.AddScoped<Services.TrainingProgramService>();
-        services.AddScoped<Services.ProgramTrainingDataService>();
-        services.AddSingleton<Services.IProgressionService, Services.ProgressionService>();
-        services.AddSingleton<Services.IPlateauDetectionService, Services.PlateauDetectionService>();
-        services.AddScoped<Services.IRecommendationService, Services.RecommendationService>();
-        services.AddSingleton<Services.IProgramAnalysisService, Services.ProgramAnalysisService>();
-        services.AddSingleton<Services.ITrainingVolumeService, Services.TrainingVolumeService>();
-        services.AddScoped<Services.CoachAttentionService>();
+        services.AddScoped<TrainingProgramService>();
+        services.AddScoped<ProgramTrainingDataService>();
+        services.AddSingleton<IProgressionService, ProgressionService>();
+        services.AddSingleton<IPlateauDetectionService, PlateauDetectionService>();
+        services.AddScoped<IRecommendationService, RecommendationService>();
+        services.AddSingleton<IProgramAnalysisService, ProgramAnalysisService>();
+        services.AddSingleton<ITrainingVolumeService, TrainingVolumeService>();
+        services.AddScoped<CoachAttentionService>();
         return services;
     }
 }

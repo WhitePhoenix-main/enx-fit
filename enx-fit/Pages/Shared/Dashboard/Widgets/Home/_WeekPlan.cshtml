@@ -1,0 +1,29 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var reference = dashboard.Reference;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string? PageUrl(string page) => Url.Page(page, dashboard.NavigationValues);
+    var monday = d.Today.AddDays(-((int)d.Today.DayOfWeek + 6) % 7 + dashboard.WeekOffset * 7);
+    if (reference) monday = new DateOnly(2026, 9, 28).AddDays(dashboard.WeekOffset * 7);
+    var days = new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" };
+    var completedThisWeek = reference ? 2 : d.Completed.Count(w => w.Date >= monday && w.Date < monday.AddDays(7));
+    var weeklyTarget = reference ? 3 : d.Settings.WeeklyWorkoutGoal;
+}
+<section class="ef-card ef-week" id="plan">
+    <header class="ef-card-heading"><h2><reference-icon name="calendar" />План недели</h2><button class="ef-week-completion" type="button" data-dialog="goal-dialog">@completedThisWeek / @weeklyTarget <span>выполнено</span></button><nav class="ef-week-navigation" aria-label="Выбор недели"><a asp-page="/Dashboard/Index" asp-route-ClientId="@dashboard.ClientId" asp-route-WeekOffset="@(dashboard.WeekOffset - 1)" aria-label="Предыдущая неделя"><reference-icon name="chevron" /></a><a asp-page="/Dashboard/Index" asp-route-ClientId="@dashboard.ClientId" asp-route-WeekOffset="@(dashboard.WeekOffset + 1)" aria-label="Следующая неделя"><reference-icon name="chevron" /></a></nav></header>
+    <div class="ef-week-days">
+        @for (var i = 0; i < 7; i++)
+        {
+            var date = monday.AddDays(i);
+            var done = d.Completed.FirstOrDefault(w => w.Date == date);
+            var scheduledWorkout = d.Workouts.FirstOrDefault(w => w.Date == date && w.State == WorkoutStatus.Planned);
+            var scheduledProgram = dashboard.ActiveProgram is { } training ? ProgramSchedule.Occurrences(training).FirstOrDefault(o => o.Date == date) : null;
+            var dayTitle = reference ? new[] { "Верх тела", "Ноги и кор", "Отдых", "Верх тела", "Ноги и кор", "Кардио", "Отдых" }[i] : (done?.Title ?? scheduledWorkout?.Title ?? scheduledProgram?.Workout.Name ?? "Отдых").Split('—')[0].Trim();
+            var completed = reference ? i < 3 : done is not null;
+            var icon = completed ? "check" : dayTitle == "Отдых" ? "coffee" : dayTitle.Contains("Кардио", StringComparison.OrdinalIgnoreCase) ? "shoe" : "workout";
+            <a class="ef-day @(completed ? "is-complete" : "") @((reference ? i == 3 : date == d.Today) ? "is-today" : "")" href="@PageUrl("/Training/Plans")" data-dialog="home-day-@date.ToString("yyyy-MM-dd")" aria-label="@date.ToString("d MMMM", ru): @dayTitle"><span>@days[i]</span><time datetime="@date.ToString("yyyy-MM-dd")">@date.ToString("dd.MM")</time><span class="ef-day-icon"><reference-icon name="@icon" /></span><small>@dayTitle</small></a>
+        }
+    </div>
+</section>

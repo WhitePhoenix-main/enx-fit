@@ -4,7 +4,7 @@
     ViewData["Title"] = "Подтвердите вход";
     ViewData["AuthDescription"] = "Введите текущий код из приложения для аутентификации.";
 }
-<partial name="_AuthStepHeader" />
+<partial name="/Pages/Shared/Account/_AuthStepHeader.cshtml" />
 <section class="auth-card auth-step-card">
     <p class="auth-step-label"><span>1. Пароль проверен</span><strong>2. Код из приложения</strong></p>
     <form method="post" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe" data-auth-form>

@@ -1,0 +1,23 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var reference = dashboard.Reference;
+    string? PageUrl(string page) => Url.Page(page, dashboard.NavigationValues);
+}
+@switch (Model.WidgetId)
+{
+    case "stat-workouts":
+        var monthly = d.Completed.Count(w => w.Date >= d.Today.AddDays(-29));
+        var previousMonth = d.Completed.Count(w => w.Date >= d.Today.AddDays(-59) && w.Date < d.Today.AddDays(-29));
+        var change = previousMonth > 0 ? (int?)Math.Round((monthly - previousMonth) * 100d / previousMonth) : null;
+        if (reference) { monthly = 8; change = 33; }
+        <a class="ef-card ef-stat" href="@PageUrl("/Training/Index")"><reference-icon name="bars" /><div><strong>@monthly</strong><span>тренировок за месяц</span></div>@if (change.HasValue) { <span class="ef-stat-change @(change < 0 ? "negative" : "")"><svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18 18 6M9 6h9v9" /></svg>@(change >= 0 ? "+" : "")@change%</span> }</a>
+        break;
+    case "stat-goal":
+        <a class="ef-card ef-stat" href="@PageUrl("/Progress/Achievements")"><reference-icon name="trophy" /><div><strong>@(reference ? 3 : d.Records.Count())</strong><span>личных рекорда</span></div>@if (reference || d.NewRecords > 0) { <span class="ef-stat-change"><svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18 18 6M9 6h9v9" /></svg>+@(reference ? 1 : d.NewRecords)</span> }</a>
+        break;
+    case "stat-volume":
+        <a class="ef-card ef-stat ef-consistency" href="@PageUrl("/Training/Plans")"><reference-icon name="calendar" /><div><span>Регулярность</span><p><strong>@(reference ? 2 : d.ThisWeek.Count()) / @(reference ? 3 : d.Settings.WeeklyWorkoutGoal)</strong><small>на этой неделе</small></p></div><reference-icon name="chevron" /></a>
+        break;
+}
