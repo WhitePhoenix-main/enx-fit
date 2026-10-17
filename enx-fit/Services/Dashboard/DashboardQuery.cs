@@ -24,7 +24,8 @@ public sealed class DashboardQuery(ApplicationDbContext db, CurrentUser currentU
                 e.SetEntries.Any(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0)));
         var daily = await completed.GroupBy(w => w.Date).Select(g => new DashboardDay(g.Key, g.Count(),
             g.Sum(w => w.WorkoutExercises.SelectMany(e => e.SetEntries)
-                .Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0).Sum(s => s.Weight * s.Reps))))
+                .Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0)
+                .Sum(s => (s.IsBodyweight ? 0 : s.Weight * s.Reps) + s.Drops.Sum(d => d.IsBodyweight ? 0 : d.Weight * d.Reps)))))
             .ToListAsync();
         var recordSince = today.AddDays(-29);
         var exerciseRows = completed.SelectMany(w => w.WorkoutExercises.SelectMany(e => e.SetEntries
@@ -73,6 +74,7 @@ public sealed class DashboardQuery(ApplicationDbContext db, CurrentUser currentU
                     SetEntries = e.SetEntries.Select(s => new SetEntry
                     {
                         Id = s.Id, SetNumber = s.SetNumber, Weight = s.Weight, Reps = s.Reps,
+                        IsBodyweight = s.IsBodyweight, Drops = s.Drops,
                         IsCompleted = s.IsCompleted, IsWarmup = s.IsWarmup, IsSkipped = s.IsSkipped
                     }).ToList()
                 }).ToList()

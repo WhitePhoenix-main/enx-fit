@@ -57,6 +57,7 @@ public partial class WorkoutService
                     TargetRestSeconds = e.TargetRestSeconds, BlockKind = e.BlockKind,
                     SetEntries = e.SetEntries.Where(s => s.IsCompleted).OrderBy(s => s.SetNumber).Select(s => new SetEntry
                     { SetNumber = s.SetNumber, Weight = s.Weight, Reps = s.Reps, RestSeconds = s.RestSeconds, IsWarmup = s.IsWarmup,
+                        IsBodyweight = s.IsBodyweight, Drops = SetDropInput.ToEntries(SetDropInput.FromEntries(s.Drops)),
                         Notes = s.Notes, IsCompleted = false }).ToList()
                 }).ToList();
             }
@@ -178,7 +179,7 @@ public partial class WorkoutService
             var block = WorkoutExerciseBlocks.Describe(session)[exercise.Id];
             exercise.ExerciseId = replacementId;
             // Results belong to the old exercise; a replacement starts with fresh, uncompleted sets.
-            foreach (var set in exercise.SetEntries) { set.IsCompleted = false; set.Weight = 0; set.Rir = null; set.Notes = null; }
+            foreach (var set in exercise.SetEntries) { set.IsCompleted = false; set.Weight = 0; set.IsBodyweight = false; set.Drops.Clear(); set.Rir = null; set.Notes = null; }
             exercise.Notes = block.Key.StartsWith("plan:") || block.Kind != "strength" ? block.Name : null;
             exercise.TargetWeightKg = null; exercise.TargetRir = null; exercise.TargetRpe = null;
         }
@@ -211,7 +212,10 @@ public partial class WorkoutService
             Validator.ValidateObject(input, new ValidationContext(input), true);
             if (completed && input.Reps < 1) throw new InvalidOperationException("У выполненного подхода должно быть хотя бы одно повторение.");
             var justCompleted = completed && !set.IsCompleted;
-            set.Weight = input.Weight; set.Reps = input.Reps; set.Rir = input.Rir;
+            set.Weight = input.IsBodyweight ? 0 : input.Weight; set.Reps = input.Reps; set.Rir = input.Rir;
+            set.IsBodyweight = input.IsBodyweight;
+            set.Drops.Clear();
+            set.Drops.AddRange(SetDropInput.ToEntries(input.Drops));
             set.IsWarmup = input.IsWarmup; set.Notes = input.Notes?.Trim(); set.IsCompleted = completed;
             set.IsSkipped = !completed && skipped;
             set.RestSeconds = input.RestSeconds;

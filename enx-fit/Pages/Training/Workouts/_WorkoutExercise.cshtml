@@ -90,8 +90,12 @@
                 <p>Фактические рабочие подходы · @previous.Title</p>
                 <ul>@foreach (var result in previous.Sets)
                     {
-                        <li>Подход @result.Number: <strong>@Number(result.Weight) кг
+                        <li>Подход @result.Number: <strong>@(result.IsBodyweight ? "Собственный вес" : Number(result.Weight) + " кг")
                                 × @result.Reps повт.</strong>
+                            @foreach (var drop in result.Drops.OrderBy(d => d.Order))
+                            {
+                                <span> → @(drop.IsBodyweight ? "Собственный вес" : Number(drop.Weight) + " кг") × @drop.Reps повт.</span>
+                            }
                             @if (result.Rir is { } reserve)
                             {
                                 <span> · запас: @reserve повт.</span>
@@ -132,7 +136,8 @@
             <label>Вес, кг<input name="AddSet.Weight" aria-label="Вес нового подхода, кг" type="number"
                                  inputmode="decimal" min="0" max="10000" step="0.01"
                                  value="@Model.NextWeight.ToString(CultureInfo.InvariantCulture)"
-                                 required/></label>
+                                 hidden="@Model.NextIsBodyweight" required="@(!Model.NextIsBodyweight)"/>
+                <span class="bodyweight-value" hidden="@(!Model.NextIsBodyweight)">Собственный вес</span></label>
             <label>Повторения<input name="AddSet.Reps" aria-label="Повторения нового подхода"
                                     type="number" inputmode="numeric" min="1" max="1000"
                                     value="@Model.NextReps"
@@ -141,6 +146,7 @@
                 <admin-icon name="plus"/>
                 Добавить подход
             </button>
+            <label class="bodyweight-check"><input type="checkbox" name="AddSet.IsBodyweight" value="true" data-bodyweight checked="@Model.NextIsBodyweight" />Собственный вес</label>
             <small>Добавляется невыполненным. Отметьте галочку после выполнения подхода.</small>
         </form>
     }

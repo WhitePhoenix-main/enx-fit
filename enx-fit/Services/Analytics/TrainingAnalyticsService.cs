@@ -109,7 +109,7 @@ public class TrainingAnalyticsService
     }
 
     private static decimal CalculateSetVolume(SetEntry set) =>
-        set.Weight * set.Reps;
+        set.Volume;
 
     private static IEnumerable<SetEntry> GetValidSets(IEnumerable<WorkoutExercise> workoutExercises) =>
         workoutExercises
@@ -127,11 +127,11 @@ public class TrainingAnalyticsService
                     .Select(set => (workout, set))));
 
     private static bool IsValidWorkingSet(SetEntry set) =>
-        !set.IsWarmup &&
+        !set.IsWarmup && !set.IsBodyweight && set.Weight > 0 &&
         IsValidSet(set);
 
     private static bool IsValidSet(SetEntry set) =>
-        set.IsCompleted && set.Weight > 0 &&
+        set.IsCompleted && !set.IsSkipped && (set.IsBodyweight || set.Weight > 0 || set.Drops.Count > 0) &&
         set.Reps > 0;
 }
 

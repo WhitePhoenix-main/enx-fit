@@ -1612,6 +1612,73 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     });
 })();
 
+// Bodyweight and the additional stages of a drop set share the set's completion.
+(() => {
+    'use strict';
+    const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
+    const dropMarkup = (drop, index, record = false) => {
+        const field = name => record ? `data-set-field="${name}"` : `name="AddSet.Drops[${index}].${name[0].toUpperCase() + name.slice(1)}" data-drop-field="${name}"`;
+        return `<div class="set-drop" data-drop-index="${index}"><div class="drop-main"><span class="drop-number">Дроп ${index + 1}</span><input type="${record ? 'text' : 'number'}" inputmode="decimal" min="0" max="10000" step="0.01" ${field('weight')} value="${escape(drop.weight)}" aria-label="Вес дропа ${index + 1}, кг" ${drop.isBodyweight ? 'hidden' : 'required'} /><span class="bodyweight-value" ${drop.isBodyweight ? '' : 'hidden'}>Собственный вес</span><input type="number" inputmode="numeric" min="1" max="1000" ${field('reps')} value="${escape(drop.reps)}" required aria-label="Повторения дропа ${index + 1}" /><button type="button" class="text-button danger-text" data-remove-drop aria-label="Удалить дроп ${index + 1}">×</button></div><label class="bodyweight-check"><input type="checkbox" ${field('isBodyweight')} value="true" data-bodyweight ${drop.isBodyweight ? 'checked' : ''} />Собственный вес</label></div>`;
+    };
+    const refreshBodyweight = container => container.querySelectorAll('[data-bodyweight]').forEach(check => {
+        const row = check.closest('[data-drop-index]') || check.closest('.set-form,.new-set-form,.record-set');
+        const weight = row?.querySelector('[name="AddSet.Weight"],[data-drop-field="weight"],[data-set-field="weight"]');
+        if (!weight) return;
+        if (check.checked) {
+            if (!weight.hidden) weight.dataset.externalWeight = weight.value;
+            weight.value = '0';
+        } else if (weight.hidden && weight.dataset.externalWeight != null) weight.value = weight.dataset.externalWeight;
+        weight.hidden = check.checked;
+        weight.required = !check.checked;
+        weight.setCustomValidity('');
+        const label = weight.nextElementSibling;
+        if (label?.classList.contains('bodyweight-value')) label.hidden = !check.checked;
+    });
+    const restoreDrops = (form, pairs) => {
+        const drops = [];
+        for (let i = 0; i < 10; i++) {
+            const value = name => pairs.find(([n]) => n === `AddSet.Drops[${i}].${name}`)?.[1];
+            if (value('Reps') == null) break;
+            drops.push({weight: value('Weight') ?? '', reps: value('Reps'), isBodyweight: value('IsBodyweight') === 'true'});
+        }
+        const host = form.querySelector('[data-set-drops]');
+        if (host) host.innerHTML = drops.map((d, i) => dropMarkup(d, i)).join('');
+        const add = form.querySelector('[data-add-drop]');
+        if (add) add.disabled = drops.length >= 10;
+        const help = form.querySelector('.drop-help');
+        if (help) help.hidden = !drops.length;
+        const badge = form.querySelector('[data-drop-badge]');
+        if (badge) badge.hidden = !drops.length;
+    };
+    window.WorkoutSetFields = {dropMarkup, refreshBodyweight, restoreDrops};
+    document.addEventListener('change', event => {
+        if (event.target.matches('[data-bodyweight]')) refreshBodyweight(event.target.closest('form'));
+    }, true);
+    const root = document.querySelector('[data-active-workout]');
+    if (!root) return;
+    root.addEventListener('click', event => {
+        const button = event.target.closest('[data-add-drop],[data-remove-drop]');
+        if (!button) return;
+        const form = button.closest('.set-form'), host = form.querySelector('[data-set-drops]');
+        const drops = [...host.children].map(row => ({
+            weight: row.querySelector('[data-drop-field="weight"]').value,
+            reps: row.querySelector('[data-drop-field="reps"]').value,
+            isBodyweight: row.querySelector('[data-bodyweight]').checked
+        }));
+        if (button.hasAttribute('data-add-drop') && drops.length < 10)
+            drops.push({weight: '', reps: drops.at(-1)?.reps || form.elements.namedItem('AddSet.Reps').value, isBodyweight: false});
+        else if (button.hasAttribute('data-remove-drop')) drops.splice(Number(button.closest('[data-drop-index]').dataset.dropIndex), 1);
+        host.innerHTML = drops.map((d, i) => dropMarkup(d, i)).join('');
+        form.querySelector('[data-add-drop]').disabled = drops.length >= 10;
+        form.querySelector('.drop-help').hidden = !drops.length;
+        const badge = form.querySelector('[data-drop-badge]');
+        if (badge) badge.hidden = !drops.length;
+        form.dispatchEvent(new Event('input', {bubbles: true}));
+        if (button.hasAttribute('data-add-drop')) host.lastElementChild?.querySelector('input').focus();
+    });
+    refreshBodyweight(root);
+})();
+
 // Set results and effort guidance.
 (() => {
     'use strict';
@@ -2344,6 +2411,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         for (const op of queue.filter(o => o.kind === 'set')) {
             const form = [...root.querySelectorAll('.set-form')].find(f => f.elements.namedItem('setId')?.value === op.setId);
             if (!form) continue;
+            window.WorkoutSetFields.restoreDrops(form, op.fields);
             for (const input of form.querySelectorAll('input[name]')) {
                 if (input.name === '__RequestVerificationToken') continue;
                 const pair = op.fields.find(([n]) => n === input.name);
@@ -2351,6 +2419,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             }
             form.classList.toggle('is-completed', form.elements.namedItem('completed').checked);
             form.classList.toggle('is-skipped', op.fields.some(([n, v]) => n === 'skipped' && v === 'true'));
+            window.WorkoutSetFields.refreshBodyweight(form);
         }
     }
 
@@ -2607,7 +2676,8 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             const forms = [...root.querySelectorAll('.set-form')],
                 completed = forms.filter(f => f.elements.namedItem('completed').checked),
                 working = completed.filter(f => !f.elements.namedItem('AddSet.IsWarmup').checked);
-            const volume = working.reduce((sum, f) => sum + Number(f.elements.namedItem('AddSet.Weight').value) * Number(f.elements.namedItem('AddSet.Reps').value), 0);
+            const volume = working.reduce((sum, f) => sum + (f.elements.namedItem('AddSet.IsBodyweight').checked ? 0 : Number(f.elements.namedItem('AddSet.Weight').value) * Number(f.elements.namedItem('AddSet.Reps').value)) +
+                [...f.querySelectorAll('[data-drop-index]')].reduce((total, row) => total + (row.querySelector('[data-bodyweight]').checked ? 0 : Number(row.querySelector('[data-drop-field="weight"]').value) * Number(row.querySelector('[data-drop-field="reps"]').value)), 0), 0);
             document.querySelector('[data-finish-summary]').textContent = `Рабочих подходов: ${working.length} · Объём: ${volume.toLocaleString('ru-RU')} кг · Осталось: ${forms.length - completed.length}`;
         }
         const soundButton = event.target.closest('[data-sound]');
@@ -2705,11 +2775,13 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     for (const [id, pairs] of Object.entries(scratch)) {
         const form = [...root.querySelectorAll(".set-form")].find(f => f.elements.namedItem("setId").value === id);
         if (!form) continue;
+        window.WorkoutSetFields.restoreDrops(form, pairs);
         for (const input of form.querySelectorAll("input[name]")) {
             if (input.name === "__RequestVerificationToken") continue;
             const pair = pairs.find(([n]) => n === input.name);
             if (input.type === "checkbox") input.checked = !!pair; else if (pair) input.value = pair[1];
         }
+        window.WorkoutSetFields.refreshBodyweight(form);
         if (active() && state.status !== "Paused") saveSet(form);
     }
     syncMessage();
@@ -2744,7 +2816,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     }[c]));
     const number = value => Number(String(value).trim().replace(',', '.'));
     const format = value => new Intl.NumberFormat('ru-RU', {maximumFractionDigits: 2}).format(value);
-    const blankSet = () => ({weight: '', reps: '', rir: '', isWarmup: false, notes: ''});
+    const blankSet = () => ({weight: '', reps: '', rir: '', isWarmup: false, isBodyweight: false, drops: [], notes: ''});
     const exerciseId = window.ExerciseIds.normalize;
     const normalize = value => {
         if (!Array.isArray(value) || value.length > 40) throw new Error('Invalid draft');
@@ -2759,6 +2831,8 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                         reps: s.reps ?? '',
                         rir: s.rir ?? '',
                         isWarmup: !!s.isWarmup,
+                        isBodyweight: !!s.isBodyweight,
+                        drops: Array.isArray(s.drops) ? s.drops.slice(0, 10).map(d => ({weight: d.weight ?? '', reps: d.reps ?? '', isBodyweight: !!d.isBodyweight})) : [],
                         notes: s.notes ?? ''
                     };
                 })
@@ -2803,7 +2877,9 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         for (const input of list.querySelectorAll('[data-set-field]')) {
             const exercise = exercises[Number(input.closest('[data-index]').dataset.index)];
             const set = exercise.sets[Number(input.closest('[data-set-index]').dataset.setIndex)];
-            set[input.dataset.setField] = input.type === 'checkbox' ? input.checked : input.value;
+            const drop = input.closest('[data-drop-index]');
+            const target = drop ? set.drops[Number(drop.dataset.dropIndex)] : set;
+            target[input.dataset.setField] = input.type === 'checkbox' ? input.checked : input.value;
         }
     }
 
@@ -2875,8 +2951,14 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 <header><span class="exercise-order">${i + 1}</span><div><h2>${escape(row?.dataset.name || 'Упражнение недоступно')}</h2><p>${escape(row?.dataset.group || '')} · подходов: ${exercise.sets.length}</p></div><details class="exercise-menu"><summary aria-label="Действия с упражнением">⋯</summary><div><button type="button" data-move-exercise="-1" ${i === 0 ? 'disabled' : ''}>Выше в списке</button><button type="button" data-move-exercise="1" ${i === exercises.length - 1 ? 'disabled' : ''}>Ниже в списке</button><button type="button" class="danger-text" data-remove-exercise>Удалить упражнение</button></div></details></header>
                 <details class="record-batch"><summary>Одинаковый вес и повторения</summary><div><label>Вес для всех<input type="text" inputmode="decimal" data-batch-weight placeholder="кг" aria-label="Вес для всех подходов" /></label><label>Повторения<input type="number" min="1" max="1000" data-batch-reps placeholder="раз" aria-label="Повторения для всех подходов" /></label><button type="button" class="button secondary" data-apply-batch>Применить</button></div></details>
                 <div class="record-set-labels"><span>№</span><span>Вес, кг</span><span>Повторения</span><span></span></div>
-                ${exercise.sets.map((s, n) => `<div class="record-set app-set-row" data-set-index="${n}"><div class="record-set-main"><span class="set-number">${n + 1}</span><input type="text" inputmode="decimal" data-set-field="weight" value="${escape(s.weight)}" required aria-label="Вес подхода ${n + 1}, кг" placeholder="0" /><input type="number" inputmode="numeric" data-set-field="reps" value="${escape(s.reps)}" min="1" max="1000" required aria-label="Повторения подхода ${n + 1}" /><button type="button" class="text-button danger-text" data-remove-set aria-label="Удалить подход ${n + 1}">×</button></div><details class="set-extra app-disclosure" ${s.isWarmup || s.notes || s.rir !== '' ? 'open' : ''}><summary>Разминка, усилие и заметка</summary><div><label>Осталось повторов (RIR)<input type="number" min="0" max="10" inputmode="numeric" data-set-field="rir" value="${escape(s.rir)}" /></label><label class="set-note">Заметка<input maxlength="500" data-set-field="notes" value="${escape(s.notes)}" /></label><label class="warmup-check"><input type="checkbox" data-set-field="isWarmup" ${s.isWarmup ? 'checked' : ''} />Разминка</label></div></details></div>`).join('')}
-                <p class="record-weight-hint">Для упражнения с собственным весом укажите 0 кг.</p>
+                ${exercise.sets.map((s, n) => `<div class="record-set app-set-row" data-set-index="${n}">
+                    <div class="record-set-main"><span class="set-number">${n + 1}</span><input type="text" inputmode="decimal" data-set-field="weight" value="${escape(s.weight)}" ${s.isBodyweight ? 'hidden' : 'required'} aria-label="Вес подхода ${n + 1}, кг" placeholder="кг" /><span class="bodyweight-value" ${s.isBodyweight ? '' : 'hidden'}>Собственный вес</span><input type="number" inputmode="numeric" data-set-field="reps" value="${escape(s.reps)}" min="1" max="1000" required aria-label="Повторения подхода ${n + 1}" /><button type="button" class="text-button danger-text" data-remove-set aria-label="Удалить подход ${n + 1}">×</button></div>
+                    <div class="set-kind-controls"><label class="bodyweight-check"><input type="checkbox" data-set-field="isBodyweight" data-bodyweight ${s.isBodyweight ? 'checked' : ''} />Собственный вес</label>${s.drops.length ? '<span class="drop-set-badge">Дропсет</span>' : ''}</div>
+                    <div class="set-drops" data-set-drops>${s.drops.map((d, i) => window.WorkoutSetFields.dropMarkup(d, i, true)).join('')}</div>
+                    <button type="button" class="text-button add-drop" data-add-drop ${s.drops.length >= 10 ? 'disabled' : ''}>+ Дроп: снизить вес</button>
+                    ${s.drops.length ? '<small class="drop-help">Ступени выполняются без отдыха и входят в один подход.</small>' : ''}
+                    <details class="set-extra app-disclosure" ${s.isWarmup || s.notes || s.rir !== '' ? 'open' : ''}><summary>Разминка, усилие и заметка</summary><div><label>Осталось повторов (RIR)<input type="number" min="0" max="10" inputmode="numeric" data-set-field="rir" value="${escape(s.rir)}" /></label><label class="set-note">Заметка<input maxlength="500" data-set-field="notes" value="${escape(s.notes)}" /></label><label class="warmup-check"><input type="checkbox" data-set-field="isWarmup" ${s.isWarmup ? 'checked' : ''} />Разминка</label></div></details></div>`).join('')}
+                <p class="record-weight-hint">Без дополнительного отягощения отметьте «Собственный вес».</p>
                 <footer class="record-exercise-footer"><button type="button" class="button secondary" data-add-set ${exercise.sets.length >= 20 ? 'disabled' : ''}>+ Подход</button><div>${i > 0 ? `<button type="button" class="button secondary" data-record-neighbor="${exercises[i - 1].exerciseId}">Назад</button>` : ''}${i < exercises.length - 1 ? `<button type="button" class="button secondary" data-record-neighbor="${exercises[i + 1].exerciseId}">Следующее →</button>` : ''}</div></footer>
             </section>`;
         }).join('');
@@ -2958,7 +3040,13 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 [exercises[i], exercises[target]] = [exercises[target], exercises[i]];
             }, 'Порядок упражнений изменён.');
         } else if (button.hasAttribute('data-add-set') && exercise.sets.length < 20) {
-            change(() => exercise.sets.push({...exercise.sets.at(-1) || blankSet()}), 'Подход добавлен. Проверьте вес и повторения.');
+            change(() => exercise.sets.push(structuredClone(exercise.sets.at(-1) || blankSet())), 'Подход добавлен. Проверьте вес и повторения.');
+        } else if (button.hasAttribute('data-add-drop')) {
+            const set = exercise.sets[Number(button.closest('[data-set-index]').dataset.setIndex)];
+            if (set.drops.length < 10) change(() => set.drops.push({weight: '', reps: set.drops.at(-1)?.reps || set.reps, isBodyweight: false}), 'Дроп добавлен. Укажите сниженный вес и повторения.');
+        } else if (button.hasAttribute('data-remove-drop')) {
+            const set = exercise.sets[Number(button.closest('[data-set-index]').dataset.setIndex)];
+            change(() => set.drops.splice(Number(button.closest('[data-drop-index]').dataset.dropIndex), 1), 'Ступень дропсета удалена.');
         } else if (button.hasAttribute('data-remove-set')) change(() => {
             exercise.sets.splice(Number(button.closest('[data-set-index]').dataset.setIndex), 1);
             if (!exercise.sets.length) exercise.sets.push(blankSet());
@@ -2979,7 +3067,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 return;
             }
             change(() => exercise.sets.forEach(s => {
-                if (weight !== '') s.weight = weight;
+                if (weight !== '') { s.weight = weight; s.isBodyweight = false; }
                 if (reps !== '') s.reps = reps;
             }), 'Значения применены ко всем подходам упражнения.');
         }
@@ -3073,7 +3161,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     function validate() {
         syncResults();
         for (const input of list.querySelectorAll('[data-set-field="weight"]'))
-            input.setCustomValidity(input.value.trim() !== '' && Number.isFinite(number(input.value)) && number(input.value) >= 0 && number(input.value) <= 10000 ? '' : 'Введите вес от 0 до 10000 кг. Для собственного веса укажите 0.');
+            input.setCustomValidity(input.hidden || input.value.trim() !== '' && Number.isFinite(number(input.value)) && number(input.value) >= 0 && number(input.value) <= 10000 ? '' : 'Введите вес от 0 до 10000 кг или отметьте «Собственный вес».');
         const invalid = [...form.querySelectorAll('input:invalid,textarea:invalid')].find(input => !input.matches('[data-batch-weight],[data-batch-reps]'));
         if (invalid) {
             message('Проверьте выделенное поле.');
@@ -3091,10 +3179,12 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         const payload = exercises.map(e => ({
             exerciseId: e.exerciseId,
             sets: e.sets.map(s => ({
-                weight: number(s.weight),
+                weight: s.isBodyweight ? 0 : number(s.weight),
                 reps: number(s.reps),
                 rir: s.rir === '' || s.rir == null ? null : number(s.rir),
                 isWarmup: !!s.isWarmup,
+                isBodyweight: !!s.isBodyweight,
+                drops: s.drops.map(d => ({weight: d.isBodyweight ? 0 : number(d.weight), reps: number(d.reps), isBodyweight: !!d.isBodyweight})),
                 notes: s.notes || null
             }))
         }));
@@ -3118,7 +3208,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 month: 'long',
                 year: 'numeric'
             }).format(new Date(field('Date').value + 'T12:00:00'));
-            review.querySelector('[data-record-review-content]').innerHTML = `<h3>${escape(field('Title').value)}</h3><p class="record-review-date">${escape(date)} · ${field('DurationMinutes').value ? escape(field('DurationMinutes').value) + ' мин' : 'Длительность не указана'}</p><div class="record-review-stats"><div><span>Рабочих подходов</span><strong>${working.length}</strong></div><div><span>Объём, кг</span><strong>${format(working.reduce((sum, s) => sum + s.weight * s.reps, 0))}</strong></div></div><ul class="record-review-list">${payload.map(e => `<li><strong>${escape(library.byId.get(e.exerciseId).dataset.name)}</strong><span>${e.sets.length} подх.</span></li>`).join('')}</ul>${sets.some(s => s.isWarmup) ? `<p class="record-review-date">Разминочных подходов: ${sets.length - working.length}</p>` : ''}`;
+            review.querySelector('[data-record-review-content]').innerHTML = `<h3>${escape(field('Title').value)}</h3><p class="record-review-date">${escape(date)} · ${field('DurationMinutes').value ? escape(field('DurationMinutes').value) + ' мин' : 'Длительность не указана'}</p><div class="record-review-stats"><div><span>Рабочих подходов</span><strong>${working.length}</strong></div><div><span>Объём, кг</span><strong>${format(working.reduce((sum, s) => sum + s.weight * s.reps + s.drops.reduce((v, d) => v + d.weight * d.reps, 0), 0))}</strong></div></div><ul class="record-review-list">${payload.map(e => `<li><strong>${escape(library.byId.get(e.exerciseId).dataset.name)}</strong><span>${e.sets.length} подх.${e.sets.some(s => s.drops.length) ? ' · дропсет' : ''}${e.sets.some(s => s.isBodyweight) ? ' · собственный вес' : ''}</span></li>`).join('')}</ul>${sets.some(s => s.isWarmup) ? `<p class="record-review-date">Разминочных подходов: ${sets.length - working.length}</p>` : ''}`;
             save();
             review.showModal();
             return;

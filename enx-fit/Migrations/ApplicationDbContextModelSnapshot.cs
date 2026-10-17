@@ -3414,6 +3414,9 @@ namespace enx_fit.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("IsBodyweight")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsCompleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -5499,6 +5502,41 @@ namespace enx_fit.Migrations
                         .HasForeignKey("WorkoutExerciseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.OwnsMany("enx_fit.Models.SetDrop", "Drops", b1 =>
+                        {
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
+
+                            b1.Property<bool>("IsBodyweight")
+                                .HasColumnType("boolean");
+
+                            b1.Property<int>("Order")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("Reps")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("SetEntryId")
+                                .HasColumnType("integer");
+
+                            b1.Property<decimal>("Weight")
+                                .HasColumnType("numeric");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("SetEntryId");
+
+                            b1.ToTable("SetDrops", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("SetEntryId");
+                        });
+
+                    b.Navigation("Drops");
 
                     b.Navigation("WorkoutExercise");
                 });

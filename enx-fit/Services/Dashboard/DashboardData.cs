@@ -23,7 +23,7 @@ public sealed class DashboardData
     public string Name => (Subject.UserName ?? Subject.Email)?.Split('@')[0] is { Length: > 0 } name ? name : "Спортсмен";
     public string Initial => Name[..1].ToUpperInvariant();
     public static IEnumerable<SetEntry> WorkingSets(WorkoutSession w) => w.WorkoutExercises.SelectMany(e => e.SetEntries).Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0);
-    public static decimal Volume(WorkoutSession w) => WorkingSets(w).Sum(s => s.Weight * s.Reps);
+    public static decimal Volume(WorkoutSession w) => WorkingSets(w).Sum(s => s.Volume);
     // Detailed sessions only. Home widgets must use the summary fields for all-time totals.
     public IEnumerable<WorkoutSession> Completed => Workouts.Where(w => w.Date <= Today &&
         w.State == WorkoutStatus.Completed && WorkingSets(w).Any());

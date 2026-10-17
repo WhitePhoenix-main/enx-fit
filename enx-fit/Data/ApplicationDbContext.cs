@@ -145,6 +145,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         });
 
         modelBuilder.Entity<SetEntry>().Property(s => s.IsCompleted).HasDefaultValue(true).HasSentinel(true);
+        modelBuilder.Entity<SetEntry>().OwnsMany(s => s.Drops, drop =>
+        {
+            drop.ToTable("SetDrops");
+            drop.WithOwner().HasForeignKey("SetEntryId");
+            drop.HasKey(d => d.Id);
+            drop.Property(d => d.Id).ValueGeneratedOnAdd();
+        });
 
         modelBuilder.Entity<WorkoutCommand>(entity =>
         {

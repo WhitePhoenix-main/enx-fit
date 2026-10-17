@@ -29,11 +29,14 @@ public sealed class RecordedExercise
     [Required(ErrorMessage = "Укажите подходы."), MinLength(1, ErrorMessage = "Укажите хотя бы один подход."), MaxLength(20, ErrorMessage = "В упражнении может быть не более 20 подходов.")]
     public List<RecordedSet> Sets { get; set; } = [];
 }
-public sealed class RecordedSet
+public sealed class RecordedSet : IValidatableObject
 {
     [Range(typeof(decimal), "0", "10000", ErrorMessage = "Укажите вес от 0 до 10000 кг.")] public decimal Weight { get; set; }
     [Range(1, 1000, ErrorMessage = "Укажите повторения от 1 до 1000.")] public int Reps { get; set; } = 10;
     [Range(0, 10, ErrorMessage = "Укажите RIR от 0 до 10 или оставьте поле пустым.")] public int? Rir { get; set; }
     public bool IsWarmup { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool IsBodyweight { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<SetDropInput>? Drops { get; set; }
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext) => SetDropInput.ValidateDrops(Drops);
     [StringLength(500, ErrorMessage = "Заметка к подходу должна быть не длиннее 500 символов.")] public string? Notes { get; set; }
 }

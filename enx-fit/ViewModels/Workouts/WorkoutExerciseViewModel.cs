@@ -18,6 +18,8 @@ public sealed record WorkoutExerciseViewModel(
     decimal NextWeight,
     int NextReps)
 {
+    public bool NextIsBodyweight => Sets.LastOrDefault()?.Set.IsBodyweight ?? false;
+
     public static IReadOnlyList<WorkoutExerciseViewModel> CreateAll(
         WorkoutSession workout,
         WorkoutBuilderInput? blueprint,

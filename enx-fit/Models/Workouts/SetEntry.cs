@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace enx_fit.Models;
 
 public class SetEntry
@@ -14,6 +16,13 @@ public class SetEntry
 
     public decimal Weight { get; set; }
 
+    public bool IsBodyweight { get; set; }
+
+    public List<SetDrop> Drops { get; set; } = [];
+
+    [NotMapped]
+    public decimal Volume => (IsBodyweight ? 0 : Weight * Reps) + Drops.Sum(d => d.IsBodyweight ? 0 : d.Weight * d.Reps);
+
     public int? Rir { get; set; }
 
     public bool IsWarmup { get; set; }
@@ -23,4 +32,14 @@ public class SetEntry
     public DateTime? PerformedAtUtc { get; set; }
 
     public string? Notes { get; set; }
+}
+
+// Additional stages belong to one set and share its completion, warm-up and rest.
+public class SetDrop
+{
+    public int Id { get; set; }
+    public int Order { get; set; }
+    public decimal Weight { get; set; }
+    public int Reps { get; set; }
+    public bool IsBodyweight { get; set; }
 }

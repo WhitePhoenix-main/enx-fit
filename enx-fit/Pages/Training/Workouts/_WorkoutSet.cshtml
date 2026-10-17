@@ -41,7 +41,8 @@
         <input aria-label="Вес подхода @set.SetNumber, кг" name="AddSet.Weight" type="number"
                inputmode="decimal" min="0" max="10000" step="0.01"
                value="@set.Weight.ToString(CultureInfo.InvariantCulture)" readonly="@locked"
-               required/>
+               hidden="@set.IsBodyweight" required="@(!set.IsBodyweight)"/>
+        <span class="bodyweight-value" hidden="@(!set.IsBodyweight)">Собственный вес</span>
         <input aria-label="Повторения подхода @set.SetNumber" name="AddSet.Reps" type="number"
                inputmode="numeric" min="0" max="1000" value="@set.Reps" readonly="@locked"
                required/>
@@ -50,6 +51,38 @@
                                             aria-label="Подход @set.SetNumber выполнен"/><span><admin-icon
                     name="check"/></span></label>
     </div>
+    <div class="set-kind-controls">
+        <label class="bodyweight-check"><input type="checkbox" name="AddSet.IsBodyweight" value="true"
+            data-bodyweight checked="@set.IsBodyweight" disabled="@locked" />Собственный вес</label>
+        <span class="drop-set-badge" data-drop-badge hidden="@(set.Drops.Count == 0)">Дропсет</span>
+    </div>
+    <div class="set-drops" data-set-drops>
+        @foreach (var stage in set.Drops.OrderBy(d => d.Order).Select((drop, index) => (drop, index)))
+        {
+            <div class="set-drop" data-drop-index="@stage.index">
+                <div class="drop-main">
+                    <span class="drop-number">Дроп @(stage.index + 1)</span>
+                    <input name="AddSet.Drops[@stage.index].Weight" type="number" inputmode="decimal" min="0" max="10000" step="0.01"
+                        value="@stage.drop.Weight.ToString(CultureInfo.InvariantCulture)" data-drop-field="weight"
+                        aria-label="Вес дропа @(stage.index + 1), кг" hidden="@stage.drop.IsBodyweight" required="@(!stage.drop.IsBodyweight)" readonly="@locked" />
+                    <span class="bodyweight-value" hidden="@(!stage.drop.IsBodyweight)">Собственный вес</span>
+                    <input name="AddSet.Drops[@stage.index].Reps" type="number" inputmode="numeric" min="1" max="1000"
+                        value="@stage.drop.Reps" data-drop-field="reps" aria-label="Повторения дропа @(stage.index + 1)" required readonly="@locked" />
+                    @if (!locked)
+                    {
+                        <button type="button" class="text-button danger-text" data-remove-drop aria-label="Удалить дроп @(stage.index + 1)">×</button>
+                    }
+                </div>
+                <label class="bodyweight-check"><input name="AddSet.Drops[@stage.index].IsBodyweight" type="checkbox" value="true"
+                    data-drop-field="isBodyweight" data-bodyweight checked="@stage.drop.IsBodyweight" disabled="@locked" />Собственный вес</label>
+            </div>
+        }
+    </div>
+    @if (!locked)
+    {
+        <button type="button" class="text-button add-drop" data-add-drop disabled="@(set.Drops.Count >= 10)">+ Дроп: снизить вес</button>
+        <small class="drop-help" hidden="@(set.Drops.Count == 0)">Ступени выполняются без отдыха. Отметьте выполнение после всего дропсета.</small>
+    }
     @if (!locked)
     {
         <div class="set-effort-prompt" data-effort-prompt

@@ -160,6 +160,8 @@ public partial class WorkoutService(ApplicationDbContext dbContext, CurrentUser 
 
     public async Task<AddSetEntryResult> AddSetAsync(int workoutSessionId, AddSetEntryInputModel input, bool completed = true)
     {
+        System.ComponentModel.DataAnnotations.Validator.ValidateObject(input,
+            new System.ComponentModel.DataAnnotations.ValidationContext(input), true);
         if (await VisibleWorkouts().AnyAsync(w => w.Id == workoutSessionId && (w.Status == WorkoutStatus.Completed || w.Status == WorkoutStatus.Cancelled || (w.StartedAtUtc != null && w.CompletedAtUtc != null))))
             return AddSetEntryResult.WorkoutExerciseNotFound;
         var workoutExerciseExists = await dbContext.WorkoutExercises
@@ -177,7 +179,9 @@ public partial class WorkoutService(ApplicationDbContext dbContext, CurrentUser 
         {
             WorkoutExerciseId = input.WorkoutExerciseId,
             SetNumber = input.SetNumber,
-            Weight = input.Weight,
+            Weight = input.IsBodyweight ? 0 : input.Weight,
+            IsBodyweight = input.IsBodyweight,
+            Drops = SetDropInput.ToEntries(input.Drops),
             Reps = input.Reps,
             Rir = input.Rir,
             IsWarmup = input.IsWarmup,

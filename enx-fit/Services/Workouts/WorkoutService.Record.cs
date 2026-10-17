@@ -42,6 +42,10 @@ public partial class WorkoutService
                 var setLocation = $"{location}, подход №{n + 1}";
                 if (set is null) throw new InvalidOperationException($"{setLocation}: заполните результаты подхода.");
                 ValidateResult(set, setLocation);
+                if (set.IsBodyweight) set.Weight = 0;
+                if (set.Drops is { Count: 0 }) set.Drops = null;
+                foreach (var drop in set.Drops ?? [])
+                    if (drop.IsBodyweight) drop.Weight = 0;
             }
         }
         if (!exercises.Any(e => e.Sets.Any(s => !s.IsWarmup))) throw new InvalidOperationException("Добавьте хотя бы один рабочий подход.");
@@ -83,6 +87,7 @@ public partial class WorkoutService
                 ExerciseId = e.ExerciseId, Order = i,
                 SetEntries = e.Sets.Select((s, n) => new SetEntry
                 { SetNumber = n + 1, Weight = s.Weight, Reps = s.Reps, Rir = s.Rir, IsWarmup = s.IsWarmup,
+                    IsBodyweight = s.IsBodyweight, Drops = SetDropInput.ToEntries(s.Drops),
                     Notes = s.Notes?.Trim(), IsCompleted = true }).ToList()
             }).ToList()
         };
@@ -111,6 +116,7 @@ public partial class WorkoutService
             .Select(e => new RecordedExercise { ExerciseId = e.ExerciseId,
                 Sets = e.SetEntries.Where(s => source == "template" || (s.IsCompleted && s.Reps > 0)).OrderBy(s => s.SetNumber)
                     .Select(s => new RecordedSet { Weight = s.Weight, Reps = s.Reps, IsWarmup = s.IsWarmup,
+                        IsBodyweight = s.IsBodyweight, Drops = SetDropInput.FromEntries(s.Drops),
                         Rir = source == "previous" ? s.Rir : null, Notes = source == "previous" ? s.Notes : null }).ToList() })
             .Where(e => e.Sets.Count > 0).ToList());
     }
