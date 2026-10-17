@@ -4,7 +4,7 @@
     var d = dashboard.Data;
     var ru = CultureInfo.GetCultureInfo("ru-RU");
     string N(decimal? value, string format = "N0") => value?.ToString(format, ru) ?? "—";
-    var hasData = d.Completed.Any();
+    var hasData = d.CompletedCount > 0;
 }
 <section class="panel achievements-card" id="achievements">
 <div class="card-heading">
@@ -17,7 +17,7 @@
 </span>
 <div>
 <h3>@(d.Streak > 1 ? $"{d.Streak} дней подряд" : hasData ? "Первый шаг сделан" : "Всё впереди")</h3>
-<p>@(hasData ? $"{d.Completed.Count()} тренировок записано" : "Запишите первую тренировку")</p>
+<p>@(hasData ? $"{d.CompletedCount} тренировок записано" : "Запишите первую тренировку")</p>
 </div>
 </div>
 <div class="achievement">

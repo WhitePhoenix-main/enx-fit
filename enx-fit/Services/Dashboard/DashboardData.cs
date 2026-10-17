@@ -10,6 +10,7 @@ public sealed record DashboardStrengthSeries(Exercise Exercise, IReadOnlyList<Da
 
 public sealed class DashboardData
 {
+    public DashboardHistorySummary? History { get; init; }
     public ApplicationUser Subject { get; init; } = null!;
     public DashboardSettings Settings { get; set; } = new();
     public List<WorkoutSession> Workouts { get; set; } = [];
@@ -23,14 +24,23 @@ public sealed class DashboardData
     public string Initial => Name[..1].ToUpperInvariant();
     public static IEnumerable<SetEntry> WorkingSets(WorkoutSession w) => w.WorkoutExercises.SelectMany(e => e.SetEntries).Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0);
     public static decimal Volume(WorkoutSession w) => WorkingSets(w).Sum(s => s.Weight * s.Reps);
+    // Detailed sessions only. Home widgets must use the summary fields for all-time totals.
     public IEnumerable<WorkoutSession> Completed => Workouts.Where(w => w.Date <= Today &&
         w.State == WorkoutStatus.Completed && WorkingSets(w).Any());
     public IEnumerable<WorkoutSession> PeriodWorkouts => Completed.Where(w => w.Date >= Since && w.Date <= Until);
-    public decimal TotalVolume => PeriodWorkouts.Sum(Volume);
-    public decimal PreviousVolume => Completed.Where(w => w.Date >= Since.AddDays(-Days) && w.Date < Since).Sum(Volume);
+    public int CompletedCount => History?.Days.Sum(d => d.Count) ?? Completed.Count();
+    public int CountCompleted(DateOnly from, DateOnly to) => History is { } history
+        ? history.Days.Where(d => d.Date >= from && d.Date <= to).Sum(d => d.Count)
+        : Completed.Count(w => w.Date >= from && w.Date <= to);
+    public IEnumerable<DateOnly> CompletedDates => History?.Days.Select(d => d.Date) ?? Completed.Select(w => w.Date);
+    private decimal VolumeBetween(DateOnly from, DateOnly to) => History is { } history
+        ? history.Days.Where(d => d.Date >= from && d.Date <= to).Sum(d => d.Volume)
+        : Completed.Where(w => w.Date >= from && w.Date <= to).Sum(Volume);
+    public decimal TotalVolume => VolumeBetween(Since, Until);
+    public decimal PreviousVolume => VolumeBetween(Since.AddDays(-Days), Since.AddDays(-1));
     public decimal? VolumeChange => PreviousVolume > 0 ? Math.Round((TotalVolume / PreviousVolume - 1) * 100) : null;
     public decimal? Weight => Measurements.LastOrDefault()?.WeightKg;
-    public int NewRecords => Completed.SelectMany(w => w.WorkoutExercises.Select(e => new { w.Date, e.ExerciseId,
+    public int NewRecords => History?.Exercises.Count(e => e.Recent > e.Prior) ?? Completed.SelectMany(w => w.WorkoutExercises.Select(e => new { w.Date, e.ExerciseId,
             Weight = e.SetEntries.Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0).Select(s => s.Weight).DefaultIfEmpty().Max() }))
         .GroupBy(e => e.ExerciseId).Count(g => g.Where(e => e.Date >= Today.AddDays(-29)).Select(e => e.Weight).DefaultIfEmpty().Max() >
             g.Where(e => e.Date < Today.AddDays(-29)).Select(e => e.Weight).DefaultIfEmpty().Max());
@@ -51,7 +61,7 @@ public sealed class DashboardData
     {
         get
         {
-            var dates = Completed.Select(w => w.Date).ToHashSet();
+            var dates = CompletedDates.ToHashSet();
             var date = dates.Contains(Today) ? Today : Today.AddDays(-1);
             var count = 0;
             while (dates.Contains(date)) { count++; date = date.AddDays(-1); }
@@ -74,7 +84,7 @@ public sealed class DashboardData
             .Select(g => new DashboardStrengthPoint(g.Key, g.Max(s => s.Weight))).ToList();
         return new(exercise.Exercise, points);
     }
-    public IEnumerable<(string Name, decimal Weight, decimal? Gain)> Records => Completed
+    public IEnumerable<(string Name, decimal Weight, decimal? Gain)> Records => History?.Records.AsEnumerable() ?? Completed
         .SelectMany(w => w.WorkoutExercises.Select(e => new { w.Date, Exercise = e }))
         .Where(x => x.Exercise.SetEntries.Any(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0 && s.Weight > 0))
         .GroupBy(x => x.Exercise.ExerciseId).Select(g =>
@@ -95,8 +105,7 @@ public sealed class DashboardData
             {
                 var from = Since.AddDays(i * Days / buckets);
                 var to = Since.AddDays((i + 1) * Days / buckets);
-                var workouts = PeriodWorkouts.Where(w => w.Date >= from && w.Date < to).ToList();
-                yield return (from, workouts.Sum(Volume), workouts.Count);
+                yield return (from, VolumeBetween(from, to.AddDays(-1)), CountCompleted(from, to.AddDays(-1)));
             }
         }
     }

@@ -21,20 +21,39 @@ public sealed class ProgramTrainingDataService(ApplicationDbContext db, Training
     {
         // Resolve access on every read, including callers outside a Razor page.
         var p = await programs.FindAsync(programId) ?? throw new ProgramOperationException(ProgramFailure.NotFound);
-        var workout = p.Workouts.SingleOrDefault(w => w.Exercises.Any(e => e.Id == programExerciseId));
-        var exercise = workout?.Exercises.Single(e => e.Id == programExerciseId);
-        if (exercise is null) throw new ProgramOperationException(ProgramFailure.NotFound);
+        return await HistoryAsync(p, programExerciseId);
+    }
+
+    // Only callers that have already resolved access may reuse the program snapshot.
+    internal async Task<List<ExercisePerformance>> HistoryAsync(TrainingProgram p, int programExerciseId) =>
+        (await HistoryBatchAsync(p, [programExerciseId]))[programExerciseId];
+
+    internal async Task<Dictionary<int, List<ExercisePerformance>>> HistoryBatchAsync(TrainingProgram p, int[] exerciseIds)
+    {
+        if (exerciseIds.Any(id => !p.Workouts.SelectMany(w => w.Exercises).Any(e => e.Id == id)))
+            throw new ProgramOperationException(ProgramFailure.NotFound);
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var rows = await db.WorkoutExercises.AsNoTracking().Include(e => e.SetEntries).Include(e => e.WorkoutSession)
-            .Where(e => e.WorkoutSession.UserId == p.OwnerId && e.WorkoutSession.TrainingProgramId == p.Id &&
-                e.WorkoutSession.ProgramWorkoutKey == workout!.Key && e.ExerciseId == exercise.ExerciseId &&
-                e.WorkoutSession.CompletedAtUtc != null && e.WorkoutSession.Status != WorkoutStatus.Cancelled && e.WorkoutSession.Date <= today)
-            .OrderByDescending(e => e.WorkoutSession.Date).ThenByDescending(e => e.WorkoutSessionId).Take(12).ToListAsync();
-        return rows.Where(e => e.SetEntries.Any(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0))
-            .Select(e => new ExercisePerformance(e.WorkoutSessionId, e.WorkoutSession.Date,
-                e.SetEntries.Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0).OrderBy(s => s.SetNumber).ThenBy(s => s.Id)
-                    .Select(s => new PerformedSet(s.SetNumber, s.Weight, s.Reps, s.Rir)).ToList(),
-                e.TargetSets, e.TargetRepsMin, e.TargetRepsMax, e.TargetRir, e.TargetRpe)).ToList();
+        var rows = await db.Set<ProgramWorkout>().AsNoTracking().AsSingleQuery().Where(w => w.TrainingProgramId == p.Id)
+            .SelectMany(w => w.Exercises.Where(exercise => exerciseIds.Contains(exercise.Id)).Select(exercise => new
+            {
+                exercise.Id,
+                History = db.WorkoutExercises.Where(e => e.WorkoutSession.UserId == p.OwnerId &&
+                    e.WorkoutSession.TrainingProgramId == p.Id && e.WorkoutSession.ProgramWorkoutKey == w.Key &&
+                    e.ExerciseId == exercise.ExerciseId && e.WorkoutSession.CompletedAtUtc != null &&
+                    e.WorkoutSession.Status != WorkoutStatus.Cancelled && e.WorkoutSession.Date <= today)
+                    .OrderByDescending(e => e.WorkoutSession.Date).ThenByDescending(e => e.WorkoutSessionId).Take(12)
+                    .Select(e => new
+                    {
+                        e.WorkoutSessionId, e.WorkoutSession.Date, e.TargetSets, e.TargetRepsMin, e.TargetRepsMax, e.TargetRir, e.TargetRpe,
+                        Sets = e.SetEntries.Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0)
+                            .OrderBy(s => s.SetNumber).ThenBy(s => s.Id)
+                            .Select(s => new PerformedSet(s.SetNumber, s.Weight, s.Reps, s.Rir)).ToList()
+                    }).ToList()
+            })).ToListAsync();
+        // Preserve the original rule: take 12 sessions before discarding empty working sets.
+        return rows.ToDictionary(r => r.Id, r => r.History.Where(e => e.Sets.Count > 0)
+            .Select(e => new ExercisePerformance(e.WorkoutSessionId, e.Date, e.Sets,
+                e.TargetSets, e.TargetRepsMin, e.TargetRepsMax, e.TargetRir, e.TargetRpe)).ToList());
     }
 
     public static string EvidenceKey(TrainingProgram p, ProgramWorkoutExercise e, IReadOnlyList<ExercisePerformance> history) =>

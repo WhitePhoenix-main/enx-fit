@@ -34,8 +34,12 @@ public sealed class HomeProgressViewModel
                 w.Date, WorkoutId = w.Id, e.ExerciseId, Name = ExercisePresentation.DisplayName(e.Exercise),
                 Best = e.SetEntries.Where(ValidSet).OrderByDescending(s => s.Weight).ThenByDescending(s => s.Reps).First()
             })).ToList();
-        Exercises = observations.GroupBy(o => o.ExerciseId).OrderByDescending(g => g.Last().Date)
-            .ThenByDescending(g => g.Last().WorkoutId).Select(g => new ProgressExerciseOption(g.Key, g.Last().Name)).ToList();
+        Exercises = model.Data.History is { } history
+            ? history.Exercises.Where(e => e.ProgressDate.HasValue).OrderByDescending(e => e.ProgressDate)
+                .ThenByDescending(e => e.ProgressWorkoutId).Select(e => new ProgressExerciseOption(e.Id,
+                    ExercisePresentation.DisplayName(new Exercise { Id = e.Id, Name = e.Name }))).ToList()
+            : observations.GroupBy(o => o.ExerciseId).OrderByDescending(g => g.Last().Date)
+                .ThenByDescending(g => g.Last().WorkoutId).Select(g => new ProgressExerciseOption(g.Key, g.Last().Name)).ToList();
         ExerciseId = Exercises.Any(e => e.Id == model.ProgressExercise) ? model.ProgressExercise : Exercises.FirstOrDefault()?.Id;
         ExerciseName = Exercises.FirstOrDefault(e => e.Id == ExerciseId)?.Name ?? "Результаты упражнений";
         Results = observations.Where(o => o.ExerciseId == ExerciseId && o.Date >= model.Data.Until.AddDays(1 - model.ChartWeeks * 7))

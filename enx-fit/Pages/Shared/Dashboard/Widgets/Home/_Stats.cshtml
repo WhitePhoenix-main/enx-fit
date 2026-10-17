@@ -8,8 +8,8 @@
 @switch (Model.WidgetId)
 {
     case "stat-workouts":
-        var monthly = d.Completed.Count(w => w.Date >= d.Today.AddDays(-29));
-        var previousMonth = d.Completed.Count(w => w.Date >= d.Today.AddDays(-59) && w.Date < d.Today.AddDays(-29));
+        var monthly = d.CountCompleted(d.Today.AddDays(-29), d.Today);
+        var previousMonth = d.CountCompleted(d.Today.AddDays(-59), d.Today.AddDays(-30));
         var change = previousMonth > 0 ? (int?)Math.Round((monthly - previousMonth) * 100d / previousMonth) : null;
         if (reference) { monthly = 8; change = 33; }
         <a class="ef-card ef-stat" href="@PageUrl("/Training/Index")"><reference-icon name="bars" /><div><strong>@monthly</strong><span>тренировок за месяц</span></div>@if (change.HasValue) { <span class="ef-stat-change @(change < 0 ? "negative" : "")"><svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18 18 6M9 6h9v9" /></svg>@(change >= 0 ? "+" : "")@change%</span> }</a>

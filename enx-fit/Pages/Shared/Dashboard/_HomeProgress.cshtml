@@ -1,7 +1,7 @@
 @model DashboardWidgetViewModel
 @{
     var dashboard = Model.Dashboard;
-    var vm = new HomeProgressViewModel(dashboard);
+    var vm = dashboard.HomeProgress;
     var prefix = Model.WidgetId == "home-progress-mobile" ? "mobile" : "desktop";
     var ru = CultureInfo.GetCultureInfo("ru-RU");
     string N(decimal value) => value.ToString("0.##", ru);

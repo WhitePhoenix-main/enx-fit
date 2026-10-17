@@ -53,6 +53,8 @@ builder.Services.AddScoped<AnalyticsDataService>();
 builder.Services.AddScoped<UserDirectoryService>();
 builder.Services.AddScoped<RegistrationService>();
 builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<DashboardQuery>();
+builder.Services.AddScoped<DashboardCommands>();
 builder.Services.AddTrainingPrograms(builder.Configuration);
 builder.Services.AddSingleton<TrainingAnalyticsService>();
 builder.Services.AddSingleton<BodyAnalyticsService>();

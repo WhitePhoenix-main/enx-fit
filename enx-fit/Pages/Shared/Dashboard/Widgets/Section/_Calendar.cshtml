@@ -7,7 +7,7 @@
     var weekDays = new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" };
     var monthStart = new DateOnly(d.Until.Year, d.Until.Month, 1);
     var calendarStart = monthStart.AddDays(-((int)monthStart.DayOfWeek + 6) % 7);
-    var workoutDates = d.Completed.Select(w => w.Date).ToHashSet();
+    var workoutDates = d.CompletedDates.ToHashSet();
 }
 <section class="panel calendar-card">
 <div class="card-heading">

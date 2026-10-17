@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using enx_fit.Areas.Identity.Data;
 using enx_fit.Data;
 using enx_fit.Diagnostics;
 using enx_fit.ModelBinding;
@@ -20,7 +21,7 @@ namespace enx_fit.Pages.Dashboard;
 [RequestSizeLimit(16384)]
 public class DashboardModel(DashboardService dashboard, ApplicationDbContext db, CurrentUser currentUser,
     IFeatureAccessService features, CoachAttentionService attention, TrainingProgramService programs, WorkoutService workouts,
-    IRecommendationService recommendations, RequestPerformance performance) : PageModel
+    IRecommendationService recommendations, RequestPerformance performance, DashboardQuery homeQuery, DashboardCommands commands) : PageModel
 {
     [BindProperty(SupportsGet = true)] public string? ClientId { get; set; }
     [BindProperty(SupportsGet = true)] public int Days { get; set; } = 7;
@@ -66,14 +67,17 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
             return planned is not null && (program is null || planned.Date <= program.Date) ? planned : program;
         }
     }
-    public bool ShowOnboarding => !IsCoachView && ActiveWorkout is null && !Data.Completed.Any() && Data.Measurements.Count == 0;
+    private HomeProgressViewModel? homeProgress;
+    public HomeProgressViewModel HomeProgress => homeProgress ??= new(this);
+    public bool ShowOnboarding => !IsCoachView && ActiveWorkout is null && Data.CompletedCount == 0 && Data.Measurements.Count == 0;
     public bool ShowSetupPrompt => !Reference && ShowOnboarding && Data.Settings.SetupStatus == SetupStatus.NotStarted;
     public bool UsesDefaultLayout { get; private set; }
 
     public async Task<IActionResult> OnPostStartAsync(string source, int? templateId, int? plannedId, int? programId, int? previousId)
     {
-        if (!await LoadAsync()) return NotFound();
-        if (IsCoachView) return Forbid();
+        var subject = await dashboard.GetSubjectAsync(ClientId);
+        if (subject is null) return NotFound();
+        if (subject.Id != currentUser.Id) return Forbid();
         try
         {
             var id = source == "program" && programId.HasValue
@@ -83,6 +87,7 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
         }
         catch (InvalidOperationException ex) { ModelState.AddModelError("", ex.Message); }
         catch (ProgramOperationException ex) { ModelState.AddModelError("", ex.Message); }
+        await LoadAsync(subject);
         return Page();
     }
     public List<DashboardWidgetPlacement> Widgets { get; private set; } = [];
@@ -111,32 +116,25 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
 
     public async Task<IActionResult> OnPostGoalAsync()
     {
-        if (!await LoadAsync()) return NotFound();
-        if (!ModelState.IsValid) return Page();
-        var settings = await db.DashboardSettings.FindAsync(Data.Subject.Id);
-        if (settings is null) { settings = new DashboardSettings { UserId = Data.Subject.Id }; db.DashboardSettings.Add(settings); }
-        settings.GoalTitle = Goal.Title.Trim();
-        settings.WeeklyWorkoutGoal = Goal.WeeklyWorkouts;
-        settings.PreferencesRevision = Guid.NewGuid();
-        if (IsCoachView) settings.TrainerNote = Goal.TrainerNote?.Trim();
-        await db.SaveChangesAsync();
+        var subject = await dashboard.GetSubjectAsync(ClientId);
+        if (subject is null) return NotFound();
+        if (!ModelState.IsValid) { await LoadAsync(subject); return Page(); }
+        await commands.SaveGoalAsync(subject.Id, Goal);
+        NormalizePeriod(currentUser.LocalToday);
         StatusMessage = "Цель сохранена.";
         return RedirectToPage(new { ClientId, Days, Until = Until?.ToString("yyyy-MM-dd") });
     }
 
     public async Task<IActionResult> OnPostCheckInAsync()
     {
-        if (!await LoadAsync()) return NotFound();
-        if (IsCoachView) return Forbid();
+        var subject = await dashboard.GetSubjectAsync(ClientId);
+        if (subject is null) return NotFound();
+        if (subject.Id != currentUser.Id) return Forbid();
         // Only this form's fields are relevant; goal validation belongs to OnPostGoal.
         foreach (var key in ModelState.Keys.Where(k => k.StartsWith("Goal.")).ToArray()) ModelState.Remove(key);
-        if (!ModelState.IsValid) return Page();
-        var entry = await db.DailyCheckIns.FindAsync(currentUser.Id, Data.Today);
-        if (entry is null) { entry = new DailyCheckIn { UserId = currentUser.Id, Date = Data.Today }; db.DailyCheckIns.Add(entry); }
-        entry.WaterMl = CheckIn.WaterMl; entry.Steps = CheckIn.Steps; entry.SleepMinutes = CheckIn.SleepMinutes;
-        entry.ReadingMinutes = CheckIn.ReadingMinutes;
-        entry.NutritionLogged = CheckIn.NutritionLogged; entry.StretchingDone = CheckIn.StretchingDone;
-        await db.SaveChangesAsync();
+        if (!ModelState.IsValid) { await LoadAsync(subject); return Page(); }
+        await commands.SaveCheckInAsync(CheckIn);
+        NormalizePeriod(currentUser.LocalToday);
         StatusMessage = "Показатели на сегодня сохранены.";
         return RedirectToPage(new { Days, Until = Until?.ToString("yyyy-MM-dd") });
     }
@@ -163,12 +161,18 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
         return new JsonResult(new { widgets });
     }
 
-    private async Task<bool> LoadAsync()
+    private void NormalizePeriod(DateOnly latestDate)
     {
-        var subject = await performance.MeasureAsync("subject", () => dashboard.GetSubjectAsync(ClientId));
+        Days = Days is 7 or 30 or 365 ? Days : 7;
+        var today = currentUser.LocalToday;
+        Until = Until is null || Until > latestDate || Until < today.AddYears(-20) ? latestDate : Until;
+    }
+
+    private async Task<bool> LoadAsync(ApplicationUser? authorizedSubject = null)
+    {
+        var subject = authorizedSubject ?? await performance.MeasureAsync("subject", () => dashboard.GetSubjectAsync(ClientId));
         if (subject is null) return false;
         if (CurrentPage == "/Training/Index" && !Request.Query.ContainsKey("Days")) Days = 30;
-        Days = Days is 7 or 30 or 365 ? Days : 7;
         WeekOffset = Math.Clamp(WeekOffset, -52, 52);
         ProgressWeeks = ProgressWeeks is 2 or 4 or 6 or 12 ? ProgressWeeks : 6;
         ChartWeeks = ChartWeeks is 2 or 4 or 6 or 12 ? ChartWeeks : 6;
@@ -177,14 +181,21 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
         ProgressMetric = ProgressMetric is "consistency" or "strength" or "body" || (ProgressTab == "analytics" && ProgressMetric == "volume") ? ProgressMetric : "consistency";
         var today = currentUser.LocalToday;
         var latestDate = Reference && CurrentPage == "/Progress/Index" ? new DateOnly(2026, 10, 2) : today;
-        Until = Until is null || Until > latestDate || Until < today.AddYears(-20) ? latestDate : Until;
-        Data = await performance.MeasureAsync("history", () => dashboard.LoadAsync(subject, Days, Until.Value));
+        NormalizePeriod(latestDate);
+        DashboardReadModel? home = null;
+        if (CurrentPage == "/Dashboard/Index")
+        {
+            home = await performance.MeasureAsync("history", () => homeQuery.LoadAsync(subject, Days, Until!.Value, WeekOffset, ChartWeeks));
+            Data = home.Data;
+        }
+        else Data = await performance.MeasureAsync("history", () => dashboard.LoadAsync(subject, Days, Until!.Value));
+        homeProgress = null;
         if (CurrentPage == "/Training/Index")
         {
             Search = Search?.Trim();
             if (Search?.Length > 120) Search = Search[..120];
             if (WorkoutProgram != "standalone" && !int.TryParse(WorkoutProgram, out _)) WorkoutProgram = null;
-            var calendarDate = Month ?? (Reference ? new DateOnly(2026, 10, 2) : Until.Value);
+            var calendarDate = Month ?? (Reference ? new DateOnly(2026, 10, 2) : Until!.Value);
             if (calendarDate.Year < today.Year - 20 || calendarDate.Year > today.Year + 5) calendarDate = today;
             Month = new(calendarDate.Year, calendarDate.Month, 1);
             WorkoutPrograms = await db.TrainingPrograms.AsNoTracking().AsSplitQuery()
@@ -223,28 +234,28 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
                     if (CanAnalyzePrograms)
                     {
                         using var measurement = performance.Measure("recommendations");
-                        var exerciseIds = await db.TrainingRecommendations.AsNoTracking()
-                            .Where(r => r.TrainingProgramId == activeProgram.Id && r.UserId == Data.Subject.Id &&
-                                r.Status == RecommendationStatus.New && r.ProgramRevision == activeProgram.Revision)
-                            .OrderByDescending(r => r.CreatedAtUtc).Select(r => r.ProgramWorkoutExerciseId).ToListAsync();
-                        foreach (var exerciseId in exerciseIds.Distinct())
+                        NextRecommendation = await recommendations.NextForDashboardAsync(activeProgram);
+                        if (NextRecommendation is { } proposal)
                         {
-                            // Reuse the existing evidence/expiry checks without generating or applying on GET.
-                            var proposal = (await recommendations.ListAsync(activeProgram.Id, exerciseId))
-                                .FirstOrDefault(r => r.Status == RecommendationStatus.New);
-                            if (proposal is null) continue;
-                            NextRecommendation = proposal;
-                            NextGoalExercise = activeProgram.Workouts.SelectMany(w => w.Exercises).Single(e => e.Id == exerciseId);
-                            break;
+                            NextGoalExercise = activeProgram.Workouts.SelectMany(w => w.Exercises)
+                                .Single(e => e.Id == proposal.ProgramWorkoutExerciseId);
                         }
                     }
                 }
             }
         }
-        var preference = await performance.MeasureAsync("layout", async () =>
-            await db.DashboardLayoutPreferences.FindAsync(currentUser.Id, IsCoachView ? "coach" : "personal"));
-        UsesDefaultLayout = preference is null;
-        Widgets = DashboardWidgets.Read(preference?.WidgetsJson, IsCoachView);
+        if (home is not null)
+        {
+            UsesDefaultLayout = home.UsesDefaultLayout;
+            Widgets = DashboardWidgets.Read(home.WidgetsJson, IsCoachView);
+        }
+        else
+        {
+            var preference = await performance.MeasureAsync("layout", async () =>
+                await db.DashboardLayoutPreferences.FindAsync(currentUser.Id, IsCoachView ? "coach" : "personal"));
+            UsesDefaultLayout = preference is null;
+            Widgets = DashboardWidgets.Read(preference?.WidgetsJson, IsCoachView);
+        }
         ViewData["Dashboard"] = this;
         Response.Headers.CacheControl = "no-cache, no-store";
         return true;
