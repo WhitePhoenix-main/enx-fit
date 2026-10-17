@@ -24,7 +24,17 @@
         else if (!Model.Reference && date == Model.Data.Today) { <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="@(planned is not null ? "planned" : "program")"/><input type="hidden" name="plannedId" value="@planned?.Id"/><input type="hidden" name="programId" value="@Model.ActiveProgram?.Id"/><button class="em-primary em-hero-start" type="submit"><reference-icon name="play" />Начать по плану</button></form> }
         else if (!Model.Reference && date.HasValue) { <a class="em-primary em-hero-start" href="@(planned is not null ? Url.Page("/Training/Workouts/Details", new { id = planned.Id }) : Url.Page("/Training/Programs/Details", new { id = Model.ActiveProgram?.Id }))"><reference-icon name="calendar" />Открыть план</a> }
         else { <button class="em-primary em-hero-start" type="button" data-dialog="quick-workout-dialog"><reference-icon name="play" />@(Model.Reference ? "Начать по плану" : "Начать тренировку")</button> }
-        @if (!Model.IsCoachView) { <div class="em-shortcuts"><button type="button" data-dialog="quick-workout-dialog"><reference-icon name="bolt" /><span>Быстрая<br/>тренировка</span></button><button type="button" data-dialog="template-start-dialog"><reference-icon name="document" /><span>Из шаблона</span></button><form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="previous"/><button type="@(Model.Reference ? "button" : "submit")" data-dialog="@(Model.Reference ? "quick-workout-dialog" : null)" disabled="@(!Model.Reference && !Model.Data.Completed.Any())"><reference-icon name="repeat" /><span>Повторить</span></button></form></div> }
+        @if (!Model.IsCoachView)
+        {
+            <div class="em-shortcuts">
+                <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start" data-quick-start>
+                    <input type="hidden" name="source" value="empty" />
+                    <button type="submit" aria-label="Быстрая тренировка"><reference-icon name="bolt" /><span>Быстрая<br/>тренировка</span></button>
+                </form>
+                <button type="button" data-dialog="template-start-dialog"><reference-icon name="document" /><span>Из шаблона</span></button>
+                <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="previous"/><button type="@(Model.Reference ? "button" : "submit")" data-dialog="@(Model.Reference ? "quick-workout-dialog" : null)" disabled="@(!Model.Reference && !Model.Data.Completed.Any())"><reference-icon name="repeat" /><span>Повторить</span></button></form>
+            </div>
+        }
     </section>
     @if (!Model.IsCoachView) { <div class="em-manual-actions"><a class="em-primary" asp-page="/Training/Workouts/Record">Записать прошедшую</a><a asp-page="/Training/Workouts/Create">Создать план</a></div> }
     <section class="em-card em-workout-stats"><div><reference-icon name="bars" /><p><strong>@vm.MonthlyWorkouts</strong><span>тренировок<br/>за месяц</span></p></div><div><reference-icon name="calendar" /><p><strong>@vm.WeeklyWorkouts / @vm.WeeklyTarget</strong><span>на этой неделе</span></p></div></section>

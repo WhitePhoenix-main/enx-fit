@@ -8,7 +8,7 @@
 @if (workout.IsActive)
 {
     <section class="workout-app-overview" data-app-overview hidden aria-label="Выполнение тренировки">
-        <div class="workout-app-progress"><span>Ваше занятие</span><strong data-app-count>0 подходов</strong>
+        <div class="workout-app-progress"><span>Выполненные подходы</span><strong data-app-count>0 подходов</strong>
             <progress data-app-progress max="1" value="0" aria-label="Выполнение подходов"></progress>
         </div>
         <button type="button" class="button secondary" data-dialog="workout-outline-dialog">
@@ -29,7 +29,14 @@
     </section>
     <p class="pause-notice" data-pause-notice hidden>Тренировка на паузе. Время занятия и отдыха остановлено.</p>
 }
-@if (locked)
+@if (workout.State == WorkoutStatus.Cancelled)
+{
+    <section class="panel workout-cancelled" role="status">
+        <span class="start-icon"><admin-icon name="close"/></span>
+        <div><h2>Тренировка отменена</h2><p>Она не войдёт в статистику. Вы можете начать новое занятие в любое время.</p></div>
+    </section>
+}
+else if (locked)
 {
     <section class="panel execution-summary">
         <div><span>Рабочие подходы</span><strong>@DashboardData.WorkingSets(workout).Count()</strong></div>
@@ -64,7 +71,7 @@
         </details>
     </section>
 }
-@if (workout.CompletedAtUtc.HasValue && !workout.TemplateDecisionPending && workout.UserId == Model.ViewerId)
+@if (workout.State == WorkoutStatus.Completed && !workout.TemplateDecisionPending && workout.UserId == Model.ViewerId)
 {
     <section class="panel template-decision workout-save-template">
         <details>
@@ -93,15 +100,24 @@
         }
     </details>
 }
-@if (workout.WorkoutExercises.Count == 0)
+@if (!locked && workout.WorkoutExercises.Count == 0)
 {
     <section class="panel workout-empty"><span class="start-icon"><admin-icon name="workout"/></span>
-        <h2>Всё начинается с первого упражнения</h2>
-        <p>Добавляйте упражнения и записывайте подходы в своём темпе.</p>
-        <button class="button" data-dialog="exercise-dialog" data-add-exercise>
+        <p class="eyebrow">СВОБОДНЫЙ ПОРЯДОК · ВАШ ТЕМП</p>
+        <h2>С какого упражнения начнём?</h2>
+        <p>Выберите одно или несколько упражнений из библиотеки.<br/>После добавления укажите свой вес и повторения.</p>
+        <button type="button" class="button" data-dialog="exercise-dialog" data-add-exercise>
             <admin-icon name="plus"/>
             Добавить упражнение
         </button>
-        <button class="text-button" data-dialog="load-template-dialog">Или загрузить шаблон</button>
+        @if (Model.Templates.Count > 0)
+        {
+            <button type="button" class="text-button" data-dialog="load-template-dialog">Взять упражнения из шаблона</button>
+        }
+        <ol class="workout-empty-steps" aria-label="Как проходит тренировка">
+            <li><span>1</span>Добавьте упражнения</li>
+            <li><span>2</span>Отмечайте подходы</li>
+            <li><span>3</span>Сохраните результат</li>
+        </ol>
     </section>
 }

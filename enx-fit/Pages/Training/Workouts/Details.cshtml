@@ -7,7 +7,9 @@
     ViewData["Title"] = Model.Workout.Title ?? "Тренировка";
 }
 <div class="active-workout app-workspace" data-active-workout data-session-id="@Model.Workout.Id"
-     data-viewer="@Model.ViewerId" data-recorded-request="@TempData["RecordedWorkout"]">
+     data-viewer="@Model.ViewerId" data-recorded-request="@TempData["RecordedWorkout"]"
+     data-session-status="@Model.Workout.State"
+     data-workouts-url="@Url.Page(Model.IsAdministrator ? "/Training/Workouts/Index" : "/Training/Index")">
     <script type="application/json"
             id="workout-execution-state">@Html.Raw(JsonSerializer.Serialize(Model.Execution, WorkoutBuilderInput.JsonOptions))</script>
     <partial name="_WorkoutHeader" model="Model" />
@@ -25,6 +27,15 @@
     <button type="button" class="text-button" data-discard-operation hidden>Убрать отклонённое действие из очереди
     </button>
     <partial name="_WorkoutOverview" model="Model" />
+    @if (!Model.Workout.IsFinished)
+    {
+        <div class="workout-exercises-heading" data-exercises-heading hidden="@(Model.Exercises.Count == 0)">
+            <div><p class="eyebrow">СОСТАВ ЗАНЯТИЯ</p><h2>Упражнения <span data-exercise-total>@Model.Exercises.Count</span></h2></div>
+            <button type="button" class="button secondary" data-dialog="exercise-dialog" data-add-exercise>
+                <admin-icon name="plus"/>Добавить упражнение
+            </button>
+        </div>
+    }
     <div class="workout-app-layout">
         <nav class="workout-app-sidebar" data-app-sidebar aria-label="Упражнения занятия" hidden></nav>
         <div class="session-exercises">

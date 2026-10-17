@@ -61,7 +61,14 @@
         }
         else { <button class="ef-primary ef-start" type="button" data-dialog="quick-workout-dialog"><reference-icon name="play" />@(reference ? "Начать по плану" : "Начать тренировку")</button> }
         @if (!Model.IsCoachView) {
-            <div class="ef-workout-shortcuts"><button type="button" data-dialog="quick-workout-dialog"><reference-icon name="bolt" />Быстрая тренировка</button><button type="button" data-dialog="template-start-dialog"><reference-icon name="document" />Из шаблона</button><form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="previous" /><button type="@(reference ? "button" : "submit")" data-dialog="@(reference ? "quick-workout-dialog" : null)" disabled="@(!reference && previous is null)"><reference-icon name="repeat" />Повторить</button></form></div>
+            <div class="ef-workout-shortcuts">
+                <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start" data-quick-start>
+                    <input type="hidden" name="source" value="empty" />
+                    <button type="submit"><reference-icon name="bolt" />Быстрая тренировка</button>
+                </form>
+                <button type="button" data-dialog="template-start-dialog"><reference-icon name="document" />Из шаблона</button>
+                <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="previous" /><button type="@(reference ? "button" : "submit")" data-dialog="@(reference ? "quick-workout-dialog" : null)" disabled="@(!reference && previous is null)"><reference-icon name="repeat" />Повторить</button></form>
+            </div>
         }
     </section>
     <section class="ef-card ew-calendar" aria-labelledby="ew-calendar-title" data-widget-id="calendar">

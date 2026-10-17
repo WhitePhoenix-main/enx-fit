@@ -15,10 +15,6 @@
         <button type="button" class="button secondary" data-order-cancel>Отмена</button>
         <button type="button" class="button" data-order-save>Сохранить порядок</button>
     </div>
-    <button type="button" class="button secondary" data-dialog="exercise-dialog" data-add-exercise>
-        <admin-icon name="plus"/>
-        Добавить упражнение
-    </button>
 </dialog>
 <dialog class="app-dialog app-workspace" id="finish-workout-dialog">
     <div class="dialog-heading"><h2>Завершить тренировку</h2>
@@ -29,6 +25,7 @@
     <p data-finish-summary></p>
     <p class="muted">Невыполненные подходы будут отмечены как пропущенные. В статистику войдут только рабочие
         результаты.</p>
+    <p class="workout-dialog-status" data-finish-status role="status" hidden></p>
     <form method="post" asp-page-handler="Complete" data-complete-form>
         <button class="button">Сохранить в историю</button>
     </form>
@@ -40,7 +37,15 @@
         </button>
     </div>
     <p>Занятие сохранится как отменённое и освободит место для новой тренировки. Оно не войдёт в статистику.</p>
-    <button class="button secondary" type="button" data-control="cancel">Отменить тренировку</button>
+    <p class="workout-dialog-status" data-cancel-status role="status" hidden></p>
+    <form method="post" asp-page-handler="Cancel" data-cancel-form>
+        <input type="hidden" name="operationId" value="@Guid.NewGuid()"/>
+        <input type="hidden" name="expectedRevision" value="@Model.Execution.Revision"/>
+        <div class="workout-dialog-actions">
+            <button class="button secondary" type="button" data-close>Продолжить занятие</button>
+            <button class="button workout-danger-button" type="submit">Отменить тренировку</button>
+        </div>
+    </form>
 </dialog>
 <dialog class="app-dialog exercise-picker-dialog app-workspace" id="exercise-dialog"
         aria-labelledby="exercise-dialog-title">

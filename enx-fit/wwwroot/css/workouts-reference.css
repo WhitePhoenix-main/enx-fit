@@ -23,7 +23,7 @@
 .ew-next .ef-workout-shortcuts { margin-top:19px; height:65px; }
 .ew-next .ef-workout-shortcuts button { font-size:15px; gap:15px; }
 .ew-next .ef-workout-shortcuts svg { width:25px; height:25px; }
-.ew-next .ef-workout-shortcuts>button+button,.ew-next .ef-workout-shortcuts>form { border-left-color:#6285d829; }
+.ew-next .ef-workout-shortcuts>:not(:first-child) { border-left-color:#6285d829; }
 .ew-hero-photo { position:absolute; z-index:-1; top:0; right:0; width:322px; height:225px; background:url('../images/dashboard/workouts-reference-art.png') -634px -178px / 1546px 1017px no-repeat; mask-image:linear-gradient(to right,transparent,#000 24%),linear-gradient(to bottom,#000 82%,transparent); mask-composite:intersect; pointer-events:none; }
 .ew-calendar { padding:17px 14px 12px; min-height:320px; }
 .ew-calendar .ef-card-heading { padding:0 4px 14px; border-bottom:1px solid #1e3041; }

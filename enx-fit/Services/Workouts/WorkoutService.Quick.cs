@@ -245,7 +245,7 @@ public partial class WorkoutService
         if (await CommandExistsAsync(id, operationId)) return;
         var session = await VisibleWorkouts().Include(w => w.WorkoutExercises).ThenInclude(e => e.SetEntries)
             .SingleOrDefaultAsync(w => w.Id == id) ?? throw new KeyNotFoundException();
-        if (!session.CompletedAtUtc.HasValue) throw new InvalidOperationException("Сначала завершите тренировку.");
+        if (session.State != WorkoutStatus.Completed) throw new InvalidOperationException("Сохранить шаблон можно только из завершённой тренировки.");
         if (choice is not ("keep" or "update" or "new")) throw new InvalidOperationException("Выберите действие с шаблоном.");
         if (!session.TemplateDecisionPending && choice != "new") return;
         if (choice != "keep")

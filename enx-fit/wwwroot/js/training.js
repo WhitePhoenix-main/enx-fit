@@ -1584,6 +1584,29 @@ if (document.querySelector('.programs-page, .ep-heading')) {
 })();
 
 // Workout execution and synchronization.
+// Workout dialogs also run in layouts that do not load dashboard.js.
+(() => {
+    'use strict';
+    if (!document.querySelector('[data-active-workout]')) return;
+    const ids = new Set(['exercise-dialog', 'load-template-dialog', 'workout-outline-dialog', 'finish-workout-dialog', 'cancel-workout-dialog']);
+    document.addEventListener('click', event => {
+        const trigger = event.target.closest('[data-dialog]');
+        if (trigger && ids.has(trigger.dataset.dialog)) {
+            const dialog = document.getElementById(trigger.dataset.dialog);
+            trigger.closest('details')?.removeAttribute('open');
+            if (!dialog || dialog.open) return;
+            document.querySelectorAll('dialog[open]').forEach(item => item.close());
+            dialog.showModal();
+        }
+        const close = event.target.closest('[data-close]');
+        if (close && ids.has(close.closest('dialog')?.id)) close.closest('dialog').close();
+        if (event.target instanceof HTMLDialogElement && ids.has(event.target.id)) {
+            const box = event.target.getBoundingClientRect();
+            if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) event.target.close();
+        }
+    });
+})();
+
 // Set results and effort guidance.
 (() => {
     'use strict';
@@ -1656,7 +1679,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     } catch { /* The server session remains usable without local storage. */
     }
     root.classList.add('workout-app');
-    overview.hidden = dock.hidden = false;
+    overview.hidden = false;
 
     function select(id, scroll = false) {
         const card = cards().find(item => item.id === id);
@@ -1864,6 +1887,13 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         root.querySelector('[data-app-count]').textContent = total ? `${done} / ${total} подходов` : 'Начните с первого упражнения';
         root.querySelector('[data-app-outline-count]').textContent = `Состав · ${cards().length}`;
         sidebar.hidden = cards().length === 0;
+        const hasExercises = cards().length > 0;
+        overview.hidden = !hasExercises;
+        dock.hidden = !hasExercises || state.status === 'Paused';
+        root.querySelector('[data-exercises-heading]').hidden = !hasExercises;
+        root.querySelector('[data-exercise-total]').textContent = cards().length;
+        root.querySelector('.workout-empty')?.toggleAttribute('hidden', hasExercises);
+        overview.querySelector('[data-dialog="workout-outline-dialog"]').hidden = !hasExercises;
         if (!editingOrder) orderDialog.querySelector('[data-order-edit]').hidden = !canReorder();
         cards().forEach(item => {
             const selectedCard = item === card;
@@ -1900,8 +1930,8 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         if (paused) {
             caption = 'Занятие на паузе';
             detail = rest != null ? `Отдых остановлен · ${clock(rest)}` : 'Продолжите, когда будете готовы';
-            label = 'Продолжить занятие';
-            mode = 'resume';
+            label = 'Тренировка на паузе';
+            mode = 'paused';
         } else if (rest > 0) {
             caption = 'Отдых после подхода';
             detail = clock(rest);
@@ -1920,14 +1950,17 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             label = 'Следующее упражнение';
             mode = 'next';
         } else {
-            detail = 'Можно добавить подходы или завершить';
-            label = 'Завершить тренировку';
-            mode = 'finish';
+            detail = 'Добавьте упражнение или завершите занятие кнопкой вверху';
+            label = 'Все подходы отмечены';
+            mode = 'done';
         }
         root.querySelector('[data-app-action-caption]').textContent = caption;
         root.querySelector('[data-app-action-detail]').textContent = detail;
         action.textContent = label;
         action.dataset.mode = mode;
+        action.disabled = paused || mode === 'done';
+        root.querySelector('[data-finish]').disabled = !all.some(form => completed(form) &&
+            !form.elements.namedItem('AddSet.IsWarmup').checked && Number(form.elements.namedItem('AddSet.Reps').value) > 0);
         dock.classList.toggle('is-resting', rest > 0 && !paused);
         dock.classList.toggle('is-paused', paused);
         root.querySelector('[data-app-rest-tools]').hidden = rest == null || rest <= 0 || paused;
@@ -2025,7 +2058,6 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             }
         }
     });
-    root.querySelector('[data-app-pause]').addEventListener('click', () => root.querySelector('[data-pause-button]').click());
     // Removal by the execution client must update counts and navigation as well.
     new MutationObserver(() => render()).observe(root.querySelector('.session-exercises'), {
         childList: true,
@@ -2085,7 +2117,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     let scratch = {}, rejectedOperationId = null;
     const debounce = new Map();
     const pickerRoot = document.getElementById('workout-library'), picker = pickerRoot?.exerciseLibrary;
-    let picking = false, ordering = false, pickAttempt = null, orderAttempt = null;
+    let picking = false, ordering = false, cancelling = false, pickAttempt = null, orderAttempt = null;
 
     async function flushResults() {
         for (const timeout of debounce.values()) clearTimeout(timeout);
@@ -2100,7 +2132,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     }
 
     root.reorderWorkout = async entries => {
-        if (picking || ordering) throw new Error('Дождитесь сохранения состава тренировки.');
+        if (picking || ordering || cancelling) throw new Error('Дождитесь сохранения состава тренировки.');
         ordering = true;
         try {
             await flushResults();
@@ -2133,7 +2165,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         }
     };
     if (picker) pickerRoot.addEventListener('exercises-selected', async event => {
-        if (picking || ordering) return;
+        if (picking || ordering || cancelling) return;
         picking = true;
         picker.setBusy(true);
         picker.message('');
@@ -2182,6 +2214,10 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             document.getElementById('exercise-dialog').close();
             const empty = root.querySelector('.workout-empty');
             if (empty) empty.hidden = true;
+            const heading = root.querySelector('[data-exercises-heading]');
+            if (heading) heading.hidden = false;
+            const total = root.querySelector('[data-exercise-total]');
+            if (total) total.textContent = currentList.children.length;
             root.querySelector('[data-dialog="load-template-dialog"]')?.setAttribute('hidden', '');
             syncMessage(entry === '0' ? 'Упражнения добавлены · все изменения сохранены' : 'Упражнение заменено · все изменения сохранены');
             const ids = event.detail.exercises.map(p => p.exerciseId);
@@ -2243,6 +2279,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     }
 
     function tick() {
+        root.dataset.sessionStatus = state.status;
         const elapsed = state.elapsedSeconds + (state.status === 'InProgress' ? (Date.now() - sampledAt) / 1000 : 0);
         const sessionClock = root.querySelector('[data-session-clock]');
         if (sessionClock) sessionClock.textContent = clock(elapsed);
@@ -2313,10 +2350,10 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     }
 
     async function drain() {
-        if (sending || conflict || !queue.length) return;
+        if (sending || conflict || cancelling || !queue.length) return;
         sending = true;
         try {
-            while (queue.length) {
+            while (queue.length && !cancelling) {
                 const op = queue[0];
                 syncMessage('Сохраняем результаты…', 'pending');
                 const body = new URLSearchParams(op.fields);
@@ -2408,6 +2445,8 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             root.querySelector("[data-discard-operation]").hidden = true;
         }
         const fields = [...new FormData(form).entries()].filter(([n]) => n !== '__RequestVerificationToken');
+        // A completion checkbox changes the submitted values too. Track this snapshot so its acknowledgement clears the draft.
+        scratch[form.elements.namedItem('setId').value] = fields.map(pair => [...pair]);
         fields.push(...extra, ['performedAtUtc', new Date(Date.now() + offset).toISOString()]);
         const startsRest = form.elements.namedItem("completed").checked && !form.classList.contains("is-completed");
         form.classList.toggle("is-completed", form.elements.namedItem("completed").checked);
@@ -2460,7 +2499,51 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         if (form.hasAttribute('data-native-order')) form.elements.namedItem('expectedRevision').value = revision;
     }
 
+    async function cancelWorkout(form) {
+        if (cancelling) return;
+        cancelling = true;
+        const message = form.closest('dialog').querySelector('[data-cancel-status]');
+        const submit = form.querySelector('[type="submit"]');
+        message.hidden = false;
+        message.textContent = 'Отменяем тренировку…';
+        submit.disabled = true;
+        form.setAttribute('aria-busy', 'true');
+        try {
+            // An invalid or offline set must not prevent cancellation. Wait only for requests already in flight.
+            for (const timeout of debounce.values()) clearTimeout(timeout);
+            debounce.clear();
+            for (let n = 0; (sending || picking || ordering) && n < 400; n++) await new Promise(resolve => setTimeout(resolve, 25));
+            if (sending || picking || ordering) throw new Error('Дождитесь ответа сервера и повторите отмену.');
+            const snapshot = await fetch(`${location.pathname}?handler=State`, {cache: 'no-store', redirect: 'error'});
+            if (!snapshot.ok) throw new Error('Не удалось проверить тренировку. Повторите отмену.');
+            const latest = await snapshot.json();
+            const body = new URLSearchParams(new FormData(form));
+            body.set('expectedRevision', latest.revision);
+            const response = await fetch(form.action, {
+                method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}, body, redirect: 'error'
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || result.status !== 'Cancelled') throw new Error(result.error || 'Не удалось отменить тренировку. Повторите попытку.');
+            queue = [];
+            scratch = {};
+            persist();
+            try { localStorage.removeItem(`enix-workout-view:${root.dataset.viewer}:${root.dataset.sessionId}`); } catch { /* Optional view state. */ }
+            location.assign(root.dataset.workoutsUrl);
+        } catch (error) {
+            message.textContent = error instanceof TypeError ? 'Нет связи с сервером. Отмена не подтверждена. Подключитесь к сети и повторите.' : error.message;
+        } finally {
+            cancelling = false;
+            submit.disabled = false;
+            form.removeAttribute('aria-busy');
+        }
+    }
+
     document.addEventListener('submit', async event => {
+        if (event.target.hasAttribute('data-cancel-form')) {
+            event.preventDefault();
+            await cancelWorkout(event.target);
+            return;
+        }
         if (event.target.hasAttribute('data-pick-form')) {
             event.preventDefault();
             picker?.commit();
@@ -2475,34 +2558,27 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         }
         if (!root.contains(form) && !form.hasAttribute('data-complete-form') && !form.closest('#exercise-dialog,#load-template-dialog')) return;
         if (form.dataset.flushed) return;
-        for (const [id, pairs] of Object.entries(scratch)) {
-            const pendingForm = [...root.querySelectorAll(".set-form")].find(f => f.elements.namedItem("setId").value === id);
-            if (pendingForm && state.status !== "Paused" && !saveSet(pendingForm)) {
-                event.preventDefault();
-                return;
-            }
-        }
-        for (const setForm of root.querySelectorAll('.set-form:focus-within')) {
-            if (!saveSet(setForm)) {
-                event.preventDefault();
-                return;
-            }
-        }
-        if (!queue.length && !sending) {
+        event.preventDefault();
+        if (form.dataset.flushing) return;
+        form.dataset.flushing = 'true';
+        const message = form.closest('dialog')?.querySelector('[data-finish-status]');
+        try {
+            await flushResults();
+            form.dataset.flushed = 'true';
             nativeOrderRevision(form);
             if (form.hasAttribute('data-complete-form')) completionFields(form);
-            return;
+            // Let the original submit event finish before starting native submission again.
+            const submitter = event.submitter;
+            setTimeout(() => form.requestSubmit(submitter), 0);
+        } catch (error) {
+            syncMessage(error.message, 'error');
+            if (message) {
+                message.hidden = false;
+                message.textContent = error.message;
+            }
+        } finally {
+            delete form.dataset.flushing;
         }
-        event.preventDefault();
-        await drain();
-        if (queue.length || sending) {
-            syncMessage('Дождитесь отправки всех изменений перед переходом.');
-            return;
-        }
-        form.dataset.flushed = 'true';
-        nativeOrderRevision(form);
-        if (form.hasAttribute('data-complete-form')) completionFields(form);
-        form.requestSubmit(event.submitter);
     });
     document.addEventListener('click', event => {
         const control = event.target.closest("[data-control]");
@@ -2571,7 +2647,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     });
 
     async function refresh() {
-        if (picking || ordering || root.dataset.orderEditing === 'true' || pickerRoot?.closest('dialog')?.open) return;
+        if (picking || ordering || cancelling || root.dataset.orderEditing === 'true' || pickerRoot?.closest('dialog')?.open) return;
         if (queue.length) {
             drain();
             return;
@@ -2584,7 +2660,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             if (!response.ok) return;
             const data = await response.json();
             // A result saved while this GET was in flight owns the newer revision.
-            if (queue.length || sending || revision !== requestedRevision || picking || ordering || root.dataset.orderEditing === 'true' || pickerRoot?.closest('dialog')?.open) return;
+            if (queue.length || sending || revision !== requestedRevision || picking || ordering || cancelling || root.dataset.orderEditing === 'true' || pickerRoot?.closest('dialog')?.open) return;
             if (data.revision !== revision) {
                 location.reload();
                 return;

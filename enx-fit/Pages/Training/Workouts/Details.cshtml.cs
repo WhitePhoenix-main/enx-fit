@@ -96,6 +96,32 @@ public class DetailsModel(
         catch (WorkoutConflictException ex) { return StatusCode(409, new { error = ex.Message }); }
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
     }
+
+    public async Task<IActionResult> OnPostCancelAsync(int id, Guid? operationId, Guid? expectedRevision)
+    {
+        ModelState.Clear();
+        var ajax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+        try
+        {
+            var state = await workoutService.ControlAsync(id, "cancel", operationId, expectedRevision);
+            if (ajax) return new JsonResult(state);
+            TempData["StatusMessage"] = "Тренировка отменена. Можно начать новое занятие.";
+            return RedirectToPage(IsAdministrator ? "/Training/Workouts/Index" : "/Training/Index");
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (WorkoutConflictException ex)
+        {
+            if (ajax) return StatusCode(409, new { error = ex.Message });
+            ModelState.AddModelError("", ex.Message);
+            return await LoadPageAsync(id);
+        }
+        catch (InvalidOperationException ex)
+        {
+            if (ajax) return BadRequest(new { error = ex.Message });
+            ModelState.AddModelError("", ex.Message);
+            return await LoadPageAsync(id);
+        }
+    }
     public async Task<IActionResult> OnPostSetAsync(int id, int setId, bool completed, bool remove,
         Guid? operationId, Guid? expectedRevision, DateTime? performedAtUtc, bool skipped)
     {
