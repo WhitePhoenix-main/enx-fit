@@ -1,8 +1,6 @@
-using enx_fit.Data;
 using enx_fit.Services.Analytics;
 using enx_fit.Services.Coaching;
 using enx_fit.Services.Programs;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace enx_fit.Security;
@@ -51,13 +49,13 @@ public interface IFeatureAccessService
     Task<bool> CanUseAsync(Feature feature);
 }
 
-public sealed class FeatureAccessService(ApplicationDbContext db, CurrentUser currentUser, IOptions<FeatureOptions> options) : IFeatureAccessService
+public sealed class FeatureAccessService(UserAccountReader accounts, CurrentUser currentUser, IOptions<FeatureOptions> options) : IFeatureAccessService
 {
     private FeatureAccess? cached;
     public async Task<FeatureAccess> GetAsync()
     {
         if (cached is not null) return cached;
-        var user = await db.Users.AsNoTracking().SingleOrDefaultAsync(u => u.Id == currentUser.Id);
+        var user = await accounts.GetAsync(currentUser.Id);
         var role = user?.Role ?? UserRole.Guest;
         var plan = user?.SubscriptionPlan ?? SubscriptionPlan.Free;
         var features = role >= UserRole.Administrator ? Enum.GetValues<Feature>() :

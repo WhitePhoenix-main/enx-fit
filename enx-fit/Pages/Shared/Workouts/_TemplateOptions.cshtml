@@ -1,0 +1,17 @@
+@using enx_fit.Services.Workouts
+@model IReadOnlyList<WorkoutTemplateOption>
+<div class="quick-options" data-template-options>
+    @foreach (var template in Model)
+    {
+        <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start">
+            <input type="hidden" name="source" value="template" />
+            <input type="hidden" name="templateId" value="@template.Id" />
+            <button class="quick-option"><admin-icon name="workout" /><span><strong>@template.Name</strong><small>@template.ProgramName · @template.Exercises упражнений</small></span><admin-icon name="arrow" /></button>
+        </form>
+    }
+    @if (Model.Count == 0)
+    {
+        <p class="muted">Шаблонов пока нет. Выберите готовую программу или сохраните свободную тренировку после выполнения.</p>
+        <a class="button secondary" asp-page="/Training/Programs/Index" asp-route-Tab="templates">Готовые программы</a>
+    }
+</div>

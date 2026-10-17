@@ -9,13 +9,42 @@ if (document.body.classList.contains('fitness-app')) {
     // Dashboard navigation, dialogs and forms.
     (() => {
         'use strict';
+        const templateLoads = new WeakSet();
+        const loadTemplates = async dialog => {
+            if (!dialog.dataset.templatesUrl || dialog.dataset.templatesLoaded || templateLoads.has(dialog)) return;
+            const content = dialog.querySelector('[data-template-content]');
+            const retry = dialog.querySelector('[data-template-retry]');
+            templateLoads.add(dialog);
+            content.setAttribute('aria-busy', 'true');
+            retry.hidden = true;
+            const status = content.querySelector('[role="status"]');
+            if (status) status.textContent = 'Загружаем шаблоны…';
+            try {
+                const response = await fetch(dialog.dataset.templatesUrl, { cache: 'no-store', credentials: 'same-origin' });
+                if (!response.ok || response.redirected) throw new Error('Templates request failed');
+                const document = new DOMParser().parseFromString(await response.text(), 'text/html');
+                const options = document.querySelector('[data-template-options]');
+                if (!options) throw new Error('Templates response is missing');
+                content.replaceChildren(options);
+                dialog.dataset.templatesLoaded = 'true';
+            } catch {
+                if (status) status.textContent = 'Не удалось загрузить шаблоны. Повторите попытку или обновите страницу.';
+                retry.hidden = false;
+            } finally {
+                content.removeAttribute('aria-busy');
+                templateLoads.delete(dialog);
+            }
+        };
         const openDialog = id => {
             const dialog = document.getElementById(id);
             if (!(dialog instanceof HTMLDialogElement)) return;
             document.querySelectorAll('dialog[open]').forEach(item => item.close());
             dialog.showModal();
+            void loadTemplates(dialog);
         };
         document.addEventListener('click', event => {
+            const retryTemplates = event.target.closest('[data-template-retry]');
+            if (retryTemplates) void loadTemplates(retryTemplates.closest('dialog'));
             const trigger = event.target.closest('[data-dialog]');
             if (trigger) {
                 if (trigger.tagName === 'A') event.preventDefault();

@@ -1,16 +1,12 @@
 using System.Globalization;
 using System.Security.Claims;
-using enx_fit.Data;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.EntityFrameworkCore;
 
 namespace enx_fit.Security;
 
 /// <summary>Uses the database role on every request, including requests with an older cookie.</summary>
-public sealed class UserRoleClaimsTransformation(ApplicationDbContext db) : IClaimsTransformation
+public sealed class UserRoleClaimsTransformation(UserAccountReader accounts) : IClaimsTransformation
 {
-    private readonly Dictionary<string, UserRole?> roles = new();
-
     public async Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
     {
         if (principal.Identity?.IsAuthenticated != true)
@@ -29,14 +25,7 @@ public sealed class UserRoleClaimsTransformation(ApplicationDbContext db) : ICla
         if (userId is null)
             return result;
 
-        if (!roles.TryGetValue(userId, out var role))
-        {
-            role = await db.Users.AsNoTracking()
-                .Where(user => user.Id == userId)
-                .Select(user => (UserRole?)user.Role)
-                .SingleOrDefaultAsync();
-            roles[userId] = role;
-        }
+        var role = (await accounts.GetAsync(userId))?.Role;
 
         if (role is null || !Enum.IsDefined(role.Value))
             return result;

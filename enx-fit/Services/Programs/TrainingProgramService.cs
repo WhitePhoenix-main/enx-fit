@@ -44,6 +44,18 @@ public sealed partial class TrainingProgramService(ApplicationDbContext db, Curr
         return await query.OrderByDescending(p => p.StartDate).ThenByDescending(p => p.CreatedAtUtc).ToListAsync();
     }
 
+    public async Task<List<TrainingProgram>> DashboardProgramsAsync(DateOnly today)
+    {
+        Require((await features.GetAsync()).CanUse(Feature.ProgramBasic), ProgramFailure.Forbidden);
+        // The dashboard needs the schedule and prescriptions, not assignment or block metadata.
+        return await db.TrainingPrograms.AsNoTracking().AsSplitQuery()
+            .Where(p => p.OwnerId == currentUser.Id && !p.IsTemplate && !p.IsArchived &&
+                p.StartDate.HasValue && p.StartDate.Value.AddDays(p.Weeks * 7) > today)
+            .Include(p => p.ScheduleChanges)
+            .Include(p => p.Workouts).ThenInclude(w => w.Exercises).ThenInclude(e => e.Exercise)
+            .OrderByDescending(p => p.StartDate).ThenByDescending(p => p.CreatedAtUtc).ToListAsync();
+    }
+
     public Task<List<Exercise>> ExercisesAsync() => db.Exercises.AsNoTracking().OrderBy(e => e.Name).ToListAsync();
 
     private async Task CheckBasicAccessAsync()

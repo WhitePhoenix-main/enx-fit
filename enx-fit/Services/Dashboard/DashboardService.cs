@@ -7,8 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace enx_fit.Services.Dashboard;
 
-public sealed class DashboardService(ApplicationDbContext db, CurrentUser currentUser)
+public sealed class DashboardService(ApplicationDbContext db, CurrentUser currentUser, UserAccountReader accounts)
 {
+    private Task<IReadOnlyList<ClientSummary>>? assignedClients;
+
     public async Task<string> GetGoalTitleAsync() =>
         await db.DashboardSettings.AsNoTracking()
             .Where(settings => settings.UserId == currentUser.Id)
@@ -19,12 +21,18 @@ public sealed class DashboardService(ApplicationDbContext db, CurrentUser curren
     public Task<ApplicationUser?> GetSubjectAsync(string? clientId)
     {
         var id = string.IsNullOrWhiteSpace(clientId) ? currentUser.Id : clientId;
+        if (id == currentUser.Id) return accounts.GetAsync(id);
         return db.Users.AsNoTracking().SingleOrDefaultAsync(user => user.Id == id &&
             (user.Id == currentUser.Id || currentUser.IsAdministrator ||
              ((currentUser.Role == UserRole.Trainer || currentUser.IsAdministrator) && user.TrainerId == currentUser.Id)));
     }
 
-    public async Task<IReadOnlyList<ClientSummary>> GetClientsAsync(string? search = null)
+    public Task<IReadOnlyList<ClientSummary>> GetClientsAsync(string? search = null) =>
+        string.IsNullOrWhiteSpace(search)
+            ? assignedClients ??= LoadClientsAsync(null)
+            : LoadClientsAsync(search);
+
+    private async Task<IReadOnlyList<ClientSummary>> LoadClientsAsync(string? search)
     {
         if (currentUser.Role != UserRole.Trainer && !currentUser.IsAdministrator) return [];
         var users = db.Users.AsNoTracking().Where(user => user.TrainerId == currentUser.Id);

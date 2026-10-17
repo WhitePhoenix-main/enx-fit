@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using enx_fit.Data;
+using enx_fit.Diagnostics;
 using enx_fit.ModelBinding;
 using enx_fit.Models;
 using enx_fit.Presentation.Dashboard;
@@ -19,7 +20,7 @@ namespace enx_fit.Pages.Dashboard;
 [RequestSizeLimit(16384)]
 public class DashboardModel(DashboardService dashboard, ApplicationDbContext db, CurrentUser currentUser,
     IFeatureAccessService features, CoachAttentionService attention, TrainingProgramService programs, WorkoutService workouts,
-    IRecommendationService recommendations) : PageModel
+    IRecommendationService recommendations, RequestPerformance performance) : PageModel
 {
     [BindProperty(SupportsGet = true)] public string? ClientId { get; set; }
     [BindProperty(SupportsGet = true)] public int Days { get; set; } = 7;
@@ -65,7 +66,6 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
             return planned is not null && (program is null || planned.Date <= program.Date) ? planned : program;
         }
     }
-    public List<WorkoutTemplateOption> Templates { get; private set; } = [];
     public bool ShowOnboarding => !IsCoachView && ActiveWorkout is null && !Data.Completed.Any() && Data.Measurements.Count == 0;
     public bool ShowSetupPrompt => !Reference && ShowOnboarding && Data.Settings.SetupStatus == SetupStatus.NotStarted;
     public bool UsesDefaultLayout { get; private set; }
@@ -102,6 +102,13 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
         return Page();
     }
 
+    public async Task<PartialViewResult> OnGetTemplatesAsync()
+    {
+        Response.Headers.CacheControl = "no-cache, no-store";
+        var templates = await performance.MeasureAsync("templates", workouts.TemplatesAsync);
+        return Partial("/Pages/Shared/Workouts/_TemplateOptions.cshtml", templates);
+    }
+
     public async Task<IActionResult> OnPostGoalAsync()
     {
         if (!await LoadAsync()) return NotFound();
@@ -136,7 +143,7 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
 
     public async Task<IActionResult> OnPostLayoutAsync([FromBody] DashboardLayoutInput? input)
     {
-        var subject = await dashboard.GetSubjectAsync(ClientId);
+        var subject = await performance.MeasureAsync("subject", () => dashboard.GetSubjectAsync(ClientId));
         if (subject is null) return NotFound();
         if (!ModelState.IsValid || !DashboardWidgets.IsValid(input?.Widgets))
             return BadRequest(new { error = "Не удалось прочитать раскладку. Обновите страницу и попробуйте ещё раз." });
@@ -158,7 +165,7 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
 
     private async Task<bool> LoadAsync()
     {
-        var subject = await dashboard.GetSubjectAsync(ClientId);
+        var subject = await performance.MeasureAsync("subject", () => dashboard.GetSubjectAsync(ClientId));
         if (subject is null) return false;
         if (CurrentPage == "/Training/Index" && !Request.Query.ContainsKey("Days")) Days = 30;
         Days = Days is 7 or 30 or 365 ? Days : 7;
@@ -171,7 +178,7 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
         var today = currentUser.LocalToday;
         var latestDate = Reference && CurrentPage == "/Progress/Index" ? new DateOnly(2026, 10, 2) : today;
         Until = Until is null || Until > latestDate || Until < today.AddYears(-20) ? latestDate : Until;
-        Data = await dashboard.LoadAsync(subject, Days, Until.Value);
+        Data = await performance.MeasureAsync("history", () => dashboard.LoadAsync(subject, Days, Until.Value));
         if (CurrentPage == "/Training/Index")
         {
             Search = Search?.Trim();
@@ -190,18 +197,18 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
         }
         if (!IsCoachView)
         {
-            ActiveWorkout = await workouts.ActiveAsync();
-            Templates = await workouts.TemplatesAsync();
+            ActiveWorkout = Data.Workouts.Where(workout => workout.IsActive)
+                .OrderByDescending(workout => workout.CreatedAtUtc).FirstOrDefault();
         }
-        Clients = await dashboard.GetClientsAsync();
+        Clients = await performance.MeasureAsync("clients", () => dashboard.GetClientsAsync());
         CanManageClients = await features.CanUseAsync(Feature.CoachClientManagement);
         if (CurrentPage is "/Dashboard/Index" or "/Progress/Index")
         {
-            if (CurrentPage == "/Dashboard/Index" && !IsCoachView && await features.CanUseAsync(Feature.CoachClientAlerts)) Attention = await attention.LoadAsync(assignedOnly: true);
+            if (CurrentPage == "/Dashboard/Index" && !IsCoachView && await features.CanUseAsync(Feature.CoachClientAlerts))
+                Attention = await performance.MeasureAsync("alerts", () => attention.LoadAsync(assignedOnly: true));
             if (!IsCoachView)
             {
-                var candidates = (await programs.ListAsync("mine"))
-                    .Where(p => p.StartDate.HasValue && p.StartDate.Value.AddDays(p.Weeks * 7) > today)
+                var candidates = (await performance.MeasureAsync("programs", () => programs.DashboardProgramsAsync(today)))
                     .Select(p => new { Program = p, Next = ProgramSchedule.Next(p, Data.Workouts.Where(w => w.TrainingProgramId == p.Id).ToList(), today) }).ToList();
                 var selectedProgram = candidates.FirstOrDefault(p => p.Program.Id == ActiveWorkout?.TrainingProgramId)
                     ?? candidates.Where(p => p.Next is not null).OrderBy(p => p.Next!.Date).ThenBy(p => p.Program.Id).FirstOrDefault()
@@ -215,6 +222,7 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
                         .Exercises.OrderBy(e => e.Order).FirstOrDefault();
                     if (CanAnalyzePrograms)
                     {
+                        using var measurement = performance.Measure("recommendations");
                         var exerciseIds = await db.TrainingRecommendations.AsNoTracking()
                             .Where(r => r.TrainingProgramId == activeProgram.Id && r.UserId == Data.Subject.Id &&
                                 r.Status == RecommendationStatus.New && r.ProgramRevision == activeProgram.Revision)
@@ -233,7 +241,8 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
                 }
             }
         }
-        var preference = await db.DashboardLayoutPreferences.FindAsync(currentUser.Id, IsCoachView ? "coach" : "personal");
+        var preference = await performance.MeasureAsync("layout", async () =>
+            await db.DashboardLayoutPreferences.FindAsync(currentUser.Id, IsCoachView ? "coach" : "personal"));
         UsesDefaultLayout = preference is null;
         Widgets = DashboardWidgets.Read(preference?.WidgetsJson, IsCoachView);
         ViewData["Dashboard"] = this;

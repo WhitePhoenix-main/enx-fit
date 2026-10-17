@@ -10,13 +10,11 @@
         <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="empty" /><button class="quick-option"><admin-icon name="bolt" /><span><strong>Добавлять упражнения на лету</strong><small>Начать свободно и собирать занятие по ходу</small></span><admin-icon name="arrow" /></button></form>
     </div>
 </dialog>
-<dialog class="app-dialog quick-dialog app-workspace" id="template-start-dialog" aria-labelledby="template-start-title">
+<dialog class="app-dialog quick-dialog app-workspace" id="template-start-dialog" aria-labelledby="template-start-title"
+        data-templates-url="@Url.Page("/Dashboard/Index", "Templates", new { area = "" })">
     <div class="dialog-heading"><h2 id="template-start-title">Загрузить шаблон</h2><button class="icon-button" data-close aria-label="Закрыть"><admin-icon name="close" /></button></div>
     <p class="muted">Тренировки из ваших программ и готовых шаблонов. Изменения занятия не затронут оригинал.</p>
-    <div class="quick-options">@foreach (var template in Model.Templates)
-    {
-        <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="template" /><input type="hidden" name="templateId" value="@template.Id" /><button class="quick-option"><admin-icon name="workout" /><span><strong>@template.Name</strong><small>@template.ProgramName · @template.Exercises упражнений</small></span><admin-icon name="arrow" /></button></form>
-    }</div>
-    @if (Model.Templates.Count == 0) { <p class="muted">Шаблонов пока нет. Выберите готовую программу или сохраните свободную тренировку после выполнения.</p><a class="button secondary" asp-page="/Training/Programs/Index" asp-route-Tab="templates">Готовые программы</a> }
+    <div data-template-content><p class="muted" role="status" aria-live="polite">Загружаем шаблоны…</p></div>
+    <button class="button secondary" type="button" data-template-retry hidden>Повторить загрузку</button>
 </dialog>
 }

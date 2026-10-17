@@ -1,6 +1,7 @@
 using enx_fit.Routing;
 using enx_fit.Areas.Identity.Data;
 using enx_fit.Data;
+using enx_fit.Diagnostics;
 using enx_fit.Extensions;
 using enx_fit.Middleware;
 using enx_fit.Security;
@@ -29,8 +30,11 @@ builder.Logging.AddConsole();
 
 // Add services to the container.
 var databaseConnection = DatabaseConnectionSettings.Resolve(builder.Configuration);
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(databaseConnection));
+builder.Services.AddScoped<RequestPerformance>();
+builder.Services.AddScoped<RequestPerformanceDbInterceptor>();
+builder.Services.AddDbContext<ApplicationDbContext>((services, options) =>
+    options.UseNpgsql(databaseConnection)
+        .AddInterceptors(services.GetRequiredService<RequestPerformanceDbInterceptor>()));
 
 builder.Services
     .AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
@@ -38,7 +42,8 @@ builder.Services
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.ConfigureApplicationCookie(options => options.LoginPath = "/TechnicalPages/Login");
 builder.Services.AddUserRoleAuthorization();
-builder.Services.AddRazorPages(PageRouteAliases.Configure);
+builder.Services.AddRazorPages(PageRouteAliases.Configure)
+    .AddMvcOptions(options => options.Filters.Add<RequestPerformanceFilter>());
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<ExerciseService>();
@@ -148,6 +153,7 @@ app.UseHttpsRedirection();
 app.UsePublicPageErrors();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseMiddleware<RequestPerformanceMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
