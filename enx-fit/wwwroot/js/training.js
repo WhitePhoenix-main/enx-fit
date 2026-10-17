@@ -38,7 +38,11 @@
             this.search.addEventListener('keydown', event => {
                 if (event.key === 'Enter') event.preventDefault();
             });
-            this.group.addEventListener('change', () => this.filter());
+            this.group.addEventListener('change', () => {
+                // Muscle filters search the full catalog, just like a text query.
+                this.tab = 'all';
+                this.filter();
+            });
             this.equipment.addEventListener('change', () => this.filter());
             root.addEventListener('click', event => this.click(event));
             const updatePick = event => {
@@ -169,6 +173,7 @@
             }
             if (button.hasAttribute('data-muscle-filter')) {
                 this.group.value = button.dataset.muscleFilter;
+                this.tab = 'all';
                 this.filter();
                 return;
             }
