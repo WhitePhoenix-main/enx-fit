@@ -1,4 +1,5 @@
 using enx_fit.Areas.Identity.Data;
+using enx_fit.Services.Accounts;
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
@@ -11,7 +12,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using enx_fit.Services;
 namespace enx_fit.Areas.Identity.Pages.Account
 {
     public class LoginWithRecoveryCodeModel : PageModel
@@ -69,7 +69,7 @@ namespace enx_fit.Areas.Identity.Pages.Account
             var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
             if (user == null)
             {
-                return RedirectToPage("/TechnicalPages/Login", new { area = "", returnUrl = ReturnUrl });
+                return RedirectToPage("/Account/Login", new { area = "", returnUrl = ReturnUrl });
             }
 
             return Page();
@@ -82,7 +82,7 @@ namespace enx_fit.Areas.Identity.Pages.Account
             var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
             if (user == null)
             {
-                return RedirectToPage("/TechnicalPages/Login", new { area = "", returnUrl = ReturnUrl });
+                return RedirectToPage("/Account/Login", new { area = "", returnUrl = ReturnUrl });
             }
             if (!ModelState.IsValid) return Page();
 

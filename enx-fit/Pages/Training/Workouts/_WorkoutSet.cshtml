@@ -1,0 +1,105 @@
+@using enx_fit.ViewModels.Workouts
+@model enx_fit.ViewModels.Workouts.WorkoutSetViewModel
+@using System.Globalization
+@{
+    var set = Model.Set;
+    var exercise = Model.Exercise;
+    var locked = Model.Locked;
+    var prescription = Model.Prescription;
+    var hasTarget = Model.HasTarget;
+    string Number(decimal value) => value.ToString("0.##", CultureInfo.GetCultureInfo("ru-RU"));
+}
+<form method="post" asp-page-handler="Set"
+      class="set-form app-set-row @(set.IsCompleted ? "is-completed" : "") @(set.IsSkipped ? "is-skipped" : "")"
+      data-effort-needed="@exercise.TargetRir.HasValue.ToString().ToLowerInvariant()">
+    <input type="hidden" name="setId" value="@set.Id"/><input type="hidden"
+                                                              name="AddSet.WorkoutExerciseId"
+                                                              value="@exercise.Id"/><input
+        type="hidden" name="AddSet.SetNumber" value="@set.SetNumber"/>
+    <div class="set-result-meta"><span
+            data-set-result-state>@(set.IsCompleted ? "Выполнен · фактические значения" : set.IsSkipped ? "Пропущен" : "Ещё не выполнен")</span>
+        @if (set.IsWarmup)
+        {
+            <span data-set-warmup>Разминка</span>
+        }
+        else
+        {
+            <span data-set-warmup hidden>Разминка</span>
+        }
+    </div>
+    @if (prescription is not null)
+    {
+        <p class="set-plan-hint" data-set-plan>План: @Number(prescription.Weight) кг
+            × @prescription.Reps повт. · отдых @prescription.RestSeconds с</p>
+    }
+    else if (hasTarget)
+    {
+        <p class="set-plan-hint" data-set-plan>
+            План: @(exercise.TargetWeightKg is { } targetWeight ? Number(targetWeight) + " кг" : "вес на выбор") × @(exercise.TargetRepsMin == exercise.TargetRepsMax ? exercise.TargetRepsMin.ToString() : $"{exercise.TargetRepsMin}–{exercise.TargetRepsMax}") повт.</p>
+    }
+    <div class="set-main"><span class="set-number">@set.SetNumber</span>
+        <input aria-label="Вес подхода @set.SetNumber, кг" name="AddSet.Weight" type="number"
+               inputmode="decimal" min="0" max="10000" step="0.01"
+               value="@set.Weight.ToString(CultureInfo.InvariantCulture)" readonly="@locked"
+               required/>
+        <input aria-label="Повторения подхода @set.SetNumber" name="AddSet.Reps" type="number"
+               inputmode="numeric" min="0" max="1000" value="@set.Reps" readonly="@locked"
+               required/>
+        <label class="set-completed"><input type="checkbox" name="completed" value="true"
+                                            checked="@set.IsCompleted" disabled="@locked"
+                                            aria-label="Подход @set.SetNumber выполнен"/><span><admin-icon
+                    name="check"/></span></label>
+    </div>
+    @if (!locked)
+    {
+        <div class="set-effort-prompt" data-effort-prompt
+             hidden="@(!set.IsCompleted || set.IsWarmup || set.Rir.HasValue || !exercise.TargetRir.HasValue)">
+            <span>При желании укажите запас в «Дополнительно» — это поможет сравнить результат с планом.</span>
+            <button type="button" class="text-button" data-add-effort
+                    aria-controls="set-extra-@set.Id" hidden>Указать запас
+            </button>
+        </div>
+    }
+    <details class="set-extra app-disclosure" id="set-extra-@set.Id">
+        <summary>Дополнительно: запас, отдых и действия</summary>
+        <div>
+            <label class="set-effort">Запас повторений (RIR)<input type="number"
+                                                                   inputmode="numeric"
+                                                                   name="AddSet.Rir" min="0"
+                                                                   max="10" value="@set.Rir"
+                                                                   placeholder="Не указан"
+                                                                   aria-describedby="set-effort-help-@set.Id"
+                                                                   readonly="@locked"/><small
+                    id="set-effort-help-@set.Id">После подхода оцените, сколько ещё повторений
+                    могли бы сделать с этим весом и той же техникой. 0 — больше ни одного; 2 —
+                    ещё два. Если не уверены, оставьте поле пустым.</small></label><label>Отдых,
+                с<input type="number" inputmode="numeric" name="AddSet.RestSeconds" min="0"
+                        max="1800"
+                        value="@(set.RestSeconds ?? exercise.TargetRestSeconds ?? 90)"
+                        readonly="@locked"/></label><label class="set-note">Комментарий<input
+                    name="AddSet.Notes" maxlength="500" value="@set.Notes" readonly="@locked"/></label><label
+                class="warmup-check"><input type="checkbox" name="AddSet.IsWarmup" value="true"
+                                            checked="@set.IsWarmup" disabled="@locked"/>Разминка</label>
+            @if (!locked)
+            {
+                <button class="button secondary">Сохранить подход</button>
+                <button type="button" data-skip-set class="text-button">Пропустить подход
+                </button>
+                <button name="remove" value="true" formnovalidate
+                        class="text-button danger-text">Удалить подход
+                </button>
+            }
+        </div>
+    </details>
+    @if (!locked)
+    {
+        <p class="set-save-status" role="status" hidden></p>
+        <noscript>
+            <button class="button secondary">Сохранить</button>
+        </noscript>
+    }
+    @if (set.IsSkipped)
+    {
+        <small class="muted">Пропущен</small>
+    }
+</form>

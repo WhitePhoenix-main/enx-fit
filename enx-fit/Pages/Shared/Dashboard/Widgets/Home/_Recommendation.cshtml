@@ -1,0 +1,28 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var reference = dashboard.Reference;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string N(decimal value) => value.ToString("0.##", ru);
+    var exercise = dashboard.NextGoalExercise;
+    var proposal = dashboard.NextRecommendation;
+}
+<section class="ef-card ef-goal" id="recommendations">
+    <header class="ef-card-heading"><h2><reference-icon name="target" />Следующая цель</h2>@if (reference || proposal is not null) { <span class="ef-proposal">Предложение · ожидает подтверждения</span> }<button class="ef-more" type="button" data-dialog="goal-dialog" aria-label="Настроить цель"><reference-icon name="more" /></button></header>
+    @if (reference)
+    {
+        <div class="ef-goal-content"><span class="ef-photo ef-bench-photo" role="img" aria-label="Штанга для жима лёжа"></span><div><h3>Жим лёжа</h3><p class="ef-goal-weight">60 <span>→</span><strong>62,5 кг</strong></p><p class="ef-goal-reason">Два полных занятия в верхней границе диапазона.</p></div></div>
+        <div class="ef-goal-actions"><details class="ef-why"><summary><reference-icon name="info" />Почему?</summary><p>Два полных занятия в верхней границе диапазона. Следующий шаг — увеличить рабочий вес на 2,5 кг.</p></details><button class="ef-primary" type="button" data-dialog="goal-dialog">Подтвердить</button></div>
+    }
+    else if (exercise is not null && dashboard.ActiveProgram is { } goalProgram)
+    {
+        <div class="ef-goal-content"><span class="ef-photo ef-bench-photo" role="img" aria-label="Штанга для жима лёжа"></span><div><h3>@ExercisePresentation.DisplayName(exercise.Exercise)</h3>@if (proposal is not null) { <p class="ef-goal-weight">@N(proposal.CurrentValue) <span>→</span> <strong>@N(proposal.SuggestedValue) кг</strong></p><p class="ef-goal-reason">@proposal.SuggestedChange</p> } else { <p class="ef-goal-weight">@exercise.Prescription.Summary @if (exercise.Prescription.WeightKg is { } weight) { <strong>· @N(weight) кг</strong> }</p><p class="ef-goal-reason">@goalProgram.Name</p> }</div></div>
+        <div class="ef-goal-actions">@if (proposal is not null) { <details class="ef-why"><summary><reference-icon name="info" />Почему?</summary><p>@proposal.Reason</p></details><a class="ef-primary" asp-page="/Training/Programs/Details" asp-route-id="@goalProgram.Id" asp-route-Tab="progression" asp-route-ExerciseId="@exercise.Id">Подтвердить</a> } else { <a class="ef-link" asp-page="/Training/Programs/Details" asp-route-id="@goalProgram.Id" asp-route-Tab="workouts">Открыть программу <reference-icon name="arrow" /></a> }</div>
+    }
+    else
+    {
+        <div class="ef-goal-content"><span class="ef-photo ef-bench-photo" aria-hidden="true"></span><div><h3>Сохраняйте свой ритм</h3><p class="ef-goal-weight">@d.ThisWeek.Count() <span>/</span> <strong>@d.Settings.WeeklyWorkoutGoal тренировок</strong></p><p class="ef-goal-reason">@d.Settings.GoalTitle</p></div></div><div class="ef-goal-actions"><button class="ef-link" type="button" data-dialog="goal-dialog">Настроить цель <reference-icon name="arrow" /></button></div>
+    }
+    @if (!string.IsNullOrWhiteSpace(d.Settings.TrainerNote)) { <p class="trainer-note"><reference-icon name="users" />@d.Settings.TrainerNote</p> }
+</section>

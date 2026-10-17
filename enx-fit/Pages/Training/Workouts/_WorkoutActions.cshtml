@@ -1,0 +1,59 @@
+@model enx_fit.Models.WorkoutSession
+@{
+    var workout = Model;
+    var locked = workout.IsFinished;
+}
+@if (!locked)
+{
+    <button class="button secondary add-session-exercise" data-dialog="exercise-dialog" data-add-exercise>
+        <admin-icon name="plus"/>
+        Добавить упражнение
+    </button>
+    <div class="workout-sticky-actions">
+        <button class="button secondary" data-dialog="exercise-dialog" data-add-exercise>
+            <admin-icon name="plus"/>
+            <span>Упражнение</span></button>
+        <button class="button" type="button" data-dialog="finish-workout-dialog" data-finish>
+            <admin-icon name="check"/>
+            Завершить
+        </button>
+    </div>
+    @if (workout.IsActive)
+    {
+        <div class="workout-app-dock app-savebar" data-app-dock hidden>
+            <div class="workout-app-dock-info"><span data-app-action-caption>Текущее упражнение</span><strong
+                    data-app-action-detail>Выберите упражнение</strong>
+                <button class="text-button" type="button" data-dialog="finish-workout-dialog" data-finish>Завершить
+                    занятие
+                </button>
+            </div>
+            <div class="workout-app-dock-actions">
+                <button type="button" class="button secondary" data-dialog="exercise-dialog" data-add-exercise
+                        aria-label="Добавить упражнение">
+                    <admin-icon name="plus"/>
+                </button>
+                <button type="button" class="button workout-app-action" data-app-action>Добавить упражнение</button>
+            </div>
+            <div class="workout-app-rest-tools" data-app-rest-tools hidden>
+                <button type="button" class="text-button" data-control="adjust-rest" data-seconds="-15">−15 с
+                </button>
+                <button type="button" class="text-button" data-control="adjust-rest" data-seconds="30">+30 с
+                </button>
+                <button type="button" class="text-button" data-app-pause>Пауза</button>
+            </div>
+        </div>
+        <p class="workout-app-feedback" data-app-feedback role="status" aria-live="polite" hidden></p>
+    }
+
+    @if (workout.IsActive)
+    {
+        <button class="text-button danger-text" type="button" data-dialog="cancel-workout-dialog">Отменить занятие
+        </button>
+    }
+}
+else
+{
+    <a class="button" asp-page="/Dashboard/Index">Вернуться на главную
+        <admin-icon name="arrow"/>
+    </a>
+}

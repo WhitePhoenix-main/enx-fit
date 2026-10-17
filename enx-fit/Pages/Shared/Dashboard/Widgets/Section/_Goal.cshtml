@@ -1,0 +1,28 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    var today = d.TodayCheckIn;
+    string? PageUrl(string page) => Url.Page(page, dashboard.NavigationValues);
+    var weekDays = new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" };
+}
+<section class="panel goal-card week-card" id="plan">
+    <div class="card-heading"><h2><admin-icon name="calendar" />План недели</h2><button class="text-button week-completion" data-dialog="goal-dialog">@d.Completed.Count(w => w.Date >= d.Today.AddDays(-((int)d.Today.DayOfWeek + 6) % 7 + dashboard.WeekOffset * 7) && w.Date < d.Today.AddDays(-((int)d.Today.DayOfWeek + 6) % 7 + (dashboard.WeekOffset + 1) * 7)) / @d.Settings.WeeklyWorkoutGoal <span>выполнено</span></button><nav class="week-navigation" aria-label="Выбор недели"><a asp-page="/Dashboard/Index" asp-route-ClientId="@dashboard.ClientId" asp-route-WeekOffset="@(dashboard.WeekOffset - 1)" aria-label="Предыдущая неделя"><admin-icon name="chevron" /></a><a asp-page="/Dashboard/Index" asp-route-ClientId="@dashboard.ClientId" asp-route-WeekOffset="@(dashboard.WeekOffset + 1)" aria-label="Следующая неделя"><admin-icon name="chevron" /></a></nav></div>
+    <div class="week-strip">
+        @for (var i = 0; i < 7; i++)
+        {
+            var date = d.Today.AddDays(-((int)d.Today.DayOfWeek + 6) % 7 + i + dashboard.WeekOffset * 7);
+            var done = d.Completed.FirstOrDefault(w => w.Date == date);
+            var planned = d.Workouts.FirstOrDefault(w => w.Date == date && w.CompletedAtUtc == null && w.StartedAtUtc == null && !DashboardData.WorkingSets(w).Any());
+            var scheduled = dashboard.ActiveProgram is { } program ? ProgramSchedule.Occurrences(program).FirstOrDefault(o => o.Date == date) : null;
+            var state = done is not null ? "done" : planned is not null || scheduled is not null ? "planned" : "rest";
+            var dayTitle = done?.Title ?? planned?.Title ?? scheduled?.Workout.Name ?? "Отдых";
+            var pastRest = state == "rest" && date < d.Today;
+            <a href="@PageUrl("/Training/Plans")" class="week-day @state @(pastRest ? "past-rest" : "") @(date == d.Today ? "is-today" : "")" aria-label="@date.ToString("d MMMM", ru): @(done is not null ? "выполнено" : state == "planned" ? "запланировано" : "отдых")">
+                <span>@weekDays[i]</span><time datetime="@date.ToString("yyyy-MM-dd")">@date.ToString("dd.MM")</time><span class="week-marker">@if (done is not null || pastRest) { <admin-icon name="check" /> } else if (state == "planned") { <admin-icon name="@(dayTitle.Contains("Кардио", StringComparison.OrdinalIgnoreCase) ? "shoe" : "workout")" /> } else { <admin-icon name="coffee" /> }</span><small>@dayTitle.Split('—')[0].Trim()</small>
+            </a>
+        }
+    </div>
+    <div class="week-legend"><span><i class="done"></i>выполнено</span><span><i class="today"></i>сегодня</span><span><i></i>запланировано</span><span>— отдых</span></div>
+</section>

@@ -1,0 +1,36 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    var today = d.TodayCheckIn;
+    var weekDays = new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" };
+    var monthStart = new DateOnly(d.Until.Year, d.Until.Month, 1);
+    var calendarStart = monthStart.AddDays(-((int)monthStart.DayOfWeek + 6) % 7);
+    var workoutDates = d.CompletedDates.ToHashSet();
+}
+<section class="panel calendar-card">
+<div class="card-heading">
+<h2>
+<admin-icon name="calendar" />Календарь</h2>
+<a asp-page="@dashboard.CurrentPage" asp-route-clientId="@dashboard.ClientId" asp-route-days="@dashboard.Days">Сегодня</a>
+</div>
+<div class="calendar-month">
+<strong>@d.Until.ToString("MMMM yyyy", ru)</strong>
+<span>
+<a asp-page="@dashboard.CurrentPage" asp-route-clientId="@dashboard.ClientId" asp-route-days="@dashboard.Days" asp-route-until="@monthStart.AddDays(-1).ToString("yyyy-MM-dd")" aria-label="Предыдущий месяц">
+<admin-icon name="back" />
+</a>@if (monthStart.AddMonths(1) <= d.Today) { <a asp-page="@dashboard.CurrentPage" asp-route-clientId="@dashboard.ClientId" asp-route-days="@dashboard.Days" asp-route-until="@(monthStart.AddMonths(2).AddDays(-1) > d.Today ? d.Today.ToString("yyyy-MM-dd") : monthStart.AddMonths(2).AddDays(-1).ToString("yyyy-MM-dd"))" aria-label="Следующий месяц">
+<admin-icon name="arrow" />
+</a> }</span>
+</div>
+<div class="calendar-grid">@foreach (var dayName in weekDays) { <small>@dayName</small> }@for (var i = 0; i < 42; i++) { var date = calendarStart.AddDays(i); <span class="calendar-day @(date.Month != monthStart.Month ? "outside" : "") @(workoutDates.Contains(date) ? "trained" : "") @(date == d.Today ? "is-today" : "")" title="@date.ToString("d MMMM", ru)@(workoutDates.Contains(date) ? " — тренировка записана" : "")">@date.Day</span> }</div>
+<div class="calendar-legend">
+<span>
+<i>
+</i>Тренировка</span>
+<span>
+<i>
+</i>Сегодня</span>
+</div>
+</section>

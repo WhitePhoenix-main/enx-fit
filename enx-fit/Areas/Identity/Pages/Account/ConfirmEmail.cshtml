@@ -5,9 +5,9 @@
     ViewData["AuthDescription"] = "Результат подтверждения вашего адреса.";
     ViewData["AuthStatusState"] = Model.Succeeded ? "saved" : "error";
 }
-<partial name="_AuthStepHeader" />
+<partial name="/Pages/Shared/Account/_AuthStepHeader.cshtml" />
 <section class="auth-card auth-step-card">
     <partial name="_StatusMessage" model="Model.StatusMessage" />
-    @if (Model.Succeeded) { <a class="auth-submit app-button" asp-area="" asp-page="/TechnicalPages/Login" asp-route-returnUrl="@Model.ReturnUrl">Войти в Enix Fit</a> }
+    @if (Model.Succeeded) { <a class="auth-submit app-button" asp-area="" asp-page="/Account/Login" asp-route-returnUrl="@Model.ReturnUrl">Войти в Enix Fit</a> }
     else { <a class="auth-submit app-button" asp-page="./ResendEmailConfirmation" asp-route-returnUrl="@Model.ReturnUrl">Запросить новое письмо</a> }
 </section>

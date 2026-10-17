@@ -8,10 +8,10 @@
         </h1>
         <p>Аккаунты, права доступа и история тренировок.</p>
     </div>
-    <a class="btn btn-primary app-button" asp-page="./CreateUser">
+    <a class="btn btn-primary app-button" asp-page="./Create">
         <admin-icon name="plus" />Добавить пользователя</a>
 </div>
-<partial name="_AdminStatus" />
+<partial name="/Pages/Shared/Admin/_AdminStatus.cshtml" />
 <div class="admin-user-summary">
     <span>
         <span class="admin-metric-icon blue">
@@ -89,7 +89,7 @@
                                 <span class="admin-dot"></span>@(user.EmailConfirmed ? "Подтверждён" : "Не подтверждён")</span>
                         </td>
                         <td data-label="Записи тренировок">
-                            <a class="admin-text-link" asp-page="/Workouts/Index" asp-route-userId="@user.Id">@user.Workouts<admin-icon name="arrow" />
+                            <a class="admin-text-link" asp-page="/Training/Workouts/Index" asp-route-userId="@user.Id">@user.Workouts<admin-icon name="arrow" />
                             </a>
                         </td>
                         <td data-label="Последняя запись">@(user.LastWorkout?.ToString("dd.MM.yyyy") ?? "Ещё нет тренировок")</td>

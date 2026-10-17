@@ -6,6 +6,7 @@ public static class RoleAuthorizationExtensions
 {
     public static IServiceCollection AddUserRoleAuthorization(this IServiceCollection services)
     {
+        services.AddScoped<UserAccountReader>();
         services.AddScoped<IClaimsTransformation, UserRoleClaimsTransformation>();
         services.AddAuthorization(options =>
         {

@@ -1,5 +1,6 @@
-using enx_fit.Data;
-using Microsoft.EntityFrameworkCore;
+using enx_fit.Services.Analytics;
+using enx_fit.Services.Coaching;
+using enx_fit.Services.Programs;
 using Microsoft.Extensions.Options;
 
 namespace enx_fit.Security;
@@ -48,13 +49,13 @@ public interface IFeatureAccessService
     Task<bool> CanUseAsync(Feature feature);
 }
 
-public sealed class FeatureAccessService(ApplicationDbContext db, CurrentUser currentUser, IOptions<FeatureOptions> options) : IFeatureAccessService
+public sealed class FeatureAccessService(UserAccountReader accounts, CurrentUser currentUser, IOptions<FeatureOptions> options) : IFeatureAccessService
 {
     private FeatureAccess? cached;
     public async Task<FeatureAccess> GetAsync()
     {
         if (cached is not null) return cached;
-        var user = await db.Users.AsNoTracking().SingleOrDefaultAsync(u => u.Id == currentUser.Id);
+        var user = await accounts.GetAsync(currentUser.Id);
         var role = user?.Role ?? UserRole.Guest;
         var plan = user?.SubscriptionPlan ?? SubscriptionPlan.Free;
         var features = role >= UserRole.Administrator ? Enum.GetValues<Feature>() :
@@ -73,14 +74,14 @@ public static class ProgramServiceRegistration
     {
         services.AddOptions<FeatureOptions>().Bind(configuration.GetSection("ProgramFeatures"));
         services.AddScoped<IFeatureAccessService, FeatureAccessService>();
-        services.AddScoped<Services.TrainingProgramService>();
-        services.AddScoped<Services.ProgramTrainingDataService>();
-        services.AddSingleton<Services.IProgressionService, Services.ProgressionService>();
-        services.AddSingleton<Services.IPlateauDetectionService, Services.PlateauDetectionService>();
-        services.AddScoped<Services.IRecommendationService, Services.RecommendationService>();
-        services.AddSingleton<Services.IProgramAnalysisService, Services.ProgramAnalysisService>();
-        services.AddSingleton<Services.ITrainingVolumeService, Services.TrainingVolumeService>();
-        services.AddScoped<Services.CoachAttentionService>();
+        services.AddScoped<TrainingProgramService>();
+        services.AddScoped<ProgramTrainingDataService>();
+        services.AddSingleton<IProgressionService, ProgressionService>();
+        services.AddSingleton<IPlateauDetectionService, PlateauDetectionService>();
+        services.AddScoped<IRecommendationService, RecommendationService>();
+        services.AddSingleton<IProgramAnalysisService, ProgramAnalysisService>();
+        services.AddSingleton<ITrainingVolumeService, TrainingVolumeService>();
+        services.AddScoped<CoachAttentionService>();
         return services;
     }
 }

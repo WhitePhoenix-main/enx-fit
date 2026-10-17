@@ -1,4 +1,4 @@
-using enx_fit.Services;
+using enx_fit.Services.Accounts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +15,7 @@ public class RegisterConfirmationModel(IEmailSender sender) : PageModel
     public bool EmailSent { get; private set; }
     public IActionResult OnGet(string? email, string? returnUrl = null)
     {
-        if (string.IsNullOrWhiteSpace(email)) return RedirectToPage("/TechnicalPages/Login", new { area = "", handler = "Register" });
+        if (string.IsNullOrWhiteSpace(email)) return RedirectToPage("/Account/Login", new { area = "", handler = "Register" });
         Email = email;
         ReturnUrl = AuthPageLinks.LocalReturnUrl(Url, returnUrl);
         var sent = TempData["AccountConfirmationEmailSent"] is true;

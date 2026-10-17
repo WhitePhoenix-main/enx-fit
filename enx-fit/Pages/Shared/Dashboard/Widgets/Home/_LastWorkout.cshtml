@@ -1,0 +1,24 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var reference = dashboard.Reference;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string? PageUrl(string page) => Url.Page(page, dashboard.NavigationValues);
+    var last = d.Completed.FirstOrDefault();
+}
+<section class="ef-card ef-last-workout" id="workouts">
+    <header class="ef-card-heading"><h2><reference-icon name="clock" />Последняя тренировка</h2><a class="ef-chevron" href="@PageUrl("/Training/Index")" aria-label="Вся история тренировок"><reference-icon name="chevron" /></a></header>
+    @if (reference)
+    {
+        <div class="ef-last-content"><span class="ef-photo ef-dumbbell-photo" role="img" aria-label="Гантели в тренажёрном зале"></span><div class="ef-last-copy"><h3>Ноги и кор <time datetime="2026-09-30">· 30 сентября</time></h3><p>12 рабочих подходов</p><div class="ef-last-actions"><span class="ef-saved"><reference-icon name="check" />Сохранена</span><a class="text-button" href="@PageUrl("/Training/Index")">Посмотреть детали <reference-icon name="arrow" /></a></div></div></div>
+    }
+    else if (last is not null)
+    {
+        <div class="ef-last-content"><span class="ef-photo ef-dumbbell-photo" role="img" aria-label="Гантели в тренажёрном зале"></span><div class="ef-last-copy"><h3>@last.Title <time datetime="@last.Date.ToString("yyyy-MM-dd")">· @last.Date.ToString("d MMMM", ru)</time></h3><p>@DashboardData.WorkingSets(last).Count() рабочих подходов</p><div class="ef-last-actions"><span class="ef-saved"><reference-icon name="check" />Сохранена</span><button class="text-button" data-dialog="workout-@last.Id">Посмотреть детали <reference-icon name="arrow" /></button></div></div></div>
+    }
+    else
+    {
+        <div class="ef-last-content"><span class="ef-photo ef-dumbbell-photo" aria-hidden="true"></span><div class="ef-last-copy"><h3>Первая тренировка впереди</h3><p>Здесь появятся результаты занятия.</p></div></div>
+    }
+</section>

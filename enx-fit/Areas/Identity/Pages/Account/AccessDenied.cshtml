@@ -4,8 +4,8 @@
     ViewData["Title"] = "Нет доступа к странице";
     ViewData["AuthDescription"] = "Текущему аккаунту этот раздел недоступен.";
 }
-<partial name="_AuthStepHeader" />
+<partial name="/Pages/Shared/Account/_AuthStepHeader.cshtml" />
 <section class="auth-card auth-step-card">
-    <a class="auth-submit app-button" asp-area="" asp-page="/Dashboard">Открыть главную</a>
-    <p class="auth-secondary-link"><a asp-area="" asp-page="/Profile">Перейти в профиль</a></p>
+    <a class="auth-submit app-button" asp-area="" asp-page="/Dashboard/Index">Открыть главную</a>
+    <p class="auth-secondary-link"><a asp-area="" asp-page="/Account/Profile">Перейти в профиль</a></p>
 </section>

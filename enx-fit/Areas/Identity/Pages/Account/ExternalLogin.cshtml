@@ -4,7 +4,7 @@
     ViewData["Title"] = "Завершить регистрацию";
     ViewData["AuthDescription"] = "Подтвердите email для аккаунта Enix Fit.";
 }
-<partial name="_AuthStepHeader" />
+<partial name="/Pages/Shared/Account/_AuthStepHeader.cshtml" />
 <section class="auth-card auth-step-card">
     <p class="auth-hint">Внешний сервис: @Model.ProviderDisplayName</p>
     <form method="post" asp-page-handler="Confirmation" asp-route-returnUrl="@Model.ReturnUrl" data-auth-form>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#060c15" />
+    <meta name="referrer" content="no-referrer" />
+    <title>@ViewData["Title"] — Enix Fit</title>
+    <partial name="/Pages/Shared/Icons/_AppIcons.cshtml" />
+    <link rel="preload" as="image" href="~/images/auth/space.webp" />
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app-components.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="auth-page app-workspace">
+    <div class="auth-universe" aria-hidden="true">
+        <div class="auth-space"></div>
+        <div class="auth-aurora auth-aurora-one"></div>
+        <div class="auth-aurora auth-aurora-two"></div>
+        <canvas id="auth-particles"></canvas>
+    </div>
+    <a class="auth-skip" href="#main-content">Перейти к форме</a>
+    <partial name="/Pages/Shared/Icons/_AuthIcons.cshtml" />
+    <header class="auth-header">
+        <a class="auth-brand" asp-area="" asp-page="/Public/Index" aria-label="Enix Fit — главная"><partial name="/Pages/Shared/Public/_LandingBrand.cshtml" /></a>
+        <a class="auth-home" asp-area="" asp-page="/Public/Index" aria-label="На главную"><span>На главную</span><svg class="auth-icon" aria-hidden="true"><use href="#auth-arrow" /></svg></a>
+    </header>
+    <main id="main-content" class="auth-main">@RenderBody()</main>
+    <footer class="auth-footer">
+        <small>© @DateTime.UtcNow.Year Enix Fit. Все права защищены.</small>
+        <nav aria-label="Информация">
+            <button type="button" data-auth-info="privacy" hidden>Конфиденциальность</button>
+            <button type="button" data-auth-info="terms" hidden>Условия использования</button>
+            <a asp-area="" asp-page="/Public/Contact">Поддержка</a>
+        </nav>
+    </footer>
+    <dialog class="auth-dialog" id="auth-dialog" aria-labelledby="auth-dialog-title" aria-describedby="auth-dialog-description">
+        <button type="button" class="auth-dialog-close app-icon-button" data-close-auth-dialog aria-label="Закрыть">×</button>
+        <p class="auth-eyebrow">Enix Fit</p>
+        <h2 id="auth-dialog-title"></h2>
+        <p id="auth-dialog-description"></p>
+        <button type="button" class="auth-submit app-button" data-close-auth-dialog>Понятно</button>
+    </dialog>
+    <script src="~/js/vendor/qrcode.js" asp-append-version="true" defer></script>
+    <script src="~/js/site.js" asp-append-version="true" defer></script>
+    <script src="~/js/public.js" asp-append-version="true" defer></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,11 +1,19 @@
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.EntityFrameworkCore;
-using enx_fit.Extensions;
-using enx_fit.Data;
-using enx_fit.Services;
+using enx_fit.Routing;
 using enx_fit.Areas.Identity.Data;
+using enx_fit.Data;
+using enx_fit.Diagnostics;
+using enx_fit.Extensions;
+using enx_fit.Middleware;
 using enx_fit.Security;
+using enx_fit.Services.Accounts;
+using enx_fit.Services.Analytics;
+using enx_fit.Services.Body;
+using enx_fit.Services.Dashboard;
+using enx_fit.Services.Exercises;
+using enx_fit.Services.Workouts;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 if (builder.Environment.IsDevelopment())
@@ -22,8 +30,11 @@ builder.Logging.AddConsole();
 
 // Add services to the container.
 var databaseConnection = DatabaseConnectionSettings.Resolve(builder.Configuration);
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(databaseConnection));
+builder.Services.AddScoped<RequestPerformance>();
+builder.Services.AddScoped<RequestPerformanceDbInterceptor>();
+builder.Services.AddDbContext<ApplicationDbContext>((services, options) =>
+    options.UseNpgsql(databaseConnection)
+        .AddInterceptors(services.GetRequiredService<RequestPerformanceDbInterceptor>()));
 
 builder.Services
     .AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
@@ -31,7 +42,8 @@ builder.Services
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.ConfigureApplicationCookie(options => options.LoginPath = "/TechnicalPages/Login");
 builder.Services.AddUserRoleAuthorization();
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(PageRouteAliases.Configure)
+    .AddMvcOptions(options => options.Filters.Add<RequestPerformanceFilter>());
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<ExerciseService>();
@@ -41,6 +53,8 @@ builder.Services.AddScoped<AnalyticsDataService>();
 builder.Services.AddScoped<UserDirectoryService>();
 builder.Services.AddScoped<RegistrationService>();
 builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<DashboardQuery>();
+builder.Services.AddScoped<DashboardCommands>();
 builder.Services.AddTrainingPrograms(builder.Configuration);
 builder.Services.AddSingleton<TrainingAnalyticsService>();
 builder.Services.AddSingleton<BodyAnalyticsService>();
@@ -141,6 +155,7 @@ app.UseHttpsRedirection();
 app.UsePublicPageErrors();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseMiddleware<RequestPerformanceMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();

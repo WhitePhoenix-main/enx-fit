@@ -1,0 +1,29 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string N(decimal? value, string format = "N0") => value?.ToString(format, ru) ?? "—";
+}
+<section class="panel records-card">
+<div class="card-heading">
+<h2>
+<admin-icon name="workout" />Силовые рекорды</h2>
+<button class="text-button" data-dialog="records-dialog">Все показатели <admin-icon name="arrow" />
+</button>
+</div>
+<div class="record-list">@foreach (var record in d.Records.Take(3)) { <div class="record-row">
+<admin-icon name="workout" />
+<span>@record.Name</span>
+<strong>@N(record.Weight) <small>кг</small>
+</strong>
+@if (record.Gain is { } gain) { <small class="record-gain" title="Изменение рекорда за последние 30 дней">↑ +@N(gain, "0.#") кг</small> }
+</div> }@if (!d.Records.Any()) { <div class="card-empty">
+<span class="icon-tile">
+<admin-icon name="trophy" />
+</span>
+<p>Первый рекорд впереди</p>
+<small>Запишите рабочие подходы — лучшие результаты появятся здесь.</small>
+</div> }</div>
+<button class="button secondary full" data-dialog="records-dialog">Все показатели</button>
+</section>

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using enx_fit.Areas.Identity.Data;
 using enx_fit.Areas.Identity.Pages.Account.Manage;
-using enx_fit.Services;
+using enx_fit.Services.Accounts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

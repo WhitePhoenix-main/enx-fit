@@ -8,10 +8,6 @@ public sealed class AdminIconTagHelper : TagHelper
     public string Name { get; set; } = "grid";
     private static readonly Dictionary<string, string> Paths = new()
     {
-        ["bolt"] = "<path d='m13 2-8 12h6l-1 8 9-13h-6l1-7Z'/>",
-        ["document"] = "<path d='M14 3H5v18h14V8Zm0 0v5h5M8 12h8m-8 4h8'/>",
-        ["repeat"] = "<path d='M20 8a8 8 0 0 0-14-3L3 8m0-5v5h5M4 16a8 8 0 0 0 14 3l3-3m0 5v-5h-5'/>",
-        ["coffee"] = "<path d='M4 6h12v14H4Zm12 2h3a3 3 0 0 1 0 6h-3M7 2h5'/>",
         ["check-circle"] = "<circle cx='12' cy='12' r='9'/><path d='m7 12 3 3 7-7'/>",
         ["more"] = "<circle cx='4' cy='12' r='1' fill='currentColor'/><circle cx='12' cy='12' r='1' fill='currentColor'/><circle cx='20' cy='12' r='1' fill='currentColor'/>",
         ["star"] = "<path d='m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9L6.5 20l1-6.2L3 9.6l6.2-.9Z'/>",
@@ -30,28 +26,19 @@ public sealed class AdminIconTagHelper : TagHelper
         ["nutrition"] = "<path d='M4 3v6a3 3 0 0 0 6 0V3M7 3v18m10 0V3c-4 4-4 10 0 10h2'/>",
         ["shoe"] = "<path d='m5 3 4 1 2 8 9 4 1 5H3L2 9Zm6 9-4 2m8 0-4 2'/>",
         ["scale"] = "<rect x='3' y='3' width='18' height='18' rx='4'/><path d='M7 7a8 8 0 0 1 10 0l-2 4H9Zm5 0v4'/>",
-        ["settings"] = "<path d='m10 2-1 3-3 1-3-1-2 4 3 2v3l-2 2 2 4 3-1 3 1 1 3h4l1-3 3-1 3 1 2-4-3-2v-3l2-2-2-4-3 1-3-1-1-3Z'/><circle cx='12' cy='12' r='3'/>",
         ["user"] = "<circle cx='12' cy='7' r='4'/><path d='M4 22v-3a8 8 0 0 1 16 0v3'/>",
         ["play"] = "<path d='m8 4 12 8-12 8Z' fill='currentColor' stroke='none'/>",
-        ["close"] = "<path d='m5 5 14 14M5 19 19 5'/>",
         ["info"] = "<circle cx='12' cy='12' r='9'/><path d='M12 11v6m0-10v.1'/>",
         ["grid"] = "<rect x='3' y='3' width='7' height='7' rx='1.5'/><rect x='14' y='3' width='7' height='7' rx='1.5'/><rect x='3' y='14' width='7' height='7' rx='1.5'/><rect x='14' y='14' width='7' height='7' rx='1.5'/>",
-        ["users"] = "<circle cx='9' cy='8' r='3'/><path d='M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m3 10v-3a6 6 0 0 0-3-5'/>",
         ["workout"] = "<path d='M3 9v6m3-9v12m12-12v12m3-9v6M6 12h12'/>",
-        ["book"] = "<path d='M12 5v16M3 3h5a4 4 0 0 1 4 2 4 4 0 0 1 4-2h5v16h-5a4 4 0 0 0-4 2 4 4 0 0 0-4-2H3Z'/>",
         ["activity"] = "<path d='M2 12h5l3-8 4 16 3-8h5'/>",
         ["search"] = "<circle cx='10.5' cy='10.5' r='6.5'/><path d='m16 16 5 5'/>",
         ["plus"] = "<path d='M12 5v14M5 12h14'/>",
-        ["arrow"] = "<path d='M4 12h16m-6-6 6 6-6 6'/>",
         ["back"] = "<path d='M20 12H4m6-6-6 6 6 6'/>",
-        ["menu"] = "<path d='M4 6h16M4 12h16M4 18h16'/>",
         ["calendar"] = "<rect x='3' y='5' width='18' height='16' rx='2'/><path d='M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2'/>",
         ["shield"] = "<path d='m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Zm-4 9 3 3 5-6'/>",
         ["edit"] = "<path d='m15 4 5 5M4 20l5-1L21 7a2 2 0 0 0-4-4L5 15Zm9 0h8'/>",
         ["logout"] = "<path d='M9 4H4v16h5m6-13 5 5-5 5M8 12h12'/>",
-        ["check"] = "<path d='m5 12 4 4L19 6'/>",
-        ["chevron"] = "<path d='m9 5 7 7-7 7'/>",
-        ["trend"] = "<path d='m3 17 6-6 4 4 8-10m-6 0h6v6'/>",
         ["clock"] = "<circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 2'/>",
         ["chest"] = "<circle cx='12' cy='4' r='2'/><path d='m8 8 4 2 4-2M8 8l-4 3-2-3m14 0 4 3 2-3M8 8v8l4 2 4-2V8M9 18l-1 4m7-4 1 4M12 10v6'/>",
         ["back-muscles"] = "<circle cx='12' cy='4' r='2'/><path d='M3 3v5l5 3v6h8v-6l5-3V3M8 10l4 3 4-3m-4 3v4m-3 0-1 5m7-5 1 5M1 2h22'/>",
@@ -65,18 +52,6 @@ public sealed class AdminIconTagHelper : TagHelper
         ["band"] = "<path d='M7 5c-3 0-5 3-5 7s2 7 5 7c2 0 3-2 5-2s3 2 5 2c3 0 5-3 5-7s-2-7-5-7c-2 0-3 2-5 2S9 5 7 5Z'/>"
     };
 
-    public override void Process(TagHelperContext context, TagHelperOutput output)
-    {
-        output.TagName = "svg";
-        output.TagMode = TagMode.StartTagAndEndTag;
-        output.Attributes.SetAttribute("viewBox", "0 0 24 24");
-        output.Attributes.SetAttribute("fill", "none");
-        output.Attributes.SetAttribute("stroke", "currentColor");
-        output.Attributes.SetAttribute("stroke-width", "1.7");
-        output.Attributes.SetAttribute("stroke-linecap", "round");
-        output.Attributes.SetAttribute("stroke-linejoin", "round");
-        output.Attributes.SetAttribute("aria-hidden", "true");
-        output.Attributes.SetAttribute("class", "admin-icon");
-        output.Content.SetHtmlContent(Paths.GetValueOrDefault(Name, Paths["grid"]));
-    }
+    public override void Process(TagHelperContext context, TagHelperOutput output) =>
+        SvgIconRenderer.Render(output, Paths, Name, "grid");
 }

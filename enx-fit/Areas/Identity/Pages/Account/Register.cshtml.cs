@@ -9,8 +9,8 @@ namespace enx_fit.Areas.Identity.Pages.Account;
 public class RegisterModel : PageModel
 {
     public IActionResult OnGet(string? returnUrl = null)
-        => RedirectToPage("/TechnicalPages/Login", "Register", new { area = "", returnUrl });
+        => RedirectToPage("/Account/Login", "Register", new { area = "", returnUrl });
 
     public IActionResult OnPost(string? returnUrl = null)
-        => RedirectToPagePreserveMethod("/TechnicalPages/Login", "Register", new { area = "", returnUrl });
+        => RedirectToPagePreserveMethod("/Account/Login", "Register", new { area = "", returnUrl });
 }

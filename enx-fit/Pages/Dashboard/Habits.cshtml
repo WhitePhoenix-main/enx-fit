@@ -1,4 +1,6 @@
 @page
-@model enx_fit.Pages.DashboardModel
-@{ Layout = "_DashboardLayout"; ViewData["Title"] = Model.Section!.Title; }
-<partial name="_DashboardSection" model="Model" />
+@using enx_fit.Pages.Dashboard
+
+@model enx_fit.Pages.Dashboard.DashboardModel
+@{ Layout = "/Pages/Shared/Layouts/_DashboardLayout.cshtml"; ViewData["Title"] = Model.Section!.Title; }
+<partial name="/Pages/Shared/Dashboard/_DashboardSection.cshtml" model="Model" />

@@ -4,9 +4,9 @@
     ViewData["Title"] = User.Identity?.IsAuthenticated == true ? "Выйти из аккаунта" : "Вы вышли из аккаунта";
     ViewData["AuthDescription"] = User.Identity?.IsAuthenticated == true ? "На этом устройстве потребуется войти снова." : "Можно войти снова и продолжить занятия.";
 }
-<partial name="_AuthStepHeader" />
+<partial name="/Pages/Shared/Account/_AuthStepHeader.cshtml" />
 <section class="auth-card auth-step-card">
     @if (User.Identity?.IsAuthenticated == true) {
         <form method="post" asp-route-returnUrl="/" data-auth-form><button type="submit" class="auth-submit app-button"><span>Выйти</span></button><p data-auth-feedback class="auth-form-feedback app-status app-notice" data-app-state="info" hidden role="status" aria-live="polite"></p></form>
-    } else { <a class="auth-submit app-button" asp-area="" asp-page="/TechnicalPages/Login">Войти в Enix Fit</a> }
+    } else { <a class="auth-submit app-button" asp-area="" asp-page="/Account/Login">Войти в Enix Fit</a> }
 </section>

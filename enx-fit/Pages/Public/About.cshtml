@@ -1,0 +1,21 @@
+@page "/about"
+@{
+    Layout = "/Pages/Shared/Layouts/_LandingLayout.cshtml";
+    ViewData["Title"] = "О проекте";
+    ViewData["Description"] = "Enix Fit помогает начать тренировку, записать подходы и увидеть свой прогресс на телефоне и компьютере.";
+}
+<div class="public-page wrap">
+    <header class="public-page-heading"><a class="public-back" asp-page="/Public/Index">← Главная</a><p class="eyebrow">О проекте</p><h1>У каждой тренировки<br /><span>есть своя история.</span></h1><p>Enix Fit объединяет план и то, что ты выполнил. Телефон помогает в зале, компьютер — разобраться в результатах и подготовить следующее занятие.</p></header>
+    <div class="public-about-grid">
+        <article class="public-panel public-panel-primary"><svg class="public-feature-icon"><use href="#i-dumbbell" /></svg><h2>Понятный старт</h2><p>Необязательно сразу составлять программу. Начни свободное занятие, добавляй упражнения по ходу или запиши уже прошедшую тренировку.</p><p>Готовые шаблоны помогут, когда захочется заниматься по плану. Настройки цели и оборудования можно заполнить позже.</p></article>
+        <div class="public-card-stack">
+            <article class="public-panel"><p class="eyebrow">План и результат</p><h2>Учитываем выполненное</h2><p>Графики строятся по завершённым рабочим подходам. Разминка, пропуски и незаконченные занятия не увеличивают результат.</p></article>
+            <article class="public-panel"><p class="eyebrow">Следующий шаг</p><h2>Решение остаётся за тобой</h2><p>В Pro можно посмотреть рекомендацию нагрузки и её причину. Вес в программе меняется после твоего подтверждения.</p></article>
+        </div>
+    </div>
+    <div class="public-device-grid">
+        <article class="public-panel"><svg class="public-feature-icon"><use href="#i-phone" /></svg><h2>Телефон в зале</h2><p>Текущий подход, крупные поля ввода, отметка выполнения и таймер отдыха. История доступна после завершения занятия.</p></article>
+        <article class="public-panel"><svg class="public-feature-icon"><use href="#i-laptop" /></svg><h2>Компьютер для планов</h2><p>Расписание, редактор программы и графики на большом экране. Один аккаунт сохраняет общую историю тренировок.</p></article>
+    </div>
+    <partial name="/Pages/Shared/Public/_PublicStartChoices.cshtml" />
+</div>

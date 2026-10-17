@@ -4,7 +4,7 @@
     ViewData["Title"] = "Подтверждение аккаунта";
     ViewData["AuthDescription"] = "Для входа в этот аккаунт требуется подтверждённый email.";
 }
-<partial name="_AuthStepHeader" />
+<partial name="/Pages/Shared/Account/_AuthStepHeader.cshtml" />
 <section class="auth-card auth-step-card">
     <p class="auth-address">@Model.Email</p>
     <div class="auth-notice app-status app-notice" data-app-state="info">
@@ -17,5 +17,5 @@
     }
     </div>
     @if (Model.CanSendEmail) { <a class="auth-submit app-button" asp-page="./ResendEmailConfirmation" asp-route-returnUrl="@Model.ReturnUrl">Запросить письмо</a> }
-    <p class="auth-secondary-link"><a asp-area="" asp-page="/TechnicalPages/Login" asp-route-returnUrl="@Model.ReturnUrl">Вернуться к входу</a></p>
+    <p class="auth-secondary-link"><a asp-area="" asp-page="/Account/Login" asp-route-returnUrl="@Model.ReturnUrl">Вернуться к входу</a></p>
 </section>

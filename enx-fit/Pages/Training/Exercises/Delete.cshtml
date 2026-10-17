@@ -1,0 +1,26 @@
+@page "/Exercises/Delete/{id}"
+@model enx_fit.Pages.Training.Exercises.DeleteModel
+@{
+    ViewData["Title"] = "Удалить упражнение";
+}
+
+<div class="mb-4">
+    <h1 class="h3 mb-1">Удалить упражнение</h1>
+    <p class="text-muted mb-0">Проверьте упражнение перед удалением.</p>
+</div>
+
+<div class="card border-danger">
+    <div class="card-body">
+        <div asp-validation-summary="ModelOnly" class="app-status app-notice mb-3" data-app-state="error" role="alert"></div>
+        <h2 class="h5">@Model.Exercise.Name</h2>
+        <p class="text-muted">@Model.Exercise.MuscleGroup · @Model.Exercise.Equipment</p>
+        <p>Восстановить удалённую запись будет невозможно.</p>
+        <form method="post" data-admin-form>
+            <input type="hidden" asp-for="Exercise.Id" />
+            <div class="d-flex gap-2">
+                <button class="btn btn-danger app-button danger" type="submit">Удалить упражнение</button>
+                <a class="btn btn-outline-secondary app-button secondary" asp-page="/Admin/Exercises/Index">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>

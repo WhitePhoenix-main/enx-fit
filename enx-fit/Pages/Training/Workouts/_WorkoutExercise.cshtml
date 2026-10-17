@@ -1,0 +1,147 @@
+@using enx_fit.Presentation.Exercises
+@using enx_fit.ViewModels.Workouts
+@model enx_fit.ViewModels.Workouts.WorkoutExerciseViewModel
+@using System.Globalization
+@{
+    var exercise = Model.Exercise;
+    var block = Model.Block;
+    var locked = Model.Locked;
+    var blueprintExercise = Model.Blueprint;
+    string Number(decimal value) => value.ToString("0.##", CultureInfo.GetCultureInfo("ru-RU"));
+}
+<section class="panel session-exercise" id="exercise-@exercise.Id"
+         data-catalog-id="@exercise.ExerciseId" data-entry-id="@exercise.Id" data-block-key="@block.Key"
+         data-block-name="@block.Name" data-block-kind="@block.Kind" data-block-type="@block.Type">
+    <p class="session-block-label" data-kind="@block.Kind"><span>@block.Type</span>
+        @if (block.Name != block.Type)
+        {
+            <span>@block.Name</span>
+        }</p>
+    <header><span class="exercise-order">@Model.Number</span>
+        <div><h2>@ExercisePresentation.DisplayName(exercise.Exercise)</h2>
+            <p>@exercise.Exercise.MuscleGroup · @exercise.Exercise.Equipment</p></div>
+        @if (!locked)
+        {
+            <details class="exercise-menu">
+                <summary aria-label="Действия: @ExercisePresentation.DisplayName(exercise.Exercise)">⋯
+                </summary>
+                <div>
+                    <button type="button" data-dialog="exercise-dialog"
+                            data-replace-exercise="@exercise.Id">Заменить упражнение
+                    </button>
+                    <form method="post" asp-page-handler="Exercise" data-native-order><input
+                            type="hidden" name="ExerciseEntryId" value="@exercise.Id"/><input
+                            type="hidden" name="operationId" value="@Guid.NewGuid()"/><input
+                            type="hidden" name="expectedRevision" value="@Model.Revision"/>
+                        <button name="action" value="up"
+                                disabled="@(!Model.CanMoveUp)">
+                            Переместить выше
+                        </button>
+                        <button name="action" value="down"
+                                disabled="@(!Model.CanMoveDown)">
+                            Переместить ниже
+                        </button>
+                        <button name="action" value="remove" class="danger-text">Удалить из тренировки
+                        </button>
+                    </form>
+                </div>
+            </details>
+        }
+    </header>
+    @if (ExerciseTechniqueCatalog.Find(exercise.Exercise) is { } technique)
+    {
+        <details class="session-technique app-disclosure">
+            <summary>Как выполнять упражнение
+                <admin-icon name="chevron"/>
+            </summary>
+            <partial name="/Pages/Shared/Exercises/_ExerciseTechnique.cshtml" model="technique"/>
+        </details>
+    }
+    @if (exercise.TargetSets is { } target)
+    {
+        <p class="exercise-prescription" data-exercise-plan>
+            <span>План занятия</span><strong>@target × @(exercise.TargetRepsMin == exercise.TargetRepsMax ? exercise.TargetRepsMin.ToString() : $"{exercise.TargetRepsMin}–{exercise.TargetRepsMax}") повт.</strong>
+            @if (blueprintExercise is null)
+            {
+                <span> · @(exercise.TargetWeightKg is { } weight ? Number(weight) + " кг" : "вес на выбор")</span>
+            }
+            else
+            {
+                <span> · вес указан у каждого подхода</span>
+            }
+            @if (exercise.TargetRir is { } rir)
+            {
+                <span> · запас по плану: @rir повт.</span>
+            }</p>
+    }
+    @if (exercise.TargetRpe is { } rpe)
+    {
+        <p class="muted exercise-effort-target">Усилие по плану (RPE): @Number(rpe) / 10. Фактический
+            RPE здесь не записывается.</p>
+    }
+    @if (Model.PreviousResult is { } previous)
+    {
+        <details class="exercise-previous" data-exercise-previous>
+            <summary>В прошлый раз ·
+                <time
+                    datetime="@previous.Date.ToString("yyyy-MM-dd")">@previous.Date.ToString("d MMMM", CultureInfo.GetCultureInfo("ru-RU"))</time>
+                <span>Рабочих подходов: @previous.Sets.Count</span></summary>
+            <div>
+                <p>Фактические рабочие подходы · @previous.Title</p>
+                <ul>@foreach (var result in previous.Sets)
+                    {
+                        <li>Подход @result.Number: <strong>@Number(result.Weight) кг
+                                × @result.Reps повт.</strong>
+                            @if (result.Rir is { } reserve)
+                            {
+                                <span> · запас: @reserve повт.</span>
+                            }
+                        </li>
+                    }
+                </ul>
+                <a asp-page="./Details" asp-route-id="@previous.WorkoutId">Открыть прошлую запись
+                    <admin-icon name="arrow"/>
+                </a>
+            </div>
+        </details>
+    }
+    @if (!string.IsNullOrWhiteSpace(exercise.Notes) && exercise.Notes != block.Name)
+    {
+        <p class="muted">@exercise.Notes</p>
+    }
+    @if (!locked)
+    {
+        <p class="set-entry-hint">Поправьте значения под свой подход. Отметьте выполнение после того,
+            как закончите.</p>
+    }
+    <div class="set-labels" aria-hidden="true">
+        <span>№</span><span>Ваш вес, кг</span><span>Повторения</span><span>Выполнено</span></div>
+    @foreach (var set in Model.Sets)
+    {
+        <partial name="_WorkoutSet" model="set" />
+    }
+    @if (!locked)
+    {
+        <form method="post" asp-page-handler="AddSet" class="new-set-form"><input type="hidden"
+                                                                                  name="AddSet.WorkoutExerciseId"
+                                                                                  value="@exercise.Id"/><input
+                type="hidden" name="AddSet.SetNumber" value="@Model.NextSetNumber"/>
+            <input type="hidden" name="completed" value="false"/><input type="hidden"
+                                                                        name="AddSet.RestSeconds"
+                                                                        value="@(exercise.TargetRestSeconds ?? 90)"/>
+            <label>Вес, кг<input name="AddSet.Weight" aria-label="Вес нового подхода, кг" type="number"
+                                 inputmode="decimal" min="0" max="10000" step="0.01"
+                                 value="@Model.NextWeight.ToString(CultureInfo.InvariantCulture)"
+                                 required/></label>
+            <label>Повторения<input name="AddSet.Reps" aria-label="Повторения нового подхода"
+                                    type="number" inputmode="numeric" min="1" max="1000"
+                                    value="@Model.NextReps"
+                                    required/></label>
+            <button class="button secondary">
+                <admin-icon name="plus"/>
+                Добавить подход
+            </button>
+            <small>Добавляется невыполненным. Отметьте галочку после выполнения подхода.</small>
+        </form>
+    }
+</section>

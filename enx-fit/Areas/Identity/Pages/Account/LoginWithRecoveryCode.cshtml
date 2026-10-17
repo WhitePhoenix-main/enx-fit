@@ -4,7 +4,7 @@
     ViewData["Title"] = "Код восстановления";
     ViewData["AuthDescription"] = "Используйте один из кодов, сохранённых при настройке двухэтапного входа.";
 }
-<partial name="_AuthStepHeader" />
+<partial name="/Pages/Shared/Account/_AuthStepHeader.cshtml" />
 <section class="auth-card auth-step-card">
     <form method="post" asp-route-returnUrl="@Model.ReturnUrl" asp-route-rememberMe="@Model.RememberMe" data-auth-form>
         <div asp-validation-summary="ModelOnly" class="auth-errors app-status app-notice" data-app-state="error" role="alert"></div>

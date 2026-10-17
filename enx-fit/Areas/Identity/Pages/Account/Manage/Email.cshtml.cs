@@ -1,4 +1,5 @@
 using enx_fit.Areas.Identity.Data;
+using enx_fit.Services.Accounts;
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
@@ -23,7 +24,7 @@ namespace enx_fit.Areas.Identity.Pages.Account.Manage
         private readonly IEmailSender _emailSender;
         private readonly ILogger<EmailModel> _logger;
         // Identity's default placeholder completes without delivering a message.
-        public bool CanSendEmail => Services.AccountEmailDelivery.IsAvailable(_emailSender);
+        public bool CanSendEmail => AccountEmailDelivery.IsAvailable(_emailSender);
 
         public EmailModel(
             UserManager<ApplicationUser> userManager,

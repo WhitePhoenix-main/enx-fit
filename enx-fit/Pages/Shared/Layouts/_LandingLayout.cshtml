@@ -1,0 +1,49 @@
+@using enx_fit.Presentation.Navigation
+@{
+    var title = ViewData["Title"]?.ToString() ?? "Тренируйся осознанно";
+    var description = ViewData["Description"]?.ToString() ?? "Enix Fit — программы, выполнение тренировок, таймер отдыха и прогресс на телефоне и компьютере. Бесплатный дневник, история и личные рекорды.";
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
+    var signedIn = User.Identity?.IsAuthenticated == true;
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#09131e" />
+    <meta name="description" content="@description" />
+    <title>@title — Enix Fit</title>
+    <partial name="/Pages/Shared/Icons/_AppIcons.cshtml" />
+    <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/landing-motion.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/landing-story.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/public-pages.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app-components.css" asp-append-version="true" />
+</head>
+<body class="enix-landing landing-story app-workspace @(currentPage == "/Public/Index" ? "public-home-page" : "public-inner-page")">
+    <div class="page-atmosphere" aria-hidden="true"></div>
+    <a class="skip-link" href="#main-content">Перейти к содержимому</a>
+    <partial name="/Pages/Shared/Icons/_LandingIcons.cshtml" /><partial name="/Pages/Shared/Public/_LandingHeader.cshtml" />
+    <main id="main-content" tabindex="-1">@RenderBody()</main>
+    <footer class="landing-footer wrap">
+        <a class="brand" asp-page="/Public/Index" aria-label="Enix Fit — главная"><partial name="/Pages/Shared/Public/_LandingBrand.cshtml" /></a>
+        <nav aria-label="Ссылки в подвале">
+            <a href="@(Url.Page("/Public/Index") + "#mobile")">На телефоне</a><a asp-page="/Public/Pricing">Тарифы</a>
+            <a asp-page="/Public/Faq">Вопросы</a><a asp-page="/Public/About">О проекте</a><a asp-page="/Public/Contact">Контакты</a>
+            @if (signedIn)
+            { <a asp-page="/Dashboard/Index">Открыть приложение</a> }
+            else
+            { <a asp-page="/Account/Login" asp-page-handler="Login" asp-route-returnUrl="@Url.Page("/Dashboard/Index")">Войти</a> }
+        </nav>
+        <small>© 2026 Enix Fit. Все права защищены.</small>
+    </footer>
+    <nav class="public-mobile-dock" aria-label="Навигация на телефоне">
+        <a asp-page="/Public/Index" aria-current="@(currentPage == "/Public/Index" ? "page" : null)"><svg class="icon"><use href="#i-grid" /></svg><span>Обзор</span></a>
+        <a asp-page="/Public/Features" aria-current="@(currentPage == "/Public/Features" ? "page" : null)"><svg class="icon"><use href="#i-dumbbell" /></svg><span>Возможности</span></a>
+        <a asp-page="/Public/Faq" aria-current="@(currentPage == "/Public/Faq" ? "page" : null)"><svg class="icon"><use href="#i-question" /></svg><span>Вопросы</span></a>
+        <a class="public-dock-start" href="@PublicPageLinks.Open(Url, User, "/Dashboard/Index")"><svg class="icon"><use href="#i-arrow" /></svg><span>@(signedIn ? "Открыть" : "Начать")</span></a>
+    </nav>
+    <script src="~/js/site.js" asp-append-version="true" defer></script>
+    <script src="~/js/public.js" asp-append-version="true" defer></script>
+</body>
+</html>

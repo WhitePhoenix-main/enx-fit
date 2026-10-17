@@ -1,0 +1,48 @@
+@page "/Workouts/Details/{id:int}"
+@using enx_fit.ViewModels.Workouts
+@model enx_fit.Pages.Training.Workouts.DetailsModel
+@using System.Text.Json
+@{
+    Layout = Model.IsAdministrator ? "/Pages/Shared/Layouts/_AdminLayout.cshtml" : "/Pages/Shared/Layouts/_DashboardReferenceLayout.cshtml";
+    ViewData["Title"] = Model.Workout.Title ?? "Тренировка";
+}
+<div class="active-workout app-workspace" data-active-workout data-session-id="@Model.Workout.Id"
+     data-viewer="@Model.ViewerId" data-recorded-request="@TempData["RecordedWorkout"]">
+    <script type="application/json"
+            id="workout-execution-state">@Html.Raw(JsonSerializer.Serialize(Model.Execution, WorkoutBuilderInput.JsonOptions))</script>
+    <partial name="_WorkoutHeader" model="Model" />
+    @if (TempData["StatusMessage"] is string message)
+    {
+        <p class="status-message app-status" data-app-state="saved" role="status">
+            <admin-icon name="check"/>@message</p>
+    }
+    <div asp-validation-summary="All" class="validation-message app-status app-notice" data-app-state="error"
+         role="alert"></div>
+    <p class="execution-sync app-status" data-app-state="saved" data-sync-status role="status" aria-live="polite">Все
+        изменения сохранены</p>
+    <button type="button" class="button secondary" data-reconcile hidden>Применить мои изменения к текущей версии
+    </button>
+    <button type="button" class="text-button" data-discard-operation hidden>Убрать отклонённое действие из очереди
+    </button>
+    <partial name="_WorkoutOverview" model="Model" />
+    <div class="workout-app-layout">
+        <nav class="workout-app-sidebar" data-app-sidebar aria-label="Упражнения занятия" hidden></nav>
+        <div class="session-exercises">
+            @foreach (var exercise in Model.Exercises)
+            {
+                <partial name="_WorkoutExercise" model="exercise" />
+            }
+        </div>
+    </div>
+    <partial name="_WorkoutActions" model="Model.Workout" />
+</div>
+<partial name="_WorkoutDialogs" model="Model" />
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/exercise-library.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="~/css/active-workout.css" asp-append-version="true"/>
+    <link rel="stylesheet" href="~/css/workout-app.css" asp-append-version="true"/> }
+
+@section Scripts {
+    <script src="~/js/training.js" asp-append-version="true"></script>
+}

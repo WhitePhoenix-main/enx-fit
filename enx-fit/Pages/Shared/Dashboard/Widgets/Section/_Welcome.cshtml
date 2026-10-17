@@ -1,0 +1,12 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var coach = dashboard.IsCoachView;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+}
+<section class="panel welcome-card compact-welcome">
+    <h1>@(coach ? d.Name : $"Привет, {d.Name}!")</h1>
+    <p><time datetime="@d.Today.ToString("yyyy-MM-dd")">@d.Today.ToString("d MMMM, dddd", ru)</time></p>
+    <button class="text-button welcome-goal" data-dialog="goal-dialog"><admin-icon name="target" />@d.Settings.GoalTitle <admin-icon name="edit" /></button>
+</section>

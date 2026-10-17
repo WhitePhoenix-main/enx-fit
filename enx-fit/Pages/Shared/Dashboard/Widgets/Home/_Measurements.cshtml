@@ -1,0 +1,17 @@
+@model DashboardWidgetViewModel
+@{
+    var dashboard = Model.Dashboard;
+    var d = dashboard.Data;
+    var reference = dashboard.Reference;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    string N(decimal value) => value.ToString("0.##", ru);
+    string? PageUrl(string page) => Url.Page(page, dashboard.NavigationValues);
+    var latest = d.Measurements.LastOrDefault();
+    var prior = d.Measurements.SkipLast(1).LastOrDefault();
+    var measurements = reference ? new[] { ("Вес", (decimal?)78.2m, (decimal?)78.2m, "кг"), ("Обхват талии", (decimal?)82m, (decimal?)83m, "см"), ("Обхват груди", (decimal?)101m, (decimal?)101m, "см") } : new[] { ("Вес", latest?.WeightKg, prior?.WeightKg, "кг"), ("Обхват талии", latest?.WaistCm, prior?.WaistCm, "см"), ("Обхват груди", latest?.ChestCm, prior?.ChestCm, "см") };
+}
+<section class="ef-card ef-body">
+    <header class="ef-card-heading"><h2><reference-icon name="scale" />Параметры тела</h2><a class="ef-chevron" href="@PageUrl("/Progress/Index")" aria-label="Все параметры тела"><reference-icon name="chevron" /></a></header>
+    <dl class="ef-measurements">@foreach (var row in measurements) { var delta = row.Item2 - row.Item3; <div><dt>@row.Item1</dt><dd>@(row.Item2.HasValue ? N(row.Item2.Value) + " " + row.Item4 : "—")</dd><dd class="ef-measurement-change @(delta < 0 ? "decreased" : "")">@if (delta.HasValue && delta != 0) { <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 10 4 4 10-10M5 18h7" /></svg><span>@(delta > 0 ? "+" : "")@N(delta.Value)</span> } else { <span>—</span> }</dd></div> }</dl>
+    <div class="ef-body-footer"><span>@(reference ? "Обновлено 28 сентября" : latest is null ? "Замеров пока нет" : $"Обновлено {latest.Date.ToString("d MMMM", ru)}")</span>@if (!dashboard.IsCoachView) { <a asp-page="/Progress/Measurements/Create">Изменить</a> }</div>
+</section>

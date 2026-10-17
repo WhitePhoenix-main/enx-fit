@@ -2,7 +2,7 @@ using System.Text.Json;
 using enx_fit.Data;
 using enx_fit.Models;
 using enx_fit.Security;
-using enx_fit.Services;
+using enx_fit.Services.Accounts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;

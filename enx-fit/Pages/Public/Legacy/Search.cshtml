@@ -1,0 +1,6 @@
+@page "/search"
+@{
+    Layout = null;
+    var search = Request.Query["q"].FirstOrDefault() ?? Request.Query["query"].FirstOrDefault() ?? Request.Query["Search"].FirstOrDefault();
+    Response.Redirect(Url.Page("/Public/Faq", new { Search = search })!);
+}

@@ -1,7 +1,8 @@
-using enx_fit.Models;
-using enx_fit.Security;
-using enx_fit.Services;
 using enx_fit.Extensions;
+using enx_fit.Models;
+using enx_fit.Presentation.Exercises;
+using enx_fit.Security;
+using enx_fit.Services.Exercises;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 

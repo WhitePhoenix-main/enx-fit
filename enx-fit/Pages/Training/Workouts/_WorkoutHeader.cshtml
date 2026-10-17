@@ -1,0 +1,57 @@
+@model enx_fit.Pages.Training.Workouts.DetailsModel
+@{
+    var workout = Model.Workout;
+    var locked = workout.IsFinished;
+}
+<a class="workout-back" asp-page="@(Model.IsAdministrator ? "/Training/Workouts/Index" : "/Dashboard/Index")"
+   asp-route-UserId="@(Model.IsAdministrator ? workout.UserId : null)">
+    <admin-icon name="back"/>@(Model.IsAdministrator ? "Записи пользователя" : "На главную")</a>
+<header class="active-header">
+    <div>
+        <p class="eyebrow">@(workout.State == WorkoutStatus.Cancelled ? "ТРЕНИРОВКА ОТМЕНЕНА" : locked ? "ТРЕНИРОВКА ЗАВЕРШЕНА" : workout.IsActive ? "ЗДЕСЬ И СЕЙЧАС" : "ПЛАН ТРЕНИРОВКИ") · @workout.Date.ToString("dd.MM.yyyy")</p>
+        <h1>@(workout.Title ?? "Быстрая тренировка")</h1>
+        @if (workout.StartedAtUtc is { } started)
+        {
+            <p class="active-session-meta"><span class="live-dot"></span><strong
+                    data-session-clock="@DateTime.SpecifyKind(started, DateTimeKind.Utc).ToString("O")"
+                    data-session-end="@(workout.CompletedAtUtc is { } ended ? DateTime.SpecifyKind(ended, DateTimeKind.Utc).ToString("O") : null)">00:00</strong><span>Начало: <time
+                        data-local-time="@DateTime.SpecifyKind(started, DateTimeKind.Utc).ToString("O")">@started.ToString("HH:mm") UTC</time></span>
+            </p>
+        }
+        @if (Model.IsAdministrator)
+        {
+            <p class="muted">Пользователь: @Model.OwnerName</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(workout.Notes))
+        {
+            <p class="muted">@workout.Notes</p>
+        }
+    </div>
+    <div class="active-header-actions">
+        @if (!locked && workout.WorkoutExercises.Count == 0)
+        {
+            <button class="button secondary" data-dialog="load-template-dialog">Загрузить шаблон
+                <admin-icon name="chevron"/>
+            </button>
+        }
+        @if (workout.State == WorkoutStatus.Planned)
+        {
+            <form method="post" asp-page-handler="Start">
+                <button class="button">Начать занятие
+                    <admin-icon name="play"/>
+                </button>
+            </form>
+        }
+        @if (workout.IsActive)
+        {
+            <button type="button" class="button secondary"
+                    data-control="@(workout.State == WorkoutStatus.Paused ? "resume" : "pause")"
+                    data-pause-button>@(workout.State == WorkoutStatus.Paused ? "Продолжить" : "Пауза")</button>
+        }
+        @if (workout.TrainingProgramId is { } programId)
+        {
+            <a class="button secondary" asp-page="/Training/Programs/Details" asp-route-id="@programId">К программе</a>
+        }
+        <a class="button secondary" asp-page="./Edit" asp-route-id="@workout.Id">Название и заметки</a>
+    </div>
+</header>

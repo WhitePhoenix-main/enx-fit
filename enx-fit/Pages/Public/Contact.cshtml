@@ -1,0 +1,30 @@
+@page "/contact"
+@using enx_fit.Pages.Public
+
+@using enx_fit.Presentation.Navigation
+@model enx_fit.Pages.Public.ContactModel
+@{
+    Layout = "/Pages/Shared/Layouts/_LandingLayout.cshtml";
+    ViewData["Title"] = "Помощь и контакты";
+    ViewData["Description"] = "Ответы на вопросы о тренировках, доступе и аккаунте Enix Fit. Контактная информация проекта.";
+}
+<div class="public-page wrap">
+    <header class="public-page-heading"><a class="public-back" asp-page="/Public/Index">← Главная</a><p class="eyebrow">Помощь и контакты</p><h1>Разберёмся<br /><span>со следующим шагом.</span></h1><p>Ответы на частые вопросы собраны в справке. Выбери тему, чтобы быстрее найти нужное.</p></header>
+    <div class="public-support-grid">
+        <section class="public-panel"><h2>Что хочешь узнать?</h2><div class="public-help-links">
+            <a href="@(Url.Page("/Public/Faq") + "#faq-recovery")"><span><b>Не получается войти</b><small>Пароль и двухэтапная проверка</small></span><svg class="icon"><use href="#i-arrow" /></svg></a>
+            <a href="@(Url.Page("/Public/Faq") + "#faq-offline")"><span><b>Пропало подключение</b><small>Что сохраняется и как повторить отправку</small></span><svg class="icon"><use href="#i-arrow" /></svg></a>
+            <a href="@(Url.Page("/Public/Faq") + "#faq-access")"><span><b>Доступ к Pro и Coach</b><small>Возможности и назначение плана</small></span><svg class="icon"><use href="#i-arrow" /></svg></a>
+        </div><a class="public-text-link" asp-page="/Public/Faq">Все вопросы и ответы →</a></section>
+        <section class="public-panel public-contact-card" data-test-contact="@Model.IsTest.ToString().ToLowerInvariant()">
+            <p class="public-status-badge">@(Model.IsTest ? "Тестовый контакт" : "Контакт проекта")</p><h2>Контактный email</h2>
+            <label for="support-address">Адрес</label><input id="support-address" type="text" value="@Model.Email" readonly autocomplete="off" />
+            @if (Model.IsTest)
+            { <p>Это тестовый адрес для макета страницы. Отправка обращений пока не подключена.</p> }
+            else
+            { <p><a class="public-text-link" href="mailto:@Model.Email">Написать на этот адрес →</a></p> }
+            <button class="button button-outline secondary" type="button" data-copy-support hidden>Скопировать адрес</button><p class="public-copy-feedback app-status" data-app-state="info" data-copy-feedback role="status" aria-live="polite"></p>
+        </section>
+    </div>
+    <div class="public-help-next"><p>Готов продолжить тренировку?</p><a class="button button-primary" href="@PublicPageLinks.Open(Url, User, "/Dashboard/Index")">@(User.Identity?.IsAuthenticated == true ? "Открыть приложение" : "Начать бесплатно")</a></div>
+</div>

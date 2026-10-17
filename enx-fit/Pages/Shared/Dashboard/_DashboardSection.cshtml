@@ -1,0 +1,38 @@
+@using enx_fit.Pages.Dashboard
+@model enx_fit.Pages.Dashboard.DashboardModel
+@{ var tab = Model.Section!; }
+<partial name="/Pages/Shared/Dashboard/_DashboardContext.cshtml" model="Model" />
+<div class="page-heading">
+    <div>
+        @if (Model.IsCoachView) { <p class="eyebrow">@Model.Data.Name</p> }
+        <h1>@tab.Title</h1>
+        <p>@tab.Description</p>
+    </div>
+    @if (!Model.IsCoachView && tab.Page == "/Training/Index")
+    {
+        <a class="button" asp-page="/Training/Workouts/Create"><admin-icon name="plus" />Добавить тренировку</a>
+    }
+    @if (!Model.IsCoachView && tab.Page == "/Progress/Index")
+    {
+        <a class="button" asp-page="/Progress/Measurements/Create"><admin-icon name="plus" />Добавить замер</a>
+    }
+</div>
+@if (tab.Page is "/Progress/Index" or "/Progress/Analytics" or "/Progress/Achievements")
+{
+    <nav class="progress-navigation app-tabs" aria-label="Разделы прогресса">
+        <a href="@Url.Page("/Progress/Index", Model.NavigationValues)" aria-current="@(tab.Page == "/Progress/Index" ? "page" : null)">Обзор · тело и силовые</a>
+        <a href="@Url.Page("/Progress/Analytics", Model.NavigationValues)" aria-current="@(tab.Page == "/Progress/Analytics" ? "page" : null)">Аналитика</a>
+        <a href="@Url.Page("/Progress/Achievements", Model.NavigationValues)" aria-current="@(tab.Page == "/Progress/Achievements" ? "page" : null)">Рекорды и достижения</a>
+    </nav>
+}
+<partial name="/Pages/Shared/Dashboard/_DashboardPeriod.cshtml" model="Model" />
+<div class="dashboard-grid modular-grid" data-dashboard-section="@tab.Page">
+    @foreach (var widget in tab.Widgets)
+    {
+        <div class="dashboard-widget" data-widget-id="@widget.Id" data-widget-width="@widget.Width">
+            <partial name="/Pages/Shared/Dashboard/_DashboardWidget.cshtml" model="new DashboardWidgetViewModel(Model, widget.Id)" />
+        </div>
+    }
+</div>
+<partial name="/Pages/Shared/Dashboard/_DashboardDialogs.cshtml" model="Model" />
+<partial name="/Pages/Shared/Workouts/_QuickWorkoutDialogs.cshtml" model="Model" />
