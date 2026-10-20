@@ -10,6 +10,8 @@ public sealed class DashboardReferenceIconTagHelper : TagHelper
     private static readonly IReadOnlyDictionary<string, string> Paths = new Dictionary<string, string>
     {
         ["users"] = "<circle cx='9' cy='7' r='4'/><path d='M2 22v-4c0-6 14-6 14 0v4Zm15-19a4 4 0 0 1 0 8m2 3c4 0 4 4 4 8'/>",
+        ["list"] = "<path d='M7 5h15M7 12h15M7 19h15'/><circle cx='2' cy='5' r='.7'/><circle cx='2' cy='12' r='.7'/><circle cx='2' cy='19' r='.7'/>",
+        ["circle"] = "<circle cx='12' cy='12' r='9'/>",
         ["expand"] = "<path d='M15 3h6v6m0-6-7 7M9 21H3v-6m0 6 7-7'/>",
         ["history"] = "<path d='M3 10a9 9 0 1 1 2 8M3 4v6h6M12 7v6l4 2'/>",
         ["image"] = "<rect x='2' y='2' width='20' height='20' rx='2'/><circle cx='8' cy='8' r='2'/><path d='m3 20 6-7 4 4 4-6 5 7'/>",

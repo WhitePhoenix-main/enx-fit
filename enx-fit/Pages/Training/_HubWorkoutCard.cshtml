@@ -1,0 +1,26 @@
+@using enx_fit.ViewModels.Workouts
+@model WorkoutHubCardViewModel
+@{var page=Model.Page;var w=Model.Card;var dialogId="hub-plan-"+(w.Session?.Id.ToString()??"p"+w.Occurrence?.Workout.Id);var photo=!Model.Calendar&&!Model.Client;}
+<section class="wh-card wh-workout @(photo?"has-photo":"") @(Model.Calendar?"is-calendar":"")" data-hub-workout="@(w.Session?.Id)" data-workout-state="@(w.Active?"active":w.Completed?"completed":"planned")">
+<div class="wh-workout-heading">
+    @if(photo){<img class="wh-workout-photo" src="~/images/training/workout-hub-barbell.png" alt="" />}
+    <p class="wh-eyebrow">@if(w.Active){<i class="wh-live-dot"></i>}@(w.Active?w.Session!.State==WorkoutStatus.Paused?"ТРЕНИРОВКА НА ПАУЗЕ":"ТРЕНИРОВКА ИДЁТ":w.Completed?"ТРЕНИРОВКА ЗАВЕРШЕНА":w.Date==page.Today?"ПО ПЛАНУ · СЕГОДНЯ":"ПО ПЛАНУ")</p>
+    <h2>@w.Title</h2>@if(Model.Calendar){<span class="wh-state-pill @(w.Completed?"wh-success":"")">@w.Status</span>}<p class="wh-muted">@w.ProgramLabel</p>
+    @if(!w.Active||Model.Client){<p class="wh-workout-meta">@if(w.Minutes>0){<span>@w.Minutes мин · </span>}@WorkoutHubCard.Count(w.Exercises.Count,"упражнение","упражнения","упражнений") · @if(Model.Client){@WorkoutHubCard.Count(w.Sets,"рабочий подход","рабочих подхода","рабочих подходов")}else{@WorkoutHubCard.Count(w.Sets,"подход","подхода","подходов")}</p>}
+</div>
+@if(w.Active){
+    <div class="wh-live-stats"><div><strong data-hub-clock="@w.Seconds" data-hub-paused="@(w.Session!.State==WorkoutStatus.Paused?"true":"false")">@WorkoutHubCard.Clock(w.Seconds)</strong><small>время</small></div><div><strong>@w.Done из @w.Sets</strong><small>подходов</small></div>@if(!Model.Client&&!Model.Calendar){<div class="wh-live-progress"><small>@w.Percent%</small><div class="wh-meter"><i style="width:@w.Percent%"></i></div></div>}</div>
+    @if(Model.Client){<div class="wh-client-progress"><div class="wh-meter"><i style="width:@w.Percent%"></i></div><span>@w.Percent%</span></div>}
+    else if(!Model.Calendar&&w.Current is {} current){<button type="button" class="wh-current-exercise" data-hub-dialog="@dialogId"><reference-icon name="dumbbell-outline" /><span><strong>Сейчас: @current.Name</strong><small>@current.Prescription</small></span><reference-icon name="chevron" /></button>}
+}else if(!Model.Calendar&&!Model.Client&&w.Exercises.Count>0){
+<div class="wh-exercise-preview">@foreach(var(e,i) in w.Exercises.Take(3).Select((e,i)=>(e,i))){<button type="button" class="wh-prescription-row" data-hub-dialog="@dialogId"><span class="wh-exercise-number">@(i+1)</span><strong>@e.Name</strong><small>@e.Prescription</small><reference-icon name="chevron" /></button>}</div>
+@if(w.Exercises.Count>3){<button class="wh-text-link wh-more-exercises" type="button" data-hub-dialog="@dialogId">Ещё @WorkoutHubCard.Count(w.Exercises.Count-3,"упражнение","упражнения","упражнений") <reference-icon name="chevron-down" /></button>}}
+<div class="wh-workout-action">
+@if(w.Session is {} session&&(w.Active||w.Completed||Model.Client||w.Date!=page.Today)){
+<a class="wh-primary" asp-page="/Training/Workouts/Details" asp-route-id="@session.Id" asp-route-Coach="@(Model.Client?(bool?)true:null)">@(Model.Client?"Открыть тренировку":w.Active?Model.Calendar?"Вернуться к тренировке":"Продолжить тренировку":w.Completed?"Открыть результаты":"Открыть тренировку") <reference-icon name="arrow" /></a>
+}else if(w.Date==page.Today){<form method="post" asp-page="/Training/Index" asp-page-handler="Start"><input type="hidden" name="source" value="@(w.Session is not null?"planned":"program")" /><input type="hidden" name="plannedId" value="@w.Session?.Id" /><input type="hidden" name="programId" value="@w.Program?.Id" /><button type="submit" class="wh-primary">Начать тренировку <reference-icon name="arrow" /></button></form>}
+else{<a class="wh-primary" asp-page="/Training/Programs/Details" asp-route-id="@w.Program?.Id">Открыть план <reference-icon name="arrow" /></a>}
+</div>
+@if(w.Active&&!Model.Calendar&&!Model.Client){<p class="wh-saved"><reference-icon name="check" />Все записанные подходы сохранены</p><button type="button" class="wh-row" data-hub-dialog="@dialogId"><reference-icon name="list" /><strong>Состав тренировки</strong><small>@WorkoutHubCard.Count(w.Exercises.Count,"упражнение","упражнения","упражнений")</small><reference-icon name="chevron" /></button><a class="wh-row" asp-page="@(w.Program is null?"/Training/Programs/Index":"/Training/Programs/Details")" asp-route-id="@w.Program?.Id"><reference-icon name="clipboard-outline" /><span><strong>Моя программа</strong><small>@(w.Program?.Name??"Выбрать программу")</small></span><reference-icon name="chevron" /></a>}
+</section>
+<dialog class="wh-dialog" id="@dialogId"><div class="wh-dialog-heading"><h2>@w.Title</h2><button type="button" data-hub-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p class="wh-muted">@w.ProgramLabel</p><div class="wh-dialog-exercises">@foreach(var(e,i) in w.Exercises.Select((e,i)=>(e,i))){<div class="wh-plan-row"><span class="wh-exercise-number">@(i+1)</span><span><strong>@e.Name</strong><small>@e.Prescription</small></span>@if(w.Active||w.Completed){<span class="@(e.Done>=e.Total&&e.Total>0?"wh-success":"wh-muted")">@e.Done/@e.Total</span>}</div>}</div></dialog>

@@ -41,7 +41,7 @@
 <nav class="enix-bottom-nav" aria-label="Мобильная навигация" data-app-navigation="@(Model.IsAdminShell ? null : "primary")" style="@(Model.IsAdminShell ? $"grid-template-columns:repeat({items.Length+1},minmax(0,1fr))" : null)">
     @foreach (var (key, itemPage, icon, label) in items)
     {
-        <a href="@Model.PageUrl(Url, itemPage)" aria-current="@(Selected(key) ? "page" : null)"><reference-icon name="@icon" /><span>@label</span></a>
+        <a href="@Model.PageUrl(Url, itemPage)" aria-current="@(Selected(key) ? "page" : null)"><reference-icon name="@(key=="home"&&!Selected(key)?"home-outline":icon)" /><span>@label</span></a>
     }
     <button type="button" data-app-menu-open aria-controls="enix-navigation-dialog" aria-haspopup="dialog" aria-expanded="false" aria-current="@(!items.Any(item=>Selected(item.Item1)) ? "page" : null)"><reference-icon name="more" /><span>Ещё</span></button>
 </nav>
