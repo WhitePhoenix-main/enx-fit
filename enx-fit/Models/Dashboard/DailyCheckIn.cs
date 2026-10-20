@@ -10,4 +10,6 @@ public sealed class DailyCheckIn
     public int ReadingMinutes { get; set; }
     public bool NutritionLogged { get; set; }
     public bool StretchingDone { get; set; }
+    public int? Feeling { get; set; }
+    public bool RestDay { get; set; }
 }

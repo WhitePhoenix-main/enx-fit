@@ -6,7 +6,7 @@
     <div class="dialog-heading"><h2 id="quick-title">Как хотите тренироваться?</h2><button type="button" class="icon-button" data-close aria-label="Закрыть"><admin-icon name="close" /></button></div>
     <div class="quick-options">
         <a class="quick-option" asp-page="/Training/Workouts/Record"><admin-icon name="plus" /><span><strong>Записать тренировку</strong><small>Внести уже выполненное занятие без запуска таймера</small></span><admin-icon name="arrow" /></a>
-        <button class="quick-option" type="button" data-dialog="template-start-dialog"><admin-icon name="layers" /><span><strong>Заниматься по шаблону</strong><small>Начать с готовым составом упражнений и подходов</small></span><admin-icon name="arrow" /></button>
+        <a class="quick-option" asp-page="/Training/Workouts/Templates"><admin-icon name="layers" /><span><strong>Заниматься по шаблону</strong><small>Начать с готовым составом упражнений и подходов</small></span><admin-icon name="arrow" /></a>
         <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="empty" /><button class="quick-option"><admin-icon name="bolt" /><span><strong>Добавлять упражнения на лету</strong><small>Начать свободно и собирать занятие по ходу</small></span><admin-icon name="arrow" /></button></form>
     </div>
 </dialog>

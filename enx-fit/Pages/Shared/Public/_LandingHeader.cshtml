@@ -5,7 +5,7 @@
     string Section(string id) => Url.Page("/Public/Index") + "#" + id;
 }
 <header class="landing-header wrap">
-    <a class="brand" asp-page="/Public/Index" aria-label="Enix Fit — главная"><partial name="/Pages/Shared/Public/_LandingBrand.cshtml" /></a>
+    <a class="brand" asp-page="/Public/Index" aria-label="Enix Fit — главная"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /></a>
     <nav class="landing-nav landing-desktop-nav" aria-label="Основная навигация">
         <a asp-page="/Public/Features" aria-current="@(currentPage == "/Public/Features" ? "page" : null)">Возможности</a>
         <a href="@Section("planner")">Программы</a>

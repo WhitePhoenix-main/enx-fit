@@ -7,7 +7,8 @@
     var active = dashboard.ActiveWorkout;
     var planned = d.NextWorkout?.Date == d.Today ? d.NextWorkout : null;
     var program = dashboard.NextProgramWorkout?.Date == d.Today ? dashboard.NextProgramWorkout : null;
-    var title = active?.Title ?? planned?.Title ?? program?.Workout.Name ?? "Начать тренировку";
+    var title = active?.Title ?? planned?.Title ?? program?.Workout.Name ??
+        (dashboard.ShowSetupPrompt ? "Соберём ваш первый план" : dashboard.ShowOnboarding ? "Выберите подходящую программу" : "Начать тренировку");
     if (reference) title = "Верх тела — сила";
     var count = active?.WorkoutExercises.Count ?? planned?.WorkoutExercises.Count ?? program?.Workout.Exercises.Count;
     var word = count % 100 is >= 11 and <= 14 || count % 10 is 0 or >= 5 ? "упражнений" : count % 10 == 1 ? "упражнение" : "упражнения";
@@ -32,6 +33,14 @@
     else if (planned is not null || program is not null)
     {
         <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="@(planned is not null ? "planned" : "program")" /><input type="hidden" name="plannedId" value="@planned?.Id" /><input type="hidden" name="programId" value="@dashboard.ActiveProgram?.Id" /><button class="ef-primary ef-start" type="submit"><reference-icon name="play" />Начать тренировку</button></form>
+    }
+    else if (dashboard.ShowSetupPrompt)
+    {
+        <a class="ef-primary ef-start" asp-page="/Account/TrainingSetup">Настроить под себя <reference-icon name="arrow" /></a>
+    }
+    else if (dashboard.ShowOnboarding)
+    {
+        <a class="ef-primary ef-start" asp-page="/Training/Programs/Index" asp-route-Tab="templates" asp-route-MatchPreferences="true">Подобрать программу <reference-icon name="arrow" /></a>
     }
     else
     {

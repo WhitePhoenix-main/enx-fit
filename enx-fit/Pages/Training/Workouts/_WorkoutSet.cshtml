@@ -38,6 +38,13 @@
             План: @(exercise.TargetWeightKg is { } targetWeight ? Number(targetWeight) + " кг" : "вес на выбор") × @(exercise.TargetRepsMin == exercise.TargetRepsMax ? exercise.TargetRepsMin.ToString() : $"{exercise.TargetRepsMin}–{exercise.TargetRepsMax}") повт.</p>
     }
     <div class="set-main"><span class="set-number">@set.SetNumber</span>
+        <div class="set-previous-cell">
+            @if (Model.Previous is { } previous) {
+                @if (!locked && !set.IsCompleted && !set.IsSkipped && previous.Drops.Count == 0 && set.Drops.Count == 0) {
+                    <button type="button" data-copy-previous data-weight="@previous.Weight.ToString(CultureInfo.InvariantCulture)" data-reps="@previous.Reps" data-previous-bodyweight="@previous.IsBodyweight.ToString().ToLowerInvariant()" aria-label="Перенести вес и повторения прошлого подхода @set.SetNumber" title="Повторить значения">@(previous.IsBodyweight ? "Свой вес" : Number(previous.Weight)) × @previous.Reps</button>
+                } else { <span>@(previous.IsBodyweight ? "Свой вес" : Number(previous.Weight)) × @previous.Reps</span> }
+            } else { <span aria-label="Нет прошлого результата">—</span> }
+        </div>
         <input aria-label="Вес подхода @set.SetNumber, кг" name="AddSet.Weight" type="number"
                inputmode="decimal" min="0" max="10000" step="0.01"
                value="@set.Weight.ToString(CultureInfo.InvariantCulture)" readonly="@locked"
@@ -94,7 +101,7 @@
         </div>
     }
     <details class="set-extra app-disclosure" id="set-extra-@set.Id">
-        <summary>Дополнительно: запас, отдых и действия</summary>
+        <summary aria-label="Подход @set.SetNumber: запас, отдых и действия"><span class="set-options-caption">Дополнительно: запас, отдых и действия</span><span class="set-options-number" aria-hidden="true">@(set.IsWarmup ? "Р" : set.SetNumber.ToString())<reference-icon name="chevron" /></span></summary>
         <div>
             <label class="set-effort">Запас повторений (RIR)<input type="number"
                                                                    inputmode="numeric"

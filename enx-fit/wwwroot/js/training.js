@@ -422,6 +422,8 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             });
         }
         document.querySelectorAll('[data-template-filters]').forEach(form => {
+            // A sheet applies several choices together; selecting one field keeps it open.
+            if (form.closest('.native-filter-sheet')) return;
             form.classList.add('plan-filter-enhanced');
             form.querySelectorAll('select,input[type="checkbox"]').forEach(control => control.addEventListener('change', () => form.requestSubmit()));
         });
@@ -1724,7 +1726,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     'use strict';
     const root = document.querySelector('[data-active-workout]');
     const initial = document.getElementById('workout-execution-state');
-    if (!root || !initial) return;
+    if (!root || !initial || root.hasAttribute('data-training-log')) return;
     let state = JSON.parse(initial.textContent);
     if (!['InProgress', 'Paused'].includes(state.status)) return;
     const storageKey = `enix-workout-view:${root.dataset.viewer}:${root.dataset.sessionId}`;
@@ -2236,19 +2238,54 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             ordering = false;
         }
     };
-    if (picker) pickerRoot.addEventListener('exercises-selected', async event => {
-        if (picking || ordering || cancelling) return;
+    // Structural log edits use the same queue and revision as set results.
+    root.saveWorkoutStructure = async (form, submitter) => {
+        if (picking || ordering || cancelling) throw new Error('Дождитесь сохранения тренировки.');
+        ordering = true;
+        try {
+            await flushResults();
+            const fields = new FormData(form);
+            if (submitter?.name) fields.set(submitter.name, submitter.value);
+            form.dataset.operationId ||= crypto.randomUUID();
+            fields.set('operationId', form.dataset.operationId);
+            fields.set('expectedRevision', revision);
+            const response = await fetch(form.getAttribute('action') || location.pathname, {method: 'POST', body: fields, headers: {'X-Requested-With': 'XMLHttpRequest'}});
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.error || 'Не удалось сохранить изменение. Обновите страницу и повторите.');
+            }
+            const html = new DOMParser().parseFromString(await response.text(), 'text/html');
+            const nextState = html.getElementById('workout-execution-state');
+            const errors = html.querySelector('.validation-summary-errors');
+            if (errors) throw new Error(errors.textContent.trim());
+            const nextList = html.querySelector('.session-exercises');
+            if (!nextState || !nextList) throw new Error('Не удалось получить тренировку. Проверьте вход в аккаунт.');
+            root.dispatchEvent(new CustomEvent('workout-exercises-replacing'));
+            root.querySelector('.session-exercises').replaceChildren(...nextList.children);
+            const latest = JSON.parse(nextState.textContent);
+            revision = latest.revision;
+            persist();
+            update(latest);
+            picker?.setSelected([...root.querySelectorAll('[data-catalog-id]')].map(card => window.ExerciseIds.normalize(card.dataset.catalogId)));
+            root.dispatchEvent(new CustomEvent('workout-exercises-changed'));
+            syncMessage();
+            delete form.dataset.operationId;
+            return latest;
+        } finally { ordering = false; }
+    };
+    root.pickWorkoutExercises = async (exercises, entryId = 0) => {
+        if (picking || ordering || cancelling) throw new Error('Дождитесь сохранения состава тренировки.');
         picking = true;
         picker.setBusy(true);
         picker.message('');
         try {
             await flushResults();
-            const entry = document.querySelector('[data-exercise-entry]').value;
-            const signature = JSON.stringify([entry, event.detail.exercises]);
+            const entry = String(entryId);
+            const signature = JSON.stringify([entry, exercises]);
             if (pickAttempt?.signature !== signature) pickAttempt = {signature, id: crypto.randomUUID()};
             const body = new URLSearchParams({
                 __RequestVerificationToken: token,
-                selectionJson: JSON.stringify(event.detail.exercises),
+                selectionJson: JSON.stringify(exercises),
                 ExerciseEntryId: entry,
                 expectedRevision: revision,
                 operationId: pickAttempt.id
@@ -2268,6 +2305,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 nextState = html.getElementById('workout-execution-state');
             if (!nextList || !nextState) throw new Error('Обновите страницу, чтобы увидеть сохранённые упражнения.');
             const currentList = root.querySelector('.session-exercises');
+            root.dispatchEvent(new CustomEvent('workout-exercises-replacing'));
             if (entry === '0') {
                 const existing = new Set([...currentList.children].map(card => card.id));
                 for (const card of [...nextList.children]) if (!existing.has(card.id)) currentList.append(card);
@@ -2292,7 +2330,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             if (total) total.textContent = currentList.children.length;
             root.querySelector('[data-dialog="load-template-dialog"]')?.setAttribute('hidden', '');
             syncMessage(entry === '0' ? 'Упражнения добавлены · все изменения сохранены' : 'Упражнение заменено · все изменения сохранены');
-            const ids = event.detail.exercises.map(p => p.exerciseId);
+            const ids = exercises.map(p => p.exerciseId);
             const card = [...root.querySelectorAll('.session-exercise')].find(el => ids.includes(window.ExerciseIds.normalize(el.dataset.catalogId)));
             root.dispatchEvent?.(new CustomEvent('workout-exercises-changed', {detail: {exerciseId: card?.id}}));
             card?.classList.add('exercise-just-added');
@@ -2301,12 +2339,17 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 block: 'start'
             });
             if (state.status !== 'Paused' && window.matchMedia?.('(min-width:1024px)')?.matches) card?.querySelector('input:not([type="hidden"])')?.focus({preventScroll: true});
+            return latest;
         } catch (error) {
             picker.message(error instanceof TypeError ? 'Нет соединения. Выбранные упражнения остались здесь — повторите добавление после восстановления связи.' : error.message);
+            throw error;
         } finally {
             picking = false;
             picker.setBusy(false);
         }
+    };
+    if (picker) pickerRoot.addEventListener('exercises-selected', event => {
+        void root.pickWorkoutExercises(event.detail.exercises, document.querySelector('[data-exercise-entry]').value).catch(() => {});
     });
 
     function persist() {
@@ -2353,8 +2396,10 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     function tick() {
         root.dataset.sessionStatus = state.status;
         const elapsed = state.elapsedSeconds + (state.status === 'InProgress' ? (Date.now() - sampledAt) / 1000 : 0);
-        const sessionClock = root.querySelector('[data-session-clock]');
-        if (sessionClock) sessionClock.textContent = clock(elapsed);
+        root.querySelectorAll('[data-session-clock]').forEach(sessionClock => {
+            sessionClock.textContent = root.hasAttribute('data-quick-workout')
+                ? `${String(Math.floor(elapsed / 3600)).padStart(2, '0')}:${clock(elapsed % 3600)}` : clock(elapsed);
+        });
         const paused = state.status === 'Paused', notice = root.querySelector('[data-pause-notice]'),
             pauseButton = root.querySelector('[data-pause-button]');
         if (notice) notice.hidden = !paused;
@@ -2365,7 +2410,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         root.querySelectorAll('.set-form input:not([type="hidden"]),.set-form button').forEach(input => {
             if (active()) input.disabled = paused;
         });
-        const remaining = paused ? state.restRemainingSeconds : state.restEndsAtUtc ? Math.max(0, Math.ceil((Date.parse(state.restEndsAtUtc) - Date.now() - offset) / 1000)) : null;
+        const remaining = paused ? state.restRemainingSeconds : state.restEndsAtUtc ? Math.max(0, Math.ceil((Date.parse(state.restEndsAtUtc) - Date.now() - offset) / 1000)) : state.restRemainingSeconds;
         root.dispatchEvent?.(new CustomEvent('workout-state', {
             detail: {
                 ...state,
@@ -2375,9 +2420,11 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         }));
         const panel = root.querySelector('[data-rest-panel]');
         if (panel) {
-            panel.hidden = remaining == null || !active();
-            root.querySelector('[data-rest-clock]').textContent = clock(remaining || 0);
-            root.querySelector('[data-rest-caption]').textContent = paused ? 'Отдых на паузе' : remaining === 0 ? 'Отдых закончен · можно начинать следующий подход' : 'Восстановитесь перед следующим подходом';
+            if (!root.hasAttribute('data-quick-workout')) {
+                panel.hidden = remaining == null || !active();
+                root.querySelector('[data-rest-clock]').textContent = clock(remaining || 0);
+                root.querySelector('[data-rest-caption]').textContent = paused ? 'Отдых на паузе' : remaining === 0 ? 'Можно продолжать' : 'Отдых после подхода';
+            }
             if (remaining === 0 && !paused && state.restEndsAtUtc && soundedRest !== state.restEndsAtUtc) {
                 soundedRest = state.restEndsAtUtc;
                 if (sound && audioContext) {
@@ -2483,7 +2530,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 state.elapsedSeconds = Math.max(0, state.elapsedSeconds + (at - offset - sampledAt) / 1000);
                 sampledAt = Date.now();
                 state.status = 'Paused';
-                state.restRemainingSeconds = state.restEndsAtUtc ? Math.max(0, Math.ceil((Date.parse(state.restEndsAtUtc) - at) / 1000)) : null;
+                state.restRemainingSeconds = state.restEndsAtUtc ? Math.max(0, Math.ceil((Date.parse(state.restEndsAtUtc) - at) / 1000)) : state.restRemainingSeconds;
                 state.restEndsAtUtc = null;
             } else if (action === 'resume' && state.status === 'Paused') {
                 state.status = 'InProgress';
@@ -2494,8 +2541,22 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 state.restEndsAtUtc = null;
                 state.restRemainingSeconds = null;
                 state.restAfterSetId = null;
+            } else if (action === 'start-rest' && state.status === 'InProgress') {
+                state.restEndsAtUtc = new Date(at + seconds * 1000).toISOString();
+                state.restRemainingSeconds = null;
+                state.restAfterSetId = null;
+            } else if (action === 'pause-rest' && state.status === 'InProgress') {
+                state.restRemainingSeconds = state.restEndsAtUtc ? Math.max(0, Math.ceil((Date.parse(state.restEndsAtUtc) - at) / 1000)) : state.restRemainingSeconds;
+                state.restEndsAtUtc = null;
+            } else if (action === 'resume-rest' && state.status === 'InProgress') {
+                state.restEndsAtUtc = state.restRemainingSeconds > 0 ? new Date(at + state.restRemainingSeconds * 1000).toISOString() : null;
+                state.restRemainingSeconds = null;
+            } else if (action === 'set-rest' && state.status === 'InProgress') {
+                if (state.restEndsAtUtc) state.restEndsAtUtc = seconds > 0 ? new Date(at + seconds * 1000).toISOString() : null;
+                else if (state.restRemainingSeconds != null) state.restRemainingSeconds = seconds > 0 ? seconds : null;
+                if (seconds === 0) state.restAfterSetId = null;
             } else if (action === 'adjust-rest') {
-                if (state.status === 'Paused' && state.restRemainingSeconds != null) state.restRemainingSeconds = Math.max(0, Math.min(1800, state.restRemainingSeconds + seconds));
+                if (!state.restEndsAtUtc && state.restRemainingSeconds != null) state.restRemainingSeconds = Math.max(0, Math.min(1800, state.restRemainingSeconds + seconds));
                 else if (state.restEndsAtUtc) state.restEndsAtUtc = new Date(at + Math.max(0, Math.min(1800, (Date.parse(state.restEndsAtUtc) - at) / 1000 + seconds)) * 1000).toISOString();
             }
         }
@@ -2519,6 +2580,8 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             root.querySelector("[data-discard-operation]").hidden = true;
         }
         const fields = [...new FormData(form).entries()].filter(([n]) => n !== '__RequestVerificationToken');
+        if (completedInput.checked) form.classList.toggle('is-skipped', false);
+        else if (form.classList.contains('is-skipped') && !extra.some(([n]) => n === 'skipped')) extra.push(['skipped', 'true']);
         // A completion checkbox changes the submitted values too. Track this snapshot so its acknowledgement clears the draft.
         scratch[form.elements.namedItem('setId').value] = fields.map(pair => [...pair]);
         fields.push(...extra, ['performedAtUtc', new Date(Date.now() + offset).toISOString()]);
@@ -2533,6 +2596,23 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         enqueue({kind: "set", setId: form.elements.namedItem("setId").value, fields, startsRest});
         return true;
     }
+
+    root.addEventListener('click', event => {
+        const button = event.target.closest('[data-copy-previous]');
+        if (!button || !active() || state.status === 'Paused') return;
+        const form = button.closest('.set-form');
+        if (!form || form.classList.contains('is-completed') || form.classList.contains('is-skipped')) return;
+        const weight = form.elements.namedItem('AddSet.Weight');
+        const reps = form.elements.namedItem('AddSet.Reps');
+        const bodyweight = form.elements.namedItem('AddSet.IsBodyweight');
+        bodyweight.checked = button.dataset.previousBodyweight === 'true';
+        weight.value = bodyweight.checked ? '0' : button.dataset.weight;
+        weight.dataset.externalWeight = weight.value;
+        reps.value = button.dataset.reps;
+        // Use the existing draft/command queue; copying never marks a set complete or starts rest.
+        bodyweight.dispatchEvent(new Event('change', {bubbles: true}));
+        reps.focus();
+    });
 
     root.addEventListener("input", event => {
         const form = event.target.closest(".set-form");
@@ -2654,17 +2734,18 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             delete form.dataset.flushing;
         }
     });
-    document.addEventListener('click', event => {
-        const control = event.target.closest("[data-control]");
-        if (control) {
+    root.controlWorkout = (action, seconds = 0) => {
             const op = {
                 kind: "control",
-                fields: [["action", control.dataset.control], ["seconds", control.dataset.seconds || "0"], ["performedAtUtc", new Date(Date.now() + offset).toISOString()]]
+                fields: [["action", action], ["seconds", String(seconds)], ["performedAtUtc", new Date(Date.now() + offset).toISOString()]]
             };
             previewOperation(op);
             tick();
             enqueue(op);
-        }
+    };
+    document.addEventListener('click', event => {
+        const control = event.target.closest("[data-control]");
+        if (control) root.controlWorkout(control.dataset.control, Number(control.dataset.seconds || 0));
         const skip = event.target.closest('[data-skip-set]');
         if (skip) {
             const form = skip.closest('.set-form');
@@ -3323,6 +3404,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         revision,
         step,
         goal: selected('Input.Goal')[0],
+        level: selected('Input.Level')[0],
         location: selected('Input.Location')[0],
         equipment: selected('Input.Equipment'),
         days: selected('Input.Days'),
@@ -3337,7 +3419,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         }
     };
     const renderSummary = () => {
-        const rows = [['Цель', title(form.querySelector('[name="Input.Goal"]:checked')) || 'Выберите цель'], ['Место', title(form.querySelector('[name="Input.Location"]:checked')) || 'Выберите место'], ['Оборудование', [...form.querySelectorAll('[name="Input.Equipment"]:checked')].map(title).join(', ') || 'Без дополнительного оборудования'], ['Удобные дни', later.checked ? 'Дни выберу позже' : dayInputs.filter(input => input.checked).map(input => input.closest('label').querySelector('small').textContent).join(', ') || 'Выберите дни']];
+        const rows = [['Цель', title(form.querySelector('[name="Input.Goal"]:checked')) || 'Выберите цель'], ['Уровень', title(form.querySelector('[name="Input.Level"]:checked')) || 'Выберите уровень'], ['Место', title(form.querySelector('[name="Input.Location"]:checked')) || 'Выберите место'], ['Оборудование', [...form.querySelectorAll('[name="Input.Equipment"]:checked')].map(title).join(', ') || 'Без дополнительного оборудования'], ['Удобные дни', later.checked ? 'Дни выберу позже' : dayInputs.filter(input => input.checked).map(input => input.closest('label').querySelector('small').textContent).join(', ') || 'Выберите дни']];
         form.querySelectorAll('[data-setup-preview],[data-setup-review]').forEach(dl => {
             dl.replaceChildren(...rows.map(([label, value]) => {
                 const row = document.createElement('div'), dt = document.createElement('dt'),
@@ -3397,7 +3479,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         try {
             const draft = JSON.parse(sessionStorage.getItem(key));
             if (draft?.version === 1 && draft.revision === revision) {
-                for (const [name, values] of [['Input.Goal', [draft.goal]], ['Input.Location', [draft.location]], ['Input.Equipment', draft.equipment], ['Input.Days', draft.days]]) {
+                for (const [name, values] of [['Input.Goal', [draft.goal]], ['Input.Level', [draft.level]], ['Input.Location', [draft.location]], ['Input.Equipment', draft.equipment], ['Input.Days', draft.days]]) {
                     if (!Array.isArray(values)) continue;
                     form.querySelectorAll(`[name="${name}"]`).forEach(input => input.checked = values.includes(input.value));
                 }

@@ -8,15 +8,7 @@
         <div class="container">
             
             <a class="navbar-brand" asp-page="@brandPage" aria-label="Enix Fit — главная">
-                <span class="app-brand-mark" aria-hidden="true">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </span>
-                <span class="app-brand-copy">
-                    <span class="app-brand-name">Enix Fit</span>
-                    <span class="app-brand-tagline">Fitness &amp; progress</span>
-                </span>
+                <partial name="/Pages/Shared/Navigation/_Brand.cshtml" />
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavigation" 
                     aria-controls="mainNavigation" aria-expanded="false" aria-label="Открыть навигацию">

@@ -88,7 +88,7 @@ public sealed class DashboardQuery(ApplicationDbContext db, CurrentUser currentU
             History = new(daily, records), Workouts = workouts,
             Measurements = await measurements.Where(m => m.Date >= until.AddDays(-28) || lastMeasurements.Contains(m.Id))
                 .OrderBy(m => m.Date).ThenBy(m => m.Id).ToListAsync(),
-            CheckIns = await db.DailyCheckIns.AsNoTracking().Where(c => c.UserId == subject.Id && c.Date >= today.AddDays(-6) && c.Date <= today)
+            CheckIns = await db.DailyCheckIns.AsNoTracking().Where(c => c.UserId == subject.Id && c.Date >= today.AddDays(-29) && c.Date <= today)
                 .OrderBy(c => c.Date).ToListAsync()
         };
         return new(data, config.Layout?.WidgetsJson, config.Layout is null);

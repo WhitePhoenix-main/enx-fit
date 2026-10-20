@@ -4,14 +4,24 @@
 <nav class="em-mobile-menu-links" aria-label="Все разделы">
     <a href="@PageUrl("/Training/Exercises/Index")">Библиотека <reference-icon name="book" /></a>
     <a href="@PageUrl("/Account/Profile")">Профиль <reference-icon name="user" /></a>
+    <a href="@PageUrl("/Coaching/Messages")">Сообщения <reference-icon name="message" /></a>
+    <a href="@PageUrl("/Account/TrainingSetup")">Условия тренировок <reference-icon name="sliders" /></a>
+    <a asp-area="Identity" asp-page="/Account/Manage/Index">Настройки аккаунта <reference-icon name="settings" /></a>
+    <a href="@PageUrl("/Nutrition/Index")">Питание <reference-icon name="nutrition" /></a>
+    <a href="@PageUrl("/Training/Workouts/Templates")">Шаблоны <reference-icon name="layers" /></a>
+    <a href="@PageUrl("/Training/Plans")">План / Календарь <reference-icon name="calendar" /></a>
     <a href="@PageUrl("/Dashboard/Habits")">Привычки <reference-icon name="check-circle" /></a>
     <a href="@PageUrl("/Progress/Analytics")">Аналитика <reference-icon name="trend" /></a>
     <a href="@PageUrl("/Progress/Achievements")">Достижения <reference-icon name="trophy" /></a>
     <a href="@PageUrl("/Account/Subscription")">Подписка <reference-icon name="crown" /></a>
-    @if (Model.IsTrainer) { <a href="@PageUrl("/Coaching/Clients")">Мои клиенты <reference-icon name="users" /></a> }
+    @if (Model.IsTrainer) {
+        <a href="@PageUrl("/Coaching/Clients")">Мои клиенты <reference-icon name="users" /></a>
+        <a href="@PageUrl("/Coaching/Calendar")">Календарь тренера <reference-icon name="calendar" /></a>
+    }
     @if (Model.IsAdministrator) {
         <a href="@PageUrl("/Admin/Index")">Администрирование <reference-icon name="shield" /></a>
         <a href="@PageUrl("/Admin/Users/Index")">Пользователи <reference-icon name="users" /></a>
+        <a href="@PageUrl("/Admin/Exercises/Index")">Управление упражнениями <reference-icon name="book" /></a>
         <a href="@PageUrl("/Training/Workouts/Index")">Управление тренировками <reference-icon name="workout" /></a>
         <a href="@PageUrl("/Progress/Measurements/Index")">Замеры пользователей <reference-icon name="body-scale" /></a>
     }

@@ -49,6 +49,10 @@ else if (locked)
         </div>
     </section>
 }
+@if (workout.State == WorkoutStatus.Completed && workout.UserId == Model.ViewerId)
+{
+    <section class="panel session-next-step"><div><h2>Занятие в вашей истории</h2><p>Результаты уже учтены. Посмотрите прогресс и вернитесь на главную за следующим занятием.</p></div><a class="button" asp-page="/Progress/Index">Посмотреть прогресс <admin-icon name="arrow" /></a><a class="button secondary" asp-page="/Dashboard/Index">Следующий шаг</a></section>
+}
 @if (workout.TemplateDecisionPending)
 {
     <section class="panel template-decision" aria-labelledby="template-decision-title"><h2

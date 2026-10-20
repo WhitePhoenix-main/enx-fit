@@ -43,9 +43,6 @@
         }
         @if (workout.IsActive)
         {
-            <button type="button" class="button secondary"
-                    data-control="@(workout.State == WorkoutStatus.Paused ? "resume" : "pause")"
-                    data-pause-button>@(workout.State == WorkoutStatus.Paused ? "Продолжить" : "Пауза")</button>
             <button class="button" type="button" data-dialog="finish-workout-dialog" data-finish
                     disabled="@(!workout.WorkoutExercises.Any(e => e.SetEntries.Any(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0)))">
                 <admin-icon name="check"/>Завершить
@@ -58,6 +55,9 @@
         <details class="workout-session-menu">
             <summary aria-label="Меню тренировки"><span>Ещё</span><span aria-hidden="true">⋯</span></summary>
             <div>
+                @if (workout.IsActive) {
+                    <button type="button" data-control="@(workout.State == WorkoutStatus.Paused ? "resume" : "pause")" data-pause-button>@(workout.State == WorkoutStatus.Paused ? "Продолжить" : "Пауза")</button>
+                }
                 <a asp-page="./Edit" asp-route-id="@workout.Id">Название и заметки</a>
                 @if (workout.IsActive)
                 {

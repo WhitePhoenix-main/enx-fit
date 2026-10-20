@@ -67,7 +67,7 @@ public sealed class DashboardService(ApplicationDbContext db, CurrentUser curren
         data.Measurements = await db.BodyMeasurements.AsNoTracking()
             .Where(m => m.UserId == subject.Id && m.Date <= until).OrderBy(m => m.Date).ThenBy(m => m.Id).ToListAsync();
         data.CheckIns = await db.DailyCheckIns.AsNoTracking()
-            .Where(c => c.UserId == subject.Id && c.Date >= today.AddDays(-6) && c.Date <= today)
+            .Where(c => c.UserId == subject.Id && c.Date >= today.AddMonths(-13) && c.Date <= today)
             .OrderBy(c => c.Date).ToListAsync();
         return data;
     }

@@ -1,42 +1,69 @@
 @using enx_fit.Pages.Dashboard
+@using enx_fit.Presentation.Exercises
 @model enx_fit.Pages.Dashboard.DashboardModel
 @{
     var d = Model.Data;
-    var reference = Model.Reference;
+    var today = d.Today;
     var ru = DashboardWorkoutsViewModel.Russian;
-    var today = reference ? new DateOnly(2026, 10, 1) : d.Today;
-    var monday = today.AddDays(-((int)today.DayOfWeek + 6) % 7 + Model.WeekOffset * 7);
+    var monday = today.AddDays(-((int)today.DayOfWeek + 6) % 7);
     var active = Model.ActiveWorkout;
-    var planned = d.NextWorkout?.Date == d.Today ? d.NextWorkout : null;
-    var next = Model.NextProgramWorkout?.Date == d.Today ? Model.NextProgramWorkout : null;
-    var title = reference ? "Верх тела" : active?.Title ?? planned?.Title ?? next?.Workout.Name ?? "В вашем темпе";
-    var count = active?.WorkoutExercises.Count ?? planned?.WorkoutExercises.Count ?? next?.Workout.Exercises.Count;
-    var last = d.Completed.FirstOrDefault();
-    var goal = Model.NextRecommendation;
-    string N(decimal? value) => value?.ToString("0.##", ru) ?? "—";
+    var planned = d.NextWorkout?.Date == today ? d.NextWorkout : null;
+    var next = Model.NextProgramWorkout?.Date == today ? Model.NextProgramWorkout : null;
+    var completed = Model.CompletedToday;
+    var beginner = Model.ShowOnboarding && active is null && planned is null && next is null && Model.ActiveProgram is null && Model.UpcomingWorkout is null;
+    var title = active?.Title ?? planned?.Title ?? next?.Workout.Name;
+    var session = active ?? planned;
+    var exercises = session is not null
+        ? session.WorkoutExercises.OrderBy(e => e.Order).Select(e => (Name: ExercisePresentation.DisplayName(e.Exercise), Muscle: e.Exercise.MuscleGroup)).ToArray()
+        : next?.Workout.Exercises.OrderBy(e => e.Order).Select(e => (Name: ExercisePresentation.DisplayName(e.Exercise), Muscle: e.Exercise.MuscleGroup)).ToArray() ?? [];
+    var done = d.CountCompleted(monday, today);
+    var goal = Math.Max(1, d.Settings.WeeklyWorkoutGoal);
+    var last = d.Completed.OrderByDescending(w => w.Date).ThenByDescending(w => w.Id).FirstOrDefault();
     string? PageUrl(string page) => Url.Page(page, Model.NavigationValues);
 }
-<div class="ef-mobile-screen em-home">
-    <header class="em-greeting"><h1>@(reference ? "Привет, Алексей!" : Model.IsCoachView ? d.Name : $"Привет, {d.Name}!")</h1><p>@ru.TextInfo.ToTitleCase(today.ToString("dddd, d MMMM", ru))</p></header>
-    <section class="em-today">
-        <div class="em-today-heading"><reference-icon name="workout" /><div><h2>@(active is null || reference ? "Сегодня: " : "Продолжается: ")@title</h2><p>@(reference ? "4 упражнения · Неделя 3" : count.HasValue ? DashboardWorkoutsViewModel.ExerciseCount(count.Value) : "Добавляйте упражнения по ходу")</p></div><reference-icon name="chevron" /></div>
-        @if (Model.IsCoachView) { <a class="em-primary em-today-start" href="@PageUrl("/Training/Plans")">План тренировок</a> }
-        else if (!reference && active is not null) { <a class="em-primary em-today-start" asp-page="/Training/Workouts/Details" asp-route-id="@active.Id">Продолжить тренировку</a> }
-        else if (!reference && (planned is not null || next is not null)) { <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="@(planned is not null ? "planned" : "program")"/><input type="hidden" name="plannedId" value="@planned?.Id"/><input type="hidden" name="programId" value="@Model.ActiveProgram?.Id"/><button class="em-primary em-today-start" type="submit">Начать тренировку</button></form> }
-        else { <button class="em-primary em-today-start" type="button" data-dialog="quick-workout-dialog">@(Model.ShowOnboarding ? "Начать первую тренировку" : "Выбрать тренировку")</button> }
-        @if (!Model.IsCoachView && (active is not null || planned is not null || next is not null)) { <button class="em-today-quick" type="button" data-dialog="quick-workout-dialog"><reference-icon name="layers" />Другой способ тренировки</button> }
-    </section>
-    <partial name="/Pages/Shared/Dashboard/_HomeNextStep.cshtml" model="Model" />
-    @if (!Model.IsCoachView) { <partial name="/Pages/Shared/Dashboard/_HomeWorkoutChoices.cshtml" model="Model" /> }
-    <partial name="/Pages/Shared/Dashboard/_TrainingSetupPrompt.cshtml" model="Model" />
-    <nav class="em-home-week" aria-label="План недели">
-        @for (var i = 0; i < 7; i++) { var date = monday.AddDays(i); var done = reference ? i is 0 or 2 : d.Completed.Any(w => w.Date == date); <a href="@PageUrl("/Training/Plans")" data-dialog="home-day-@date.ToString("yyyy-MM-dd")" aria-label="@date.ToString("d MMMM", ru)" aria-current="@(date == today ? "date" : null)"><span>@(new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" }[i])</span><strong class="@(done ? "is-done" : date == today ? "is-today" : "")">@if (done) { <reference-icon name="check" /> } else if (date >= today) { @date.Day } else { <span class="em-day-dot"></span> }</strong></a> }
+<div class="ef-mobile-screen native-home">
+    <div asp-validation-summary="All" class="app-status app-notice" data-app-state="error" role="alert"></div>
+    <header class="native-page-title"><p>@today.ToString("dddd, d MMMM", ru)</p><h1>@(Model.IsCoachView ? d.Name : $"Привет, {d.Name}")<span class="native-title-dot">.</span></h1></header>
+    <nav class="native-week" aria-label="Ваша неделя">
+        @for (var i = 0; i < 7; i++) {
+            var day = monday.AddDays(i); var finished = d.CountCompleted(day, day) > 0;
+            <a href="@PageUrl("/Training/Plans")" data-dialog="home-day-@day.ToString("yyyy-MM-dd")" class="@(day == today ? "is-today" : "") @(finished ? "is-done" : "")" aria-current="@(day == today ? "date" : null)" aria-label="@day.ToString("d MMMM", ru)@(finished ? ", выполнено" : "")"><span>@(new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" }[i])</span><strong>@day.Day</strong><i aria-hidden="true">@(finished ? "✓" : "·")</i></a>
+        }
     </nav>
-    <partial name="/Pages/Shared/Dashboard/_HomeProgress.cshtml" model="@(new enx_fit.ViewModels.Dashboard.DashboardWidgetViewModel(Model, "home-progress-mobile"))" />
-    <section class="em-card em-home-goal"><h2><reference-icon name="target" />Следующая цель</h2><reference-photo class="em-home-bench" image="overview" window="288 543 72 55" alt="Скамья для жима лёжа"/>
-        <p>@(reference ? "Жим лёжа" : Model.NextGoalExercise is { } exercise ? ExercisePresentation.DisplayName(exercise.Exercise) : d.Settings.GoalTitle)</p>
-        <strong>@(reference ? "60 → 62,5 кг" : goal is not null ? $"{N(goal.CurrentValue)} → {N(goal.SuggestedValue)} кг" : $"{d.ThisWeek.Count()} / {d.Settings.WeeklyWorkoutGoal} тренировок")</strong>
-        <footer>@if (reference || goal is not null) { <span class="em-pending"><reference-icon name="clock" />Нужно подтверждение</span> }<a class="em-outline" href="@PageUrl("/Progress/Index")">Посмотреть<reference-icon name="chevron" /></a></footer>
+    <section class="native-today" aria-labelledby="native-today-title">
+        <header class="native-section-title"><h2 id="native-today-title">@(active is not null ? "Продолжим?" : "Сегодня")</h2>@if (!Model.IsCoachView) { <a asp-page="/Account/TrainingSetup" aria-label="Условия подбора"><reference-icon name="sliders" /></a> }</header>
+        @if (Model.IsCoachView) {
+            <div class="native-session-card"><span class="native-kicker">План клиента</span><h3>Следующее занятие</h3><p>Расписание, упражнения и результаты — в плане клиента.</p><a class="native-primary" href="@PageUrl("/Training/Plans")">Открыть план <reference-icon name="arrow" /></a></div>
+        }
+        else if (title is not null) {
+            <div class="native-session-card">
+                <div class="native-session-top"><span class="native-kicker">@(active is not null ? "Тренировка идёт" : Model.ActiveProgram?.Name ?? "Ваш план")</span><reference-icon name="@(active is not null ? "play" : "workout")" /></div>
+                <h3>@title</h3><div class="native-session-facts"><span>@DashboardWorkoutsViewModel.ExerciseCount(exercises.Length)</span>@if (next is not null) { <span>≈ @next.Workout.EstimatedMinutes мин</span> }@if (active is not null) { <span>Выполнено подходов: @active.WorkoutExercises.Sum(e => e.SetEntries.Count(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0))</span> }</div>
+                <div class="native-exercise-preview">@foreach (var exercise in exercises.Take(3)) { <div><span><admin-icon name="@ExercisePresentation.MuscleIcon(exercise.Muscle)" /></span><strong>@exercise.Name</strong></div> }@if (exercises.Length > 3) { <small>И ещё @(exercises.Length - 3)</small> }</div>
+                @if (active is not null) { <a class="native-primary" asp-page="/Training/Workouts/Details" asp-route-id="@active.Id"><reference-icon name="play" />Продолжить тренировку</a> }
+                else { <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="@(planned is not null ? "planned" : "program")" /><input type="hidden" name="plannedId" value="@planned?.Id" /><input type="hidden" name="programId" value="@Model.ActiveProgram?.Id" /><button type="submit" class="native-primary"><reference-icon name="play" />Начать тренировку</button></form> }
+            </div>
+        }
+        else if (completed is not null) {
+            <div class="native-session-card native-session-complete"><span class="native-kicker"><reference-icon name="check-circle" />Сегодня выполнено</span><h3>Время для себя<br />уже нашлось.</h3><p>@completed.Title</p><a class="native-primary" asp-page="/Training/Workouts/Details" asp-route-id="@completed.Id">Результат тренировки <reference-icon name="arrow" /></a></div>
+        }
+        else if ((beginner || Model.ActiveProgram is null) && Model.UpcomingWorkout is null) {
+            <div class="native-start-card"><div><span class="native-kicker">Ваш первый шаг</span><h3>План, который<br />подходит вам.</h3><p>Цель, опыт и ваше оборудование.<br />Начнём с того, что удобно.</p><a class="native-primary" asp-page="@(Model.ShowSetupPrompt ? "/Account/TrainingSetup" : "/Training/Programs/Index")" asp-route-Tab="@(Model.ShowSetupPrompt ? null : "templates")" asp-route-MatchPreferences="@(Model.ShowSetupPrompt ? null : "true")">Подобрать программу <reference-icon name="arrow" /></a></div></div>
+        }
+        else if (Model.UpcomingWorkout is { } upcoming) {
+            <div class="native-session-card native-rest-day"><span class="native-kicker"><reference-icon name="coffee" />Сегодня без спешки</span><h3>Отдых — тоже<br />часть плана.</h3><p>Следующая: @upcoming.Title</p><a class="native-next-session" href="@(upcoming.ProgramId.HasValue ? Url.Page("/Training/Programs/Details", new { id = upcoming.ProgramId, Tab = "schedule", Day = upcoming.Date.ToString("yyyy-MM-dd"), Week = upcoming.Date.ToString("yyyy-MM-dd"), OpenDay = true }) : Url.Page("/Training/Workouts/Details", new { id = upcoming.WorkoutId }))"><span>@upcoming.Date.ToString("d MMMM", ru)<strong>@DashboardWorkoutsViewModel.ExerciseCount(upcoming.ExerciseCount)</strong></span><reference-icon name="arrow" /></a></div>
+        }
+        else {
+            <div class="native-session-card"><span class="native-kicker">В вашем темпе</span><h3>Что сегодня<br />в вашем плане?</h3><button type="button" class="native-primary" data-dialog="quick-workout-dialog">Выбрать тренировку <reference-icon name="arrow" /></button></div>
+        }
+        @if (!Model.IsCoachView && active is null) {
+            <div class="native-start-options"><form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="empty" /><button type="submit"><reference-icon name="plus" />Свободная тренировка</button></form><button type="button" data-dialog="template-start-dialog"><reference-icon name="layers" />Из шаблона</button></div>
+        }
     </section>
-    <a class="em-card em-home-last" href="@PageUrl("/Training/Index")"><h2><reference-icon name="repeat" />Последняя тренировка</h2><p>@(reference ? "29 сентября, вторник" : last?.Date.ToString("d MMMM, dddd", ru) ?? "Первая тренировка впереди")</p><div><strong>@(reference ? "Низ тела" : last?.Title ?? "Начните сегодня")</strong>@if (reference || last is not null) { <span class="em-saved">Выполнена</span> }<reference-icon name="chevron" /></div><small>@(reference ? "4 упражнения · 1 ч 05 мин" : last is null ? "Результаты появятся после занятия" : DashboardWorkoutsViewModel.ExerciseCount(last.WorkoutExercises.Count))</small></a>
+    <section class="native-week-summary" aria-label="Регулярность за неделю"><div class="native-goal-ring" style="--goal-progress:@(Math.Min(100, done * 100 / goal))%"><span><strong>@done</strong><small>из @goal</small></span></div><div><span class="native-kicker">Ваш ритм</span><h2>@(done >= goal ? "Неделя удалась" : done == 0 ? "Начнём с одного" : "Вы уже в движении")</h2><p>@(done >= goal ? "Недельная цель выполнена. Оставьте время для отдыха." : done == 0 ? "Одного занятия достаточно, чтобы сделать первый шаг." : "Каждое занятие считается. Продолжайте в своём темпе.")</p><a href="@PageUrl("/Progress/Index")">Посмотреть прогресс <reference-icon name="arrow" /></a></div></section>
+    @if (Model.ActiveProgram is { } program) { <a class="native-list-link" asp-page="/Training/Programs/Details" asp-route-id="@program.Id"><span class="native-list-icon"><reference-icon name="calendar" /></span><span><small>Ваша программа</small><strong>@program.Name</strong></span><reference-icon name="chevron" /></a> }
+    @if (Model.NextRecommendation is { } recommendation && Model.NextGoalExercise is { } goalExercise) { <a class="native-list-link" asp-page="/Training/Programs/Details" asp-route-id="@Model.ActiveProgram?.Id" asp-route-Tab="progression" asp-route-ExerciseId="@goalExercise.Id"><span class="native-list-icon"><reference-icon name="spark" /></span><span><small>Следующий шаг · по вашим результатам</small><strong>@ExercisePresentation.DisplayName(goalExercise.Exercise)</strong><small>@recommendation.Reason</small></span><reference-icon name="chevron" /></a> }
+    @if (last is not null) { <header class="native-section-title"><h2>Последнее занятие</h2><a href="@PageUrl("/Training/Index")">История <reference-icon name="chevron" /></a></header><a class="native-list-link" asp-page="/Training/Workouts/Details" asp-route-id="@last.Id"><span class="native-list-icon"><reference-icon name="check-circle" /></span><span><strong>@last.Title</strong><small>@last.Date.ToString("d MMMM", ru) · @DashboardWorkoutsViewModel.ExerciseCount(last.WorkoutExercises.Count)</small></span><reference-icon name="chevron" /></a> }
+    <a class="native-learn-link" asp-page="/Training/Exercises/Index"><reference-icon name="book" /><span><small>Почувствуйте уверенность</small><strong>Знакомство с упражнениями</strong></span><reference-icon name="arrow" /></a>
+    @if (!Model.IsCoachView) { <a class="native-record-link" asp-page="/Training/Workouts/Record"><reference-icon name="pencil" />Уже потренировались? Записать результат</a> }
 </div>

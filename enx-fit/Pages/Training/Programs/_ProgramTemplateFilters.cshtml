@@ -9,15 +9,18 @@
     }
     <form method="get" asp-page="Index" class="plan-catalog-filters" data-template-filters>
         <input type="hidden" name="Tab" value="templates" />
+        <label>Поиск программы<input type="search" name="Search" value="@Model.Search" maxlength="120" placeholder="Название или цель" /></label>
+        <label>Время на занятие<select name="MaxMinutes"><option value="">Любая длительность</option>@foreach (var minutes in new[] { 20, 30, 45, 60, 90 }) { <option value="@minutes" selected="@(Model.MaxMinutes == minutes)">До @minutes мин</option> }</select></label>
         @if (Model.Reference) { <input type="hidden" name="Reference" value="true" /> }
         <label>Уровень<select name="Level"><option value="">Любой уровень</option>@foreach (var (level, label) in new[] { (ProgramLevel.Beginner, "Начинающий"), (ProgramLevel.Intermediate, "Средний"), (ProgramLevel.Advanced, "Продвинутый") }) { <option value="@level" selected="@(Model.Level == level)">@label</option> }</select></label>
         <label>Тренировок в неделю<select name="Days"><option value="">Любое количество</option>@for (var d = 1; d <= 7; d++) { <option value="@d" selected="@(Model.Days == d)">@d</option> }</select></label>
         <label>Направление<select name="Category"><option value="">Все направления</option>@foreach (var category in IndexModel.Categories) { <option value="@category" selected="@(Model.Category == category)">@category</option> }</select></label>
-        @if (Model.HasPreferences) { <label class="plan-equipment-filter"><input type="checkbox" name="MatchPreferences" value="true" checked="@Model.MatchPreferences" />Только с моим оборудованием</label> }
+        @if (Model.HasPreferences) { <label class="plan-equipment-filter"><input type="checkbox" name="MatchPreferences" value="true" checked="@Model.MatchPreferences" />По моим условиям</label> }
+        <input type="hidden" name="MatchPreferences" value="false" />
         <button class="ep-outline" type="submit">Показать</button>
-        @if (Model.Level is not null || Model.Days is not null || !string.IsNullOrEmpty(Model.Category)) { <a class="plan-filter-reset" asp-page="Index" asp-route-Tab="templates" asp-route-Reference="@(Model.Reference ? (bool?)true : null)">Сбросить фильтры</a> }
+        @if (Model.Level is not null || Model.Days is not null || !string.IsNullOrEmpty(Model.Category) || Model.MatchPreferences || Model.Search is not null || Model.MaxMinutes is not null) { <a class="plan-filter-reset" asp-page="Index" asp-route-Tab="templates" asp-route-MatchPreferences="false" asp-route-Reference="@(Model.Reference ? (bool?)true : null)">Весь каталог</a> }
     </form>
-    @if (Model.MatchPreferences && Model.HasPreferences) { <p class="plan-match-rule">Учитываем оборудование всех упражнений. Уровень и число занятий можно изменить выше, а дни и рабочие веса — после выбора программы.</p> }
+    @if (Model.MatchPreferences && Model.HasPreferences) { <p class="plan-match-rule">Учитываем оборудование всех упражнений, сохранённый уровень и число занятий. Планы с вашей целью показываем первыми, если она указана в каталоге. Это фильтры каталога; нагрузку выбираете вы. Уровень и число занятий можно изменить выше, а дни и рабочие веса — после выбора программы.</p> }
     @if (Model.MatchPreferences && !Model.HasPreferences && !Model.Reference) { <p class="plan-match-rule">Условия пока не сохранены — сейчас показаны планы по обычным фильтрам.</p> }
     @if (Model.MatchPreferences && Model.HasPreferences && Model.Items.Count == 0) { <div class="plan-match-empty"><strong>В каталоге пока нет плана под эти условия</strong><p>Можно начать свободную тренировку или просмотреть полный каталог и изменить состав программы после выбора.</p><a asp-page="/Dashboard/Index">Начать свободно</a><a asp-page="Index" asp-route-Tab="templates">Весь каталог</a></div> }
     <p class="plan-catalog-count" role="status">Найдено программ: @Model.Items.Count</p>

@@ -17,7 +17,7 @@
         {
             <span>@block.Name</span>
         }</p>
-    <header><span class="exercise-order">@Model.Number</span>
+    <header><span class="exercise-order"><admin-icon name="@ExercisePresentation.MuscleIcon(exercise.Exercise.MuscleGroup)" /></span>
         <div><h2>@ExercisePresentation.DisplayName(exercise.Exercise)</h2>
             <p>@exercise.Exercise.MuscleGroup · @exercise.Exercise.Equipment</p></div>
         @if (!locked)
@@ -119,7 +119,7 @@
             как закончите.</p>
     }
     <div class="set-labels" aria-hidden="true">
-        <span>№</span><span>Ваш вес, кг</span><span>Повторения</span><span>Выполнено</span></div>
+        <span>Подход</span><span>Прошлый</span><span>кг</span><span>Повт.</span><span>✓</span></div>
     @foreach (var set in Model.Sets)
     {
         <partial name="_WorkoutSet" model="set" />

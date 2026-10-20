@@ -18,6 +18,7 @@ public sealed record WorkoutExerciseViewModel(
     decimal NextWeight,
     int NextReps)
 {
+    public ExercisePerformance? Performance { get; init; }
     public bool NextIsBodyweight => Sets.LastOrDefault()?.Set.IsBodyweight ?? false;
 
     public static IReadOnlyList<WorkoutExerciseViewModel> CreateAll(
@@ -48,10 +49,12 @@ public sealed record WorkoutExerciseViewModel(
                 sets.Select(set => new WorkoutSetViewModel(
                     set, exercise, workout.IsFinished,
                     prescription?.Sets.ElementAtOrDefault(set.SetNumber - 1),
-                    prescription is null && exercise.TargetSets is { } target && set.SetNumber <= target)).ToArray(),
+                    prescription is null && exercise.TargetSets is { } target && set.SetNumber <= target,
+                    set.IsWarmup ? null : previousResults.GetValueOrDefault(exercise.ExerciseId)?.Sets
+                        .ElementAtOrDefault(sets.TakeWhile(s => s.Id != set.Id).Count(s => !s.IsWarmup)))).ToArray(),
                 nextNumber,
                 planned?.Weight ?? sets.LastOrDefault()?.Weight ?? exercise.TargetWeightKg ?? 0,
-                planned?.Reps ?? sets.LastOrDefault()?.Reps ?? exercise.TargetRepsMin ?? 8));
+                planned?.Reps ?? sets.LastOrDefault(s => s.Reps > 0)?.Reps ?? exercise.TargetRepsMin ?? 8));
         }
 
         return result;
@@ -63,4 +66,5 @@ public sealed record WorkoutSetViewModel(
     WorkoutExercise Exercise,
     bool Locked,
     WorkoutBuilderSet? Prescription,
-    bool HasTarget);
+    bool HasTarget,
+    PreviousWorkingSet? Previous = null);

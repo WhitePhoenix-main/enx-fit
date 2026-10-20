@@ -29,4 +29,18 @@ public sealed class DashboardCommands(ApplicationDbContext db, CurrentUser user)
         entry.NutritionLogged = input.NutritionLogged; entry.StretchingDone = input.StretchingDone;
         await db.SaveChangesAsync();
     }
+
+    internal async Task SaveWellbeingAsync(string choice, int? feeling)
+    {
+        var entry = await db.DailyCheckIns.FindAsync(user.Id, user.LocalToday);
+        if (entry is null)
+        {
+            entry = new DailyCheckIn { UserId = user.Id, Date = user.LocalToday };
+            db.DailyCheckIns.Add(entry);
+        }
+        if (choice == "feeling") entry.Feeling = feeling;
+        else if (choice == "clear") entry.Feeling = null;
+        else entry.RestDay = choice == "rest";
+        await db.SaveChangesAsync();
+    }
 }

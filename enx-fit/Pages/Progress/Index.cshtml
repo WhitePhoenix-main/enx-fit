@@ -1,11 +1,4 @@
 @page "/Dashboard/Progress"
-@using enx_fit.Pages.Dashboard
-
-@model enx_fit.Pages.Dashboard.DashboardModel
-@{ Layout = "/Pages/Shared/Layouts/_DashboardReferenceLayout.cshtml"; ViewData["Title"] = "Прогресс"; }
-@section Styles {
-    <link rel="stylesheet" href="~/css/progress-reference.css" asp-append-version="true" />
-    @if (!Model.Reference) { <link rel="stylesheet" href="~/css/progress-workspace.css" asp-append-version="true" /> }
-}
-@if (Model.Reference) { <partial name="/Pages/Shared/Dashboard/_DashboardProgress.cshtml" model="Model" /> }
-else { <partial name="/Pages/Shared/Progress/_ProgressWorkspace.cshtml" model="Model" /> }
+@model enx_fit.Pages.Progress.IndexModel
+@{ Layout = "/Pages/Shared/Layouts/_ProgressLayout.cshtml"; ViewData["Title"] = Model.Data.Coach ? "Прогресс клиентов" : "Ваш прогресс"; }
+<partial name="_Overview" model="Model" />

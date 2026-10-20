@@ -16,6 +16,7 @@ public partial class WorkoutService
         }
         var session = await EditableSessionAsync(id);
         CheckRevision(session, expectedRevision);
+        if (session.State == WorkoutStatus.Paused) throw new InvalidOperationException("Продолжите тренировку перед перестановкой упражнений.");
         var ordered = session.WorkoutExercises.OrderBy(e => e.Order).ThenBy(e => e.Id).ToArray();
         if (entryIds.Count != ordered.Length || entryIds.Count > 40 || entryIds.Distinct().Count() != entryIds.Count ||
             !entryIds.Order().SequenceEqual(ordered.Select(e => e.Id).Order()))

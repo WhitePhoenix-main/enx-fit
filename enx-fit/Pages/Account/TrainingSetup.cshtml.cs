@@ -25,7 +25,7 @@ public sealed class TrainingSetupModel(ApplicationDbContext db, CurrentUser user
     {
         if (Request.Query.ContainsKey("ClientId")) return NotFound();
         await LoadAsync();
-        Input = new() { Goal = Settings.TrainingGoal, Location = Settings.TrainingLocation, Revision = Settings.PreferencesRevision,
+        Input = new() { Goal = Settings.TrainingGoal, Level = Settings.TrainingLevel, Location = Settings.TrainingLocation, Revision = Settings.PreferencesRevision,
             Equipment = TrainingPreferences.Equipment.Where(e => Settings.AvailableEquipment.HasFlag(e.Value)).Select(e => e.Value).ToList(),
             Days = TrainingPreferences.SelectedDays(Settings.PreferredDays).ToList(), DaysLater = Settings.SetupStatus == SetupStatus.Completed && Settings.PreferredDays == 0 };
         return Page();
@@ -41,6 +41,7 @@ public sealed class TrainingSetupModel(ApplicationDbContext db, CurrentUser user
         if ((settings?.PreferencesRevision ?? Guid.Empty) != Input.Revision) return PreferenceConflict();
         if (settings is null) { settings = new() { UserId = user.Id }; db.DashboardSettings.Add(settings); }
         settings.TrainingGoal = Input.Goal; settings.GoalTitle = TrainingPreferences.GoalTitle(Input.Goal);
+        settings.TrainingLevel = Input.Level;
         settings.TrainingLocation = Input.Location; settings.AvailableEquipment = Input.EquipmentMask; settings.PreferredDays = Input.DaysMask;
         if (!Input.DaysLater) settings.WeeklyWorkoutGoal = Input.Days.Distinct().Count();
         settings.SetupStatus = SetupStatus.Completed; settings.PreferencesRevision = Guid.NewGuid();

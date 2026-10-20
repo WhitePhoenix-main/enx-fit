@@ -29,7 +29,7 @@ public sealed class ProgramsOverviewViewModel
 
     public ProgramsOverviewViewModel(IndexModel model)
     {
-        Today = model.Reference ? new DateOnly(2026, 10, 2) : DateOnly.FromDateTime(DateTime.UtcNow);
+        Today = model.Reference ? new DateOnly(2026, 10, 2) : model.Today;
         var cards = model.Reference && model.Tab == "mine" && !model.Archived ? ReferenceCards() :
             model.Items.Select((p, i) => new ProgramOverviewCard(p, model.Sessions.GetValueOrDefault(p.Id) ?? [], i % 2 == 0 ? "bench" : "dumbbells")).ToList();
         if (model.Tab == "mine" && !model.Archived)

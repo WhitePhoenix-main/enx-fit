@@ -1,12 +1,36 @@
 @page "/Dashboard/Workouts"
-@using enx_fit.Pages.Dashboard
-
+@using enx_fit.ViewModels.Dashboard
+@using enx_fit.Presentation.Exercises
 @model enx_fit.Pages.Dashboard.DashboardModel
-@{ Layout = "/Pages/Shared/Layouts/_DashboardReferenceLayout.cshtml"; ViewData["Title"] = "Тренировки"; }
-@section Styles {
-    <link rel="stylesheet" href="~/css/workouts-reference.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/home-interactive.css" asp-append-version="true" />
+@{
+    Layout = "/Pages/Shared/Layouts/_TrainingLogLayout.cshtml";
+    ViewData["Title"] = "Тренировки";
+    var vm = new DashboardWorkoutsViewModel(Model);
+    var historyView = Request.Query["View"] == "history";
+    var active = Model.ActiveWorkout;
+    var planned = Model.Data.NextWorkout;
+    var next = Model.NextProgramWorkout;
 }
-<partial name="/Pages/Shared/Dashboard/_DashboardWorkouts.cshtml" model="Model" />
+@if (!historyView) { if(Model.CanManageClients && Model.IsTrainer){<partial name="_ReferenceCoachWorkouts" model="Model" />}else{<partial name="_ReferenceWorkouts" model="Model" />} } else {
+<header class="log-page-heading"><div><p class="eyebrow">ЛИЧНЫЙ ТРЕНИРОВОЧНЫЙ ДНЕВНИК</p><h1>Тренировки<span>.</span></h1></div><a class="log-library-link" asp-page="/Training/Exercises/Index"><reference-icon name="book" /><span>Библиотека</span></a></header>
+<nav class="log-tabs" aria-label="Разделы тренировок"><a class="@(!historyView ? "is-active" : "")" href="@Url.Page("/Training/Index", new { Model.ClientId })" aria-current="@(!historyView ? "page" : null)">Тренироваться</a><a class="@(historyView ? "is-active" : "")" href="@Url.Page("/Training/Index", new { View = "history", Days = 30, Model.ClientId })" aria-current="@(historyView ? "page" : null)">История</a><a asp-page="/Training/Records">Рекорды</a></nav>
+@if (Model.IsCoachView) { <p class="log-notice">Дневник клиента · @Model.Data.Name <a asp-page="/Coaching/Clients">К клиентам</a></p> }
+@if (!historyView) {
+<div class="log-hub-grid"><section class="log-start-panel"><span class="log-start-symbol"><reference-icon name="workout-outline" /></span><p class="eyebrow">@(active is not null ? "ВАША ТРЕНИРОВКА ИДЁТ" : "СЛЕДУЮЩАЯ ТРЕНИРОВКА")</p><h2>@(active?.Title ?? (planned?.Date == Model.Data.Today ? planned.Title : next?.Date == Model.Data.Today ? next.Workout.Name : "Хороший день\nдля тренировки"))</h2><p>@(active is not null ? "Вернитесь к своим упражнениям. Записанные подходы уже сохранены." : "Ваши упражнения. Ваш темп.\nКаждый подход — шаг вперёд.")</p>
+@if (Model.IsCoachView) { <a class="button" asp-page="/Training/Plans" asp-route-ClientId="@Model.ClientId">План тренировок</a> }
+else if (active is not null) { <a class="button" asp-page="/Training/Workouts/Details" asp-route-id="@active.Id"><reference-icon name="play" />Продолжить тренировку</a> }
+else if (planned?.Date == Model.Data.Today || next?.Date == Model.Data.Today) { <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input name="source" type="hidden" value="@(planned?.Date == Model.Data.Today ? "planned" : "program")" /><input name="plannedId" type="hidden" value="@planned?.Id" /><input name="programId" type="hidden" value="@Model.ActiveProgram?.Id" /><button class="button"><reference-icon name="play" />Начать по плану</button></form> }
+else { <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input name="source" type="hidden" value="empty" /><button class="button"><reference-icon name="plus" />Начать тренировку</button></form> }
+@if (!Model.IsCoachView && active is null) { <a class="text-button" asp-page="/Training/Workouts/Templates"><reference-icon name="layers" />Выбрать шаблон</a> }
+</section><div class="log-hub-side"><section class="log-week"><p class="eyebrow">ВАША НЕДЕЛЯ</p><strong>@vm.WeeklyWorkouts<small> / @vm.WeeklyTarget</small></strong><p>тренировок выполнено</p><div class="log-week-marks" aria-label="Выполнение недельного ориентира">@for (var i = 0; i < vm.WeeklyTarget; i++) { <i class="@(i < vm.WeeklyWorkouts ? "is-done" : "")"></i> }</div></section><a class="log-link-panel" asp-page="/Training/Records"><reference-icon name="trophy" /><div><strong>Ваши личные рекорды</strong><span>Смотрите, как растёт ваша сила</span></div><span>↗</span></a>@if (!Model.IsCoachView) { <a class="log-link-panel" asp-page="/Training/Workouts/Record"><reference-icon name="pencil" /><div><strong>Записать прошлую тренировку</strong><span>Добавить результат в историю</span></div><span>↗</span></a> }</div></div>
+@if (!Model.IsCoachView) { <section class="log-routines"><div class="log-section-heading"><h2>Быстрый старт</h2><a asp-page="/Training/Programs/Index">Мои программы ↗</a></div><div class="log-routine-grid"><a class="log-routine" asp-page="/Training/Workouts/Templates"><reference-icon name="layers" /><strong>Из шаблона</strong><span>Готовые упражнения и подходы</span><i>↗</i></a><form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input name="source" type="hidden" value="previous" /><button class="log-routine" disabled="@(!Model.Data.Completed.Any())"><reference-icon name="clock" /><strong>Повторить последнюю</strong><span>@(Model.Data.Completed.FirstOrDefault()?.Title ?? "После первой тренировки")</span><i>↗</i></button></form><form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input name="source" type="hidden" value="empty" /><button class="log-routine"><reference-icon name="plus" /><strong>С чистого листа</strong><span>Добавляйте упражнения по ходу</span><i>↗</i></button></form></div></section> }
+}
+<section class="log-history"><div class="log-section-heading"><h2>@(historyView ? "История тренировок" : "Последние тренировки")</h2>@if (!historyView) { <a href="@Url.Page("/Training/Index", new { View = "history", Days = 30, Model.ClientId })">Вся история ↗</a> }</div>
+@if (historyView) { <form method="get" class="log-history-filters" role="search"><input name="View" type="hidden" value="history" /><input name="ClientId" type="hidden" value="@Model.ClientId" /><label><reference-icon name="search" /><input name="Search" type="search" value="@Model.Search" placeholder="Название или упражнение" aria-label="Поиск тренировок" /></label><select name="Days" aria-label="Период истории">@foreach (var (days, title) in new[] { (7,"Неделя"), (30,"Месяц"), (365,"Год") }) { <option value="@days" selected="@(Model.Days == days)">@title</option> }</select><button class="button secondary" type="submit">Найти</button></form> }
+<div class="log-history-grid">@foreach (var w in vm.History.Take(historyView ? int.MaxValue : 3)) { <a class="log-history-card" asp-page="/Training/Workouts/Details" asp-route-id="@w.Id"><div class="log-history-date"><time datetime="@w.Date.ToString("yyyy-MM-dd")">@w.Date.ToString("d MMMM · dddd", DashboardWorkoutsViewModel.Russian)</time><reference-icon name="up-right" /></div><h3>@w.Title</h3><div class="log-history-metrics"><span>@w.Exercises упр.</span><span>@w.Sets подх.</span><span>@DashboardWorkoutsViewModel.Number(w.Volume) кг</span></div><ul>@foreach (var e in w.Preview.Take(3)) { <li><span>@e.Name</span><small>@e.Summary</small></li> }</ul><span class="log-history-saved"><reference-icon name="check-circle" />@(w.IsManual ? "Внесена вручную" : "Завершена")</span></a> }</div>
+@if (vm.History.Count == 0) { <div class="log-empty log-history-empty"><reference-icon name="clock" /><h3>@(historyView ? "Тренировки не найдены" : "История начинается с первого подхода")</h3><p>@(historyView ? "Попробуйте другой период или название." : "Завершённые тренировки появятся здесь.")</p></div> }
+</section>
 <partial name="/Pages/Shared/Workouts/_QuickWorkoutDialogs.cshtml" model="Model" />
-<partial name="/Pages/Shared/Workouts/_WorkoutHistorySheets.cshtml" model="Model" />
+
+}
+
