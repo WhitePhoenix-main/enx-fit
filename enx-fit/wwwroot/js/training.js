@@ -332,7 +332,8 @@
             const words = query.split(/\s+/).filter(Boolean);
             let count = 0;
             const recentCount = this.rows.filter(row => row.dataset.recent === 'true').length;
-            if ((this.tab === 'favorites' && !this.favorites.size) || (this.tab === 'recent' && !recentCount)) this.tab = 'all';
+            const quick = this.root.dataset.quickPick === 'true';
+            if (!quick && ((this.tab === 'favorites' && !this.favorites.size) || (this.tab === 'recent' && !recentCount))) this.tab = 'all';
             this.rows.forEach(row => {
                 const id = exerciseId(row.dataset.exerciseId), group = row.dataset.group;
                 const muscle = !this.group.value || group === this.group.value || (this.group.value === 'Ноги' && ['Квадрицепсы', 'Задняя поверхность бедра', 'Ягодицы', 'Икры', 'Приводящие мышцы бедра', 'Отводящие мышцы бедра'].includes(group));
@@ -352,8 +353,8 @@
             }
             this.root.querySelectorAll('[data-library-tab]').forEach(button => {
                 button.setAttribute('aria-pressed', String(button.dataset.libraryTab === this.tab));
-                if (button.dataset.libraryTab === 'recent') button.hidden = !recentCount;
-                if (button.dataset.libraryTab === 'favorites') button.hidden = !this.favorites.size;
+                if (button.dataset.libraryTab === 'recent') button.hidden = !quick && !recentCount;
+                if (button.dataset.libraryTab === 'favorites') button.hidden = !quick && !this.favorites.size;
             });
             this.root.querySelector('[data-tab-count="recent"]').textContent = recentCount;
             this.root.querySelector('[data-tab-count="favorites"]').textContent = this.favorites.size;
@@ -2397,7 +2398,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         root.dataset.sessionStatus = state.status;
         const elapsed = state.elapsedSeconds + (state.status === 'InProgress' ? (Date.now() - sampledAt) / 1000 : 0);
         root.querySelectorAll('[data-session-clock]').forEach(sessionClock => {
-            sessionClock.textContent = root.hasAttribute('data-quick-workout')
+            sessionClock.textContent = root.hasAttribute('data-quick-workout') && !root.hasAttribute('data-quick-session')
                 ? `${String(Math.floor(elapsed / 3600)).padStart(2, '0')}:${clock(elapsed % 3600)}` : clock(elapsed);
         });
         const paused = state.status === 'Paused', notice = root.querySelector('[data-pause-notice]'),
@@ -2774,7 +2775,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         const trigger = event.target.closest('[data-add-exercise],[data-replace-exercise]');
         if (trigger) {
             document.querySelector('[data-exercise-entry]').value = trigger.dataset.replaceExercise || '0';
-            document.getElementById('exercise-dialog-title').textContent = trigger.dataset.replaceExercise ? 'Заменить упражнение' : 'Добавить упражнения';
+            document.getElementById('exercise-dialog-title').textContent = trigger.dataset.replaceExercise ? 'Заменить упражнение' : root.hasAttribute('data-quick-session') ? 'Добавить упражнение' : 'Добавить упражнения';
             picker?.setSingle(!!trigger.dataset.replaceExercise);
             picker?.message('');
         }

@@ -76,7 +76,7 @@
         const cards = root.querySelectorAll('.session-exercise');
         const forms = [...root.querySelectorAll('.set-form')];
         root.querySelectorAll('[data-qw-exercise-count]').forEach(el => el.textContent = cards.length);
-        root.querySelectorAll('[data-qw-working-count]').forEach(el => el.textContent = forms.filter(form => !form.elements.namedItem('AddSet.IsWarmup').checked && !form.classList.contains('is-skipped')).length);
+        root.querySelectorAll('[data-qw-working-count]').forEach(el => el.textContent = forms.filter(form => form.elements.namedItem('completed').checked && !form.elements.namedItem('AddSet.IsWarmup').checked && !form.classList.contains('is-skipped') && Number(form.elements.namedItem('AddSet.Reps').value) > 0).length);
         root.querySelectorAll('[data-qw-clear-trigger]').forEach(button => button.disabled = !cards.length || state.status !== 'InProgress' || clearing);
     }
     async function setRest(seconds, form = null) {

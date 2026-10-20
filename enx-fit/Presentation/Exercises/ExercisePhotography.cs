@@ -5,6 +5,11 @@ namespace enx_fit.Presentation.Exercises;
 // These photographs illustrate the actual movement; unknown exercises keep their muscle icon.
 public static class ExercisePhotography
 {
+    // The quick-session atlas adds a seated shoulder press without changing legacy photo maps.
+    public static string? QuickKey(Exercise exercise) => Key(exercise) ??
+        (ExercisePresentation.DisplayName(exercise).ToLowerInvariant() is var name &&
+         name.Contains("жим") && name.Contains("гантел") && name.Contains("сидя") ? "shoulder" : null);
+
     public static string? Key(Exercise exercise)
     {
         var name = ExercisePresentation.DisplayName(exercise).ToLowerInvariant().Replace('ё', 'е');

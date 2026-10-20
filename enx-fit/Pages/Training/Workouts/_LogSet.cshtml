@@ -4,7 +4,7 @@
 <form method="post" asp-page-handler="Set" class="set-form log-set @(s.IsCompleted ? "is-completed" : "") @(s.IsSkipped ? "is-skipped" : "")" data-effort-needed="false">
     <input type="hidden" name="setId" value="@s.Id" /><input type="hidden" name="AddSet.WorkoutExerciseId" value="@e.Id" /><input type="hidden" name="AddSet.SetNumber" value="@s.SetNumber" />
     <div class="set-main log-set-main">
-        @if (ViewData["QuickWorkout"] is true) { <span class="qw-set-number">@(s.IsWarmup ? "Р" : s.SetNumber)</span> }
+
         @if (ViewData["CurrentWorkout"] is true) {
             var targetWeight=Model.Prescription?.Weight ?? e.TargetWeightKg;
             var targetReps=Model.Prescription?.Reps ?? e.TargetRepsMin;

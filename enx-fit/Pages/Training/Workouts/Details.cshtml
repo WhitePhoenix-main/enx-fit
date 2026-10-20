@@ -4,7 +4,7 @@
 @using enx_fit.Services.Dashboard
 @model enx_fit.Pages.Training.Workouts.DetailsModel
 @{
-    Layout = Model.Workout.IsActive ? "/Pages/Shared/Layouts/_QuickWorkoutLayout.cshtml" : "/Pages/Shared/Layouts/_TrainingLogLayout.cshtml";
+    Layout = Model.IsQuickWorkout ? "/Pages/Shared/Layouts/_QuickSessionLayout.cshtml" : Model.Workout.IsActive ? "/Pages/Shared/Layouts/_QuickWorkoutLayout.cshtml" : "/Pages/Shared/Layouts/_TrainingLogLayout.cshtml";
     ViewData["QuickWorkout"] = Model.IsQuickWorkout;
     ViewData["CurrentWorkout"] = Model.Workout.IsActive && !Model.IsQuickWorkout;
     ViewData["WorkoutShellClass"] = Model.Workout.IsActive && !Model.IsQuickWorkout ? "current-workout" + (Model.CoachMode ? " coach-execution" : "") : "";
