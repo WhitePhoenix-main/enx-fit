@@ -188,3 +188,13 @@ body.athlete-dashboard{
     .ah-action,.athlete-dashboard button.ah-action{gap:7px;padding:6px}.ah-action .ah-icon-tile{width:34px;height:38px}.ah-action .ah-icon-tile svg{width:23px;height:23px}
     .ah-stats strong{font-size:27px}.ah-stats>a{padding-inline:9px}.ah-last-photo{width:72px}.ah-last-stats small{font-size:10px}.ah-section-heading h2{font-size:19px}
 }
+/* The shared athlete shell follows the subscription palette on Home as well as Progress. */
+body.athlete-dashboard[data-subscription="pro"]{--plan-accent:#f59a3d;--plan-bright:#ffad52;--plan-rgb:245,154,61;--plan-on:#17110b;--chrome-accent:#f59a3d}
+.athlete-dashboard .ah-primary,.athlete-dashboard button.ah-primary,.athlete-dashboard .ah-day.is-today{background:var(--plan-accent);color:var(--plan-on)}
+.athlete-dashboard .ah-primary:hover{background:var(--plan-bright)}
+.athlete-dashboard .ah-day .is-planned{background:var(--plan-accent)}
+.athlete-dashboard .ah-day.is-today>span{color:var(--plan-on)}
+.athlete-dashboard .ah-chart path{stroke:var(--plan-bright)}
+.athlete-dashboard .ah-chart circle{fill:var(--plan-bright);stroke:var(--plan-bright)}
+.athlete-dashboard :is(.ah-eyebrow,.ah-program>.ah-icon-tile,.ah-chart-result>a,.ah-strength-empty>svg){color:var(--plan-bright)}
+body.athlete-dashboard .enix-bottom-nav[data-app-navigation]>[aria-current=page]{color:var(--plan-bright)}

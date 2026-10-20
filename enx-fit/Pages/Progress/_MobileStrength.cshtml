@@ -1,0 +1,28 @@
+@using enx_fit.ViewModels.Progress
+@using System.Globalization
+@model enx_fit.Pages.Progress.IndexModel
+@{var d=Model.Data;var p=d.Person!;var ru=CultureInfo.GetCultureInfo("ru-RU");}
+<section class="mp-card mp-strength" id="strength" aria-label="Динамика упражнения">
+    <div class="mp-card-heading">
+        <label class="mp-exercise"><span class="mp-sr">Упражнение</span><select name="ChartExercise" form="progress-filters" data-progress-submit disabled="@(d.Exercises.Count==0)">
+            @if(d.Exercises.Count==0){<option>Выберите упражнение</option>}
+            @foreach(var e in d.Exercises){<option value="@e.Id" selected="@(e.Id==p.ExerciseId?.ToString())">@e.Name</option>}
+        </select><reference-icon name="chevron-down" /></label>
+        <button type="button" class="mp-icon-button" data-progress-dialog="exercise-chart-dialog" aria-label="Развернуть график"><reference-icon name="expand" /></button>
+    </div>
+    @if(d.Advanced&&!d.Coach){<nav class="mp-metrics" aria-label="Метрика упражнения">@foreach(var(key,label) in new[]{("weight","Вес"),("volume","Объём"),("1rm","1RM"),("reps","Повторы")}){<a href="@Url.Page(null,Model.Values(metric:key))#strength" aria-current="@(p.Metric==key?"page":null)">@label</a>}</nav>}
+    <div class="mp-strength-copy">
+        <p class="mp-muted">@(p.Metric=="1rm"?"ОЦЕНКА 1RM":p.Metric=="volume"?"Объём за занятие":p.Metric=="reps"?"Повторения":"Последний подход")</p>
+        <strong class="mp-result">@p.CurrentDisplay</strong>
+        @if(p.Metric=="weight" && p.CurrentDate is {} date){<p class="mp-muted">@date.ToString("d MMMM",ru)</p>}
+        <p class="mp-delta @(p.ExerciseChange>0?"is-positive":p.ExerciseChange<0?"is-negative":"")">@ProgressOverview.Signed(p.ExerciseChange," "+p.Unit) <span>@(p.Metric=="weight"?"рабочего веса":"за период")</span></p>
+        @if(p.Metric=="1rm"&&p.Current is {} actual){<p class="mp-muted">Последний подход: @ProgressOverview.Number(actual.Weight) кг × @actual.Reps</p>}
+    </div>
+    <partial name="_MobileChart" model="@(p.ExerciseChart with { ZeroBaseline=false, ComparisonLabel=null, Points=p.ExerciseChart.Points.Select(x=>x with { Comparison=null }).ToArray() })" />
+    @if(p.Metric=="1rm"){
+        <p class="mp-footnote"><reference-icon name="info" />Расчёт по Эпли · оценка, не рекорд</p>
+        <div class="mp-before-after"><div><small>Начало периода</small><strong>@(p.Initial is {} initial ? ProgressOverview.Number(initial.Weight)+" кг × "+initial.Reps:"—")</strong></div><reference-icon name="arrow" /><div><small>Сейчас</small><strong>@(p.Current is {} now ? ProgressOverview.Number(now.Weight)+" кг × "+now.Reps:"—")</strong></div></div>
+    }else if(d.Coach){<button class="mp-row mp-card-footer" type="button" data-progress-dialog="exercise-chart-dialog"><reference-icon name="dumbbell-outline" /><span>Все результаты упражнения</span><reference-icon name="chevron" /></button>}
+    else{<a class="mp-row mp-card-footer" asp-page="/Progress/ExerciseAnalytics/Index" asp-route-ExerciseId="@p.ExerciseId"><reference-icon name="dumbbell-outline" /><span>@p.ExerciseSessions занятий с упражнением</span><reference-icon name="chevron" /></a>}
+</section>
+<dialog class="rd-dialog mp-chart-dialog" id="exercise-chart-dialog"><div class="dialog-heading"><h2>@p.ExerciseName</h2><button type="button" data-progress-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>@p.CurrentLabel · @p.CurrentDisplay</p><partial name="_MobileChart" model="@(p.ExerciseChart with { Id="expanded-exercise",ZeroBaseline=false })" /></dialog>

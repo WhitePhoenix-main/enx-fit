@@ -1,0 +1,11 @@
+.account-tools{display:flex;align-items:center;gap:4px}
+.account-avatar{position:relative;flex:none;font:14px/1.4 DashboardSans,Arial,sans-serif}
+.account-avatar summary{list-style:none;cursor:pointer;width:44px;height:44px;display:grid;place-items:center;border-radius:50%}
+.account-avatar summary::-webkit-details-marker{display:none}
+.account-avatar summary>span{display:grid;place-items:center;width:32px;height:32px;background:#35424d;color:#f3f2ed;border:1px solid #52616e;border-radius:50%;font-size:12px;font-weight:650}
+.account-avatar summary:focus-visible{outline:2px solid var(--plan-bright,#4389ff);outline-offset:2px}
+.account-popover{position:absolute;top:48px;right:0;z-index:100;width:240px;max-width:calc(100vw - 24px);padding:8px;background:#1d2327;color:#f3f2ed;border:1px solid #424b53;border-radius:10px;box-shadow:0 12px 35px #0008}
+.account-popover>strong{display:block;padding:8px 10px 12px;overflow-wrap:anywhere;border-bottom:1px solid #394149;margin-bottom:4px}
+.account-popover :is(a,button){display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:9px 10px;border:0;border-radius:5px;background:transparent;color:inherit;font:inherit;text-decoration:none;text-align:left;cursor:pointer}
+.account-popover :is(a,button):hover{background:#303940}
+.account-popover svg{width:20px;height:20px;flex:none}.account-popover form{margin:0}

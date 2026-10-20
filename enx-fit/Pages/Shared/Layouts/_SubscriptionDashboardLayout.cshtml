@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="~/css/subscription-dashboard.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/subscription-theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/app-chrome.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/account-avatar.css" asp-append-version="true" />
     @if (coach) {
         <link rel="stylesheet" href="~/css/fitness-reference.css" asp-append-version="true" />
         <link rel="stylesheet" href="~/css/reference-polish.css" asp-append-version="true" />
@@ -43,7 +44,7 @@
         </div>
     </aside>
     <div class="rd-content">
-        <header class="rd-mobile-header"><a class="rd-brand" href="@Link("/Dashboard/Index")"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /></a><button class="rd-icon-button" type="button" data-dialog="notifications-dialog" aria-label="Уведомления"><reference-icon name="bell" />@if (coach && home.AttentionCount > 0) { <i class="rd-notification-dot"></i> }</button></header>
+        <header class="rd-mobile-header"><a class="rd-brand" href="@Link("/Dashboard/Index")"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /></a><div class="account-tools"><button class="rd-icon-button" type="button" data-dialog="notifications-dialog" aria-label="Уведомления"><reference-icon name="bell" />@if (coach && home.AttentionCount > 0) { <i class="rd-notification-dot"></i> }</button><partial name="/Pages/Shared/Navigation/_AccountAvatar.cshtml" /></div></header>
         @if (home.Preview && coach) { <nav class="rd-preview-bar" aria-label="Предпросмотр тарифов"><span>Предпросмотр</span>@foreach (var plan in new[] { "Free", "Pro", "Coach" }) { <a asp-page="/Dashboard/Index" asp-route-Reference="true" asp-route-ReferencePlan="@plan" aria-current="@(home.Badge == plan ? "page" : null)">@plan</a> }<a asp-page="/Dashboard/Index">Мои данные ↗</a></nav> }
         <header class="rd-page-header">
             <div><h1>Главная</h1><p>@if (coach) { <span>Ваши клиенты. Их прогресс. Всё под контролем.</span> } else { @(home.Premium ? "Персональный план. Адаптивные рекомендации. Максимальный результат." : "Добро пожаловать! Продолжайте двигаться к своим целям.") }</p></div>
@@ -67,6 +68,7 @@
 @if (home.Preview) { <dialog class="app-dialog rd-dialog" id="preview-action-dialog"><div class="dialog-heading"><h2>Предпросмотр интерфейса</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>Здесь показаны примеры с референсов. Перейдите к своим данным, чтобы начать тренировку или работать с клиентами.</p><a class="rd-primary" asp-page="/Dashboard/Index">Открыть мой кабинет <reference-icon name="arrow" /></a></dialog> }
 <noscript><p class="rd-notice"><a href="@Link("/Training/Index")">Тренировки</a> · <a href="@Link("/Training/Programs/Index")">Программы</a> · <a href="@Link("/Account/Profile")">Профиль</a></p></noscript>
 <script src="~/js/dashboard.js" asp-append-version="true"></script>
+<script src="~/js/account-avatar.js" asp-append-version="true" defer></script>
 </body>
 </html>
 

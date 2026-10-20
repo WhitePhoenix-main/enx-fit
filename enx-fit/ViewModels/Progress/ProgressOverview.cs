@@ -8,6 +8,7 @@ namespace enx_fit.ViewModels.Progress;
 public sealed record ProgressSet(Guid ExerciseId, string Name, string Muscle, decimal Weight, int Reps, bool Bodyweight, decimal Volume);
 public sealed record ProgressSession(int Id, string UserId, DateOnly Date, int? ProgramId, Guid? WorkoutKey, DateOnly? ScheduledDate, List<ProgressSet> Sets);
 public sealed record ProgressClient(string Id, string Name, string Goal);
+public sealed record ProgressClientActivity(string ClientId, DateOnly? LastDate, int Missed);
 public sealed record ProgressChoice(string Id, string Name);
 public sealed record ProgressPoint(string Label, decimal? Value, decimal? Comparison = null);
 public sealed record ProgressChart(string Id, string Label, string Unit, IReadOnlyList<ProgressPoint> Points, bool Bars = false, string? ComparisonLabel = null, bool ZeroBaseline = true);
@@ -28,6 +29,7 @@ public sealed class ProgressOverview
     public string Theme => Access.Plan.ToString().ToLowerInvariant();
     public string Badge => Access.Plan.ToString();
     public IReadOnlyList<ProgressClient> Clients { get; init; } = [];
+    public IReadOnlyList<ProgressClientActivity> ClientActivity { get; init; } = [];
     public IReadOnlyList<ProgressChoice> Programs { get; init; } = [];
     public IReadOnlyList<ProgressChoice> Exercises { get; init; } = [];
     public ProgressPerson? Person { get; init; }
@@ -77,6 +79,9 @@ public sealed class ProgressPerson
     public int WorkingSets { get; init; }
     public int ExerciseSets { get; init; }
     public ProgressSet? Current { get; init; }
+    public ProgressSet? Initial { get; init; }
+    public int ExerciseSessions { get; init; }
+    public decimal PreviousVolume { get; init; }
     public string CurrentLabel => Metric switch { "volume" => "Объём за занятие", "1rm" => "Оценка 1RM", "reps" => "Повторения", _ => "Текущий результат" };
     public string CurrentDisplay => Current is null ? "—" : Metric=="weight"
         ? ProgressOverview.Number(Current.Weight)+" кг × "+Current.Reps

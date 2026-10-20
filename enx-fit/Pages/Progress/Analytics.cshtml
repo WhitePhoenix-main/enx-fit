@@ -1,4 +1,4 @@
 @page "/Dashboard/Analytics"
 @model enx_fit.Pages.Progress.IndexModel
-@{ Layout = "/Pages/Shared/Layouts/_ProgressLayout.cshtml"; ViewData["Title"] = Model.Data.Coach ? "Аналитика клиентов" : "Аналитика тренировок"; }
-<partial name="_Overview" model="Model" />
+@{ Layout = "/Pages/Shared/Layouts/_MobileProgressLayout.cshtml"; ViewData["Title"] = Model.Data.Coach ? "Аналитика клиентов" : "Аналитика тренировок"; }
+<partial name="_MobileOverview" model="Model" />

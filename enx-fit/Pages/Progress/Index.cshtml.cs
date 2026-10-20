@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace enx_fit.Pages.Progress;
 
 [MinimumRole(UserRole.User)]
-public sealed class IndexModel(ProgressOverviewQuery query, enx_fit.Data.ApplicationDbContext db) : PageModel
+public sealed class IndexModel(ProgressOverviewQuery query, enx_fit.Data.ApplicationDbContext db, IFeatureAccessService accessService) : PageModel
 {
     public int TotalSeconds { get; private set; }
     public int? AverageCalories { get; private set; }
@@ -30,6 +30,8 @@ public sealed class IndexModel(ProgressOverviewQuery query, enx_fit.Data.Applica
     {
         // Keep links from the previous progress workspace usable.
         if (Weeks==0 && int.TryParse(Request.Query["ProgressWeeks"],out var oldWeeks)) Weeks=oldWeeks;
+        if (Weeks==0) Weeks=4;
+        if (!Request.Query.ContainsKey("Metric") && (await accessService.GetAsync()).Plan==SubscriptionPlan.Pro) Metric="1rm";
         if (ChartExercise is null && Guid.TryParse(Request.Query["ProgressExercise"],out var oldExercise)) ChartExercise=oldExercise;
         if (ClientId == "") ClientId=null;
         if (SelectedClient == "") SelectedClient=null;

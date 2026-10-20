@@ -92,6 +92,8 @@ public sealed class ProgressOverviewQuery(ApplicationDbContext db, CurrentUser u
         }
         return new() { Access=access, ViewerName=viewer.Split('@')[0], Today=today, Start=start, Weeks=weeks, Coach=coach,
             Clients=people, CohortCount=cohort.Count, Person=person,
+            ClientActivity=cohort.Select(c=>new ProgressClientActivity(c.Id, scoped.Where(s=>s.UserId==c.Id).LastOrDefault()?.Date,
+                scopedPlans.Where(p=>p.OwnerId==c.Id).Sum(p=>Completion(p,completedSessions,today).Missed))).ToArray(),
             Programs=plans.Where(p => clientId == null || p.OwnerId == clientId).Select(p => new ProgressChoice(p.Id.ToString(), p.Name)).ToArray(),
             Exercises=choices.Select(e => new ProgressChoice(e.ExerciseId.ToString(), e.Name)).ToArray(),
             ActiveClients=scoped.Where(s => s.Date >= monday).Select(s => s.UserId).Distinct().Count(),
@@ -167,13 +169,16 @@ public sealed class ProgressOverviewQuery(ApplicationDbContext db, CurrentUser u
             : body.Where(b=>b.WeightKg>0).Select(b=>new ProgressPoint(b.Date.ToString("d MMM"),b.WeightKg)).ToList();
         return new() {Client=client,ExerciseId=chartId,ExerciseName=current?.Name ?? ownChoices.FirstOrDefault(e=>e.ExerciseId==chartId)?.Name ?? "Выберите упражнение",Metric=metric,
             ExerciseChart=new("exercise",label,unit,points,false,advanced&&metric=="weight" ? "Средний рабочий вес":null),
-            VolumeChart=new("volume","Общий объём тренировок","кг",WeekPoints(start,weeks,d=>period.Where(s=>s.Date>=d&&s.Date<d.AddDays(7)).SelectMany(s=>s.Sets).Where(s=>!filter.HasValue||s.ExerciseId==filter).Sum(s=>s.Volume)),true),
+            VolumeChart=new("volume","Общий объём тренировок","кг",WeekPoints(start,weeks,d=>period.Where(s=>s.Date>=d&&s.Date<d.AddDays(7)).SelectMany(s=>s.Sets).Where(s=>!filter.HasValue||s.ExerciseId==filter).Sum(s=>s.Volume))
+                .Select((point,i)=>point with { Comparison=advanced ? all.Where(s=>s.Date>=start.AddDays(-weeks*7+i*7)&&s.Date<start.AddDays(-weeks*7+(i+1)*7)).SelectMany(s=>s.Sets).Where(s=>!filter.HasValue||s.ExerciseId==filter).Sum(s=>s.Volume) : null }).ToArray(),true,advanced?"Предыдущий период":null),
             BodyChart=new("body",bodyMetric=="measurements" ? "Талия" : "Вес тела",bodyMetric=="measurements" ? "см":"кг",bodyValue,ZeroBaseline:false),
             AttendanceChart=new("attendance","Посещаемость","занятий",WeekPoints(start,weeks,d=>period.Count(s=>s.Date>=d&&s.Date<d.AddDays(7))),true),
             Volume=filtered.Sum(s=>s.Volume),VolumeChange=ProgressOverview.Change(filtered.Sum(s=>s.Volume),before.Sum(s=>s.Volume)),
             StrengthGain=strength.Count==0?null:Math.Round(strength.Average(),1),Completed=period.Count,WeekCompleted=all.Count(s=>s.Date>=monday),
             WeeklyGoal=settings?.WeeklyWorkoutGoal??4,Streak=streak,ActiveWeeks=weekCounts.Count(c=>c>0),WeekCounts=weekCounts,
             WorkingSets=filtered.Count,ExerciseSets=rows.Count,Current=current,CurrentDate=last?.Date,ExerciseChange=changeValue,
+            Initial=exercise.FirstOrDefault()?.Sets.Where(s=>s.ExerciseId==chartId).OrderByDescending(s=>isBody?s.Reps:s.Weight).ThenByDescending(s=>s.Reps).FirstOrDefault(),
+            ExerciseSessions=exercise.Count,PreviousVolume=before.Sum(s=>s.Volume),
             BestValue=points.Count==0?null:points.Max(p=>p.Value),Unit=unit,Records=records.OrderByDescending(r=>r.Gain).ThenBy(r=>r.Name).ToList(),Muscles=muscle,
             Days=Enumerable.Range(0,7).Select(i=>(monday.AddDays(i),all.Count(s=>s.Date==monday.AddDays(i)))).ToArray(),Program=program,
             Measurement=body.LastOrDefault(),FirstMeasurement=body.Count>1?body.First():null,
