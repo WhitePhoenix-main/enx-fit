@@ -1,0 +1,9 @@
+@using enx_fit.Presentation.Programs
+@model (enx_fit.Models.TrainingProgram Program, enx_fit.Models.DashboardSettings? Preferences)
+@{ var reasons = ProgramDiscovery.Reasons(Model.Program, Model.Preferences); }
+@if (reasons.Count > 0)
+{
+    <div class="program-match-reasons" aria-label="Почему эта программа подходит">
+        @foreach (var reason in reasons) { <span><reference-icon name="check" />@reason</span> }
+    </div>
+}

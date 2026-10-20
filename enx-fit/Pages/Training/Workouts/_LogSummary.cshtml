@@ -1,0 +1,12 @@
+@using enx_fit.Services.Dashboard
+@model enx_fit.Pages.Training.Workouts.DetailsModel
+@{ var w = Model.Workout; }
+@if (w.State == WorkoutStatus.Cancelled) {
+    <section class="log-completion workout-cancelled"><reference-icon name="archive" /><div><h2>Тренировка отменена</h2><p>Запись не учитывается в статистике.</p></div><a class="text-button" asp-page="/Training/Index">К тренировкам ↗</a></section>
+} else {
+    <section class="log-completion"><span class="log-completion-mark"><reference-icon name="check-circle" /></span><div><p class="eyebrow">РЕЗУЛЬТАТ СОХРАНЁН</p><h2>Работа сделана.</h2><p>@DashboardData.WorkingSets(w).Count() рабочих подходов · @DashboardData.Volume(w).ToString("0.##") кг</p></div><nav><a asp-page="/Training/Records">Личные рекорды ↗</a><a href="@Url.Page("/Training/Index", new { View = "history", Days = 30 })">Вся история ↗</a></nav></section>
+    @if (w.UserId == Model.ViewerId) {
+        <section class="log-template-action workout-save-template"><details><summary>Сохранить как шаблон <reference-icon name="plus" /></summary><p>Повторите это занятие в следующий раз. Сохранятся упражнения и подходы.</p><form method="post" asp-page-handler="TemplateDecision"><input type="hidden" name="operationId" value="@Guid.NewGuid()" /><input type="hidden" name="choice" value="new" /><label>Название шаблона<input name="templateName" maxlength="120" value="@w.Title" required /></label><button class="button" type="submit">Сохранить шаблон</button></form></details>
+        @if (w.TemplateDecisionPending) { <div class="log-template-decision"><p>Вы изменили состав исходного шаблона.</p><form method="post" asp-page-handler="TemplateDecision">@if (Model.CanUpdateTemplate) { <button class="text-button" name="choice" value="update">Обновить исходный шаблон</button> }<button class="text-button" name="choice" value="keep">Оставить исходный шаблон</button></form></div> }</section>
+    }
+}

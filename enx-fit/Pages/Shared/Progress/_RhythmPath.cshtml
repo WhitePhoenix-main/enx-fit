@@ -1,0 +1,33 @@
+@using enx_fit.ViewModels.Dashboard
+@using System.Globalization
+@model WellbeingViewModel
+@{
+    var ru = WellbeingViewModel.Russian;
+    var nav = enx_fit.ViewModels.Navigation.MobileAppNavigationViewModel.Create(ViewData, User, ViewContext.RouteData.Values["page"] as string);
+    var max = Math.Max(3, Model.Path.Max(p => p.RollingSessions));
+    string N(double n) => n.ToString("0.##", CultureInfo.InvariantCulture);
+    double X(int i) => 26 + i * 548d / 29;
+    double Y(int n) => 152 - n * 112d / max;
+    var line = string.Join(" ", Model.Path.Select((p, i) => $"{(i == 0 ? "M" : "L")}{N(X(i))},{N(Y(p.RollingSessions))}"));
+}
+<section class="wb-rhythm training-rhythm" data-rhythm aria-labelledby="wb-path-title">
+    <header class="wb-section-heading"><div><p class="wb-eyebrow">Маленькие шаги складываются</p><h2 id="wb-path-title">Ваш путь</h2></div><div class="wb-ranges" aria-label="Период графика"><button type="button" data-path-range="10" aria-pressed="false">10 дн.</button><button type="button" data-path-range="30" aria-pressed="true">30 дн.</button></div></header>
+    <div class="wb-path-caption"><span>Занятия за предыдущие 7 дней</span><button type="button" data-wb-open="wb-path-help" aria-label="Как читать график">?</button></div>
+    <svg class="wb-path" viewBox="0 0 600 193" aria-label="История ритма: число занятий за 7 дней на каждую дату">
+        <defs><linearGradient id="wb-path-fill" x1="0" y1="0" x2="0" y2="1"><stop stop-color="var(--wb-accent)" stop-opacity=".26" /><stop offset="1" stop-color="var(--wb-accent)" stop-opacity=".015" /></linearGradient></defs>
+        <path data-path-area d="@line L574,164 L26,164Z" fill="url(#wb-path-fill)" />
+        <path data-path-line d="@line" fill="none" stroke="var(--wb-accent)" stroke-width="2.7" stroke-linejoin="round" stroke-linecap="round" />
+        <text x="3" y="42" class="wb-axis">@max</text><text x="3" y="155" class="wb-axis">0</text>
+        @for (var i = 0; i < Model.Path.Count; i++) { var p = Model.Path[i];
+            <g data-path-point data-index="@i" data-rolling="@p.RollingSessions" data-date="@p.Date.ToString("d MMMM", ru)" data-count="@p.Sessions" data-rest="@p.Rest.ToString().ToLowerInvariant()" data-history-url="@Url.Page("/Training/Index", new { nav.Dashboard?.ClientId, WorkoutDate = p.Date.ToString("yyyy-MM-dd") })" role="button" tabindex="0" aria-label="@p.Date.ToString("d MMMM", ru): занятий @p.Sessions@(p.Rest ? ", выбран отдых" : "")">
+                <circle data-path-hit cx="@N(X(i))" cy="@N(Y(p.RollingSessions))" r="14" fill="transparent" />
+                <circle data-path-dot cx="@N(X(i))" cy="@N(Y(p.RollingSessions))" r="@(p.Sessions > 0 || i == 29 ? 4.5 : 2)" fill="@(p.Sessions > 0 ? "var(--wb-accent)" : "var(--wb-paper)")" stroke="var(--wb-accent)" stroke-width="1.6" />
+                @if (p.Rest) { <circle data-rest-dot cx="@N(X(i))" cy="170" r="3" fill="var(--wb-rest)" /> }
+            </g>
+        }
+        <text x="26" y="190" class="wb-axis" data-path-first>@Model.Path[0].Date.ToString("d MMM", ru)</text><text x="574" y="190" text-anchor="end" class="wb-axis">Сегодня</text>
+    </svg>
+    <div class="wb-chart-readout" aria-live="polite"><span data-path-readout>Сегодня · занятий: @Model.Path[^1].Sessions@(Model.Today.RestDay ? " · выбран отдых" : "")</span><a data-path-history href="@Url.Page("/Training/Index", new { nav.Dashboard?.ClientId, WorkoutDate = Model.Data.Today.ToString("yyyy-MM-dd") })">Открыть день <reference-icon name="chevron" /></a></div>
+    @if (!Model.HasHistory) { <p class="wb-empty-path">Первое занятие станет началом линии. Дни без записи не считаются неудачей.</p> }
+</section>
+<dialog class="wb-sheet" id="wb-path-help"><header><h2>Как читать свой путь</h2><button type="button" data-wb-close aria-label="Закрыть">×</button></header><p>На каждую дату линия показывает число завершённых занятий за этот и шесть предыдущих дней. Нажмите на точку, чтобы открыть конкретный день.</p><p>Оранжевые точки — дни с занятиями. Янтарная точка под линией — день, когда вы выбрали отдых. Пустой день означает только отсутствие записи.</p><p>Линия может опускаться, когда занятия выходят за пределы семи дней. Это не потеря результата и не оценка вашего здоровья.</p><p class="wb-footnote">Учитываются завершённые тренировки хотя бы с одним выполненным рабочим подходом, включая ручные записи. Разминка, отменённые и незавершённые занятия не входят в расчёт. Самочувствие не меняет линию.</p></dialog>

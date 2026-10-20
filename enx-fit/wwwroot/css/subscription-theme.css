@@ -1,0 +1,8 @@
+/* Subscription colors are derived from server-side entitlements. */
+[data-subscription="free"]{--plan-accent:#008cff;--plan-bright:#13b8ff;--plan-rgb:0,140,255;--plan-on:#fff;--plan-soft:#092b58;--plan-photo:url('../images/subscription/free-reference.png')}
+[data-subscription="pro"]{--plan-accent:#ff8a14;--plan-bright:#ffb238;--plan-rgb:255,138,20;--plan-on:#160d03;--plan-soft:#3a251c;--plan-photo:url('../images/subscription/pro-reference.png')}
+[data-subscription="coach"]{--plan-accent:#ff254f;--plan-bright:#ff4668;--plan-rgb:255,37,79;--plan-on:#fff;--plan-soft:#38202e;--plan-photo:url('../images/subscription/coach-reference.png')}
+body[data-subscription],body[data-subscription].fitness-app.em-app-shell{--blue:var(--plan-accent);--accent:var(--plan-accent);--accent-rgb:var(--plan-rgb);--primary:var(--plan-accent);--app-accent:var(--plan-accent);--app-focus:var(--plan-accent);--app-button-bg:var(--plan-accent);--app-button-border:var(--plan-accent);--app-button-text:var(--plan-on);--mc-accent:var(--plan-accent);--mc-soft:var(--plan-soft);--mc-on-accent:var(--plan-on);--wb-accent:var(--plan-accent);--wb-on-accent:var(--plan-on);--wb-soft:var(--plan-soft);--na-accent:var(--plan-accent);--na-on-accent:var(--plan-on);--log-orange:var(--plan-accent)}
+body[data-subscription] :is(.ef-nav-item.active,.em-mobile-nav a.active,.wb-nav .is-active){color:var(--plan-accent);background:rgba(var(--plan-rgb),.12);border-color:rgba(var(--plan-rgb),.35)}
+body[data-subscription] :is(.button.primary,.app-button-primary,.wb-primary){background:var(--plan-accent);border-color:var(--plan-accent);color:var(--plan-on)}
+body[data-subscription] :is(.ef-plan,.mc-plan-badge){color:var(--plan-accent);border-color:rgba(var(--plan-rgb),.4)}

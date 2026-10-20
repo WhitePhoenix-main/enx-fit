@@ -1,0 +1,17 @@
+@using enx_fit.ViewModels.Dashboard
+@model SubscriptionDashboardViewModel
+@{ var dashboardPage=Model.Page; }
+        <section class="rd-card rd-hero" aria-labelledby="workout-title">
+            <div class="rd-hero-photo" aria-hidden="true"></div><div class="rd-hero-shade"></div>
+            <div class="rd-hero-content"><span class="rd-eyebrow">@(dashboardPage.ActiveWorkout is not null && !Model.Preview ? "ТРЕНИРОВКА В ПРОЦЕССЕ" : "ТРЕНИРОВКА НА СЕГОДНЯ")</span><h2 id="workout-title">@Model.WorkoutTitle</h2>
+                @if (Model.Premium && Model.Preview) { <div class="rd-muscles"><span><reference-icon name="muscle" />Грудь</span><span><reference-icon name="muscle" />Плечи</span><span><reference-icon name="muscle" />Трицепс</span></div> }
+                <p class="rd-workout-meta"><reference-icon name="stopwatch" />@(Model.ExerciseCount > 0 ? $"{Model.ExerciseCount} упражнения" : "В удобном темпе") @if (Model.Minutes is > 0) { <span>·</span><span>@Model.Minutes мин</span> }</p>
+                <p class="rd-hero-description">@Model.WorkoutDescription</p>
+                @if (Model.Preview) { <button class="rd-primary" type="button" data-dialog="preview-action-dialog">Начать тренировку <reference-icon name="arrow" /></button> }
+                else if (dashboardPage.ActiveWorkout is { } active) { <a class="rd-primary" asp-page="/Training/Workouts/Details" asp-route-id="@active.Id">Продолжить тренировку <reference-icon name="arrow" /></a> }
+                else if (dashboardPage.IsCoachView) { <a class="rd-primary" asp-page="/Training/Index" asp-route-ClientId="@dashboardPage.Data.Subject.Id">Тренировки клиента <reference-icon name="arrow" /></a> }
+                else if (Model.HasWorkout) { <form method="post" asp-page-handler="Start"><input type="hidden" name="source" value="@(Model.Session is not null ? "planned" : "program")" /><input type="hidden" name="plannedId" value="@Model.Session?.Id" /><input type="hidden" name="programId" value="@dashboardPage.ActiveProgram?.Id" /><button class="rd-primary" type="submit">Начать тренировку <reference-icon name="arrow" /></button></form> }
+                else { <button class="rd-primary" type="button" data-dialog="quick-workout-dialog">Начать тренировку <reference-icon name="arrow" /></button> }
+            </div>
+            @if (Model.Premium && (Model.Preview || dashboardPage.NextRecommendation is not null)) { <span class="rd-adapted"><reference-icon name="bars" /><span>Адаптировано<small>под твой прогресс</small></span></span> }
+        </section>

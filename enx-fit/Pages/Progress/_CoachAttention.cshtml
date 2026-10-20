@@ -1,0 +1,3 @@
+@using enx_fit.ViewModels.Progress
+@model ProgressOverview
+<section class="pa-card pa-attention"><header class="pa-card-heading"><h2><reference-icon name="warning" />Нуждаются во внимании</h2><a asp-page="/Coaching/Clients" asp-route-Scope="attention">Все <reference-icon name="chevron" /></a></header>@foreach(var alert in Model.Alerts.Take(4)){<a class="pa-attention-row" asp-page="/Coaching/Client" asp-route-id="@alert.ClientId"><span class="pa-client-avatar">@alert.Name[..1]</span><strong>@alert.Name</strong><small>@alert.Reason</small><span class="pa-alert-icon @(alert.Urgent?"is-urgent":"")">!</span><reference-icon name="chevron" /></a>}@if(Model.Alerts.Count==0){<p class="pa-empty-text">По тренировкам и расписаниям сигналов внимания нет.</p>}</section>

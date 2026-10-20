@@ -1,0 +1,45 @@
+@using enx_fit.ViewModels.Dashboard
+@model enx_fit.Pages.Dashboard.DashboardModel
+@{
+    var w = new WellbeingViewModel(Model.Data);
+    var today = Model.Data.Today;
+    var ru = WellbeingViewModel.Russian;
+    var active = Model.ActiveWorkout;
+    var planned = Model.Data.NextWorkout?.Date == today ? Model.Data.NextWorkout : null;
+    var next = Model.NextProgramWorkout?.Date == today ? Model.NextProgramWorkout : null;
+    var upcoming = planned is not null ? new HomeNextWorkout(planned.Title ?? "Запланированное занятие", planned.Date, planned.WorkoutExercises.Count, WorkoutId: planned.Id)
+        : next is not null ? new HomeNextWorkout(next.Workout.Name, next.Date, next.Workout.Exercises.Count, ProgramId: Model.ActiveProgram?.Id, EstimatedMinutes: next.Workout.EstimatedMinutes)
+        : Model.UpcomingWorkout;
+    var completed = Model.CompletedToday;
+    var quiet = w.Today.RestDay || w.Today.Feeling == 1;
+    var title = active?.Title ?? upcoming?.Title ?? "Небольшой шаг для себя";
+    string? Link(string page) => Url.Page(page, new { Model.ClientId });
+}
+<div class="wb-home">
+    <section class="wb-daily-story">
+        <partial name="/Pages/Shared/Dashboard/_WellbeingLandscape.cshtml" />
+        <div class="wb-daily-copy"><p class="wb-date">@today.ToString("dddd, d MMMM", ru)</p><p class="wb-hello">Привет, @Model.Data.Name</p><h1>@(active is not null && !quiet ? "Вы уже в движении." : w.Headline)</h1><p class="wb-guidance">@(active is not null ? quiet ? "Вы выбрали более спокойный день. Тренировка ещё идёт — откройте её, чтобы поставить на паузу или завершить. Записанные подходы сохранятся." : "Ваша тренировка продолжается. Возвращайтесь к ней, когда удобно: записанные подходы уже сохранены." : w.Message)</p></div>
+        <partial name="/Pages/Shared/Progress/_RhythmPath.cshtml" model="w" />
+    </section>
+    <aside class="wb-today-column">
+        <section class="wb-next"><header class="wb-section-heading"><h2>Для вас сегодня</h2><reference-icon name="spark" /></header>
+            @if (Model.IsCoachView) { <a class="wb-next-link" href="@Link("/Training/Plans")"><span class="wb-action-icon"><reference-icon name="calendar" /></span><span><strong>Посмотреть план клиента</strong><small>Расписание и выполненные занятия</small></span><reference-icon name="chevron" /></a> }
+            else if (active is not null) { <a class="wb-next-link" asp-page="/Training/Workouts/Details" asp-route-id="@active.Id"><span class="wb-action-icon"><reference-icon name="play" /></span><span><small>Можно продолжить</small><strong>@title</strong><small>Подходы сохраняются по ходу занятия</small></span><reference-icon name="chevron" /></a> }
+            else if (quiet) { <div class="wb-rest-message"><reference-icon name="leaf" /><div><strong>Дайте себе пространство</strong><p>Вы сами решаете, когда двигаться. План доступен в любой момент.</p></div></div><a class="wb-text-link" href="@Link("/Training/Index")">Открыть тренировки <reference-icon name="arrow" /></a> }
+            else if (completed is not null) { <a class="wb-next-link" asp-page="/Training/Workouts/Details" asp-route-id="@completed.Id"><span class="wb-action-icon"><reference-icon name="check-circle" /></span><span><small>Сегодня сделано</small><strong>@completed.Title</strong><small>Посмотреть свой результат</small></span><reference-icon name="chevron" /></a> }
+            else if (upcoming is not null) {
+                <p class="wb-next-date">@(upcoming.Date == today ? "В вашем плане на сегодня" : upcoming.Date.ToString("d MMMM", ru))</p><h3>@upcoming.Title</h3><p class="wb-footnote">@upcoming.ExerciseCount @WellbeingViewModel.Plural(upcoming.ExerciseCount, "упражнение", "упражнения", "упражнений") · нагрузку выбираете вы</p>
+                @if (upcoming.Date == today) { <form method="post" asp-page-handler="Start"><input type="hidden" name="source" value="@(upcoming.WorkoutId.HasValue ? "planned" : "program")" /><input type="hidden" name="plannedId" value="@upcoming.WorkoutId" /><input type="hidden" name="programId" value="@upcoming.ProgramId" /><button class="wb-primary" type="submit"><reference-icon name="play" />Начать в своём темпе</button></form> }
+                else { <a class="wb-primary" href="@Link("/Training/Plans")">Посмотреть план <reference-icon name="arrow" /></a> }
+            }
+            else { <p class="wb-next-date">Начать можно с малого</p><h3>Найдите посильное занятие</h3><p>Готовый план поможет с упражнениями и расписанием. Его всегда можно изменить.</p><a class="wb-primary" href="@Link("/Training/Programs/Index")">Подобрать программу <reference-icon name="arrow" /></a><a class="wb-text-link" href="@Link("/Training/Index")">Или начать свободно</a> }
+        </section>
+        <partial name="/Pages/Shared/Dashboard/_WellbeingCheckIn.cshtml" model="Model" />
+        <a class="wb-recap-teaser" href="@Link("/Progress/Index")"><span class="wb-mini-landscape"><reference-icon name="bars-outline" /></span><span><small>Каждый шаг остаётся</small><strong>Ваша история движения</strong><small>Посмотреть месяц целиком</small></span><reference-icon name="chevron" /></a>
+    </aside>
+    <section class="wb-understand"><header class="wb-section-heading"><h2>Понимать себя проще</h2><span class="wb-optional">2 минуты для себя</span></header><div class="wb-reading-grid"><button type="button" data-wb-open="wb-rest-help"><span class="wb-reading-art"><reference-icon name="leaf" /></span><strong>У отдыха тоже есть место</strong><span>Пауза не обнуляет ваш путь <reference-icon name="arrow" /></span></button><button type="button" data-wb-open="wb-path-help"><span class="wb-reading-art is-path"><reference-icon name="bars-outline" /></span><strong>О чём говорит ваш ритм</strong><span>Понятно о линии и точках <reference-icon name="arrow" /></span></button></div></section>
+    @if (Model.Data.Completed.OrderByDescending(x => x.Date).FirstOrDefault() is { } last) { <section class="wb-recent"><header class="wb-section-heading"><h2>Последнее занятие</h2><a href="@Link("/Training/Index")">История <reference-icon name="chevron" /></a></header><a class="wb-activity" asp-page="/Training/Workouts/Details" asp-route-id="@last.Id"><span class="wb-activity-icon"><reference-icon name="workout-outline" /></span><span><strong>@last.Title</strong><small>@last.Date.ToString("d MMMM", ru) · выполнено рабочих подходов: @enx_fit.Services.Dashboard.DashboardData.WorkingSets(last).Count()</small></span><reference-icon name="chevron" /></a></section> }
+    @if (!Model.IsCoachView) { <a class="wb-record-link" asp-page="/Training/Workouts/Record"><reference-icon name="plus" />Уже позанимались? Добавить запись</a> }
+    @if (!Model.IsCoachView && !Model.Reference) { <button class="wb-record-link wb-goal-link" type="button" data-wb-open="goal-dialog">Мой ориентир: @Model.Data.Settings.WeeklyWorkoutGoal @WellbeingViewModel.Plural(Model.Data.Settings.WeeklyWorkoutGoal, "занятие", "занятия", "занятий") в неделю <reference-icon name="sliders" /></button> }
+</div>
+<dialog class="wb-sheet" id="wb-rest-help"><header><h2>У отдыха тоже есть место</h2><button type="button" data-wb-close aria-label="Закрыть">×</button></header><p>Журнал хранит сделанное. Один день без тренировки не удаляет прошлые занятия и не обнуляет прогресс.</p><p>Если сегодня хочется паузы, можно отметить день отдыха. Это ваш выбор, а не вывод приложения о состоянии организма.</p><p>Отметка появится на пути, но не увеличит число тренировок. Расписание и рабочие веса останутся прежними — поменять их можно самостоятельно в программе.</p><a class="wb-text-link" asp-page="/Training/Plans">Посмотреть своё расписание <reference-icon name="arrow" /></a></dialog>

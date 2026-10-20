@@ -1,0 +1,18 @@
+@model enx_fit.Pages.Progress.IndexModel
+@{var d=Model.Data;}
+<div class="pa-page @(d.Coach?"pa-coach":d.Advanced?"pa-pro":"pa-free")" data-progress-overview>
+<header class="pa-heading"><div><h1>@(d.Coach?"Прогресс клиентов":"Ваш прогресс") @if(!d.Coach&&d.Advanced){<em>Pro</em>}</h1><p>@(d.Coach?"Отслеживайте результаты, находите возможности и принимайте более уверенные решения.":d.Advanced?"Углублённая аналитика, сравнения и динамика нагрузки.":"Главное за последние недели — просто, понятно и без перегруза.")</p></div>
+<form method="get" id="progress-filters" class="pa-filters" role="search" aria-label="Фильтры аналитики">
+@if(Model.Personal){<input type="hidden" name="Personal" value="true" />}
+@if(d.Coach||!d.Advanced){<input type="hidden" name="Metric" value="@Model.Metric" />}<input type="hidden" name="ClientMetric" value="@Model.ClientMetric" />
+@if(d.Coach){<label class="pa-client-filter"><span class="pa-sr">Клиент</span><select name="ClientId" data-progress-submit><option value="">Все клиенты</option>@foreach(var c in d.Clients){<option value="@c.Id" selected="@(c.Id==Model.ClientId)">@c.Name</option>}</select></label>}
+<label><span class="pa-sr">Период</span><select name="Weeks" data-progress-submit>@foreach(var weeks in d.Advanced?new[]{4,6,8,12}:new[]{4,6}){<option value="@weeks" selected="@(weeks==d.Weeks)">Последние @weeks недель</option>}</select></label>
+@if(d.Coach){<label><span class="pa-sr">Программа</span><select name="ProgramId" data-progress-submit><option value="">Все программы</option>@foreach(var p in d.Programs){<option value="@p.Id" selected="@(p.Id==Model.ProgramId?.ToString())">@p.Name</option>}</select></label>}
+else{<label><span class="pa-sr">Фильтр упражнений</span><select name="ExerciseId" data-progress-submit><option value="">Все упражнения</option>@foreach(var e in d.Exercises){<option value="@e.Id" selected="@(e.Id==Model.ExerciseId?.ToString())">@e.Name</option>}</select></label>}
+@if(!d.Coach&&d.Advanced){<label><span class="pa-sr">Метрика графика</span><select name="Metric" data-progress-submit>@foreach(var(key,label) in Model.Metrics){<option value="@key" selected="@(key==Model.Metric)">@label</option>}</select></label>}
+<noscript><button class="rd-primary" type="submit">Применить</button></noscript>
+</form></header>
+@if(d.Coach){<partial name="_Coach" model="Model" />}else if(d.Advanced){<partial name="_Personal" model="Model" />}else{<partial name="_FreeProgress" model="Model" />}
+<p class="pa-data-note">Данные по @d.Today.ToString("d MMMM yyyy",System.Globalization.CultureInfo.GetCultureInfo("ru-RU")) · учтены завершённые рабочие подходы; разминка и пропуски исключены.</p>
+</div>
+

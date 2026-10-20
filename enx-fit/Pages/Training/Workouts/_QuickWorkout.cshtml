@@ -1,0 +1,37 @@
+@using System.Text.Json
+@using enx_fit.ViewModels.Workouts
+@model enx_fit.Pages.Training.Workouts.DetailsModel
+@{ var w = Model.Workout; var rest = w.WorkoutExercises.OrderBy(e => e.Order).FirstOrDefault()?.TargetRestSeconds ?? 60; }
+<div class="qw-workout" data-training-log data-quick-workout data-active-workout data-session-id="@w.Id" data-viewer="@Model.ViewerId" data-session-status="@w.State" data-default-rest="@rest" data-workouts-url="@Url.Page("/Training/Index")">
+    <script type="application/json" id="workout-execution-state">@Html.Raw(JsonSerializer.Serialize(Model.Execution, WorkoutBuilderInput.JsonOptions))</script>
+    <header class="qw-heading"><div><h1>Быстрая тренировка</h1><p><span class="qw-desktop-copy">Начните тренировку прямо сейчас — </span>добавляйте упражнения по ходу <span class="qw-mobile-copy">тренировки</span><span class="qw-desktop-copy">занятия. Никаких планов, только вы и тренировка.</span></p></div><button class="qw-help" type="button" data-dialog="quick-help-dialog" aria-label="Как это работает?"><reference-icon name="help" /><span>Как это работает?</span></button></header>
+    @if (TempData["StatusMessage"] is string message) { <p class="qw-notice" role="status">@message</p> }
+    <div asp-validation-summary="All" class="validation-message" role="alert"></div>
+    <section class="qw-stats" aria-label="Показатели тренировки">
+        <div class="qw-stat"><reference-icon name="stopwatch" /><span><strong data-session-clock>00:00:00</strong><small><span class="qw-desktop-copy">Время тренировки</span><span class="qw-mobile-copy">Время</span></small></span></div>
+        <div class="qw-stat"><span class="qw-stat-icon"><reference-icon name="workout" /></span><span><strong data-qw-exercise-count>@Model.Exercises.Count</strong><small><span class="qw-desktop-copy">Упражнений добавлено</span><span class="qw-mobile-copy">Упр.</span></small></span></div>
+        <div class="qw-stat"><span class="qw-stat-icon"><reference-icon name="check-circle" /></span><span><strong data-qw-working-count>@w.WorkoutExercises.Sum(e => e.SetEntries.Count(s => !s.IsWarmup && !s.IsSkipped))</strong><small><span class="qw-desktop-copy">Рабочих подходов</span><span class="qw-mobile-copy">Подходов</span></small></span></div>
+        <button class="qw-finish qw-desktop-finish" type="button" data-dialog="finish-workout-dialog" data-finish disabled><reference-icon name="stop" />Завершить тренировку</button>
+    </section>
+    <div class="qw-sync-row"><span class="execution-sync" data-sync-status role="status" aria-live="polite">Все изменения сохранены</span><button type="button" class="text-button" data-control="@(w.State == WorkoutStatus.Paused ? "resume" : "pause")" data-pause-button>Пауза</button></div>
+    <button type="button" class="button secondary" data-reconcile hidden>Применить мои изменения к текущей версии</button><button type="button" class="text-button" data-discard-operation hidden>Убрать отклонённое действие из очереди</button>
+    <p class="qw-notice" data-pause-notice hidden>Тренировка на паузе. Продолжите, чтобы записывать подходы.</p>
+    <div class="qw-grid">
+        <button class="qw-add-primary" type="button" data-dialog="exercise-dialog" data-add-exercise><span><reference-icon name="plus" />Добавить упражнение</span><small>Найдите упражнение и добавьте его в текущую тренировку</small></button>
+        <section class="qw-exercises-column">
+            <header class="qw-section-heading" data-exercises-heading><h2>Уже в тренировке (<span data-exercise-total>@Model.Exercises.Count</span>)</h2><button type="button" class="qw-outline-button" data-dialog="quick-clear-dialog" data-qw-clear-trigger disabled="@(Model.Exercises.Count == 0)"><reference-icon name="trash" /><span>Очистить <span class="qw-desktop-copy">все</span></span></button></header>
+            <section class="workout-empty qw-empty" hidden="@(Model.Exercises.Count > 0)"><reference-icon name="workout" /><h2>Начнём с первого упражнения</h2><p>Выберите движение из библиотеки. Подходы и результаты можно добавлять по ходу.</p><button class="button" type="button" data-dialog="exercise-dialog" data-add-exercise><reference-icon name="plus" />Выбрать упражнение</button></section>
+            <div class="session-exercises">@foreach (var exercise in Model.Exercises) { <partial name="_QuickExercise" model="exercise" /> }</div>
+        </section>
+        <partial name="_QuickRecommendations" model="Model" />
+        <aside class="qw-timer-column"><partial name="_QuickRestTimer" model="Model" /><section class="qw-panel qw-summary"><h2>Сводка тренировки</h2><div class="qw-summary-clock"><reference-icon name="stopwatch" /><span><strong data-session-clock>00:00:00</strong><small>Время тренировки</small></span></div><div class="qw-summary-bottom"><span><reference-icon name="workout" /><span><strong data-qw-exercise-count>@Model.Exercises.Count</strong><small>Упражнений</small></span></span><span><reference-icon name="check-circle" /><span><strong data-qw-working-count>0</strong><small>Рабочих подходов</small></span></span></div></section></aside>
+        <button class="qw-add-primary qw-add-bottom" type="button" data-dialog="exercise-dialog" data-add-exercise><span><reference-icon name="plus" />Добавить упражнение</span></button>
+    </div>
+    <button class="qw-finish qw-mobile-finish" type="button" data-dialog="finish-workout-dialog" data-finish disabled><reference-icon name="stop" />Завершить тренировку</button>
+    <div hidden aria-hidden="true"><span data-log-volume></span><span data-log-done></span><span data-log-total></span><nav data-log-outline></nav></div>
+    <p class="log-toast" data-log-toast role="status" hidden></p>
+</div>
+<partial name="_LogDialogs" model="Model" />
+<partial name="_LogHistoryDialog" />
+<dialog class="app-dialog" id="quick-help-dialog"><div class="dialog-heading"><h2>Ваша тренировка — в вашем темпе</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><ol class="qw-help-steps"><li><strong>Добавьте упражнение.</strong> Выберите из библиотеки или предложений справа.</li><li><strong>Укажите вес и повторения.</strong> Отмечайте подход галочкой после выполнения — начнётся отдых.</li><li><strong>Завершите тренировку.</strong> Рабочие результаты сохранятся в истории.</li></ol><p>Меню «···» в подходе открывает разминку, собственный вес, RIR, дропсеты и прошлый результат. Изменения сохраняются автоматически; состояние отправки показано над тренировкой.</p></dialog>
+<dialog class="app-dialog" id="quick-clear-dialog"><div class="dialog-heading"><h2>Очистить тренировку?</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>Все упражнения и внесённые подходы этой тренировки будут удалены. Время занятия продолжит отсчитываться.</p><p data-qw-clear-status role="status" hidden></p><form method="post" asp-page-handler="Clear" data-qw-clear-form><div class="workout-dialog-actions"><button type="button" class="button secondary" data-close>Оставить упражнения</button><button class="button danger" type="submit">Очистить тренировку</button></div></form></dialog>

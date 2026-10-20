@@ -1,0 +1,15 @@
+@using enx_fit.ViewModels.Dashboard
+@model enx_fit.Pages.Dashboard.DashboardModel
+@{ var today = Model.Data.TodayCheckIn; }
+@if (!Model.IsCoachView && !Model.Reference) {
+<section class="wb-checkin"><header class="wb-section-heading"><div><p class="wb-eyebrow">Место для себя</p><h2>Как вы сегодня?</h2></div><span class="wb-optional">Необязательно</span></header>
+    <form method="post" asp-page-handler="Wellbeing" class="wb-feelings"><input type="hidden" name="choice" value="feeling" />
+        @foreach (var (value, face, label) in new[] { (1, "low", "Мало сил"), (2, "steady", "Всё ровно"), (3, "bright", "Есть энергия") }) {
+        <button type="submit" name="feeling" value="@value" aria-pressed="@(today.Feeling == value ? "true" : "false")"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" /><path d="M13 16h1m12 0h1" />@if (value == 1) { <path d="M14 26q6-5 12 0" /> } else if (value == 2) { <path d="M15 25h10" /> } else { <path d="M13 23q7 10 14 0" /> }</svg><span>@label</span></button>
+        }
+    </form>
+    @if (today.Feeling.HasValue) { <div class="wb-checkin-saved"><span>@WellbeingViewModel.FeelingName(today.Feeling) · сохранено на сегодня</span><form method="post" asp-page-handler="Wellbeing"><button type="submit" name="choice" value="clear">Убрать</button></form></div> }
+    else { <p class="wb-footnote">Ваш ответ поможет подобрать слова и следующий шаг. Его можно изменить или пропустить.</p> }
+    <form method="post" asp-page-handler="Wellbeing" class="wb-rest-choice"><button type="submit" name="choice" value="@(today.RestDay ? "resume" : "rest")"><reference-icon name="@(today.RestDay ? "check-circle" : "leaf")" /><span>@(today.RestDay ? "Сегодня выбран отдых" : "Выбрать день отдыха")</span><small>@(today.RestDay ? "Убрать отметку" : "План останется на месте")</small></button></form>
+</section>
+}

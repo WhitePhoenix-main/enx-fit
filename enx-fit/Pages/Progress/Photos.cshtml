@@ -1,0 +1,7 @@
+@page "/Progress/Photos"
+@model enx_fit.Pages.Progress.PhotosModel
+@{ Layout = "/Pages/Shared/Layouts/_FitnessLayout.cshtml"; ViewData["Title"] = "Фото прогресса"; }
+@section Styles { <link rel="stylesheet" href="~/css/coach-progress-reference.css" asp-append-version="true" /> }
+<header class="ref-heading"><div><h1>Фото прогресса</h1><p>@Model.SubjectName · сравнивайте изменения по датам.</p></div><a class="ref-secondary" asp-page="/Progress/Index" asp-route-ClientId="@Model.ClientId">К прогрессу <reference-icon name="arrow" /></a></header>
+<section class="ref-panel"><form method="post" enctype="multipart/form-data" class="ref-form-grid"><div asp-validation-summary="All" class="ref-full"></div><input type="hidden" asp-for="ClientId" /><label>Дата<input asp-for="Date" type="date" required /></label><label>Фотография JPEG / PNG<input asp-for="Photo" type="file" accept="image/jpeg,image/png" required /></label><button class="ref-primary ref-full">Добавить фотографию <reference-icon name="plus" /></button></form></section>
+<div class="ref-photo-gallery">@foreach(var photo in Model.Photos){<figure class="ref-panel"><img src="@Url.Page(null,"Image",new {id=photo.Id,Model.ClientId})" alt="Фотография прогресса от @photo.Date.ToString("d MMMM yyyy")" loading="lazy" /><figcaption>@photo.Date.ToString("d MMMM yyyy")</figcaption></figure>}</div>

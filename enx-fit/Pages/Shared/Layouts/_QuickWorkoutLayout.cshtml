@@ -1,0 +1,14 @@
+@{ Layout = "/Pages/Shared/Layouts/_FitnessLayout.cshtml"; ViewData["AppClass"] = "training-log quick-workout " + ViewData["WorkoutShellClass"]; }
+@section Styles {
+<link rel="stylesheet" href="~/css/exercise-library.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/training-log.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/quick-workout.css" asp-append-version="true" />
+@await RenderSectionAsync("Styles", required: false)
+}
+@RenderBody()
+@section Scripts {
+<script src="~/js/training.js" asp-append-version="true"></script>
+<script src="~/js/training-log.js" asp-append-version="true"></script>
+<script src="~/js/quick-workout.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+}

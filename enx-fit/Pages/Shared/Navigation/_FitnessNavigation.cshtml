@@ -1,0 +1,26 @@
+@inject enx_fit.Security.IFeatureAccessService NavigationAccess
+@{ var access = await NavigationAccess.GetAsync();
+   var navigation = enx_fit.ViewModels.Navigation.MobileAppNavigationViewModel.Create(ViewData, User, ViewContext.RouteData.Values["page"] as string);
+   var page = navigation.Page;
+   var preview = navigation.Dashboard?.SubscriptionHome;
+   var coach = preview?.Preview == true ? preview.Coach : access.CanUse(enx_fit.Security.Feature.CoachClientManagement) && navigation.IsTrainer;
+   var items = new List<(string Icon, string Title, string Page)> { ("home-outline", "Главная", "/Dashboard/Index") };
+   if (coach) items.Add(("users", "Клиенты", "/Coaching/Clients"));
+   items.AddRange(new[] { ("workout", "Тренировки", "/Training/Index"), ("layers", "Шаблоны", "/Training/Workouts/Templates"), ("document", "Программы", "/Training/Programs/Index"), ("calendar", "План / Календарь", coach ? "/Coaching/Calendar" : "/Training/Plans"), ("bars-outline", "Прогресс", "/Progress/Index"), ("workout-outline", "Упражнения", "/Training/Exercises/Index"), ("nutrition", "Питание", "/Nutrition/Index") });
+   if (coach) items.Add(("message", "Сообщения", "/Coaching/Messages"));
+   bool Active(string target) => target switch {
+       "/Training/Index" => navigation.IsActive("workouts") && !page.EndsWith("/Templates"),
+       "/Training/Workouts/Templates" => page.EndsWith("/Templates"),
+       "/Training/Programs/Index" => page.StartsWith("/Training/Programs/"),
+       "/Progress/Index" => navigation.IsActive("progress"),
+       "/Training/Exercises/Index" => page.StartsWith("/Training/Exercises/"),
+       "/Coaching/Clients" => page is "/Coaching/Clients" or "/Coaching/Client",
+       _ => page == target
+   };
+}
+<nav class="rd-navigation" aria-label="Основная навигация">
+@foreach (var item in items) {
+    <a href="@navigation.PageUrl(Url, item.Page)" class="@(Active(item.Page) ? "is-active" : "")" aria-current="@(Active(item.Page) ? "page" : null)"><reference-icon name="@item.Icon" /><span>@item.Title</span></a>
+}
+<button type="button" data-dialog="navigation-dialog"><reference-icon name="more" /><span>Ещё</span></button>
+</nav>

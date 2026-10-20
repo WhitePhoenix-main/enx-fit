@@ -1,0 +1,64 @@
+@using enx_fit.ViewModels.Dashboard
+@using enx_fit.Security
+@{ var mobileNavigation = enx_fit.ViewModels.Navigation.MobileAppNavigationViewModel.Create(ViewData, User, ViewContext.RouteData.Values["page"] as string);
+
+    var dashboardPage = (enx_fit.Pages.Dashboard.DashboardModel)ViewData["Dashboard"]!;
+    var home = dashboardPage.SubscriptionHome;
+    var coach = home.Coach;
+    string? Link(string target) => Url.Page(target, new { area = "", ClientId = dashboardPage.IsCoachView ? dashboardPage.Data.Subject.Id : null });
+    var menu = coach
+        ? new[] { ("home-outline", "Главная", "/Dashboard/Index"), ("users", "Клиенты", "/Coaching/Clients"), ("calendar", "Программы", "/Training/Programs/Index"), ("calendar", "Календарь", "/Coaching/Calendar"), ("document", "Отчёты клиентов", "/Coaching/Clients"), ("bars-outline", "Аналитика", "/Progress/Analytics"), ("workout-outline", "Упражнения", "/Training/Exercises/Index"), ("book", "Библиотека", "/Training/Programs/Index"), ("settings", "Настройки", "/Account/Profile") }
+        : home.Premium
+        ? new[] { ("home-outline", "Главная", "/Dashboard/Index"), ("calendar", "Тренировки", "/Training/Index"), ("document", "Программы", "/Training/Programs/Index"), ("bars-outline", "Прогресс", "/Progress/Index"), ("nutrition", "Питание", "/Nutrition/Index"), ("pulse", "Восстановление", "/Dashboard/Habits"), ("bars", "Аналитика", "/Progress/Analytics"), ("book", "Библиотека", "/Training/Exercises/Index"), ("settings", "Настройки", "/Account/Profile") }
+        : new[] { ("home-outline", "Главная", "/Dashboard/Index"), ("calendar", "Тренировки", "/Training/Index"), ("document", "Программы", "/Training/Programs/Index"), ("bars-outline", "Прогресс", "/Progress/Index"), ("nutrition", "Питание", "/Nutrition/Index"), ("menu", "Ещё", "#more") };
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#040e19" />
+    <meta name="color-scheme" content="dark" />
+    <title>Главная — Enix Fit @home.Badge</title>
+    <link rel="stylesheet" href="~/css/subscription-dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/subscription-theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app-chrome.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/fitness-reference.css" asp-append-version="true" /><link rel="stylesheet" href="~/css/reference-polish.css" asp-append-version="true" /></head>
+<body class="fitness-app ref-app rd-app" data-subscription="@home.Theme">
+<a class="rd-skip" href="#main-content">Перейти к содержимому</a>
+<div class="rd-shell">
+    <aside class="rd-sidebar">
+        <a class="rd-brand" href="@Link("/Dashboard/Index")"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /> @if (home.Premium) { <span class="rd-badge">@home.Badge</span> }</a>
+        <partial name="/Pages/Shared/Navigation/_FitnessNavigation.cshtml" />
+        <div class="rd-sidebar-footer">
+            @if (!home.Premium) { <div class="rd-upgrade"><reference-icon name="crown" /><h3>Больше возможностей<br />в Pro</h3><p>Персональные планы, детальная аналитика и многое другое.</p><a href="@Link("/Account/Subscription")">Узнать больше <reference-icon name="arrow" /></a></div> }
+            <a class="rd-profile" href="@Link("/Account/Profile")"><span class="rd-avatar" aria-hidden="true">@if (!home.Preview) { @home.Name[..1].ToUpperInvariant() }</span><span><strong>@home.Name</strong><small>@(coach ? "Тренерский аккаунт" : home.Premium ? "План Pro" : "Базовый план")</small></span><span class="rd-badge">@home.Badge</span></a>
+        </div>
+    </aside>
+    <div class="rd-content">
+        <header class="rd-mobile-header"><a class="rd-brand" href="@Link("/Dashboard/Index")"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /> @if (!coach) { <span class="rd-badge">@home.Badge</span> }</a><button class="rd-icon-button" type="button" data-dialog="notifications-dialog" aria-label="Уведомления"><reference-icon name="bell" />@if (coach && home.AttentionCount > 0) { <i class="rd-notification-dot"></i> }</button></header>
+        @if (home.Preview) { <nav class="rd-preview-bar" aria-label="Предпросмотр тарифов"><span>Предпросмотр</span>@foreach (var plan in new[] { "Free", "Pro", "Coach" }) { <a asp-page="/Dashboard/Index" asp-route-Reference="true" asp-route-ReferencePlan="@plan" aria-current="@(home.Badge == plan ? "page" : null)">@plan</a> }<a asp-page="/Dashboard/Index">Мои данные ↗</a></nav> }
+        <header class="rd-page-header">
+            <div><h1>Главная</h1><p>@if (coach) { <span>Ваши клиенты. Их прогресс. Всё под контролем.</span> } else { @(home.Premium ? "Персональный план. Адаптивные рекомендации. Максимальный результат." : "Добро пожаловать! Продолжайте двигаться к своим целям.") }</p></div>
+            <div class="rd-header-tools"><button class="rd-search" type="button" data-dialog="search-dialog"><reference-icon name="search" /><span>@(coach ? "Поиск клиентов, программ..." : "Поиск упражнений, программ...")</span></button><button class="rd-icon-button" type="button" data-dialog="notifications-dialog" aria-label="Уведомления"><reference-icon name="bell" />@if (coach && home.AttentionCount > 0) { <i class="rd-notification-dot"></i> }</button></div>
+        </header>
+        <main id="main-content" tabindex="-1">
+            @if (dashboardPage.StatusMessage is { } message) { <p class="rd-notice" role="status">@message</p> }
+            <div asp-validation-summary="All" class="rd-validation" role="alert"></div>
+            @if (dashboardPage.IsCoachView) { <p class="rd-notice">Профиль клиента · @dashboardPage.Data.Name <a asp-page="/Dashboard/Index">К своему кабинету →</a></p> }
+            @RenderBody()
+        </main>
+    </div>
+</div>
+<partial name="/Pages/Shared/Navigation/_MobileBottomNavigation.cshtml" model="mobileNavigation" />
+<dialog class="app-dialog rd-dialog" id="navigation-dialog"><div class="dialog-heading"><h2>Все разделы</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><div class="search-results">@foreach (var (icon, label, target) in menu.Where(m => m.Item3 != "#more")) { <a href="@Link(target)"><reference-icon name="@icon" />@label</a> }<a href="@Link("/Account/Profile")"><reference-icon name="user" />Профиль</a><a href="@Link("/Account/Subscription")"><reference-icon name="crown" />Подписка @home.Badge</a><a href="@Link("/Training/Exercises/Index")"><reference-icon name="book" />Библиотека упражнений</a><a asp-area="Identity" asp-page="/Account/Manage/Index"><reference-icon name="settings" />Настройки аккаунта</a></div></dialog>
+<dialog class="app-dialog rd-dialog" id="search-dialog"><div class="dialog-heading"><h2>Быстрый переход</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><input class="dialog-search" type="search" placeholder="Найти раздел" aria-label="Поиск раздела" data-section-search /><div class="search-results">@foreach (var (icon, label, target) in menu.Where(m => m.Item3 != "#more")) { <a href="@Link(target)">@label <reference-icon name="@icon" /></a> }<a href="@Link("/Training/Exercises/Index")">Упражнения <reference-icon name="workout" /></a><p data-search-empty hidden>Ничего не найдено.</p></div></dialog>
+<dialog class="app-dialog rd-dialog" id="notifications-dialog"><div class="dialog-heading"><h2>Уведомления</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>@if (coach && home.AttentionCount > 0) { <p>Клиентов, требующих внимания: @home.AttentionCount</p><a class="rd-primary" href="@Link("/Coaching/Clients")?Scope=attention">Посмотреть клиентов <reference-icon name="arrow" /></a> } else { <div class="rd-empty"><reference-icon name="bell" /><h3>Вы всё посмотрели</h3><p>Новых уведомлений пока нет.</p></div> }</dialog>
+<dialog class="app-dialog rd-dialog" id="goal-dialog"><div class="dialog-heading"><h2>План на неделю</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><form method="post" asp-page-handler="Goal"><input type="hidden" name="ClientId" value="@(dashboardPage.IsCoachView ? dashboardPage.Data.Subject.Id : null)" /><label>Цель<input type="text" name="Goal.Title" maxlength="160" required value="@dashboardPage.Data.Settings.GoalTitle" /></label><label>Тренировок в неделю<select name="Goal.WeeklyWorkouts">@for (var i = 1; i <= 7; i++) { <option value="@i" selected="@(i == dashboardPage.Data.Settings.WeeklyWorkoutGoal)">@i</option> }</select></label><button class="rd-primary" type="submit" disabled="@home.Preview">Сохранить</button></form></dialog>
+@if (!dashboardPage.IsCoachView && !home.Preview) { <partial name="/Pages/Shared/Workouts/_QuickWorkoutDialogs.cshtml" model="dashboardPage" /> }
+@if (home.Preview) { <dialog class="app-dialog rd-dialog" id="preview-action-dialog"><div class="dialog-heading"><h2>Предпросмотр интерфейса</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>Здесь показаны примеры с референсов. Перейдите к своим данным, чтобы начать тренировку или работать с клиентами.</p><a class="rd-primary" asp-page="/Dashboard/Index">Открыть мой кабинет <reference-icon name="arrow" /></a></dialog> }
+<noscript><p class="rd-notice"><a href="@Link("/Training/Index")">Тренировки</a> · <a href="@Link("/Training/Programs/Index")">Программы</a> · <a href="@Link("/Account/Profile")">Профиль</a></p></noscript>
+<script src="~/js/dashboard.js" asp-append-version="true"></script>
+</body>
+</html>
+

@@ -1,0 +1,46 @@
+@inject enx_fit.Security.IFeatureAccessService SubscriptionAccess
+@{ var subscriptionAccess = await SubscriptionAccess.GetAsync(); }
+@using enx_fit.ViewModels.Navigation
+@{
+    var dashboard = ViewData["Dashboard"] as enx_fit.Pages.Dashboard.DashboardModel;
+    var nav = MobileAppNavigationViewModel.Create(ViewData, User, ViewContext.RouteData.Values["page"] as string);
+    string? Link(string page) => nav.PageUrl(Url, page);
+    var initial = dashboard?.Data.Initial ?? "Я";
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#111213" />
+    <meta name="color-scheme" content="dark" />
+    <title>@ViewData["Title"] — Enix Fit</title>
+    <link rel="stylesheet" href="~/css/wellbeing.css" asp-append-version="true" />
+    <partial name="/Pages/Shared/Icons/_AppIcons.cshtml" />
+    <link rel="stylesheet" href="~/css/subscription-theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app-chrome.css" asp-append-version="true" />
+</head>
+<body data-subscription="@subscriptionAccess.Plan.ToString().ToLowerInvariant()" class="wellbeing-app">
+    <a class="wb-skip" href="#main-content">Перейти к содержимому</a>
+    <header class="wb-topbar"><a class="wb-brand" href="@Link("/Dashboard/Index")"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /></a><a class="wb-avatar" href="@Link("/Account/Profile")" aria-label="Профиль">@initial</a></header>
+    <nav class="wb-nav" aria-label="Основная навигация">
+        @foreach (var (key, page, icon, label) in new[] { ("home", "/Dashboard/Index", "home-outline", "Главная"), ("workouts", "/Training/Index", "workout-outline", "Тренировки"), ("programs", "/Training/Programs/Index", "calendar", "Программы"), ("progress", "/Progress/Index", "bars-outline", "Прогресс") })
+        { <a href="@Link(page)" class="@(nav.IsActive(key) ? "is-active" : "")" aria-current="@(nav.IsActive(key) ? "page" : null)"><reference-icon name="@icon" /><span>@label</span></a> }
+        <button type="button" data-wb-open="wb-more"><reference-icon name="more" /><span>Ещё</span></button>
+    </nav>
+    <partial name="/Pages/Shared/Navigation/_MobileBottomNavigation.cshtml" model="nav" />
+    <main id="main-content" class="wb-main" tabindex="-1">
+        @if (dashboard?.StatusMessage is { } message) { <p class="wb-notice" role="status">@message</p> }
+        <div asp-validation-summary="All" class="wb-validation" role="alert"></div>
+        @if (dashboard?.IsCoachView == true) { <p class="wb-context">Путь клиента · @dashboard.Data.Name <a href="@Url.Page("/Dashboard/Index")">К своему профилю</a></p> }
+        @RenderBody()
+    </main>
+    <dialog class="wb-sheet" id="wb-more"><header><h2>Всё под рукой</h2><button type="button" data-wb-close aria-label="Закрыть">×</button></header><div class="wb-menu-links"><a href="@Link("/Training/Plans")">Расписание <reference-icon name="calendar" /></a><a href="@Link("/Training/Exercises/Index")">Библиотека упражнений <reference-icon name="book" /></a><a href="@Link("/Dashboard/Habits")">Привычки <reference-icon name="check-circle" /></a><a href="@Link("/Account/TrainingSetup")">Условия тренировок <reference-icon name="sliders" /></a><a href="@Link("/Account/Profile")">Профиль <reference-icon name="user" /></a>@if (nav.IsTrainer) { <a href="@Link("/Coaching/Clients")">Мои клиенты <reference-icon name="users" /></a> }<a asp-area="Identity" asp-page="/Account/Manage/Index">Настройки <reference-icon name="settings" /></a></div></dialog>
+    @if (dashboard is not null && !dashboard.IsCoachView && !dashboard.Reference) {
+    <dialog class="wb-sheet" id="goal-dialog"><header><h2>Ваш ориентир</h2><button type="button" data-wb-close aria-label="Закрыть">×</button></header><p>Комфортный план помогает выделить время для себя. Его можно менять — это ориентир, а не обязательная серия.</p><form method="post" asp-page-handler="Goal"><input type="hidden" name="Goal.Title" value="@dashboard.Data.Settings.GoalTitle" /><label>Занятий в неделю<select name="Goal.WeeklyWorkouts">@for (var i = 1; i <= 7; i++) { <option value="@i" selected="@(i == dashboard.Data.Settings.WeeklyWorkoutGoal)">@i</option> }</select></label><button class="wb-primary" type="submit">Сохранить ориентир</button></form></dialog>
+    }
+    <noscript><p class="wb-record-link"><a href="@Link("/Account/Profile")">Профиль и настройки</a> · <a href="@Link("/Training/Exercises/Index")">Библиотека</a></p></noscript>
+    <script src="~/js/wellbeing.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
