@@ -196,6 +196,7 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
         WeekOffset = Math.Clamp(WeekOffset, -52, 52);
         ProgressWeeks = ProgressWeeks is 2 or 4 or 6 or 12 ? ProgressWeeks : 6;
         ChartWeeks = ChartWeeks is 2 or 4 or 6 or 12 ? ChartWeeks : 6;
+        if (CurrentPage == "/Dashboard/Index" && !Request.Query.ContainsKey("ChartWeeks")) ChartWeeks = 4;
         if (!Reference && CurrentPage == "/Progress/Index" && !Request.Query.ContainsKey("ChartWeeks")) ChartWeeks = ProgressWeeks;
         ProgressTab = ProgressTab is "overview" or "analytics" or "records" ? ProgressTab : "overview";
         ProgressMetric = ProgressMetric is "consistency" or "strength" or "body" || (ProgressTab == "analytics" && ProgressMetric == "volume") ? ProgressMetric : "consistency";

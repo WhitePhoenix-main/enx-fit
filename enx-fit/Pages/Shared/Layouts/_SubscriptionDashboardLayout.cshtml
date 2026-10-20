@@ -17,14 +17,21 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#040e19" />
+    <meta name="theme-color" content="@(coach ? "#040e19" : "#111518")" />
     <meta name="color-scheme" content="dark" />
     <title>Главная — Enix Fit @home.Badge</title>
     <link rel="stylesheet" href="~/css/subscription-dashboard.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/subscription-theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/app-chrome.css" asp-append-version="true" />
-<link rel="stylesheet" href="~/css/fitness-reference.css" asp-append-version="true" /><link rel="stylesheet" href="~/css/reference-polish.css" asp-append-version="true" /></head>
-<body class="fitness-app ref-app rd-app" data-subscription="@home.Theme">
+    @if (coach) {
+        <link rel="stylesheet" href="~/css/fitness-reference.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/reference-polish.css" asp-append-version="true" />
+    } else {
+        <link rel="preload" href="~/fonts/dashboard-sans.ttf" as="font" type="font/ttf" crossorigin />
+        <link rel="stylesheet" href="~/css/athlete-dashboard.css" asp-append-version="true" />
+    }
+</head>
+<body class="fitness-app rd-app @(coach ? "ref-app" : "athlete-dashboard")" data-subscription="@home.Theme">
 <a class="rd-skip" href="#main-content">Перейти к содержимому</a>
 <div class="rd-shell">
     <aside class="rd-sidebar">
@@ -36,8 +43,8 @@
         </div>
     </aside>
     <div class="rd-content">
-        <header class="rd-mobile-header"><a class="rd-brand" href="@Link("/Dashboard/Index")"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /> @if (!coach) { <span class="rd-badge">@home.Badge</span> }</a><button class="rd-icon-button" type="button" data-dialog="notifications-dialog" aria-label="Уведомления"><reference-icon name="bell" />@if (coach && home.AttentionCount > 0) { <i class="rd-notification-dot"></i> }</button></header>
-        @if (home.Preview) { <nav class="rd-preview-bar" aria-label="Предпросмотр тарифов"><span>Предпросмотр</span>@foreach (var plan in new[] { "Free", "Pro", "Coach" }) { <a asp-page="/Dashboard/Index" asp-route-Reference="true" asp-route-ReferencePlan="@plan" aria-current="@(home.Badge == plan ? "page" : null)">@plan</a> }<a asp-page="/Dashboard/Index">Мои данные ↗</a></nav> }
+        <header class="rd-mobile-header"><a class="rd-brand" href="@Link("/Dashboard/Index")"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /></a><button class="rd-icon-button" type="button" data-dialog="notifications-dialog" aria-label="Уведомления"><reference-icon name="bell" />@if (coach && home.AttentionCount > 0) { <i class="rd-notification-dot"></i> }</button></header>
+        @if (home.Preview && coach) { <nav class="rd-preview-bar" aria-label="Предпросмотр тарифов"><span>Предпросмотр</span>@foreach (var plan in new[] { "Free", "Pro", "Coach" }) { <a asp-page="/Dashboard/Index" asp-route-Reference="true" asp-route-ReferencePlan="@plan" aria-current="@(home.Badge == plan ? "page" : null)">@plan</a> }<a asp-page="/Dashboard/Index">Мои данные ↗</a></nav> }
         <header class="rd-page-header">
             <div><h1>Главная</h1><p>@if (coach) { <span>Ваши клиенты. Их прогресс. Всё под контролем.</span> } else { @(home.Premium ? "Персональный план. Адаптивные рекомендации. Максимальный результат." : "Добро пожаловать! Продолжайте двигаться к своим целям.") }</p></div>
             <div class="rd-header-tools"><button class="rd-search" type="button" data-dialog="search-dialog"><reference-icon name="search" /><span>@(coach ? "Поиск клиентов, программ..." : "Поиск упражнений, программ...")</span></button><button class="rd-icon-button" type="button" data-dialog="notifications-dialog" aria-label="Уведомления"><reference-icon name="bell" />@if (coach && home.AttentionCount > 0) { <i class="rd-notification-dot"></i> }</button></div>
@@ -48,6 +55,7 @@
             @if (dashboardPage.IsCoachView) { <p class="rd-notice">Профиль клиента · @dashboardPage.Data.Name <a asp-page="/Dashboard/Index">К своему кабинету →</a></p> }
             @RenderBody()
         </main>
+        @if (home.Preview && !coach) { <nav class="rd-preview-bar" aria-label="Предпросмотр тарифов"><span>Предпросмотр · пример данных</span>@foreach (var plan in new[] { "Free", "Pro", "Coach" }) { <a asp-page="/Dashboard/Index" asp-route-Reference="true" asp-route-ReferencePlan="@plan" aria-current="@(home.Badge == plan ? "page" : null)">@plan</a> }<a asp-page="/Dashboard/Index">Мои данные ↗</a></nav> }
     </div>
 </div>
 <partial name="/Pages/Shared/Navigation/_MobileBottomNavigation.cshtml" model="mobileNavigation" />

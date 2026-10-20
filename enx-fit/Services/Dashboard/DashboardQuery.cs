@@ -27,7 +27,7 @@ public sealed class DashboardQuery(ApplicationDbContext db, CurrentUser currentU
                 .Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0)
                 .Sum(s => (s.IsBodyweight ? 0 : s.Weight * s.Reps) + s.Drops.Sum(d => d.IsBodyweight ? 0 : d.Weight * d.Reps)))))
             .ToListAsync();
-        var recordSince = today.AddDays(-29);
+        var recordSince = today.AddDays(-27);
         var exerciseRows = completed.SelectMany(w => w.WorkoutExercises.SelectMany(e => e.SetEntries
             .Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0)
             .Select(s => new { w.Date, WorkoutId = w.Id, e.ExerciseId, e.Exercise.Name, s.Weight, s.IsSkipped })));
@@ -52,6 +52,7 @@ public sealed class DashboardQuery(ApplicationDbContext db, CurrentUser currentU
             .OrderBy(w => w.Date).ThenBy(w => w.Id).Select(w => (int?)w.Id).Take(1);
         // Disjoint windows keep an old selected period from loading every intervening year.
         var detail = sessions.Where(w => (w.Date >= since && w.Date <= until) ||
+            (w.Date >= today.AddDays(-27) && w.Date <= today) ||
             (w.Date >= progressSince && w.Date <= until) ||
             (w.Date >= week && w.Date < week.AddDays(7)) ||
             (w.Date >= monday && w.Date <= today) ||
@@ -65,7 +66,7 @@ public sealed class DashboardQuery(ApplicationDbContext db, CurrentUser currentU
             {
                 Id = w.Id, UserId = w.UserId, Title = w.Title, Notes = w.Notes, Date = w.Date,
                 Status = w.Status, EntryMode = w.EntryMode, StartedAtUtc = w.StartedAtUtc, CompletedAtUtc = w.CompletedAtUtc,
-                CreatedAtUtc = w.CreatedAtUtc, DurationSeconds = w.DurationSeconds,
+                CreatedAtUtc = w.CreatedAtUtc, DurationSeconds = w.DurationSeconds, PlannedMinutes = w.PlannedMinutes,
                 TrainingProgramId = w.TrainingProgramId, ProgramWorkoutKey = w.ProgramWorkoutKey, ScheduledDate = w.ScheduledDate,
                 WorkoutExercises = w.WorkoutExercises.Select(e => new WorkoutExercise
                 {

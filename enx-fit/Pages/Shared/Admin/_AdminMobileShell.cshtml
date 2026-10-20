@@ -4,5 +4,5 @@
     <a class="admin-mobile-brand" asp-page="/Admin/Index"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /></a>
     <details class="admin-mobile-account app-disclosure"><summary aria-label="Мой аккаунт"><span class="admin-avatar">@Model.Initial</span><admin-icon name="chevron" /></summary><div><strong>@Model.AccountName</strong><a asp-page="/Dashboard/Index"><admin-icon name="back" />В приложение</a><a asp-page="/Account/Profile"><admin-icon name="users" />Мой профиль</a><a asp-area="Identity" asp-page="/Account/Manage/Index"><admin-icon name="shield" />Настройки аккаунта</a><form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/"><button type="submit"><admin-icon name="logout" />Выйти</button></form></div></details>
 </header>
-@{ var mobileNavigation = enx_fit.ViewModels.Navigation.MobileAppNavigationViewModel.Create(ViewData, User, ViewContext.RouteData.Values["page"] as string); }
+@{ var mobileNavigation = enx_fit.ViewModels.Navigation.MobileAppNavigationViewModel.Create(ViewData, User, ViewContext.RouteData.Values["page"] as string) with { IsAdminShell = true }; }
 <partial name="/Pages/Shared/Navigation/_MobileBottomNavigation.cshtml" model="mobileNavigation" />

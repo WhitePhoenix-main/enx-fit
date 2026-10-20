@@ -1,0 +1,44 @@
+@using enx_fit.ViewModels.Dashboard
+@using System.Globalization
+@model enx_fit.Pages.Dashboard.DashboardModel
+@{
+    var vm = Model.HomeProgress;
+    var ru = DashboardWorkoutsViewModel.Russian;
+    string N(decimal n) => n.ToString("0.##", ru);
+    string F(decimal n) => n.ToString("0.###", CultureInfo.InvariantCulture);
+    var values = vm.Results;
+    var min = values.Count > 0 ? values.Min(r => r.Weight) : 0;
+    var max = values.Count > 0 ? values.Max(r => r.Weight) : 1;
+    var range = Math.Max(2.5m, max - min);
+    var points = values.Select((r, i) => new { Result = r, X = values.Count == 1 ? 180m : 32m + i * 300m / (values.Count - 1), Y = 83m - (r.Weight - min) / range * 65m }).ToList();
+}
+<article class="ah-strength ah-surface" data-athlete-strength>
+    @if (vm.Exercises.Count > 0) {
+        <form method="get" action="@Url.Page("/Dashboard/Index")#home-progress" class="ah-strength-controls">
+            <input type="hidden" name="ClientId" value="@Model.ClientId" /><input type="hidden" name="Reference" value="@(Model.Reference ? "true" : null)" /><input type="hidden" name="ReferencePlan" value="@Model.ReferencePlan" /><input type="hidden" name="Until" value="@Model.Until?.ToString("yyyy-MM-dd")" />
+            <label><span class="ah-sr-only">Упражнение для графика</span><select aria-label="Упражнение для графика" name="ProgressExercise" data-home-select>@foreach (var exercise in vm.Exercises) { <option value="@exercise.Id" selected="@(exercise.Id == vm.ExerciseId)">@exercise.Name</option> }</select><reference-icon name="chevron-down" /></label>
+            <label><span class="ah-sr-only">Период графика</span><select aria-label="Период графика" name="ChartWeeks" data-home-select>@foreach (var weeks in new[] { 2, 4, 6, 12 }) { <option value="@weeks" selected="@(weeks == Model.ChartWeeks)">@weeks @(weeks is 2 or 4 ? "недели" : "недель")</option> }</select><reference-icon name="chevron-down" /></label>
+            <noscript><button type="submit">Показать</button></noscript>
+        </form>
+    }
+    @if (vm.Last is { } last) {
+        <p class="ah-strength-value">@N(last.Weight)<small> кг × </small>@last.Reps</p>
+        <p class="ah-strength-date">Последний результат · @last.Date.ToString("d MMM", ru)</p>
+        @if (vm.Change is { } change) { <p class="ah-strength-change">Рабочий вес <strong class="@(change > 0 ? "is-positive" : change < 0 ? "is-negative" : "")">@(change > 0 ? "+" : "")@N(change) кг</strong></p> }
+        <div class="ah-chart" data-progress-chart>
+            <svg viewBox="0 0 350 110" preserveAspectRatio="none" role="group" aria-label="@vm.ExerciseName: рабочий вес в килограммах">
+                @foreach (var point in points) { <line x1="@F(point.X)" y1="14" x2="@F(point.X)" y2="94" /> }
+                <line x1="32" y1="83" x2="332" y2="83" /><line x1="32" y1="18" x2="332" y2="18" />
+                <g><text x="0" y="87">@N(min)</text><text x="0" y="22">@N(min + range)</text></g>
+                @if (points.Count > 1) { <path d="@string.Join(" ", points.Select((p, i) => (i == 0 ? "M" : "L") + F(p.X) + "," + F(p.Y)))" /> }
+                @foreach (var point in points) {
+                    var detail = point.Result.Date.ToString("d MMMM", ru) + " · " + N(point.Result.Weight) + " кг × " + point.Result.Reps;
+                    <circle cx="@F(point.X)" cy="@F(point.Y)" r="3.3" tabindex="0" role="button" aria-label="@detail" aria-pressed="false" data-chart-point data-detail="@detail" data-workout-url="@(point.Result.WorkoutId > 0 ? Url.Page("/Training/Workouts/Details", new { id = point.Result.WorkoutId }) : null)"><title>@detail</title></circle>
+                }
+                <g><text x="32" y="107">@values.First().Date.ToString("d MMM", ru)</text><text x="332" y="107" text-anchor="end">@last.Date.ToString("d MMM", ru)</text></g>
+            </svg>
+            <output class="ah-chart-tooltip" hidden></output><div class="ah-chart-result" data-progress-result hidden><span aria-live="polite"></span><a hidden><span data-point-link-label>Открыть тренировку</span> <reference-icon name="arrow" /></a></div>
+        </div>
+    }
+    else { <div class="ah-strength-empty"><reference-icon name="chart-outline" /><strong>@(vm.Exercises.Count == 0 ? "Первый результат впереди" : "За этот период результатов нет")</strong><p>@(vm.Exercises.Count == 0 ? "Выполни рабочие подходы с весом — здесь появится твой прогресс." : "Выбери другой период или упражнение.")</p></div> }
+</article>

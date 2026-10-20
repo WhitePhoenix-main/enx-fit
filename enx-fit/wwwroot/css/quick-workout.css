@@ -44,10 +44,13 @@ body.quick-workout {
 .qw-stat-icon svg { width:29px; height:29px; }
 .qw-finish { display:flex; justify-content:center; align-items:center; gap:11px; padding:13px 17px; border:1px solid #ff5967; border-radius:11px; background:linear-gradient(100deg,#e52d40,#bb1c2d); box-shadow:inset 0 0 18px #ff929b28,0 0 16px #ff123b22; min-height:48px; font-size:14px!important; font-weight:700!important; }
 .qw-finish svg { width:20px; height:20px; }
-.qw-sync-row { display:flex; align-items:center; justify-content:space-between; gap:15px; min-height:21px; font-size:10px; }
+.qw-sync-row { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; column-gap:15px; row-gap:0; min-height:21px; font-size:10px; }
 .quick-workout .execution-sync { font-size:10px; color:#82a6c9; }
 .quick-workout .execution-sync.has-pending { color:#ffd078; }
 .qw-sync-row .text-button { padding:0; font-size:10px; color:#9acbfa; background:none; border:0; }
+.qw-session-actions { display:flex; align-items:center; gap:16px; margin-left:auto; }
+.qw-sync-row .qw-session-actions > button { min-height:36px; padding:4px 0; font-size:12px; white-space:nowrap; }
+.qw-sync-row .qw-session-actions > .qw-cancel { color:#ff9aa8; }
 .qw-grid { display:grid; grid-template-columns:minmax(0,1.42fr) minmax(0,1.08fr) minmax(225px,.95fr); grid-template-rows:auto minmax(0,1fr) auto; gap:12px; align-items:start; }
 .qw-add-primary { grid-column:1/3; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:100%; min-height:70px; padding:12px; color:var(--plan-on)!important; background:linear-gradient(110deg,var(--plan-accent),var(--plan-bright),var(--plan-accent)); border:1px solid var(--plan-bright); border-radius:13px; box-shadow:inset 0 0 8px #ffffff22,0 0 16px rgba(var(--plan-rgb),.3); }
 [data-subscription=free] .qw-add-primary,[data-subscription=free] .qw-play { background:linear-gradient(110deg,#0062ff,#008dff,#0066ff); color:#fff!important; }

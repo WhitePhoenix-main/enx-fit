@@ -12,6 +12,8 @@ namespace enx_fit.ViewModels.Navigation;
 public sealed record MobileAppNavigationViewModel(
     string Page, DashboardModel? Dashboard, bool Reference, bool IsTrainer, bool IsAdministrator, CoachContextViewModel? Client = null)
 {
+    public bool IsAdminShell { get; init; }
+
     public RouteValueDictionary RouteValues => new(Dashboard?.NavigationValues ?? (Client is not null ? new { ClientId = Client.Id } : Reference ? new { Reference = true } : null))
     {
         ["area"] = ""
@@ -39,9 +41,9 @@ public sealed record MobileAppNavigationViewModel(
     public bool IsActive(string section) => section switch
     {
         "home" => Page.Equals("/Dashboard/Index", StringComparison.OrdinalIgnoreCase),
-        "workouts" => Page.Equals("/Training/Index", StringComparison.OrdinalIgnoreCase) || In("/Training/Workouts"),
+        "workouts" => Page.Equals("/Training/Index", StringComparison.OrdinalIgnoreCase) || Page.Equals("/Training/Records", StringComparison.OrdinalIgnoreCase) || In("/Training/Workouts"),
         "programs" => Page.Equals("/Training/Plans", StringComparison.OrdinalIgnoreCase) || In("/Training/Programs"),
-        "progress" => Page is "/Progress/Index" or "/Progress/Analytics" or "/Progress/Achievements" || In("/Progress/Measurements") || In("/Progress/ExerciseAnalytics"),
+        "progress" => In("/Progress"),
         "more" => !IsActive("home") && !IsActive("workouts") && !IsActive("programs") && !IsActive("progress"),
         _ => false
     };

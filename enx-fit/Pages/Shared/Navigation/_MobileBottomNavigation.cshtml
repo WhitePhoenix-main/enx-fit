@@ -3,29 +3,33 @@
 @{
     var items = new[] {
         ("home", "/Dashboard/Index", "home", "Главная"),
-        ("workouts", "/Training/Index", "workout", "Тренировки"),
-        ("programs", "/Training/Programs/Index", "calendar", "Программы"),
-        ("progress", "/Progress/Index", "bars", "Прогресс")
+        ("workouts", "/Training/Index", "dumbbell-outline", "Тренировки"),
+        ("programs", "/Training/Programs/Index", "clipboard-outline", "Программы"),
+        ("progress", "/Progress/Index", "chart-outline", "Прогресс")
     };
     var page = Model.Page;
-    var coach = Model.Dashboard?.SubscriptionHome is { Preview: true } preview ? preview.Coach : (await BottomAccess.GetAsync()).CanUse(Feature.CoachClientManagement);
-    if (coach)
+    // The administrative shell keeps its contextual shortcuts; application pages share the Progress menu.
+    var coach = Model.IsAdminShell && (Model.Dashboard?.SubscriptionHome is { Preview: true } preview ? preview.Coach : (await BottomAccess.GetAsync()).CanUse(Feature.CoachClientManagement));
+    if (Model.IsAdminShell)
     {
-        var current = page.Contains("/Exercises/") ? ("exercises", "/Training/Exercises/Index", "workout-outline", "Упражнения")
-            : page.EndsWith("/Templates") ? ("templates", "/Training/Workouts/Templates", "layers", "Шаблоны")
-            : page.StartsWith("/Nutrition/") ? ("nutrition", "/Nutrition/Index", "nutrition", "Питание")
-            : page.StartsWith("/Training/Programs/") ? ("programs", "/Training/Programs/Index", "document", "Программы")
-            : page is "/Coaching/Calendar" ? ("plan", "/Coaching/Calendar", "calendar", "Планы")
-            : ("workouts", "/Training/Index", "workout", "Тренировки");
-        items = [("home", "/Dashboard/Index", "home-outline", "Главная"), ("clients", "/Coaching/Clients", "users", "Клиенты"), current,
-            ("messages", "/Coaching/Messages", "message", "Сообщения")];
+        if (coach)
+        {
+            var current = page.Contains("/Exercises/") ? ("exercises", "/Training/Exercises/Index", "workout-outline", "Упражнения")
+                : page.EndsWith("/Templates") ? ("templates", "/Training/Workouts/Templates", "layers", "Шаблоны")
+                : page.StartsWith("/Nutrition/") ? ("nutrition", "/Nutrition/Index", "nutrition", "Питание")
+                : page.StartsWith("/Training/Programs/") ? ("programs", "/Training/Programs/Index", "document", "Программы")
+                : page is "/Coaching/Calendar" ? ("plan", "/Coaching/Calendar", "calendar", "Планы")
+                : ("workouts", "/Training/Index", "workout", "Тренировки");
+            items = [("home", "/Dashboard/Index", "home-outline", "Главная"), ("clients", "/Coaching/Clients", "users", "Клиенты"), current,
+                ("messages", "/Coaching/Messages", "message", "Сообщения")];
+        }
+        else if (page == "/Dashboard/Index") items = [("home", "/Dashboard/Index", "home", "Главная"), ("workouts", "/Training/Index", "workout", "Тренировки"), ("progress", "/Progress/Index", "bars", "Прогресс"), ("nutrition", "/Nutrition/Index", "nutrition", "Питание")];
+        else if (page.StartsWith("/Nutrition/")) items = [("home", "/Dashboard/Index", "home-outline", "Главная"), ("workouts", "/Training/Index", "workout", "Тренировки"), ("programs", "/Training/Programs/Index", "document", "Программы"), ("nutrition", "/Nutrition/Index", "nutrition", "Питание"), ("progress", "/Progress/Index", "bars", "Прогресс")];
+        else if (page.StartsWith("/Training/Exercises/")) items = [("home", "/Dashboard/Index", "home-outline", "Главная"), ("workouts", "/Training/Index", "workout", "Тренировки"), ("exercises", "/Training/Exercises/Index", "workout-outline", "Упражнения"), ("programs", "/Training/Programs/Index", "document", "Программы")];
+        else if (page.EndsWith("/Templates")) items = [("home", "/Dashboard/Index", "home-outline", "Главная"), ("workouts", "/Training/Index", "workout", "Тренировки"), ("templates", "/Training/Workouts/Templates", "layers", "Шаблоны"), ("progress", "/Progress/Index", "bars", "Прогресс")];
+        else if (page == "/Training/Plans") items = [("home", "/Dashboard/Index", "home-outline", "Главная"), ("workouts", "/Training/Index", "workout", "Тренировки"), ("plan", "/Training/Plans", "calendar", "План"), ("progress", "/Progress/Index", "bars", "Прогресс")];
     }
-    else if (page == "/Dashboard/Index") items = [("home", "/Dashboard/Index", "home", "Главная"), ("workouts", "/Training/Index", "workout", "Тренировки"), ("progress", "/Progress/Index", "bars", "Прогресс"), ("nutrition", "/Nutrition/Index", "nutrition", "Питание")];
-    else if (page.StartsWith("/Nutrition/")) items = [("home", "/Dashboard/Index", "home-outline", "Главная"), ("workouts", "/Training/Index", "workout", "Тренировки"), ("programs", "/Training/Programs/Index", "document", "Программы"), ("nutrition", "/Nutrition/Index", "nutrition", "Питание"), ("progress", "/Progress/Index", "bars", "Прогресс")];
-    else if (page.StartsWith("/Training/Exercises/")) items = [("home", "/Dashboard/Index", "home-outline", "Главная"), ("workouts", "/Training/Index", "workout", "Тренировки"), ("exercises", "/Training/Exercises/Index", "workout-outline", "Упражнения"), ("programs", "/Training/Programs/Index", "document", "Программы")];
-    else if (page.EndsWith("/Templates")) items = [("home", "/Dashboard/Index", "home-outline", "Главная"), ("workouts", "/Training/Index", "workout", "Тренировки"), ("templates", "/Training/Workouts/Templates", "layers", "Шаблоны"), ("progress", "/Progress/Index", "bars", "Прогресс")];
-    else if (page == "/Training/Plans") items = [("home", "/Dashboard/Index", "home-outline", "Главная"), ("workouts", "/Training/Index", "workout", "Тренировки"), ("plan", "/Training/Plans", "calendar", "План"), ("progress", "/Progress/Index", "bars", "Прогресс")];
-    bool Selected(string key) => key switch {
+    bool Selected(string key) => !Model.IsAdminShell ? Model.IsActive(key) : key switch {
         "clients" => page is "/Coaching/Client" or "/Coaching/Clients" || coach && Model.IsActive("progress"),
         "messages" => page == "/Coaching/Messages", "templates" => page.EndsWith("/Templates"),
         "nutrition" => page.StartsWith("/Nutrition/"), "exercises" => page.StartsWith("/Training/Exercises/"),
@@ -34,7 +38,7 @@
         _ => Model.IsActive(key)
     };
 }
-<nav class="enix-bottom-nav" aria-label="Мобильная навигация" style="grid-template-columns:repeat(@(items.Length+1),minmax(0,1fr))">
+<nav class="enix-bottom-nav" aria-label="Мобильная навигация" data-app-navigation="@(Model.IsAdminShell ? null : "primary")" style="@(Model.IsAdminShell ? $"grid-template-columns:repeat({items.Length+1},minmax(0,1fr))" : null)">
     @foreach (var (key, itemPage, icon, label) in items)
     {
         <a href="@Model.PageUrl(Url, itemPage)" aria-current="@(Selected(key) ? "page" : null)"><reference-icon name="@icon" /><span>@label</span></a>
