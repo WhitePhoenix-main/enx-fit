@@ -2178,6 +2178,14 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     if (!root) return;
     const initialState = document.getElementById('workout-execution-state');
     if (!initialState) return; // An older running server can still render the pre-migration page.
+    // Every command keeps the server-authorized owner context, including requests built in JS.
+    const workoutUrl = handler => {
+        const url = new URL(location.pathname, location.origin);
+        url.searchParams.set('handler', handler);
+        if (root.dataset.coachMode === 'true') url.searchParams.set('Coach', 'true');
+        return url.pathname + url.search;
+    };
+    root.workoutRequestUrl = workoutUrl;
     const key = `enix-session-queue:${root.dataset.viewer}:${root.dataset.sessionId}`;
     const status = root.querySelector('[data-sync-status]');
     let state = JSON.parse(initialState.textContent);
@@ -2219,7 +2227,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 expectedRevision: orderAttempt.revision,
                 __RequestVerificationToken: token
             });
-            const response = await fetch(`${location.pathname}?handler=Reorder`, {
+            const response = await fetch(workoutUrl('Reorder'), {
                 method: 'POST',
                 headers: {'X-Requested-With': 'XMLHttpRequest'},
                 body,
@@ -2291,7 +2299,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 expectedRevision: revision,
                 operationId: pickAttempt.id
             });
-            const response = await fetch(`${location.pathname}?handler=PickExercises`, {
+            const response = await fetch(workoutUrl('PickExercises'), {
                 method: 'POST',
                 headers: {'X-Requested-With': 'XMLHttpRequest'},
                 body,
@@ -2398,7 +2406,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         root.dataset.sessionStatus = state.status;
         const elapsed = state.elapsedSeconds + (state.status === 'InProgress' ? (Date.now() - sampledAt) / 1000 : 0);
         root.querySelectorAll('[data-session-clock]').forEach(sessionClock => {
-            sessionClock.textContent = root.hasAttribute('data-quick-workout') && !root.hasAttribute('data-quick-session')
+            sessionClock.textContent = root.hasAttribute('data-quick-workout') && !root.hasAttribute('data-workout-session')
                 ? `${String(Math.floor(elapsed / 3600)).padStart(2, '0')}:${clock(elapsed % 3600)}` : clock(elapsed);
         });
         const paused = state.status === 'Paused', notice = root.querySelector('[data-pause-notice]'),
@@ -2482,7 +2490,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 body.set('__RequestVerificationToken', token);
                 body.set('operationId', op.id);
                 body.set('expectedRevision', revision);
-                const response = await fetch(`${location.pathname}?handler=${op.kind === 'set' ? 'Set' : 'Control'}`, {
+                const response = await fetch(workoutUrl(op.kind === 'set' ? 'Set' : 'Control'), {
                     method: 'POST',
                     headers: {'X-Requested-With': 'XMLHttpRequest'},
                     body,
@@ -2669,7 +2677,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             debounce.clear();
             for (let n = 0; (sending || picking || ordering) && n < 400; n++) await new Promise(resolve => setTimeout(resolve, 25));
             if (sending || picking || ordering) throw new Error('Дождитесь ответа сервера и повторите отмену.');
-            const snapshot = await fetch(`${location.pathname}?handler=State`, {cache: 'no-store', redirect: 'error'});
+            const snapshot = await fetch(workoutUrl('State'), {cache: 'no-store', redirect: 'error'});
             if (!snapshot.ok) throw new Error('Не удалось проверить тренировку. Повторите отмену.');
             const latest = await snapshot.json();
             const body = new URLSearchParams(new FormData(form));
@@ -2775,7 +2783,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         const trigger = event.target.closest('[data-add-exercise],[data-replace-exercise]');
         if (trigger) {
             document.querySelector('[data-exercise-entry]').value = trigger.dataset.replaceExercise || '0';
-            document.getElementById('exercise-dialog-title').textContent = trigger.dataset.replaceExercise ? 'Заменить упражнение' : root.hasAttribute('data-quick-session') ? 'Добавить упражнение' : 'Добавить упражнения';
+            document.getElementById('exercise-dialog-title').textContent = trigger.dataset.replaceExercise ? 'Заменить упражнение' : root.hasAttribute('data-workout-session') ? 'Добавить упражнение' : 'Добавить упражнения';
             picker?.setSingle(!!trigger.dataset.replaceExercise);
             picker?.message('');
         }
@@ -2789,7 +2797,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     });
     root.querySelector('[data-reconcile]').addEventListener('click', async () => {
         try {
-            const response = await fetch(`${location.pathname}?handler=State`, {cache: 'no-store'});
+            const response = await fetch(workoutUrl('State'), {cache: 'no-store'});
             if (!response.ok) throw new Error();
             const data = await response.json();
             revision = data.revision;
@@ -2813,7 +2821,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         refreshing = true;
         const requestedRevision = revision;
         try {
-            const response = await fetch(`${location.pathname}?handler=State`, {cache: 'no-store'});
+            const response = await fetch(workoutUrl('State'), {cache: 'no-store'});
             if (!response.ok) return;
             const data = await response.json();
             // A result saved while this GET was in flight owns the newer revision.

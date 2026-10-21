@@ -1,0 +1,7 @@
+@using enx_fit.Services.Programs
+@model enx_fit.ViewModels.Programs.ProgramOverviewMenu
+@{ var p = Model.Card.Program; }
+<article class="pw-card pw-program-row">
+<a class="pw-program-main" asp-page="Details" asp-route-id="@p.Id"><design-photo kind="@(p.Name.Contains("Ног", StringComparison.OrdinalIgnoreCase) ? "squat" : "row")" /><span><strong>@p.Name</strong><small>@p.Weeks недель · @p.DaysPerWeek раза в неделю</small><span class="pw-state @(Model.Card.Finished ? "is-done" : !p.StartDate.HasValue ? "is-ready" : "")">@(p.IsArchived ? "В архиве" : Model.Card.Finished ? "Завершена" : p.StartDate > Model.Page.Today ? $"Старт {p.StartDate.Value:dd.MM.yyyy}" : p.StartDate.HasValue ? "Активная программа" : "Готова к старту")</span></span><reference-icon name="chevron" /></a>
+<partial name="_ProgramOverviewMenu" model="Model" />
+</article>

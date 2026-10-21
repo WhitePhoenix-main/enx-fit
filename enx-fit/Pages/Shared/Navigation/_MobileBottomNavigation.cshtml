@@ -45,10 +45,7 @@
     }
     <button type="button" data-app-menu-open aria-controls="enix-navigation-dialog" aria-haspopup="dialog" aria-expanded="false" aria-current="@(!items.Any(item=>Selected(item.Item1)) ? "page" : null)"><reference-icon name="more" /><span>Ещё</span></button>
 </nav>
-<dialog id="enix-navigation-dialog" class="enix-more-dialog" aria-labelledby="enix-navigation-title">
-    <div class="enix-more-heading"><h2 id="enix-navigation-title">Все разделы</h2><button type="button" data-app-menu-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
-    <partial name="/Pages/Shared/Navigation/_MobileMenuLinks.cshtml" model="Model" />
-</dialog>
+<partial name="/Pages/Shared/Navigation/_MoreNavigationDialog.cshtml" model="Model" />
 <noscript><details class="enix-native-menu"><summary>Все разделы</summary><partial name="/Pages/Shared/Navigation/_MobileMenuLinks.cshtml" model="Model" /></details></noscript>
 <script src="~/js/app-chrome.js" asp-append-version="true" defer></script>
 

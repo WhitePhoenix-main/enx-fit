@@ -34,7 +34,12 @@ public sealed record MobileAppNavigationViewModel(
         if (page == "/Training/Programs/Index" && Client is not null)
             return Client.CanManage ? url.Page("/Coaching/Client", new { area = "", id = Client.Id }) + "#client-programs"
                 : url.Page("/Training/Plans", RouteValues);
-        var personal = page is "/Account/Profile" or "/Account/Subscription" or "/Coaching/Clients" or "/Training/Exercises/Index" || page.StartsWith("/Admin/");
+        if (Client is not null && page == "/Coaching/Messages")
+            return url.Page(page, new { area = "", ContactId = Client.Id });
+        if (Client is not null && page == "/Progress/Measurements/Index")
+            return url.Page("/Progress/Index", new { area = "", ClientId = Client.Id, ClientMetric = "measurements" }) + "#client-measurements";
+        var personal = page is "/Account/Profile" or "/Account/Subscription" or "/Account/TrainingSetup"
+            or "/Coaching/Clients" or "/Coaching/Calendar" or "/Training/Exercises/Index" or "/Training/Workouts/Templates" || page.StartsWith("/Admin/");
         return url.Page(page, personal ? new RouteValueDictionary { ["area"] = "", ["Reference"] = Reference ? true : null } : RouteValues);
     }
 

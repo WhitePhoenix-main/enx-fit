@@ -86,7 +86,7 @@
         const status = document.querySelector('[data-qw-rest-status]');
         try {
             const request = form || document.createElement('form');
-            request.action = `${location.pathname}?handler=SessionRest`;
+            request.action = root.workoutRequestUrl('SessionRest');
             for (const [name, value] of Object.entries({seconds, __RequestVerificationToken: document.querySelector('[name="__RequestVerificationToken"]').value})) {
                 let input = request.elements.namedItem(name);
                 if (!input) { input = document.createElement('input'); input.type = 'hidden'; input.name = name; request.append(input); }

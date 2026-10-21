@@ -164,7 +164,6 @@ body.athlete-dashboard{
 .ah-day-detail p,.ah-day-detail li{font-size:14px;line-height:1.6;color:var(--ah-muted)}
 .ah-day-detail .ah-sheet-secondary{margin-top:14px}
 .athlete-dashboard .enix-more-heading h2{font-family:DashboardSans,Arial,sans-serif}
-.athlete-dashboard .enix-more-dialog .em-mobile-menu-links :is(a,button){font-family:DashboardSans,Arial,sans-serif;border-color:#343e48;color:#d0d7e1}
 @media(max-width:1023px){
     html:has(body.athlete-dashboard){scrollbar-width:none}
     .athlete-dashboard .rd-content{max-width:620px;padding:0 13px calc(90px + env(safe-area-inset-bottom));margin:auto}

@@ -44,7 +44,7 @@
     </div>
 </div>
 <partial name="/Pages/Shared/Navigation/_MobileBottomNavigation.cshtml" model="nav" />
-<dialog class="app-dialog rd-dialog" id="navigation-dialog"><div class="dialog-heading"><h2>Все разделы</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><partial name="/Pages/Shared/Navigation/_MobileMenuLinks.cshtml" model="nav" /></dialog>
+
 <dialog class="app-dialog rd-dialog" id="search-dialog"><div class="dialog-heading"><h2>Быстрый переход</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><input class="dialog-search" type="search" data-section-search placeholder="Найти раздел…" aria-label="Найти раздел" /><div class="search-results"><a asp-page="/Training/Index">Тренировки</a><a asp-page="/Training/Workouts/Templates">Шаблоны тренировок</a><a asp-page="/Training/Exercises/Index">Упражнения</a><a asp-page="/Training/Programs/Index">Программы</a><a asp-page="/Training/Plans">План / Календарь</a><a asp-page="/Nutrition/Index">Питание</a><a asp-page="/Progress/Index">Прогресс</a><p hidden data-search-empty>Ничего не найдено</p></div></dialog>
 <dialog class="app-dialog rd-dialog" id="notifications-dialog"><div class="dialog-heading"><h2>Уведомления</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><div class="ref-empty"><reference-icon name="bell" /><h3>Вы всё посмотрели</h3><p>Новых уведомлений пока нет.</p></div></dialog>
 <script src="~/js/site.js" asp-append-version="true"></script>

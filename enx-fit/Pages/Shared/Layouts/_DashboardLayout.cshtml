@@ -125,22 +125,7 @@
     </header>
     <main id="main-content" class="app-workspace" tabindex="-1"><partial name="/Pages/Shared/Coaching/_CoachContext.cshtml" model="mobileNavigation" />@RenderBody()</main>
 </div>
-<dialog id="navigation-dialog" class="app-dialog app-workspace">
-    <div class="dialog-heading">
-        <h2>Разделы</h2>
-        <button class="icon-button" data-close aria-label="Закрыть"><admin-icon name="close" /></button>
-    </div>
-    <nav class="search-results" aria-label="Все разделы">
-        <a href="@dashboardUrl" aria-current="@(IsActive("/Dashboard/Index") ? "page" : null)">Главная <admin-icon name="home" /></a>
-        @foreach (var tab in navigation)
-        {
-            <a href="@PageUrl(tab.Page)" aria-current="@(IsActive(tab.Page) ? "page" : null)">@tab.Title <admin-icon name="@tab.Icon" /></a>
-        }
-        @if (isTrainer) { <a asp-page="/Coaching/Clients" aria-current="@(clientsActive ? "page" : null)">Мои клиенты <admin-icon name="users" /></a> }
-        <a asp-page="/Training/Exercises/Index">Библиотека упражнений <admin-icon name="book" /></a>
-        <a asp-area="Identity" asp-page="/Account/Manage/Index">Профиль <admin-icon name="user" /></a>
-    </nav>
-</dialog>
+
 <dialog id="search-dialog" class="app-dialog app-workspace">
 <div class="dialog-heading">
 <h2>Быстрый переход</h2>

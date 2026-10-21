@@ -6,8 +6,6 @@
         if (trigger) open(trigger.dataset.hubDialog);
         const close = event.target.closest('[data-hub-close]');
         if (close) close.closest('dialog')?.close();
-        const navigation = event.target.closest('[data-dialog="navigation-dialog"]');
-        if (navigation) open('enix-navigation-dialog');
         const assignment = event.target.closest('[data-assign-template]');
         if (assignment) {
             const select = document.querySelector('[name="Appointment.WorkoutId"]');

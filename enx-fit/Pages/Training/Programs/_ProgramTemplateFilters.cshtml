@@ -9,6 +9,7 @@
     }
     <form method="get" asp-page="Index" class="plan-catalog-filters" data-template-filters>
         <input type="hidden" name="Tab" value="templates" />
+        @if (Model.SelectedClient is not null) { <input type="hidden" name="SelectedClient" value="@Model.SelectedClient" /> }
         <label>Поиск программы<input type="search" name="Search" value="@Model.Search" maxlength="120" placeholder="Название или цель" /></label>
         <label>Время на занятие<select name="MaxMinutes"><option value="">Любая длительность</option>@foreach (var minutes in new[] { 20, 30, 45, 60, 90 }) { <option value="@minutes" selected="@(Model.MaxMinutes == minutes)">До @minutes мин</option> }</select></label>
         @if (Model.Reference) { <input type="hidden" name="Reference" value="true" /> }

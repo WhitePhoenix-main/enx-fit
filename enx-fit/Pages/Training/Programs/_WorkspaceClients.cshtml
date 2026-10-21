@@ -1,0 +1,36 @@
+@using enx_fit.ViewModels.Programs
+@using enx_fit.ViewModels.Workouts
+@using enx_fit.Services.Programs
+@using System.Globalization
+@model IndexModel
+@{
+    var cards = Model.ClientPrograms.Select(p => new ProgramOverviewCard(p, Model.Sessions.GetValueOrDefault(p.Id) ?? [], "row")).ToList();
+    bool Active(ProgramOverviewCard card) => card.Program.StartDate <= Model.Today && !card.Finished;
+    var activeClients = cards.Where(Active).Select(c => c.Program.OwnerId).Distinct().Count();
+    var clients = Model.ClientNames.Where(c => Model.SelectedClient == null || Model.SelectedClient == c.Key)
+        .Where(c => string.IsNullOrWhiteSpace(Model.Search) || c.Value.Contains(Model.Search, StringComparison.OrdinalIgnoreCase) || cards.Any(p => p.Program.OwnerId == c.Key && p.Program.Name.Contains(Model.Search, StringComparison.OrdinalIgnoreCase)))
+        .Where(c => Model.ClientFilter == "active" ? cards.Any(p => p.Program.OwnerId == c.Key && Active(p)) : Model.ClientFilter != "empty" || !cards.Any(p => p.Program.OwnerId == c.Key && Active(p))).ToList();
+}
+<form method="get" class="pw-client-search"><input type="hidden" name="Tab" value="assigned" /><input type="hidden" name="ClientFilter" value="@Model.ClientFilter" /><label><reference-icon name="search" /><input type="search" name="Search" value="@Model.Search" maxlength="120" placeholder="Клиент или программа" aria-label="Клиент или программа" /></label><button class="pw-secondary" type="submit" aria-label="Найти клиента"><reference-icon name="arrow" /></button></form>
+<nav class="pw-chips" aria-label="Фильтр клиентов">@foreach(var (value,label) in new[]{("","Все"),("active","Активные"),("empty","Без программы")}){<a asp-route-Tab="assigned" asp-route-Search="@Model.Search" asp-route-ClientFilter="@value" aria-current="@((Model.ClientFilter ?? "") == value ? "true" : null)">@label</a>}</nav>
+<p class="pw-client-count">@activeClients с активной программой · @(Model.ClientNames.Count - activeClients) без активной программы</p>
+<button type="button" class="pw-primary" data-dialog="program-assign-source"><reference-icon name="plus" />Назначить программу</button>
+<header class="pw-section-heading"><h2>Программы клиентов</h2><a class="pw-link" asp-page="/Coaching/Clients">Все <reference-icon name="arrow" /></a></header>
+<div class="pw-client-grid">
+@foreach(var client in clients){
+    var clientCards = cards.Where(c => c.Program.OwnerId == client.Key).ToList();
+    var primary = clientCards.FirstOrDefault(Active);
+    <article class="pw-card pw-client-card"><header><span class="pw-client-avatar">@WorkoutHubCard.Initials(client.Value)</span><div><a asp-page="/Coaching/Client" asp-route-id="@client.Key">@client.Value</a>@if(primary is not null){<h2><a asp-page="Details" asp-route-id="@primary.Program.Id">@primary.Program.Name</a></h2>}</div><details class="program-menu"><summary aria-label="Действия с программами клиента @client.Value"><reference-icon name="more" /></summary><div class="program-menu-items"><a asp-page="/Coaching/Client" asp-route-id="@client.Key">Профиль клиента</a><a asp-route-Tab="templates" asp-route-SelectedClient="@client.Key">Назначить программу</a></div></details></header>
+    @if(primary is {} card){
+        var p = card.Program;
+        var week = Math.Clamp((Model.Today.DayNumber - p.StartDate!.Value.DayNumber) / 7 + 1, 1, p.Weeks);
+        var next = ProgramSchedule.Next(p, card.Sessions, Model.Today);
+        <p class="pw-meta">Неделя @week из @p.Weeks · @card.Done из @card.Total занятий</p><div class="pw-progress-track"><progress max="100" value="@card.Percent" aria-label="Выполнение программы @client.Value">@card.Percent%</progress><span>@card.Percent%</span></div>
+        <a class="pw-link pw-client-next" asp-page="Details" asp-route-id="@p.Id"><span>@(next is not null ? $"Следующая: {(next.Date == Model.Today ? "сегодня" : next.Date.ToString("d MMM", CultureInfo.GetCultureInfo("ru-RU")))} · {next.Workout.Name}" : "Открыть программу и историю")</span><reference-icon name="chevron" /></a>
+    }else{<div class="pw-client-empty"><span>Нет активной программы<small>@(clientCards.Count > 0 ? "Есть другие программы — откройте профиль клиента" : "Выберите готовую или создайте свою")</small></span><a class="pw-secondary" asp-route-Tab="templates" asp-route-SelectedClient="@client.Key">Назначить</a></div>}
+    </article>
+}
+</div>
+@if(clients.Count == 0){<section class="pw-empty"><reference-icon name="users" /><h2>@(Model.ClientNames.Count == 0 ? "Добавьте первого клиента" : "Клиенты не найдены")</h2><p>@(Model.ClientNames.Count == 0 ? "После добавления клиента здесь можно назначить программу и следить за её выполнением." : "Измените поиск или фильтр.")</p><a class="pw-secondary" asp-page="/Coaching/Clients">Мои клиенты</a></section>}
+<partial name="_WorkspaceShortcuts" />
+<dialog class="app-dialog pw-assignment-dialog" id="program-assign-source" aria-labelledby="assign-source-heading"><div class="dialog-heading"><h2 id="assign-source-heading">Какую программу назначить?</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>Выберите готовую программу или свою — затем укажите клиента и расписание.</p><a class="pw-primary" asp-route-Tab="templates">Открыть каталог <reference-icon name="layers" /></a><a class="pw-secondary" asp-route-Tab="mine">Мои программы <reference-icon name="document" /></a></dialog>

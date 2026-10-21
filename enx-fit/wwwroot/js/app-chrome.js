@@ -1,12 +1,14 @@
 (() => {
     'use strict';
     const dialog = document.getElementById('enix-navigation-dialog');
-    const trigger = document.querySelector('[data-app-menu-open]');
-    if (!(dialog instanceof HTMLDialogElement) || !trigger) return;
-    trigger.addEventListener('click', () => {
+    const triggers = [...document.querySelectorAll('[data-app-menu-open]')];
+    if (!(dialog instanceof HTMLDialogElement) || !triggers.length) return;
+    let opener;
+    triggers.forEach(trigger => trigger.addEventListener('click', () => {
+        opener = trigger;
         if (!dialog.open) dialog.showModal();
-        trigger.setAttribute('aria-expanded', 'true');
-    });
+        triggers.forEach(item => item.setAttribute('aria-expanded', 'true'));
+    }));
     dialog.addEventListener('click', event => {
         if (!(event.target instanceof Element)) return;
         if (event.target.closest('[data-app-menu-close], a')) dialog.close();
@@ -15,8 +17,8 @@
             if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) dialog.close();
         }
     });
-    dialog.addEventListener('close', () => trigger.setAttribute('aria-expanded', 'false'));
-    matchMedia('(min-width:1024px)').addEventListener('change', event => {
-        if (event.matches && dialog.open) dialog.close();
+    dialog.addEventListener('close', () => {
+        triggers.forEach(item => item.setAttribute('aria-expanded', 'false'));
+        if (opener?.getClientRects().length) opener.focus();
     });
 })();

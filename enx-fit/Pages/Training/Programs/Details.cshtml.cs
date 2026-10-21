@@ -30,6 +30,8 @@ public sealed class DetailsModel(TrainingProgramService programs, CurrentUser us
     [BindProperty] public Guid Revision { get; set; }
     public List<ExercisePerformance> ExerciseHistory { get; private set; } = [];
     public List<TrainingRecommendation> Recommendations { get; private set; } = [];
+    public TrainingRecommendation? OverviewRecommendation { get; private set; }
+    public ProgramWorkoutExercise? OverviewExercise => Next?.Workout.Exercises.OrderBy(e => e.Order).FirstOrDefault() ?? SelectedExercise;
     public bool CanAnalyze => Access.CanUse(IsOwner ? Feature.ProgressionRecommendations : Feature.CoachAnalytics);
     public ProgramWorkoutExercise? SelectedExercise => Item.Workouts.OrderBy(w => w.Order).SelectMany(w => w.Exercises.OrderBy(e => e.Order)).FirstOrDefault(e => e.Id == ExerciseId)
         ?? Item.Workouts.OrderBy(w => w.Order).SelectMany(w => w.Exercises.OrderBy(e => e.Order)).FirstOrDefault();
@@ -48,6 +50,8 @@ public sealed class DetailsModel(TrainingProgramService programs, CurrentUser us
         if (item is null || item.IsTemplate) { Error(new(ProgramFailure.NotFound)); return; }
         Item = item; Sessions = await Programs.SessionsAsync(Item);
         await SetClientContextAsync(Item);
+        if (Tab == "overview" && CanAnalyze && OverviewExercise is { } overviewExercise)
+            OverviewRecommendation = (await recommendations.ListAsync(id, overviewExercise.Id)).FirstOrDefault(r => r.Status == RecommendationStatus.New);
         if (Tab == "progression" && SelectedExercise is { } selected)
         {
             ExerciseHistory = await data.HistoryAsync(id, selected.Id);

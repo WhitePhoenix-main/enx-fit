@@ -2,7 +2,7 @@
 @using enx_fit.ViewModels.Exercises
 @model enx_fit.ViewModels.Exercises.ExerciseLibraryModel
 @{
-    var quick = ViewData["QuickWorkout"] is true;
+    var quick = ViewData["WorkoutSession"] is true;
     var selected = Model.SelectedIds.ToHashSet();
     var recent = Model.RecentIds.ToHashSet();
     var recentOrder = Model.RecentIds.Distinct().Select((id, index) => (id, index)).ToDictionary(e => e.id, e => e.index);

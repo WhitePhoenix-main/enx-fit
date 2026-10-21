@@ -16,11 +16,13 @@
         const dialog = document.getElementById('exercise-history-dialog');
         const content = dialog.querySelector('[data-exercise-history-content]');
         const request = ++historyRequest;
+        dialog.querySelector('.eyebrow').textContent = root?.dataset.coachMode === 'true' ? 'РЕЗУЛЬТАТЫ КЛИЕНТА' : 'ВАШИ РЕЗУЛЬТАТЫ';
         document.getElementById('exercise-history-title').textContent = trigger.closest('.log-exercise')?.querySelector('h2').textContent || trigger.closest('.log-record-card')?.querySelector('h2').textContent || 'История упражнения';
         content.textContent = 'Загружаем ваши результаты…';
         open(dialog);
         try {
-            const response = await fetch(`/Training/Records?handler=Exercise&exerciseId=${encodeURIComponent(trigger.dataset.exerciseHistory)}${root ? `&beforeWorkoutId=${root.dataset.sessionId}` : ''}`, {cache:'no-store', redirect:'error'});
+            const url = root?.workoutRequestUrl ? `${root.workoutRequestUrl('History')}&exerciseId=${encodeURIComponent(trigger.dataset.exerciseHistory)}` : `/Training/Records?handler=Exercise&exerciseId=${encodeURIComponent(trigger.dataset.exerciseHistory)}${root ? `&beforeWorkoutId=${root.dataset.sessionId}` : ''}`;
+            const response = await fetch(url, {cache:'no-store', redirect:'error'});
             if (!response.ok) throw new Error();
             const {performance: p} = await response.json();
             if (request !== historyRequest) return;
@@ -28,7 +30,7 @@
             const values = [p.bestWeight > 0 ? `<div><span>Максимальный вес</span><strong>${number(p.bestWeight)}<small> кг</small></strong></div>` : '', p.bestBodyweightReps > 0 ? `<div><span>Со своим весом</span><strong>${p.bestBodyweightReps}<small> повт.</small></strong></div>` : '', p.bestSetVolume > 0 ? `<div><span>Объём подхода</span><strong>${number(p.bestSetVolume)}<small> кг</small></strong></div>` : ''].join('');
             const points = p.history.slice(0, 12).reverse().map(h => ({date:h.date, value: Math.max(...h.sets.map(s => p.bestWeight > 0 ? (s.isBodyweight ? 0 : s.weight) : s.reps))}));
             const max = Math.max(...points.map(p => p.value), 1);
-            content.innerHTML = `<div class="log-record-values">${values}</div><p class="eyebrow">${p.bestWeight > 0 ? 'МАКСИМАЛЬНЫЙ ВЕС · КГ' : 'ПОВТОРЕНИЯ СО СВОИМ ВЕСОМ'} · ПО ЗАНЯТИЯМ</p><div class="log-performance-chart" role="img" aria-label="Результаты последних ${points.length} тренировок">${points.map(p => `<div title="${esc(p.date)}: ${number(p.value)}"><span>${number(p.value)}</span><i style="height:${Math.max(2, p.value / max * 75)}px"></i><span>${new Date(`${p.date}T12:00:00`).toLocaleDateString('ru-RU', {day:'numeric',month:'numeric'})}</span></div>`).join('')}</div>${p.history.map(h => `<section class="log-history-session"><header><div><h3>${esc(h.title)}</h3><time>${new Date(`${h.date}T12:00:00`).toLocaleDateString('ru-RU', {day:'numeric',month:'long',year:'numeric'})}</time></div><span class="muted">${number(h.volume)} кг</span></header><ul>${h.sets.map(s => `<li><span>Подход ${s.number}</span><strong>${s.isBodyweight ? 'Свой вес' : number(s.weight) + ' кг'} × ${s.reps}</strong></li>`).join('')}</ul><a href="/Workouts/Details/${h.workoutId}">Открыть тренировку ↗</a></section>`).join('')}`;
+            content.innerHTML = `<div class="log-record-values">${values}</div><p class="eyebrow">${p.bestWeight > 0 ? 'МАКСИМАЛЬНЫЙ ВЕС · КГ' : 'ПОВТОРЕНИЯ СО СВОИМ ВЕСОМ'} · ПО ЗАНЯТИЯМ</p><div class="log-performance-chart" role="img" aria-label="Результаты последних ${points.length} тренировок">${points.map(p => `<div title="${esc(p.date)}: ${number(p.value)}"><span>${number(p.value)}</span><i style="height:${Math.max(2, p.value / max * 75)}px"></i><span>${new Date(`${p.date}T12:00:00`).toLocaleDateString('ru-RU', {day:'numeric',month:'numeric'})}</span></div>`).join('')}</div>${p.history.map(h => `<section class="log-history-session"><header><div><h3>${esc(h.title)}</h3><time>${new Date(`${h.date}T12:00:00`).toLocaleDateString('ru-RU', {day:'numeric',month:'long',year:'numeric'})}</time></div><span class="muted">${number(h.volume)} кг</span></header><ul>${h.sets.map(s => `<li><span>Подход ${s.number}</span><strong>${s.isBodyweight ? 'Свой вес' : number(s.weight) + ' кг'} × ${s.reps}</strong></li>`).join('')}</ul><a href="/Workouts/Details/${h.workoutId}${root?.dataset.coachMode === 'true' ? '?Coach=true' : ''}">Открыть тренировку ↗</a></section>`).join('')}`;
         } catch {
             if (request !== historyRequest) return;
             content.replaceChildren();
@@ -151,7 +153,7 @@
     root.addEventListener('change', async event => {
         const select = event.target.closest('[data-exercise-rest]'); if (!select) return;
         const card = select.closest('.session-exercise'), old = card.querySelector('.new-set-form [name="AddSet.RestSeconds"]').value;
-        const form = document.createElement('form'); form.action = `${location.pathname}?handler=Rest`;
+        const form = document.createElement('form'); form.action = root.workoutRequestUrl('Rest');
         for (const [name,v] of Object.entries({ExerciseEntryId:card.dataset.entryId, seconds:select.value, __RequestVerificationToken:root.querySelector('[name="__RequestVerificationToken"]').value})) { const input = document.createElement('input'); input.name = name; input.value = v; form.append(input); }
         select.disabled = true; select.dataset.structBusy = 'true';
         try { await root.saveWorkoutStructure(form); render(); }

@@ -52,8 +52,6 @@ public class DetailsModel(
     public bool CanUpdateTemplate { get; private set; }
     public WorkoutExecutionState Execution { get; private set; } = null!;
     public string ViewerId => currentUser.Id;
-    public bool IsQuickWorkout => !CoachMode && Workout.IsActive && Workout.TrainingProgramId is null &&
-        Workout.SourceProgramWorkoutId is null && Workout.BuilderConfigurationJson is null;
     [BindProperty] public int ExerciseEntryId { get; set; }
 
     public async Task<IActionResult> OnPostPickExercisesAsync(int id, string selectionJson, Guid? operationId, Guid? expectedRevision)
@@ -113,6 +111,15 @@ public class DetailsModel(
     {
         Response.Headers.CacheControl = "no-store";
         try { return new JsonResult(await workoutService.ExecutionStateAsync(id)); }
+        catch (KeyNotFoundException) { return NotFound(); }
+    }
+    public async Task<IActionResult> OnGetHistoryAsync(int id, Guid exerciseId)
+    {
+        Response.Headers.CacheControl = "no-store";
+        try {
+            var performance = (await workoutService.PerformanceAsync(exerciseId, id)).FirstOrDefault();
+            return new JsonResult(new { performance });
+        }
         catch (KeyNotFoundException) { return NotFound(); }
     }
     public async Task<IActionResult> OnPostControlAsync(int id, string action, Guid? operationId, Guid? expectedRevision, int seconds, DateTime? performedAtUtc)

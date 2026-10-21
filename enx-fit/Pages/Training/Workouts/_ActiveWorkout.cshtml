@@ -3,13 +3,15 @@
 @model enx_fit.Pages.Training.Workouts.DetailsModel
 @inject enx_fit.Security.IFeatureAccessService QuickWorkoutAccess
 @{ var plan=(await QuickWorkoutAccess.GetAsync()).Plan; var w = Model.Workout; var rest = w.WorkoutExercises.OrderBy(e => e.Order).FirstOrDefault()?.TargetRestSeconds ?? 60; }
-<div class="qw-workout" data-quick-session data-training-log data-quick-workout data-active-workout data-session-id="@w.Id" data-viewer="@Model.ViewerId" data-session-status="@w.State" data-default-rest="@rest" data-workouts-url="@Url.Page("/Training/Index")">
+<div class="qw-workout" data-workout-session data-training-log data-quick-workout data-active-workout data-coach-mode="@Model.CoachMode.ToString().ToLowerInvariant()" data-session-id="@w.Id" data-viewer="@Model.ViewerId" data-session-status="@w.State" data-default-rest="@rest" data-workouts-url="@Url.Page("/Training/Index",new { ClientId=Model.CoachMode?w.UserId:null })">
     <script type="application/json" id="workout-execution-state">@Html.Raw(JsonSerializer.Serialize(Model.Execution, WorkoutBuilderInput.JsonOptions))</script>
     <header class="qs-heading">
-        <a class="qs-icon qs-back" asp-page="/Training/Index" aria-label="Вернуться к тренировкам"><reference-icon name="arrow" /></a>
-        <h1>Быстрая тренировка</h1><span class="qs-plan">@plan</span>
+        <a class="qs-icon qs-back" asp-page="/Training/Index" asp-route-ClientId="@(Model.CoachMode?w.UserId:null)" aria-label="Вернуться к тренировкам"><reference-icon name="arrow" /></a>
+        <h1>@(w.Title ?? "Тренировка")</h1><span class="qs-plan">@plan</span>
         <details class="log-menu qs-workout-menu"><summary aria-label="Меню тренировки"><reference-icon name="more" /></summary><div><button type="button" data-dialog="quick-help-dialog">Как это работает</button><a asp-page="./Edit" asp-route-id="@w.Id">Название и заметки</a><button type="button" data-dialog="quick-rest-settings-dialog">Настройки отдыха</button><button type="button" data-dialog="quick-clear-dialog" data-qw-clear-trigger disabled="@(Model.Exercises.Count == 0)">Очистить упражнения</button><button type="button" class="danger-text" data-dialog="cancel-workout-dialog">Отменить тренировку</button></div></details>
     </header>
+    @if(Model.CoachMode){<section class="ws-client-context" aria-label="Тренировка клиента" data-session-client="@w.UserId"><span class="ws-client-avatar">@WorkoutHubCard.Initials(Model.OwnerName)</span><div><small>Тренировка клиента</small><a asp-page="/Coaching/Client" asp-route-id="@w.UserId">@Model.OwnerName <reference-icon name="chevron" /></a></div><a asp-page="/Coaching/Messages" asp-route-ContactId="@w.UserId" aria-label="Обратная связь клиенту"><reference-icon name="message" /></a></section>}
+    @if(!string.IsNullOrWhiteSpace(w.Notes)){<p class="ws-session-note">@w.Notes</p>}
     @if (TempData["StatusMessage"] is string message) { <p class="qs-notice" role="status">@message</p> }
     <div asp-validation-summary="All" class="validation-message" role="alert"></div>
     <section class="qs-overview" aria-label="Показатели тренировки">
@@ -21,17 +23,17 @@
     <section class="qs-exercises">
         <header class="qs-sr" data-exercises-heading><h2>Упражнения: <span data-exercise-total>@Model.Exercises.Count</span></h2></header>
         <section class="workout-empty qs-empty" hidden="@(Model.Exercises.Count > 0)"><reference-icon name="dumbbell-outline" /><h2>Начнём с первого упражнения</h2><p>Добавляйте упражнения по ходу занятия.<br />Вес и повторы можно менять в каждом подходе.</p><button class="qs-add" type="button" data-dialog="exercise-dialog" data-add-exercise><reference-icon name="plus" />Выбрать упражнение</button>@if(Model.Templates.Count>0){<button class="text-button" type="button" data-dialog="load-template-dialog">Загрузить шаблон</button>}</section>
-        <div class="session-exercises">@foreach (var exercise in Model.Exercises) { <partial name="_QuickExercise" model="exercise" /> }</div>
+        <div class="session-exercises">@foreach (var exercise in Model.Exercises) { <partial name="_SessionExercise" model="exercise" /> }</div>
         <button class="qs-add qs-add-exercise" type="button" data-dialog="exercise-dialog" data-add-exercise><reference-icon name="plus" />Добавить упражнение</button>
     </section>
-    <footer class="qs-controls" data-quick-session-controls aria-label="Управление тренировкой">
+    <footer class="qs-controls" data-session-controls aria-label="Управление тренировкой">
         <div class="qs-rest-dock" data-qw-dock>
             <button type="button" class="qs-rest-open" data-dialog="quick-rest-dialog" aria-label="Открыть таймер отдыха"><reference-icon name="stopwatch" /><span><strong data-qw-mini-clock>@WorkoutHubCard.Clock(rest)</strong><small data-qw-mini-caption>Отдых · @rest с</small></span><span class="qs-mini-track"><i data-qw-mini-progress></i></span></button>
             <button type="button" class="qs-rest-adjust" data-qw-adjust="15" aria-label="Добавить 15 секунд отдыха">+15 с</button><button type="button" class="qs-icon qs-rest-expand" data-dialog="quick-rest-dialog" aria-label="Развернуть таймер"><reference-icon name="chevron-down" /></button>
         </div>
         <div class="qs-session-actions"><button type="button" class="qs-pause" data-control="@(w.State == WorkoutStatus.Paused ? "resume" : "pause")" data-pause-button>Пауза</button><button class="qs-finish" type="button" data-dialog="finish-workout-dialog" data-finish disabled><reference-icon name="stop" />Завершить</button></div>
     </footer>
-    <partial name="_QuickSessionRest" model="Model" />
+    <partial name="_SessionRest" model="Model" />
     <div hidden aria-hidden="true"><span data-log-volume></span><span data-log-done></span><span data-log-total></span><nav data-log-outline></nav></div>
     <p class="log-toast" data-log-toast role="status" hidden></p>
 </div>

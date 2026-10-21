@@ -23,6 +23,7 @@ public sealed class IndexModel(TrainingProgramService programs, CurrentUser curr
     [BindProperty(SupportsGet = true)] public bool MatchPreferences { get; set; }
     [BindProperty(SupportsGet = true)] public string? Search { get; set; }
     [BindProperty(SupportsGet = true)] public int? MaxMinutes { get; set; }
+    [BindProperty(SupportsGet = true)] public string? ClientFilter { get; set; }
     public DashboardSettings? Preferences { get; private set; }
     public bool HasPreferences => Preferences?.SetupStatus == SetupStatus.Completed;
     public string ViewerId => currentUser.Id;
@@ -43,6 +44,8 @@ public sealed class IndexModel(TrainingProgramService programs, CurrentUser curr
     private async Task LoadAsync()
     {
         await LoadAccessAsync();
+        if (!Request.Query.ContainsKey("Tab") && !Archived && Access.CanUse(Feature.CoachProgramAssignment)) Tab = "assigned";
+        if (ClientFilter is not ("active" or "empty")) ClientFilter = null;
         ViewData["Reference"] = Reference;
         WeekOffset = Math.Clamp(WeekOffset, -52, 52);
         if (Level is { } level && !Enum.IsDefined(level)) Level = null;
@@ -72,8 +75,7 @@ public sealed class IndexModel(TrainingProgramService programs, CurrentUser curr
         if (Access.CanUse(Feature.CoachProgramAssignment))
         {
             ClientPrograms = Tab == "assigned" ? Items : await Programs.ListAsync("assigned");
-            var clientIds = ClientPrograms.Select(p => p.OwnerId).Distinct().ToArray();
-            ClientNames = await db.Users.Where(u => clientIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id, u => u.UserName ?? "Клиент");
+            ClientNames = (await Programs.ClientsAsync()).ToDictionary(c => c.Id, c => c.Name);
         }
         if (Tab == "templates") Items = Items.Where(p => ProgramDiscovery.MatchesSearch(p, Search) && ProgramDiscovery.FitsDuration(p, MaxMinutes)).ToList();
         if (Tab == "templates" && Level is { } filter) Items = Items.Where(p => p.Level == filter).ToList();

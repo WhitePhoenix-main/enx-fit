@@ -3,7 +3,7 @@
 @using enx_fit.ViewModels.Coaching
 @model EditModel
 @{
-    Layout = "/Pages/Shared/Layouts/_DashboardReferenceLayout.cshtml";
+    Layout = "/Pages/Shared/Layouts/_ProgramWorkspaceLayout.cshtml";
     ViewData["Title"] = Model.ProgramId.HasValue ? "Редактирование программы" : "Создать программу";
 }
 @section Styles {
@@ -108,6 +108,3 @@ else {
     </dialog>
 }
 </div>
-@section Scripts {
-    <script src="~/js/training.js" asp-append-version="true"></script>
-}

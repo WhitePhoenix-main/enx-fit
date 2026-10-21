@@ -8,7 +8,7 @@
 <html lang="ru"><head>
 <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#10191d" /><meta name="color-scheme" content="dark" />
-<title>Быстрая тренировка — Enix Fit</title>
+<title>@ViewData["Title"] — Enix Fit</title>
 <link rel="preload" href="~/fonts/dashboard-sans.ttf" as="font" type="font/ttf" crossorigin />
 <link rel="preload" href="~/fonts/dashboard-condensed.ttf" as="font" type="font/ttf" crossorigin />
 <link rel="stylesheet" href="~/css/subscription-dashboard.css" asp-append-version="true" />
@@ -17,9 +17,9 @@
 <link rel="stylesheet" href="~/css/subscription-theme.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/app-chrome.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/account-avatar.css" asp-append-version="true" />
-<link rel="stylesheet" href="~/css/quick-session.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/workout-session.css" asp-append-version="true" />
 @await RenderSectionAsync("Styles", required: false)
-</head><body class="fitness-app rd-app training-log quick-workout quick-session" data-subscription="@access.Plan.ToString().ToLowerInvariant()">
+</head><body class="fitness-app rd-app training-log quick-workout workout-session" data-subscription="@access.Plan.ToString().ToLowerInvariant()">
 <a class="rd-skip" href="#main-content">Перейти к содержимому</a>
 <div class="rd-shell">
     <aside class="rd-sidebar"><a class="rd-brand" asp-page="/Dashboard/Index"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /></a><partial name="/Pages/Shared/Navigation/_FitnessNavigation.cshtml" /></aside>
@@ -29,13 +29,13 @@
     </div>
 </div>
 <dialog class="app-dialog" id="notifications-dialog"><div class="dialog-heading"><h2>Уведомления</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>Новых уведомлений пока нет.</p></dialog>
-<dialog class="app-dialog" id="navigation-dialog"><div class="dialog-heading"><h2>Все разделы</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><partial name="/Pages/Shared/Navigation/_MobileMenuLinks.cshtml" model="navigation" /></dialog>
+<partial name="/Pages/Shared/Navigation/_MoreNavigationDialog.cshtml" model="navigation" />
 <script src="~/js/site.js" asp-append-version="true"></script>
 <script src="~/js/app-chrome.js" asp-append-version="true" defer></script>
 <script src="~/js/account-avatar.js" asp-append-version="true" defer></script>
 <script src="~/js/training.js" asp-append-version="true"></script>
 <script src="~/js/training-log.js" asp-append-version="true"></script>
 <script src="~/js/quick-workout.js" asp-append-version="true"></script>
-<script src="~/js/quick-session.js" asp-append-version="true"></script>
+<script src="~/js/workout-session.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body></html>

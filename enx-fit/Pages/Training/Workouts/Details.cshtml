@@ -4,21 +4,17 @@
 @using enx_fit.Services.Dashboard
 @model enx_fit.Pages.Training.Workouts.DetailsModel
 @{
-    Layout = Model.IsQuickWorkout ? "/Pages/Shared/Layouts/_QuickSessionLayout.cshtml" : Model.Workout.IsActive ? "/Pages/Shared/Layouts/_QuickWorkoutLayout.cshtml" : "/Pages/Shared/Layouts/_TrainingLogLayout.cshtml";
-    ViewData["QuickWorkout"] = Model.IsQuickWorkout;
-    ViewData["CurrentWorkout"] = Model.Workout.IsActive && !Model.IsQuickWorkout;
-    ViewData["WorkoutShellClass"] = Model.Workout.IsActive && !Model.IsQuickWorkout ? "current-workout" + (Model.CoachMode ? " coach-execution" : "") : "";
+    Layout = Model.Workout.IsActive ? "/Pages/Shared/Layouts/_WorkoutSessionLayout.cshtml" : "/Pages/Shared/Layouts/_TrainingLogLayout.cshtml";
+    ViewData["WorkoutSession"] = Model.Workout.IsActive;
     ViewData["Title"] = Model.Workout.Title ?? "Тренировка";
     ViewData["ActiveSession"] = Model.Workout.IsActive;
     var w = Model.Workout;
 }
-@if (Model.IsQuickWorkout)
-{ <partial name="_QuickWorkout" model="Model" /> }
-else if (Model.Workout.IsActive)
-{ <partial name="_CurrentWorkout" model="Model" /> }
+@if (Model.Workout.IsActive)
+{ <partial name="_ActiveWorkout" model="Model" /> }
 else
 {
-<div class="log-session" data-training-log data-active-workout data-session-id="@w.Id" data-viewer="@Model.ViewerId" data-recorded-request="@TempData["RecordedWorkout"]" data-session-status="@w.State" data-workouts-url="@Url.Page("/Training/Index")">
+<div class="log-session" data-training-log data-active-workout data-coach-mode="@Model.CoachMode.ToString().ToLowerInvariant()" data-session-id="@w.Id" data-viewer="@Model.ViewerId" data-recorded-request="@TempData["RecordedWorkout"]" data-session-status="@w.State" data-workouts-url="@Url.Page("/Training/Index",new { ClientId=Model.CoachMode?w.UserId:null })">
     <script type="application/json" id="workout-execution-state">@Html.Raw(JsonSerializer.Serialize(Model.Execution, WorkoutBuilderInput.JsonOptions))</script>
     <header class="log-session-header"><a class="log-back" asp-page="/Training/Index"><span aria-hidden="true">‹</span><span>Тренировки</span></a><span class="log-session-label"><i></i>@(w.State == WorkoutStatus.Cancelled ? "ОТМЕНЕНА" : w.IsFinished ? "В ИСТОРИИ" : w.IsActive ? "ТРЕНИРОВКА ИДЁТ" : "ПЛАН ТРЕНИРОВКИ")</span><div class="log-header-actions">
         @if (w.IsActive) { <button type="button" class="button log-finish" data-dialog="finish-workout-dialog" data-finish disabled="@(!w.WorkoutExercises.Any(e => e.SetEntries.Any(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0)))">Завершить</button> }
@@ -46,6 +42,4 @@ else
 <partial name="_LogHistoryDialog" />
 
 }
-@section Styles { @if (Model.Workout.IsActive && !Model.IsQuickWorkout) { <link rel="stylesheet" href="~/css/current-workout.css" asp-append-version="true" /> } }
-@section Scripts { @if (Model.Workout.IsActive && !Model.IsQuickWorkout) { <script src="~/js/current-workout.js" asp-append-version="true"></script> } }
 

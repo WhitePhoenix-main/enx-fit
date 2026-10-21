@@ -1,7 +1,8 @@
-// Quick-session presentation only. training.js remains the owner of persistence and deadlines.
+// One active-session presentation for empty, template, program and supervised workouts.
+// training.js remains the owner of persistence and deadlines.
 (() => {
     'use strict';
-    const root = document.querySelector('[data-quick-session]');
+    const root = document.querySelector('[data-workout-session]');
     if (!root) return;
     const libraryRoot = document.getElementById('workout-library'), library = libraryRoot.exerciseLibrary;
     const pickerDialog = document.getElementById('exercise-dialog');
@@ -74,6 +75,18 @@
         root.querySelector('[data-qw-mini-progress]').closest('.qs-mini-track').hidden = mode === 'stopwatch';
     }
     root.addEventListener('click', event => {
+        const notes = event.target.closest('[data-session-notes]');
+        if (notes) {
+            event.stopPropagation();
+            const card = notes.closest('.session-exercise');
+            const form = forms(card).find(pending) || forms(card)[0];
+            if (form) {
+                notes.closest('details')?.removeAttribute('open');
+                root.querySelectorAll('.log-set-options[open]').forEach(menu => { menu.open = false; });
+                form.querySelector('.log-set-options').open = true;
+                field(form, 'AddSet.Notes').focus();
+            }
+        }
         const toggle = event.target.closest('[data-qw-toggle]');
         if (toggle) {
             const card = toggle.closest('.qw-exercise');

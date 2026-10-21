@@ -22,5 +22,5 @@
 @foreach (var item in items) {
     <a href="@navigation.PageUrl(Url, item.Page)" class="@(Active(item.Page) ? "is-active" : "")" aria-current="@(Active(item.Page) ? "page" : null)"><reference-icon name="@item.Icon" /><span>@item.Title</span></a>
 }
-<button type="button" data-dialog="navigation-dialog"><reference-icon name="more" /><span>Ещё</span></button>
+<button type="button" data-app-menu-open aria-controls="enix-navigation-dialog" aria-haspopup="dialog" aria-expanded="false"><reference-icon name="more" /><span>Ещё</span></button>
 </nav>
