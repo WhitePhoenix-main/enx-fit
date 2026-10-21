@@ -1,19 +1,84 @@
-@using enx_fit.ViewModels.Navigation
 @model enx_fit.ViewModels.Navigation.MobileAppNavigationViewModel
-@{ string? PageUrl(string page) => Model.PageUrl(Url, page); }
-<nav class="em-mobile-menu-links" aria-label="Все разделы">
-    <a href="@PageUrl("/Training/Exercises/Index")">Библиотека <reference-icon name="book" /></a>
-    <a href="@PageUrl("/Account/Profile")">Профиль <reference-icon name="user" /></a>
-    <a href="@PageUrl("/Dashboard/Habits")">Привычки <reference-icon name="check-circle" /></a>
-    <a href="@PageUrl("/Progress/Analytics")">Аналитика <reference-icon name="trend" /></a>
-    <a href="@PageUrl("/Progress/Achievements")">Достижения <reference-icon name="trophy" /></a>
-    <a href="@PageUrl("/Account/Subscription")">Подписка <reference-icon name="crown" /></a>
-    @if (Model.IsTrainer) { <a href="@PageUrl("/Coaching/Clients")">Мои клиенты <reference-icon name="users" /></a> }
-    @if (Model.IsAdministrator) {
-        <a href="@PageUrl("/Admin/Index")">Администрирование <reference-icon name="shield" /></a>
-        <a href="@PageUrl("/Admin/Users/Index")">Пользователи <reference-icon name="users" /></a>
-        <a href="@PageUrl("/Training/Workouts/Index")">Управление тренировками <reference-icon name="workout" /></a>
-        <a href="@PageUrl("/Progress/Measurements/Index")">Замеры пользователей <reference-icon name="body-scale" /></a>
+@inject enx_fit.Security.IFeatureAccessService MenuAccess
+@{
+    var access = await MenuAccess.GetAsync();
+    var preview = Model.Dashboard?.SubscriptionHome;
+    var coach = preview?.Preview == true ? preview.Coach : Model.IsTrainer && access.CanUse(Feature.CoachClientManagement);
+    var plan = preview?.Preview == true ? preview.Badge : access.Plan.ToString();
+    var shortcuts = new[] {
+        ("book", "Упражнения", "Техника и библиотека", "/Training/Exercises/Index"),
+        ("layers", "Шаблоны", "Готовые тренировки", "/Training/Workouts/Templates"),
+        ("calendar", Model.Client is null ? "Мой календарь" : "Календарь клиента", "Расписание тренировок", "/Training/Plans"),
+        ("message", "Сообщения", Model.Client is not null ? "Диалог с клиентом" : coach ? "Диалоги с клиентами" : "Связь с тренером", "/Coaching/Messages")
+    };
+    var health = new[] {
+        ("nutrition", "Питание", "/Nutrition/Index"), ("check-circle", "Привычки", "/Dashboard/Habits"),
+        ("body-scale", "Вес и замеры", "/Progress/Measurements/Index"), ("trend", "Аналитика", "/Progress/Analytics"),
+        ("trophy", "Достижения", "/Progress/Achievements")
+    };
+    var account = new[] {
+        ("user", "Мой профиль", "/Account/Profile"), ("sliders", "Условия тренировок", "/Account/TrainingSetup"),
+        ("crown", "Подписка", "/Account/Subscription")
+    };
+    var admin = new[] {
+        ("shield", "Обзор администрирования", "/Admin/Index"), ("users", "Пользователи", "/Admin/Users/Index"),
+        ("book", "Управление упражнениями", "/Admin/Exercises/Index"), ("workout", "Управление тренировками", "/Training/Workouts/Index"),
+        ("body-scale", "Замеры пользователей", "/Progress/Measurements/Index")
+    };
+    bool Current(string page) => string.Equals(Model.Page, page, StringComparison.OrdinalIgnoreCase);
+    bool accountOpen = account.Any(item => Current(item.Item3)) || Model.Page.StartsWith("/Account/Manage/", StringComparison.OrdinalIgnoreCase);
+}
+<nav class="em-mobile-menu-links" aria-label="Дополнительные разделы" data-more-menu>
+    @if (Model.Client is { } client)
+    {
+        <p class="em-menu-context"><reference-icon name="user" /><span>Клиент · <strong>@client.Name</strong></span></p>
     }
-    <form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Public/Index", new { area = "" })"><button type="submit">Выйти из аккаунта <reference-icon name="arrow" /></button></form>
+    <div class="em-menu-shortcuts" aria-label="Быстрый переход">
+        @foreach (var (icon, title, description, page) in shortcuts)
+        {
+            <a href="@Model.PageUrl(Url, page)" aria-current="@(Current(page) ? "page" : null)"><reference-icon name="@icon" /><strong>@title</strong><small>@description</small></a>
+        }
+    </div>
+    @if (coach)
+    {
+        <section class="em-menu-coach" aria-label="Работа с клиентами">
+            <h3>Кабинет тренера <span>Coach</span></h3>
+            <a href="@Model.PageUrl(Url, "/Coaching/Clients")" aria-current="@(Current("/Coaching/Clients") ? "page" : null)"><reference-icon name="users" /><span>Мои клиенты</span><reference-icon name="chevron" /></a>
+            <a href="@Model.PageUrl(Url, "/Coaching/Calendar")" aria-current="@(Current("/Coaching/Calendar") ? "page" : null)"><reference-icon name="calendar" /><span>Календарь тренера</span><reference-icon name="chevron" /></a>
+        </section>
+    }
+    <div class="em-menu-groups">
+        <details class="em-menu-group" name="enix-more-groups" open="@(health.Any(item => Current(item.Item3)) && !accountOpen)">
+            <summary><span class="em-menu-group-icon"><reference-icon name="pulse" /></span><span><strong>Здоровье и прогресс</strong><small>Питание, привычки, замеры и достижения</small></span><reference-icon name="chevron-down" /></summary>
+            <div class="em-menu-group-links">
+                @foreach (var (icon, title, page) in health)
+                {
+                    <a href="@Model.PageUrl(Url, page)" aria-current="@(Current(page) ? "page" : null)"><reference-icon name="@icon" /><span>@title</span><reference-icon name="chevron" /></a>
+                }
+            </div>
+        </details>
+        <details class="em-menu-group" name="enix-more-groups" open="@accountOpen">
+            <summary><span class="em-menu-group-icon"><reference-icon name="settings" /></span><span><strong>Аккаунт и настройки</strong><small>Профиль, подписка и условия тренировок</small></span><reference-icon name="chevron-down" /></summary>
+            <div class="em-menu-group-links">
+                @foreach (var (icon, title, page) in account)
+                {
+                    <a href="@Model.PageUrl(Url, page)" aria-current="@(Current(page) ? "page" : null)"><reference-icon name="@icon" /><span>@title</span>@if (page == "/Account/Subscription") { <small class="em-menu-plan">@plan</small> }<reference-icon name="chevron" /></a>
+                }
+                <a asp-area="Identity" asp-page="/Account/Manage/Index"><reference-icon name="settings" /><span>Настройки аккаунта</span><reference-icon name="chevron" /></a>
+                <form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Public/Index", new { area = "" })"><button type="submit" class="em-menu-logout"><reference-icon name="arrow" /><span>Выйти из аккаунта</span></button></form>
+            </div>
+        </details>
+        @if (Model.IsAdministrator)
+        {
+            <details class="em-menu-group" name="enix-more-groups" open="@(Model.Page.StartsWith("/Admin/") && !accountOpen)">
+                <summary><span class="em-menu-group-icon"><reference-icon name="shield" /></span><span><strong>Администрирование</strong><small>Пользователи и управление контентом</small></span><reference-icon name="chevron-down" /></summary>
+                <div class="em-menu-group-links">
+                    @foreach (var (icon, title, page) in admin)
+                    {
+                        <a href="@Model.PageUrl(Url, page)" aria-current="@(Current(page) ? "page" : null)"><reference-icon name="@icon" /><span>@title</span><reference-icon name="chevron" /></a>
+                    }
+                </div>
+            </details>
+        }
+    </div>
 </nav>

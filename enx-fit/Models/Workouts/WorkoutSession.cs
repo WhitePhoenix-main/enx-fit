@@ -12,6 +12,8 @@ public class WorkoutSession
     public int? TrainingProgramId { get; set; }
     public Guid? ProgramWorkoutKey { get; set; }
     public DateOnly? ScheduledDate { get; set; }
+    public TimeOnly? ScheduledTime { get; set; }
+    public int? PlannedMinutes { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
     public DateTime? StartedAtUtc { get; set; }
     public int? SourceProgramWorkoutId { get; set; }

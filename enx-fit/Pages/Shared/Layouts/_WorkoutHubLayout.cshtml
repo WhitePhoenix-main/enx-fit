@@ -1,0 +1,17 @@
+@{
+    var hub=(enx_fit.Pages.Training.IndexModel)Model;
+    var navigation=enx_fit.ViewModels.Navigation.MobileAppNavigationViewModel.Create(ViewData,User,ViewContext.RouteData.Values["page"] as string);
+}
+<!DOCTYPE html><html lang="ru"><head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" /><meta name="theme-color" content="#111518" /><meta name="color-scheme" content="dark" />
+<title>Тренировки — Enix Fit</title><partial name="/Pages/Shared/Icons/_AppIcons.cshtml" />
+<link rel="preload" href="~/fonts/dashboard-sans.ttf" as="font" type="font/ttf" crossorigin />
+<link rel="stylesheet" href="~/css/subscription-dashboard.css" asp-append-version="true" /><link rel="stylesheet" href="~/css/subscription-theme.css" asp-append-version="true" /><link rel="stylesheet" href="~/css/app-chrome.css" asp-append-version="true" /><link rel="stylesheet" href="~/css/account-avatar.css" asp-append-version="true" /><link rel="stylesheet" href="~/css/workout-hub.css" asp-append-version="true" />
+</head><body class="fitness-app rd-app workout-hub" data-subscription="@hub.Theme" data-workout-plan="@hub.Badge">
+<a class="rd-skip" href="#main-content">Перейти к содержимому</a>
+<div class="rd-shell"><aside class="rd-sidebar"><a class="rd-brand" asp-page="/Dashboard/Index"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /></a><partial name="/Pages/Shared/Navigation/_FitnessNavigation.cshtml" /><div class="rd-sidebar-footer"><a class="rd-profile" asp-page="/Account/Profile"><span class="rd-avatar">@enx_fit.ViewModels.Workouts.WorkoutHubCard.Initials(hub.ViewerName)</span><span><strong>@hub.ViewerName</strong><small>Подписка @hub.Badge</small></span></a></div></aside>
+<div class="rd-content"><header class="wh-brand-header"><a asp-page="/Dashboard/Index"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /></a><div class="account-tools"><button class="wh-icon-button" type="button" data-hub-dialog="hub-notifications" aria-label="Уведомления"><reference-icon name="bell" /></button><partial name="/Pages/Shared/Navigation/_AccountAvatar.cshtml" /></div></header><main id="main-content" tabindex="-1">@RenderBody()</main></div></div>
+<partial name="/Pages/Shared/Navigation/_MobileBottomNavigation.cshtml" model="navigation" />
+<dialog class="wh-dialog" id="hub-notifications"><div class="wh-dialog-heading"><h2>Уведомления</h2><button type="button" data-hub-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>Новых уведомлений пока нет.</p></dialog>
+<script src="~/js/workout-hub.js" asp-append-version="true" defer></script><script src="~/js/account-avatar.js" asp-append-version="true" defer></script>
+</body></html>

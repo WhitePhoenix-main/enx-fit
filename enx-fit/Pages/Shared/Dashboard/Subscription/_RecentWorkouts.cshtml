@@ -1,0 +1,8 @@
+@using enx_fit.ViewModels.Dashboard
+@using enx_fit.Services.Dashboard
+@model SubscriptionDashboardViewModel
+<section class="ref-panel ref-home-recent"><header class="ref-panel-heading"><h2>Недавние тренировки</h2><a class="ref-link" asp-page="/Training/Index" asp-route-View="history" asp-route-Days="30">Все <reference-icon name="chevron" /></a></header><div class="ref-history-list">
+@if(Model.Preview){@foreach(var (title,photo,date,minutes) in new[]{("Сила — верхняя часть тела","bench","8 апр. 2024",45),("Сила — ноги","squat","6 апр. 2024",50),("Всё тело — базовая","pushup","3 апр. 2024",40)}){<a class="ref-history-row" asp-page="/Training/Index"><design-photo kind="@photo" /><span><strong>@title</strong><small>@date · @minutes мин</small></span><reference-icon name="chevron" /></a>}}
+else{@foreach(var w in Model.Page.Data.Completed.OrderByDescending(w=>w.Date).Take(3)){<a class="ref-history-row" asp-page="/Training/Workouts/Details" asp-route-id="@w.Id"><design-photo kind="@(w.Title?.Contains("ног",StringComparison.OrdinalIgnoreCase)==true?"squat":"bench")" /><span><strong>@w.Title</strong><small>@w.Date.ToString("d MMM yyyy",DashboardWorkoutsViewModel.Russian) · @w.WorkoutExercises.Count упр. · @DashboardData.Volume(w).ToString("0.#") кг</small></span><reference-icon name="chevron" /></a>}}
+@if(!Model.Preview&&!Model.Page.Data.Completed.Any()){<div class="ref-empty"><reference-icon name="clock" /><p>Завершённые тренировки появятся здесь.</p></div>}
+</div></section>

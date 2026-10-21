@@ -100,7 +100,7 @@ public class CreateModel(
             {
                 title = last.Title, exercises = last.WorkoutExercises.Count,
                 sets = last.WorkoutExercises.Sum(e => e.SetEntries.Count(s => s.IsCompleted && !s.IsWarmup)),
-                volume = last.WorkoutExercises.Sum(e => e.SetEntries.Where(s => s.IsCompleted && !s.IsWarmup).Sum(s => s.Weight * s.Reps))
+                volume = last.WorkoutExercises.Sum(e => e.SetEntries.Where(s => s.IsCompleted && !s.IsWarmup).Sum(s => s.Volume))
             },
             bodyWeight = weight, ownerId = owner,
             hasErrors = !ModelState.IsValid

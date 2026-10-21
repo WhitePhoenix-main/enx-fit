@@ -7,6 +7,8 @@ public sealed class TrainingSetupInput : IValidatableObject
 {
     [Required(ErrorMessage = "Выберите цель."), EnumDataType(typeof(TrainingGoal), ErrorMessage = "Выберите цель из списка.")]
     public TrainingGoal? Goal { get; set; }
+    [Required(ErrorMessage = "Выберите свой уровень."), EnumDataType(typeof(ProgramLevel), ErrorMessage = "Выберите уровень из списка.")]
+    public ProgramLevel? Level { get; set; }
     [Required(ErrorMessage = "Выберите место занятий."), EnumDataType(typeof(TrainingLocation), ErrorMessage = "Выберите место из списка.")]
     public TrainingLocation? Location { get; set; }
     public List<TrainingEquipment> Equipment { get; set; } = [];

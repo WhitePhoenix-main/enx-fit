@@ -331,6 +331,48 @@ namespace enx_fit.Migrations
                     b.ToTable("BodyMeasurements");
                 });
 
+            modelBuilder.Entity("enx_fit.Models.CoachMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ReadAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RecipientId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SenderId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecipientId", "CreatedAtUtc");
+
+                    b.HasIndex("SenderId", "RequestId")
+                        .IsUnique();
+
+                    b.ToTable("CoachMessage");
+                });
+
             modelBuilder.Entity("enx_fit.Models.DailyCheckIn", b =>
                 {
                     b.Property<string>("UserId")
@@ -339,11 +381,17 @@ namespace enx_fit.Migrations
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date");
 
+                    b.Property<int?>("Feeling")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("NutritionLogged")
                         .HasColumnType("boolean");
 
                     b.Property<int>("ReadingMinutes")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("RestDay")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("SleepMinutes")
                         .HasColumnType("integer");
@@ -409,6 +457,9 @@ namespace enx_fit.Migrations
                         .HasColumnType("character varying(1000)");
 
                     b.Property<int?>("TrainingGoal")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TrainingLevel")
                         .HasColumnType("integer");
 
                     b.Property<int?>("TrainingLocation")
@@ -2630,6 +2681,84 @@ namespace enx_fit.Migrations
                         });
                 });
 
+            modelBuilder.Entity("enx_fit.Models.MealEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Calories")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Carbs")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Fat")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<int>("Protein")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeOnly>("Time")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Date");
+
+                    b.ToTable("MealEntries");
+                });
+
+            modelBuilder.Entity("enx_fit.Models.NutritionSettings", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Calories")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Carbs")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Fat")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Goal")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<int>("Protein")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WaterMl")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("NutritionSettings");
+                });
+
             modelBuilder.Entity("enx_fit.Models.ProgramBlock", b =>
                 {
                     b.Property<int>("Id")
@@ -3406,6 +3535,38 @@ namespace enx_fit.Migrations
                         });
                 });
 
+            modelBuilder.Entity("enx_fit.Models.ProgressPhoto", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Date");
+
+                    b.ToTable("ProgressPhotos");
+                });
+
             modelBuilder.Entity("enx_fit.Models.SetEntry", b =>
                 {
                     b.Property<int>("Id")
@@ -3413,6 +3574,9 @@ namespace enx_fit.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsBodyweight")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsCompleted")
                         .ValueGeneratedOnAdd()
@@ -3821,6 +3985,9 @@ namespace enx_fit.Migrations
                     b.Property<int>("PausedSeconds")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("PlannedMinutes")
+                        .HasColumnType("integer");
+
                     b.Property<Guid?>("ProgramWorkoutKey")
                         .HasColumnType("uuid");
 
@@ -3839,6 +4006,9 @@ namespace enx_fit.Migrations
 
                     b.Property<DateOnly?>("ScheduledDate")
                         .HasColumnType("date");
+
+                    b.Property<TimeOnly?>("ScheduledTime")
+                        .HasColumnType("time without time zone");
 
                     b.Property<Guid?>("SourceProgramRevision")
                         .HasColumnType("uuid");
@@ -3888,6 +4058,35 @@ namespace enx_fit.Migrations
                         .HasFilter("\"StartedAtUtc\" IS NOT NULL AND \"CompletedAtUtc\" IS NULL AND \"UserId\" IS NOT NULL");
 
                     b.ToTable("WorkoutSessions");
+                });
+
+            modelBuilder.Entity("enx_fit.Models.WorkoutTemplateCollection", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.PrimitiveCollection<int[]>("WorkoutIds")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("WorkoutTemplateCollection");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -3987,6 +4186,21 @@ namespace enx_fit.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
+            modelBuilder.Entity("enx_fit.Models.CoachMessage", b =>
+                {
+                    b.HasOne("enx_fit.Areas.Identity.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("RecipientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("enx_fit.Areas.Identity.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("enx_fit.Models.DailyCheckIn", b =>
                 {
                     b.HasOne("enx_fit.Areas.Identity.Data.ApplicationUser", null)
@@ -4010,6 +4224,24 @@ namespace enx_fit.Migrations
                     b.HasOne("enx_fit.Areas.Identity.Data.ApplicationUser", null)
                         .WithOne()
                         .HasForeignKey("enx_fit.Models.DashboardSettings", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("enx_fit.Models.MealEntry", b =>
+                {
+                    b.HasOne("enx_fit.Areas.Identity.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("enx_fit.Models.NutritionSettings", b =>
+                {
+                    b.HasOne("enx_fit.Areas.Identity.Data.ApplicationUser", null)
+                        .WithOne()
+                        .HasForeignKey("enx_fit.Models.NutritionSettings", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -5492,6 +5724,15 @@ namespace enx_fit.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("enx_fit.Models.ProgressPhoto", b =>
+                {
+                    b.HasOne("enx_fit.Areas.Identity.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("enx_fit.Models.SetEntry", b =>
                 {
                     b.HasOne("enx_fit.Models.WorkoutExercise", "WorkoutExercise")
@@ -5499,6 +5740,41 @@ namespace enx_fit.Migrations
                         .HasForeignKey("WorkoutExerciseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.OwnsMany("enx_fit.Models.SetDrop", "Drops", b1 =>
+                        {
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
+
+                            b1.Property<bool>("IsBodyweight")
+                                .HasColumnType("boolean");
+
+                            b1.Property<int>("Order")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("Reps")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("SetEntryId")
+                                .HasColumnType("integer");
+
+                            b1.Property<decimal>("Weight")
+                                .HasColumnType("numeric");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("SetEntryId");
+
+                            b1.ToTable("SetDrops", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("SetEntryId");
+                        });
+
+                    b.Navigation("Drops");
 
                     b.Navigation("WorkoutExercise");
                 });
@@ -5579,6 +5855,15 @@ namespace enx_fit.Migrations
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("enx_fit.Models.WorkoutTemplateCollection", b =>
+                {
+                    b.HasOne("enx_fit.Areas.Identity.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("enx_fit.Models.Exercise", b =>

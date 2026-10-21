@@ -13,6 +13,7 @@ public partial class WorkoutService
         if (await CommandExistsAsync(id, operationId)) return;
         var session = await EditableSessionAsync(id);
         CheckRevision(session, expectedRevision);
+        if (session.State == WorkoutStatus.Paused) throw new InvalidOperationException("Продолжите тренировку перед изменением упражнений.");
         if (picks.Count is < 1 or > 40 || picks.Select(p => p.ExerciseId).Distinct().Count() != picks.Count)
             throw new InvalidOperationException("Выберите от 1 до 40 разных упражнений.");
         foreach (var pick in picks) Validator.ValidateObject(pick, new ValidationContext(pick), true);

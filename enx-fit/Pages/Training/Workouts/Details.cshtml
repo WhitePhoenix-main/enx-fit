@@ -1,48 +1,45 @@
 @page "/Workouts/Details/{id:int}"
 @using enx_fit.ViewModels.Workouts
-@model enx_fit.Pages.Training.Workouts.DetailsModel
 @using System.Text.Json
+@using enx_fit.Services.Dashboard
+@model enx_fit.Pages.Training.Workouts.DetailsModel
 @{
-    Layout = Model.IsAdministrator ? "/Pages/Shared/Layouts/_AdminLayout.cshtml" : "/Pages/Shared/Layouts/_DashboardReferenceLayout.cshtml";
+    Layout = Model.Workout.IsActive ? "/Pages/Shared/Layouts/_WorkoutSessionLayout.cshtml" : "/Pages/Shared/Layouts/_TrainingLogLayout.cshtml";
+    ViewData["WorkoutSession"] = Model.Workout.IsActive;
     ViewData["Title"] = Model.Workout.Title ?? "Тренировка";
+    ViewData["ActiveSession"] = Model.Workout.IsActive;
+    var w = Model.Workout;
 }
-<div class="active-workout app-workspace" data-active-workout data-session-id="@Model.Workout.Id"
-     data-viewer="@Model.ViewerId" data-recorded-request="@TempData["RecordedWorkout"]">
-    <script type="application/json"
-            id="workout-execution-state">@Html.Raw(JsonSerializer.Serialize(Model.Execution, WorkoutBuilderInput.JsonOptions))</script>
-    <partial name="_WorkoutHeader" model="Model" />
-    @if (TempData["StatusMessage"] is string message)
-    {
-        <p class="status-message app-status" data-app-state="saved" role="status">
-            <admin-icon name="check"/>@message</p>
-    }
-    <div asp-validation-summary="All" class="validation-message app-status app-notice" data-app-state="error"
-         role="alert"></div>
-    <p class="execution-sync app-status" data-app-state="saved" data-sync-status role="status" aria-live="polite">Все
-        изменения сохранены</p>
-    <button type="button" class="button secondary" data-reconcile hidden>Применить мои изменения к текущей версии
-    </button>
-    <button type="button" class="text-button" data-discard-operation hidden>Убрать отклонённое действие из очереди
-    </button>
-    <partial name="_WorkoutOverview" model="Model" />
-    <div class="workout-app-layout">
-        <nav class="workout-app-sidebar" data-app-sidebar aria-label="Упражнения занятия" hidden></nav>
-        <div class="session-exercises">
-            @foreach (var exercise in Model.Exercises)
-            {
-                <partial name="_WorkoutExercise" model="exercise" />
-            }
-        </div>
-    </div>
-    <partial name="_WorkoutActions" model="Model.Workout" />
+@if (Model.Workout.IsActive)
+{ <partial name="_ActiveWorkout" model="Model" /> }
+else
+{
+<div class="log-session" data-training-log data-active-workout data-coach-mode="@Model.CoachMode.ToString().ToLowerInvariant()" data-session-id="@w.Id" data-viewer="@Model.ViewerId" data-recorded-request="@TempData["RecordedWorkout"]" data-session-status="@w.State" data-workouts-url="@Url.Page("/Training/Index",new { ClientId=Model.CoachMode?w.UserId:null })">
+    <script type="application/json" id="workout-execution-state">@Html.Raw(JsonSerializer.Serialize(Model.Execution, WorkoutBuilderInput.JsonOptions))</script>
+    <header class="log-session-header"><a class="log-back" asp-page="/Training/Index"><span aria-hidden="true">‹</span><span>Тренировки</span></a><span class="log-session-label"><i></i>@(w.State == WorkoutStatus.Cancelled ? "ОТМЕНЕНА" : w.IsFinished ? "В ИСТОРИИ" : w.IsActive ? "ТРЕНИРОВКА ИДЁТ" : "ПЛАН ТРЕНИРОВКИ")</span><div class="log-header-actions">
+        @if (w.IsActive) { <button type="button" class="button log-finish" data-dialog="finish-workout-dialog" data-finish disabled="@(!w.WorkoutExercises.Any(e => e.SetEntries.Any(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0)))">Завершить</button> }
+        @if (w.State == WorkoutStatus.Planned) { <form method="post" asp-page-handler="Start"><button class="button">Начать</button></form> }
+        <details class="log-menu"><summary aria-label="Меню тренировки"><reference-icon name="more" /></summary><div>@if (w.IsActive) { <button type="button" data-control="@(w.State == WorkoutStatus.Paused ? "resume" : "pause")" data-pause-button>Пауза</button> }<a asp-page="./Edit" asp-route-id="@w.Id">Название и заметки</a>@if (w.IsActive) { <button type="button" class="danger-text" data-dialog="cancel-workout-dialog">Отменить тренировку</button> }</div></details>
+    </div></header>
+    <div class="log-session-title"><p class="eyebrow">@w.Date.ToString("dddd, d MMMM", System.Globalization.CultureInfo.GetCultureInfo("ru-RU"))</p><h1>@(w.Title ?? "Свободная тренировка")</h1>@if (!string.IsNullOrWhiteSpace(w.Notes)) { <p class="muted">@w.Notes</p> }</div>
+    @if (TempData["StatusMessage"] is string message) { <p class="log-notice" role="status">@message</p> }
+    <div asp-validation-summary="All" class="validation-message" role="alert"></div>
+    <div class="log-session-stats"><div><span>Длительность</span><strong data-session-clock="@w.StartedAtUtc?.ToString("O")">@(Model.Execution.ElapsedSeconds / 60):@((Model.Execution.ElapsedSeconds % 60).ToString("00"))</strong></div><div><span>Объём, кг</span><strong data-log-volume>@DashboardData.Volume(w).ToString("0.##")</strong></div><div><span>Подходы</span><strong><span data-log-done>@Model.Execution.CompletedSets</span><small> / <span data-log-total>@w.WorkoutExercises.Sum(e => e.SetEntries.Count)</span></small></strong></div></div>
+    <div class="log-save-state"><span class="execution-sync" data-sync-status role="status" aria-live="polite">Все изменения сохранены</span><span class="log-save-dot" aria-hidden="true"></span></div>
+    <button type="button" class="button secondary" data-reconcile hidden>Применить мои изменения к текущей версии</button><button type="button" class="text-button" data-discard-operation hidden>Убрать отклонённое действие из очереди</button>
+    <p class="log-notice" data-pause-notice hidden>Тренировка на паузе. Таймеры остановлены.</p>
+    @if (w.IsFinished) { <partial name="_LogSummary" model="Model" /> }
+    <div class="log-session-grid"><div class="log-session-body">
+        <div class="log-section-heading" data-exercises-heading hidden="@(Model.Exercises.Count == 0)"><h2>Упражнения <span data-exercise-total>@Model.Exercises.Count</span></h2>@if (!w.IsFinished) { <span>Вес → повторения → <reference-icon name="check-circle" /></span> }</div>
+        @if (!w.IsFinished && Model.Exercises.Count == 0) { <section class="workout-empty log-empty"><span class="log-empty-icon"><reference-icon name="workout-outline" /></span><h2>Ваше первое упражнение</h2><p>Соберите тренировку под себя.<br />Начните с одного упражнения.</p><button class="button" type="button" data-dialog="exercise-dialog" data-add-exercise><reference-icon name="plus" />Выбрать упражнения</button>@if (Model.Templates.Count > 0) { <button type="button" class="text-button" data-dialog="load-template-dialog">Загрузить шаблон</button> }</section> }
+        <div class="session-exercises">@foreach (var exercise in Model.Exercises) { <partial name="_LogExercise" model="exercise" /> }</div>
+        @if (!w.IsFinished) { <button type="button" class="log-add-exercise" data-dialog="exercise-dialog" data-add-exercise><reference-icon name="plus" />Добавить упражнения</button> }
+    </div><aside class="log-session-aside"><p class="eyebrow">СОСТАВ ТРЕНИРОВКИ</p><nav data-log-outline aria-label="Упражнения тренировки"></nav><p class="log-aside-hint">Нажмите на прошлый результат,<br />чтобы повторить вес и повторы.</p><a class="text-button" asp-page="/Training/Records"><reference-icon name="trophy" />Мои рекорды</a></aside></div>
+    @if (w.IsActive) { <section class="log-rest-bar" data-rest-panel hidden aria-label="Отдых после подхода"><div class="log-rest-info"><span class="log-rest-ring"><reference-icon name="clock" /></span><div><span data-rest-caption>Отдых после подхода</span><strong data-rest-clock>01:30</strong></div></div><div class="rest-controls"><button type="button" data-control="adjust-rest" data-seconds="-15">−15</button><button type="button" data-control="adjust-rest" data-seconds="30">+30</button><button type="button" class="log-rest-skip" data-control="skip-rest">Пропустить</button><button type="button" class="log-sound" data-sound aria-pressed="false">Звук: выкл.</button></div></section> }
+    <p class="log-toast" data-log-toast role="status" hidden></p>
 </div>
-<partial name="_WorkoutDialogs" model="Model" />
+<partial name="_LogDialogs" model="Model" />
+<partial name="_LogHistoryDialog" />
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/exercise-library.css" asp-append-version="true"/>
-    <link rel="stylesheet" href="~/css/active-workout.css" asp-append-version="true"/>
-    <link rel="stylesheet" href="~/css/workout-app.css" asp-append-version="true"/> }
-
-@section Scripts {
-    <script src="~/js/training.js" asp-append-version="true"></script>
 }
+

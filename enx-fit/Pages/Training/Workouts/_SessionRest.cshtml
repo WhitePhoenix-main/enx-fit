@@ -1,0 +1,16 @@
+@model enx_fit.Pages.Training.Workouts.DetailsModel
+@{ var rest=Model.Workout.WorkoutExercises.OrderBy(e=>e.Order).FirstOrDefault()?.TargetRestSeconds??60; }
+<dialog class="app-dialog qs-rest-sheet" id="quick-rest-dialog" aria-labelledby="quick-rest-title">
+<section data-rest-panel>
+    <div class="dialog-heading"><h2 id="quick-rest-title">Отдых</h2><button type="button" class="qs-dialog-settings" data-dialog="quick-rest-settings-dialog" aria-label="Настройки отдыха"><reference-icon name="settings" /></button><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
+    <p class="qs-rest-context" data-qw-rest-context>Между подходами</p>
+
+    <div class="qs-countdown"><strong data-rest-clock>01:00</strong><span data-rest-caption>Отдых</span><small data-qw-rest-total>из 01:00</small></div>
+    <div class="qs-rest-track" data-qw-ring><i></i></div>
+    <div class="qs-timer-adjust"><button type="button" data-qw-adjust="-15">−15 с</button><button type="button" data-qw-timer-toggle data-control="start-rest" data-seconds="@rest" aria-label="Запустить таймер отдыха"><reference-icon name="play" /></button><button type="button" data-qw-adjust="15">+15 с</button></div>
+    <div class="qs-timer-presets" role="group" aria-label="Продолжительность отдыха">@foreach(var seconds in new[]{60,90,120}){<button type="button" data-qw-preset="@seconds" aria-pressed="@(seconds==rest?"true":"false")">@seconds с</button>}<button type="button" data-sound aria-pressed="false">Звук: выкл.</button></div>
+    <div class="qs-next-set" data-qw-next-set hidden><p>Следующий подход <small data-qw-next-name></small></p><div><input type="number" min="0" max="10000" step="0.01" inputmode="decimal" data-qw-next-weight aria-label="Вес следующего подхода, кг" /><span data-qw-next-weight-unit>кг</span><span data-qw-next-bodyweight hidden>Свой вес</span><span>×</span><input type="number" min="0" max="1000" inputmode="numeric" data-qw-next-reps aria-label="Повторы следующего подхода" /><span>повторов</span></div></div>
+    <button type="button" class="qs-rest-skip" data-control="skip-rest" data-qw-timer-skip><reference-icon name="skip" /><span>Пропустить отдых</span></button>
+    <p class="qs-rest-hint">Таймер запускается после отметки подхода</p>
+</section></dialog>
+<dialog class="app-dialog" id="quick-rest-settings-dialog"><div class="dialog-heading"><h2>Настройки отдыха</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><p>Время по умолчанию применяется к незавершённым подходам этой тренировки.</p><div class="qs-timer-modes" role="group" aria-label="Режим таймера"><button type="button" data-qw-mode="timer" aria-pressed="true">Таймер</button><button type="button" data-qw-mode="stopwatch" aria-pressed="false">Секундомер</button></div><form method="post" asp-page-handler="SessionRest" data-qw-rest-form><label>Продолжительность, секунды<input name="seconds" type="number" min="0" max="900" required value="@rest" /></label><p data-qw-rest-status role="status" hidden></p><button class="button" type="submit">Сохранить</button></form></dialog>

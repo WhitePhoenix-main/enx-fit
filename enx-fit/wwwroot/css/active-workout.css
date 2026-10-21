@@ -38,3 +38,18 @@
 .active-workout :is(.exercise-previous,.set-extra) :is(summary,a,button,input):focus-visible { outline:2px solid #9cbdff; outline-offset:3px; }
 @media(max-width:1023px) { .exercise-previous summary > span { margin-left:0; width:100%; padding-left:16px; }.active-workout .set-extra > div { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }.active-workout .set-extra .set-effort { grid-column:1/-1; }.active-workout .set-extra input:not([type=checkbox]) { font-size:16px; min-height:48px; }.set-effort-prompt { display:block; }.set-effort-prompt button { margin-top:3px; }.set-result-meta,.set-plan-hint { font-size:11px; } }
 @media(prefers-reduced-motion:reduce) { .exercise-previous summary::before { transition:none; } }
+.set-kind-controls { display:flex; align-items:center; flex-wrap:wrap; gap:8px 16px; margin-top:6px; }
+.bodyweight-check { display:flex!important; align-items:center; gap:8px; width:auto!important; min-height:44px; font-size:12px; color:var(--muted); cursor:pointer; }
+.bodyweight-check input { flex:none; width:18px; height:18px; min-height:18px; accent-color:var(--blue); }
+.bodyweight-value { font-size:12px; line-height:1.5; color:var(--text); overflow-wrap:anywhere; }
+.drop-set-badge { font-size:11px; color:#b4c8ff; border:1px solid #415a81; border-radius:6px; padding:4px 8px; }
+.set-drops { display:grid; gap:8px; }
+.set-drop { border-left:2px solid #5679aa; padding:8px 0 0 10px; }
+.drop-main { display:grid; grid-template-columns:56px minmax(0,1fr) minmax(0,1fr) 44px; align-items:center; gap:8px; }
+.drop-main input { min-width:0; width:100%; min-height:44px; font-size:16px; }
+.drop-number { font-size:11px; color:#aac1e5; }
+.drop-main .text-button { min-width:32px; min-height:44px; }
+.add-drop { min-height:44px; color:#a8c0ff; font-size:12px; }
+.drop-help { display:block; margin:0 0 8px; color:var(--muted); font-size:11px; line-height:1.6; }
+.new-set-form .bodyweight-check { grid-column:1/-1; display:flex; }
+@media(max-width:599px) { .drop-main { grid-template-columns:42px minmax(0,1fr) minmax(0,1fr) 32px; gap:6px; } .set-drop { padding-left:7px; } }

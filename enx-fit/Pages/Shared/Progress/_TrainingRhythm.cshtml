@@ -1,0 +1,18 @@
+@using enx_fit.ViewModels.Dashboard
+@model enx_fit.Services.Dashboard.DashboardData
+@{ var rhythm = new TrainingRhythmViewModel(Model); var ru = DashboardWorkoutsViewModel.Russian; }
+<section class="training-rhythm" aria-label="Ваш ритм за 28 дней">
+    <header><div><p class="rhythm-eyebrow">Движение в вашем темпе</p><h2>Ваш ритм</h2></div><span>28 дней</span></header>
+    <div class="rhythm-summary"><strong>@rhythm.Sessions</strong><span>Всего занятий<br />Активных дней: @rhythm.ActiveDays из 28</span></div>
+    <div class="rhythm-days" role="list" aria-label="Дни с записанными тренировками">
+        @foreach (var day in rhythm.Days)
+        {
+            <span role="listitem" class="@(day.Count > 0 ? "has-workout" : "") @(day.Date == Model.Today ? "is-today" : "")"
+                  title="@day.Date.ToString("d MMMM", ru): @(day.Count > 0 ? $"занятий — {day.Count}" : "нет записанных занятий")"
+                  aria-label="@day.Date.ToString("d MMMM", ru): занятий @day.Count"><span aria-hidden="true">@(day.Count > 0 ? "●" : "·")</span></span>
+        }
+    </div>
+    <div class="rhythm-range"><span>@rhythm.Days[0].Date.ToString("d MMMM", ru)</span><span>Сегодня</span></div>
+    <p class="rhythm-message">@rhythm.Message</p>
+    <details><summary>Как это считается</summary><p>Каждая точка — один день. Отмечаем завершённые тренировки хотя бы с одним выполненным рабочим подходом, включая ручные записи. Разминка, планы и отменённые занятия не учитываются. Дни без записей не означают отсутствие движения.</p><p>Активных семидневных отрезков: @rhythm.ActiveWeeks из 4. Это история занятий, а не оценка восстановления организма.</p></details>
+</section>

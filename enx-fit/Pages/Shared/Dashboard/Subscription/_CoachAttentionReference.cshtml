@@ -1,0 +1,8 @@
+@using enx_fit.ViewModels.Dashboard
+@model SubscriptionDashboardViewModel
+@{var alerts=Model.Page.Attention?.Alerts.DistinctBy(a=>a.ClientId).Take(4).ToList();}
+<section class="rd-card rd-attention"><header class="rd-section-header"><h2>Требуют внимания</h2><a asp-page="/Coaching/Clients" asp-route-Scope="attention">Все <reference-icon name="arrow" /></a></header>
+        @if (Model.Preview) { @foreach (var (name, reason) in new[] { ("Анна К.", "Не загружен отчёт · 3 дня"), ("Дмитрий С.", "Нет активности · 5 дней"), ("Мария Л.", "Пропуск тренировок · 4 дня") }) { <a class="rd-attention-row" asp-page="/Coaching/Clients"><span class="rd-client-avatar">@name[..1]</span><span><strong>@name</strong><small>@reason</small></span><reference-icon name="alert" /><reference-icon name="chevron" /></a> } }
+        else if (alerts?.Count > 0) { @foreach (var alert in alerts) { <a class="rd-attention-row" asp-page="/Coaching/Client" asp-route-id="@alert.ClientId"><span class="rd-client-avatar">@alert.Name[..1]</span><span><strong>@alert.Name</strong><small>@alert.Reason</small></span><reference-icon name="alert" /><reference-icon name="chevron" /></a> } }
+        else { <div class="rd-insight-empty"><reference-icon name="check-circle" /><p>Все клиенты в порядке. Новых сигналов нет.</p></div> }
+    </section>

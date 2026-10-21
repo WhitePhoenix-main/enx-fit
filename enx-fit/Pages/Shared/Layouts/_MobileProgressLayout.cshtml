@@ -1,0 +1,44 @@
+@{
+    var page = (enx_fit.Pages.Progress.IndexModel)Model;
+    var d = page.Data;
+    var navigation = enx_fit.ViewModels.Navigation.MobileAppNavigationViewModel.Create(ViewData, User, ViewContext.RouteData.Values["page"] as string);
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#111518" />
+    <meta name="color-scheme" content="dark" />
+    <title>@ViewData["Title"] — Enix Fit</title><partial name="/Pages/Shared/Icons/_AppIcons.cshtml" />
+    <link rel="preload" href="~/fonts/dashboard-sans.ttf" as="font" type="font/ttf" crossorigin />
+    <link rel="stylesheet" href="~/css/subscription-dashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/subscription-theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app-chrome.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/account-avatar.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/mobile-progress.css" asp-append-version="true" />
+</head>
+<body class="fitness-app rd-app progress-app" data-subscription="@d.Theme" data-progress-plan="@d.Badge">
+<a class="rd-skip" href="#main-content">Перейти к содержимому</a>
+<div class="rd-shell">
+    <aside class="rd-sidebar">
+        <a class="rd-brand" asp-page="/Dashboard/Index"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /></a>
+        <partial name="/Pages/Shared/Navigation/_FitnessNavigation.cshtml" />
+        <div class="rd-sidebar-footer"><a class="rd-profile" asp-page="/Account/Profile"><span class="rd-avatar">@d.ViewerName[..1].ToUpperInvariant()</span><span><strong>@d.ViewerName</strong><small>Подписка @d.Badge</small></span></a></div>
+    </aside>
+    <div class="rd-content">
+        <header class="rd-mobile-header">
+            <a class="rd-brand" asp-page="/Dashboard/Index"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /></a>
+            <div class="account-tools"><button class="rd-icon-button" type="button" data-progress-dialog="progress-notifications" aria-label="Уведомления"><reference-icon name="bell" /></button><partial name="/Pages/Shared/Navigation/_AccountAvatar.cshtml" /></div>
+        </header>
+        <main id="main-content" tabindex="-1">@RenderBody()</main>
+    </div>
+</div>
+<partial name="/Pages/Shared/Navigation/_MobileBottomNavigation.cshtml" model="navigation" />
+<dialog class="rd-dialog" id="progress-notifications"><div class="dialog-heading"><h2>@(d.Coach?"Требуют внимания":"Уведомления")</h2><button type="button" data-progress-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
+@if(d.Coach && d.Alerts.Count>0){foreach(var alert in d.Alerts.Take(8)){<a class="mp-row" asp-page="/Progress/Index" asp-route-SelectedClient="@alert.ClientId" asp-route-Weeks="@d.Weeks"><span>@alert.Name<small>@alert.Reason</small></span><reference-icon name="chevron" /></a>}}else{<p>Новых уведомлений пока нет.</p>}</dialog>
+<script src="~/js/progress-overview.js" asp-append-version="true"></script>
+<script src="~/js/mobile-progress.js" asp-append-version="true" defer></script>
+<script src="~/js/account-avatar.js" asp-append-version="true" defer></script>
+</body>
+</html>

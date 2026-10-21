@@ -97,6 +97,8 @@ public class LoginModel(
     public async Task<IActionResult> OnPostRegisterAsync(string? returnUrl = null)
     {
         await PrepareAsync(true, returnUrl);
+        // Preserve explicit local destinations; a new account's default next step is setup.
+        if (!Url.IsLocalUrl(returnUrl)) ReturnUrl = Url.Page("/Account/TrainingSetup")!;
         if (string.IsNullOrEmpty(Input.ConfirmPassword))
             ModelState.AddModelError("Input.ConfirmPassword", "Повторите пароль.");
         else if (Input.Password != Input.ConfirmPassword)

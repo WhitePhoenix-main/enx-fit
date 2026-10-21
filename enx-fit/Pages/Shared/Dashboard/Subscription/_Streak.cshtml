@@ -1,0 +1,9 @@
+@using enx_fit.ViewModels.Dashboard
+@model SubscriptionDashboardViewModel
+<section class="rd-card rd-streak" aria-label="Регулярность тренировок">
+    <div class="rd-streak-top"><div class="rd-ring" style="--ring-progress:@(Model.Preview ? 83 : Math.Min(100, Model.Streak * 100 / Math.Max(1, Model.BestStreak + 1)))%"><div><reference-icon name="flame" /><strong>@Model.Streak</strong><small>дня подряд</small></div></div>
+        <div class="rd-streak-content"><h2>@(Model.Streak > 0 ? Model.Premium ? "Вы в отличной форме!" : "Вы в хорошей теме!" : "Время для первого шага!")</h2><p>@(Model.Premium ? "Серия тренировок" : $"На этой неделе: {Model.WeeklyDone} из {Model.WeeklyGoal} тренировок")</p><div class="rd-streak-days" aria-label="Выполнение плана">@for (var i = 0; i < (Model.Premium ? 7 : Model.WeeklyGoal); i++) { var done = Model.Premium ? Model.Preview ? i < 5 : Model.Week[i].Done : i < Model.WeeklyDone; <span class="@(done ? "is-done" : "")" aria-label="@(done ? "Выполнено" : "Не выполнено")">@if (done) { <reference-icon name="check" /> }@if (Model.Premium) { <small>@Model.Week[i].Name</small> }</span> }</div></div>
+    </div>
+    @if (Model.Premium) { <div class="rd-streak-footer"><p>@(Model.Preview ? "Ещё 2 тренировки до нового рекорда!" : Model.Streak > 0 ? $"Продолжайте в своём темпе. На этой неделе: {Model.WeeklyDone} из {Model.WeeklyGoal}." : "Начните сегодня — ваш прогресс начинается с одного занятия.")</p><a asp-page="/Progress/Index"><reference-icon name="trophy" /><strong>Лучшая серия: @Model.BestStreak дней</strong><reference-icon name="chevron" /></a></div> }
+    else { <p class="rd-streak-note">Стабильность — ключ к прогрессу.<br />Продолжайте в том же духе!</p> }
+</section>

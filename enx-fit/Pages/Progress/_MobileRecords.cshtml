@@ -1,0 +1,4 @@
+@using enx_fit.ViewModels.Progress
+@model enx_fit.Pages.Progress.IndexModel
+@{var p=Model.Data.Person!;}
+<section class="mp-records"><header class="mp-section-heading"><h2>Личные рекорды</h2><a asp-page="/Training/Records">Все <reference-icon name="arrow" /></a></header><div class="mp-card">@foreach(var r in p.Records.Where(r=>r.Gain is null or >=0).Take(Model.Data.Advanced?10:2)){<a class="mp-row mp-record" asp-page="/Progress/ExerciseAnalytics/Index" asp-route-ExerciseId="@r.ExerciseId"><reference-icon name="trophy" /><span>@r.Name</span><strong>@ProgressOverview.Number(r.Value) @r.Unit</strong><small>@r.Date.ToString("d MMM")</small><reference-icon name="chevron" /></a>}@if(!p.Records.Any(r=>r.Gain is null or >=0)){<p class="mp-empty">Новых рекордов за период пока нет.</p>}</div></section>

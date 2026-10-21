@@ -1,0 +1,7 @@
+@using enx_fit.ViewModels.Dashboard
+@model SubscriptionDashboardViewModel
+<section class="rd-card rd-coach-records"><header class="rd-section-header"><h2>Личные рекорды клиентов</h2><a asp-page="/Coaching/Clients">Все <reference-icon name="arrow" /></a></header>
+        @if (Model.Preview) { @foreach (var (name, exercise, gain, result) in new[] { ("Иван П.", "Жим лёжа", "+20 кг", "100 → 120 кг"), ("Елена С.", "Приседания", "+15 кг", "60 → 75 кг"), ("Максим В.", "Подтягивания", "+5", "8 → 13 раз"), ("Ольга Д.", "Планка", "+1 мин", "2 → 3 мин") }) { <div class="rd-coach-record-row"><reference-icon name="workout-outline" /><span><strong>@name</strong><small>@exercise</small></span><span><strong>@gain</strong><small>@result</small></span></div> } }
+        else if (Model.Overview.Records.Count > 0) { @foreach (var record in Model.Overview.Records) { <a class="rd-coach-record-row" asp-page="/Coaching/Client" asp-route-id="@record.ClientId"><reference-icon name="workout-outline" /><span><strong>@record.ClientName</strong><small>@record.Exercise</small></span><span><strong>@record.Weight.ToString("0.##") кг</strong>@if (record.Gain is { } gain) { <small>+@gain.ToString("0.##") кг</small> }</span></a> } }
+        else { <div class="rd-insight-empty"><reference-icon name="trophy" /><p>Результаты появятся после занятий клиентов.</p></div> }
+    </section>

@@ -1,0 +1,9 @@
+@inject enx_fit.Security.IFeatureAccessService BrandAccess
+@{ var brand = await enx_fit.Presentation.Navigation.BrandPresentation.ResolveAsync(ViewData, User, BrandAccess); }
+<span class="enix-brand" data-brand-plan="@brand.Theme" style="--brand-color:@brand.Color">
+    <span class="enix-brand-mark" aria-hidden="true"><svg viewBox="0 0 124 72" fill="currentColor" focusable="false" xmlns="http://www.w3.org/2000/svg"><use href="@Url.Content("~/images/brand/ef-mark.svg")#enix-ef" /></svg></span>
+    <span class="enix-brand-copy">
+        <strong class="enix-brand-name">enix fit</strong>
+        <small class="enix-brand-tagline">Fitness &amp; progress</small>
+    </span>
+</span>

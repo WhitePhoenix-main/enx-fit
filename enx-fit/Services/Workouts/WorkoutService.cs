@@ -8,6 +8,21 @@ namespace enx_fit.Services.Workouts;
 
 public partial class WorkoutService(ApplicationDbContext dbContext, CurrentUser currentUser)
 {
+    private string? executionOwnerId;
+    private string WorkoutOwnerId => executionOwnerId ?? currentUser.Id;
+
+    // A request must explicitly enter the coach execution context before any client data is visible.
+    // This service is scoped; the grant cannot survive this HTTP request or change the signed-in user.
+    public async Task<bool> EnterCoachExecutionAsync(int id, IFeatureAccessService features)
+    {
+        if (!await features.CanUseAsync(Feature.CoachProgramAssignment)) return false;
+        var owner = await dbContext.WorkoutSessions.AsNoTracking().Where(w => w.Id == id && w.UserId != currentUser.Id &&
+                dbContext.Users.Any(c => c.Id == w.UserId && c.TrainerId == currentUser.Id))
+            .Select(w => w.UserId).SingleOrDefaultAsync();
+        if (owner is null) return false;
+        executionOwnerId = owner;
+        return true;
+    }
     public async Task<IReadOnlyList<WorkoutSession>> GetAllAsync(string? ownerId = null)
     {
         var query = VisibleWorkouts();
@@ -158,8 +173,12 @@ public partial class WorkoutService(ApplicationDbContext dbContext, CurrentUser 
         return AddWorkoutExerciseResult.Success;
     }
 
-    public async Task<AddSetEntryResult> AddSetAsync(int workoutSessionId, AddSetEntryInputModel input, bool completed = true)
+    public async Task<AddSetEntryResult> AddSetAsync(int workoutSessionId, AddSetEntryInputModel input, bool completed = true,
+        Guid? operationId = null, Guid? expectedRevision = null)
     {
+        if (await CommandExistsAsync(workoutSessionId, operationId)) return AddSetEntryResult.Success;
+        System.ComponentModel.DataAnnotations.Validator.ValidateObject(input,
+            new System.ComponentModel.DataAnnotations.ValidationContext(input), true);
         if (await VisibleWorkouts().AnyAsync(w => w.Id == workoutSessionId && (w.Status == WorkoutStatus.Completed || w.Status == WorkoutStatus.Cancelled || (w.StartedAtUtc != null && w.CompletedAtUtc != null))))
             return AddSetEntryResult.WorkoutExerciseNotFound;
         var workoutExerciseExists = await dbContext.WorkoutExercises
@@ -173,19 +192,24 @@ public partial class WorkoutService(ApplicationDbContext dbContext, CurrentUser 
             return AddSetEntryResult.WorkoutExerciseNotFound;
         }
 
+        var session = await VisibleWorkouts().SingleAsync(w => w.Id == workoutSessionId);
+        CheckRevision(session, expectedRevision);
+        if (session.State == WorkoutStatus.Paused) throw new InvalidOperationException("Продолжите тренировку перед добавлением подхода.");
+
         dbContext.SetEntries.Add(new SetEntry
         {
             WorkoutExerciseId = input.WorkoutExerciseId,
             SetNumber = input.SetNumber,
-            Weight = input.Weight,
+            Weight = input.IsBodyweight ? 0 : input.Weight,
+            IsBodyweight = input.IsBodyweight,
+            Drops = SetDropInput.ToEntries(input.Drops),
             Reps = input.Reps,
             Rir = input.Rir,
             IsWarmup = input.IsWarmup,
             IsCompleted = completed, RestSeconds = input.RestSeconds,
             Notes = string.IsNullOrWhiteSpace(input.Notes) ? null : input.Notes.Trim()
         });
-        var session = await VisibleWorkouts().SingleAsync(w => w.Id == workoutSessionId);
-        await SaveCommandAsync(session, null);
+        await SaveCommandAsync(session, operationId);
         return AddSetEntryResult.Success;
     }
 
@@ -199,7 +223,8 @@ public partial class WorkoutService(ApplicationDbContext dbContext, CurrentUser 
     private IQueryable<WorkoutSession> VisibleWorkouts() =>
         currentUser.IsAdministrator
             ? dbContext.WorkoutSessions
-            : dbContext.WorkoutSessions.Where(workout => workout.UserId == currentUser.Id);
+            : dbContext.WorkoutSessions.Where(workout => workout.UserId == WorkoutOwnerId &&
+                (executionOwnerId == null || dbContext.Users.Any(c => c.Id == workout.UserId && c.TrainerId == currentUser.Id)));
 }
 
 public enum AddWorkoutExerciseResult

@@ -1,0 +1,35 @@
+@page "/Workouts/Templates"
+@model enx_fit.Pages.Training.Workouts.TemplatesModel
+@using enx_fit.ViewModels.Workouts
+@{
+    Layout="/Pages/Shared/Layouts/_QuickWorkoutLayout.cshtml";
+    ViewData["Title"]="Шаблоны";
+    ViewData["WorkoutShellClass"]="template-catalog";
+    ViewData["SelectedTemplate"]=Model.Selected;
+    var shownCards=Model.Access.CanUse(Feature.CoachProgramAssignment)?Model.Cards.DistinctBy(c=>c.Program.Id).ToArray():Model.Cards;
+}
+@section Styles { <link rel="stylesheet" href="~/css/workout-templates.css" asp-append-version="true" /> }
+<div class="tc-page" data-template-catalog data-initial-category="@Model.Category" data-viewer="@Model.ViewerId" data-selected="@Model.Selected" data-open-detail="@(Request.Query.ContainsKey("Selected").ToString().ToLowerInvariant())">
+    <header class="tc-heading"><div><h1>Шаблоны</h1><p>Выбирайте готовые шаблоны, программы или свои тренировки. Начните прямо сейчас.</p></div><label class="tc-search"><reference-icon name="search" /><input type="search" placeholder="Поиск шаблонов, например «ноги»..." aria-label="Поиск шаблонов" data-template-search /></label></header>
+    @if (TempData["StatusMessage"] is string message) { <p class="qw-notice" role="status">@message</p> }
+    <div asp-validation-summary="All" class="validation-message" role="alert"></div>
+    @if (Model.ActiveId is { } active) { <p class="tc-active-note">У вас идёт тренировка. <a asp-page="./Details" asp-route-id="@active">Продолжить занятие <reference-icon name="arrow" /></a></p> }
+    <div class="tc-layout"><div class="tc-library">
+        <div class="tc-filter-bar"><div class="tc-tabs" role="group" aria-label="Раздел шаблонов"><button type="button" data-template-tab="all" aria-pressed="true">Все</button><button type="button" data-template-tab="mine" aria-pressed="false">Мои шаблоны</button><button type="button" data-template-tab="used" aria-pressed="false">Часто используемые</button><button type="button" data-template-tab="favorites" aria-pressed="false">Избранные</button></div><button class="qw-outline-button tc-filter-toggle" type="button" data-dialog="template-filters-dialog"><reference-icon name="sliders" />Фильтры</button></div>
+        <nav class="tc-categories" aria-label="Категории шаблонов">@foreach(var (key,title,icon) in new[] {("all","Все","grid"),("home","Дома","home-outline"),("gym","Зал","workout"),("upper","Верх тела","muscle"),("legs","Ноги","legs"),("full","Full Body","user"),("strength","Сила","bars-outline"),("weight","Похудение","flame"),("beginner","Новичок","book"),("intermediate","Средний","bars"),("advanced","Продвинутый","bars") }) { <button type="button" data-template-category="@key" aria-pressed="@(key=="all" ? "true":"false")"><reference-icon name="@icon" /><span>@title</span></button> }</nav>
+        <section class="tc-group" data-template-group="catalog"><header><h2>Популярные шаблоны <small data-template-count="catalog"></small></h2><button class="text-button" type="button" data-template-all="catalog">Смотреть все <reference-icon name="arrow" /></button></header><div class="tc-card-grid">@foreach(var card in shownCards.Where(c => !c.Mine)) { <partial name="_TemplateCard" model="card" /> }</div></section>
+        <section class="tc-group" data-template-group="mine"><header><h2>Мои шаблоны <small data-template-count="mine"></small></h2><a class="text-button" asp-page="/Training/Programs/Edit">Создать шаблон <reference-icon name="plus" /></a></header><div class="tc-card-grid">@foreach(var card in shownCards.Where(c => c.Mine)) { <partial name="_TemplateCard" model="card" /> }<a class="tc-create-template" asp-page="/Training/Programs/Edit"><reference-icon name="plus-circle" /><strong>Создать шаблон</strong><span>Соберите свою тренировку<br />и сохраните её как шаблон.</span></a></div></section>
+        <p class="tc-empty" data-template-empty hidden>Шаблоны не найдены. Измените запрос или фильтры.</p>
+        @if (Model.Cards.Count == 0) { <section class="qw-empty"><reference-icon name="layers" /><h2>Добавьте первый шаблон</h2><p>Создайте тренировку в программе или сохраните завершённое занятие как шаблон.</p><a class="button" asp-page="/Training/Programs/Edit">Создать шаблон</a></section> }
+        <div class="tc-more-row"><button class="qw-outline-button" type="button" data-template-more>Показать ещё</button><button class="text-button" type="button" data-template-reset>Сбросить фильтры</button></div>
+    <partial name="_TemplateWorkspace" model="Model" />
+    </div><aside class="tc-detail" aria-label="Выбранный шаблон" data-template-detail-host><button type="button" class="tc-close-detail" data-template-close aria-label="Закрыть описание"><reference-icon name="close" /></button><p class="tc-empty" data-template-preview-empty hidden>Выберите шаблон из списка.</p>
+        @foreach(var card in Model.Cards) { <partial name="_TemplateDetail" model="@(new WorkoutTemplateDetails(card,Model.Cards.Where(c => c.Workout.Id != card.Workout.Id && c.Focus==card.Focus).Take(3).ToArray()))" /> }
+    </aside></div>
+    <dialog class="app-dialog" id="template-filters-dialog"><div class="dialog-heading"><h2>Фильтры шаблонов</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div><div class="tc-filter-fields"><label>Цель<select data-template-goal><option value="">Любая цель</option><option value="сил">Сила</option><option value="масс">Набор массы</option><option value="вес">Снижение веса</option><option value="подготов">Общая подготовка</option></select></label><label>Уровень<select data-template-level><option value="">Любой уровень</option><option value="beginner">Начальный</option><option value="intermediate">Средний</option><option value="advanced">Продвинутый</option></select></label><label>Место<select data-template-place><option value="">Любое место</option><option value="home">Дома</option><option value="gym">Зал</option></select></label><label>Длительность<select data-template-duration><option value="">Любая</option><option value="20">До 20 минут</option><option value="30">До 30 минут</option><option value="45">До 45 минут</option><option value="60">До 60 минут</option></select></label></div><button class="button" type="button" data-close>Показать шаблоны</button></dialog>
+</div>
+@section Scripts { <script src="~/js/workout-templates.js" asp-append-version="true"></script> }
+
+
+
+

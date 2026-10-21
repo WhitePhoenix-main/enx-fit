@@ -1,0 +1,18 @@
+@using enx_fit.ViewModels.Workouts
+@model enx_fit.Pages.Training.IndexModel
+@{var month=Model.Month!.Value;var start=month.AddDays(-((int)month.DayOfWeek+6)%7);var cells=(int)Math.Ceiling((((int)month.DayOfWeek+6)%7+DateTime.DaysInMonth(month.Year,month.Month))/7d)*7;}
+<div class="wh-calendar-grid"><div>
+<div class="wh-calendar-toolbar"><a href="@Url.Page(null,Model.Values(view:"calendar",day:month.AddMonths(-1),month:month.AddMonths(-1)))" aria-label="Предыдущий месяц"><reference-icon name="chevron" /></a><h2>@month.ToString("MMMM yyyy", Model.Russian)</h2><a href="@Url.Page(null,Model.Values(view:"calendar",day:month.AddMonths(1),month:month.AddMonths(1)))" aria-label="Следующий месяц"><reference-icon name="chevron" /></a><a class="wh-today-button" href="@Url.Page(null,Model.Values(view:"calendar",day:Model.Today,month:new(Model.Today.Year,Model.Today.Month,1)))">Сегодня</a></div>
+<div class="wh-month-weekdays">@foreach(var name in new[]{"Пн","Вт","Ср","Чт","Пт","Сб","Вс"}){<span>@name</span>}</div>
+<div class="wh-month-days" aria-label="Календарь тренировок">@for(var i=0;i<cells;i++){var date=start.AddDays(i);var done=date<=Model.Today&&Model.Sessions.Any(w=>w.Date==date&&w.State==WorkoutStatus.Completed&&w.WorkoutExercises.Any(e=>e.SetEntries.Any(WorkoutHubCard.Valid)));var planned=Model.Sessions.Any(w=>w.Date==date&&(w.State==WorkoutStatus.Planned||w.IsActive))||Model.Occurrences.Any(o=>o.Date==date&&!Model.Sessions.Any(w=>w.State==WorkoutStatus.Completed&&enx_fit.Services.Programs.ProgramSchedule.Matches(w,o)));<a class="@(date.Month!=month.Month?"is-outside":"")" href="@Url.Page(null,Model.Values(view:"calendar",day:date,month:month))" aria-label="@date.ToString("d MMMM, dddd", Model.Russian) · @(done?"Выполнено":planned?"По плану":"Нет занятия")" aria-current="@(date==Model.SelectedDay?"date":null)"><span>@date.Day</span>@if(done){<i class="is-done"></i>}else if(planned){<i></i>}</a>}</div>
+<div class="wh-calendar-legend"><span><i class="is-done"></i>Выполнено</span><span><i></i>План</span><span><i class="is-today"></i>Сегодня</span></div>
+</div><div class="wh-section-group">
+@if(Model.Coach){<partial name="_HubAgenda" model="Model" />}
+else{
+<header class="wh-section-heading"><h2>@Model.SelectedDay.ToString("d MMMM · dddd", Model.Russian)</h2></header>
+@foreach(var card in Model.SelectedDayCards){<partial name="_HubWorkoutCard" model="@(new WorkoutHubCardViewModel(Model,card,Calendar:true))" />}
+@if(Model.SelectedDayCards.Count==0){<section class="wh-card wh-empty"><reference-icon name="calendar" /><h2>На этот день нет занятий</h2><p>Выберите другую дату или запланируйте тренировку.</p></section>}
+@if(Model.Upcoming is {} next){<section><header class="wh-section-heading"><h2>Далее по плану</h2></header><a class="wh-card wh-row wh-next" href="@Url.Page(null,Model.Values(view:"calendar",day:next.Date,month:new(next.Date.Year,next.Date.Month,1)))"><reference-icon name="calendar" /><span><small>@next.Date.ToString("d MMMM · dddd", Model.Russian)</small><strong>@next.Title</strong><small>@if(next.Minutes>0){<span>@next.Minutes мин · </span>}@WorkoutHubCard.Count(next.Exercises.Count,"упражнение","упражнения","упражнений")</small></span><reference-icon name="chevron" /></a></section>}
+<a class="wh-secondary" asp-page="/Training/Workouts/Create"><reference-icon name="plus" />Запланировать тренировку</a>
+}
+</div></div>

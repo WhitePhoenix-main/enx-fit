@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/app-components.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
+    <link rel="stylesheet" href="~/css/app-chrome.css" asp-append-version="true" />
 </head>
 <body class="auth-page app-workspace">
     <div class="auth-universe" aria-hidden="true">
@@ -22,7 +23,7 @@
     <a class="auth-skip" href="#main-content">Перейти к форме</a>
     <partial name="/Pages/Shared/Icons/_AuthIcons.cshtml" />
     <header class="auth-header">
-        <a class="auth-brand" asp-area="" asp-page="/Public/Index" aria-label="Enix Fit — главная"><partial name="/Pages/Shared/Public/_LandingBrand.cshtml" /></a>
+        <a class="auth-brand" asp-area="" asp-page="/Public/Index" aria-label="Enix Fit — главная"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /></a>
         <a class="auth-home" asp-area="" asp-page="/Public/Index" aria-label="На главную"><span>На главную</span><svg class="auth-icon" aria-hidden="true"><use href="#auth-arrow" /></svg></a>
     </header>
     <main id="main-content" class="auth-main">@RenderBody()</main>

@@ -1,10 +1,5 @@
 @page "/Programs"
 @model IndexModel
-@{ Layout = "/Pages/Shared/Layouts/_DashboardReferenceLayout.cshtml"; ViewData["Title"] = "Программы"; }
-@section Styles {
-    <link rel="stylesheet" href="~/css/programs.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/programs-reference.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/program-catalog.css" asp-append-version="true" />
-}
-<partial name="_ProgramsOverview" model="Model" />
-@section Scripts { <script src="~/js/training.js" asp-append-version="true"></script> }
+@{ Layout = "/Pages/Shared/Layouts/_ProgramWorkspaceLayout.cshtml"; ViewData["Title"] = "Программы"; }
+<partial name="_WorkspaceIndex" model="Model" />
+

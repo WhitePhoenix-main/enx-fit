@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="~/css/landing-story.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/public-pages.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/app-components.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app-chrome.css" asp-append-version="true" />
 </head>
 <body class="enix-landing landing-story app-workspace @(currentPage == "/Public/Index" ? "public-home-page" : "public-inner-page")">
     <div class="page-atmosphere" aria-hidden="true"></div>
@@ -26,7 +27,7 @@
     <partial name="/Pages/Shared/Icons/_LandingIcons.cshtml" /><partial name="/Pages/Shared/Public/_LandingHeader.cshtml" />
     <main id="main-content" tabindex="-1">@RenderBody()</main>
     <footer class="landing-footer wrap">
-        <a class="brand" asp-page="/Public/Index" aria-label="Enix Fit — главная"><partial name="/Pages/Shared/Public/_LandingBrand.cshtml" /></a>
+        <a class="brand" asp-page="/Public/Index" aria-label="Enix Fit — главная"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /></a>
         <nav aria-label="Ссылки в подвале">
             <a href="@(Url.Page("/Public/Index") + "#mobile")">На телефоне</a><a asp-page="/Public/Pricing">Тарифы</a>
             <a asp-page="/Public/Faq">Вопросы</a><a asp-page="/Public/About">О проекте</a><a asp-page="/Public/Contact">Контакты</a>

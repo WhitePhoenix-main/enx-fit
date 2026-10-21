@@ -38,7 +38,11 @@
             this.search.addEventListener('keydown', event => {
                 if (event.key === 'Enter') event.preventDefault();
             });
-            this.group.addEventListener('change', () => this.filter());
+            this.group.addEventListener('change', () => {
+                // Muscle filters search the full catalog, just like a text query.
+                this.tab = 'all';
+                this.filter();
+            });
             this.equipment.addEventListener('change', () => this.filter());
             root.addEventListener('click', event => this.click(event));
             const updatePick = event => {
@@ -169,6 +173,7 @@
             }
             if (button.hasAttribute('data-muscle-filter')) {
                 this.group.value = button.dataset.muscleFilter;
+                this.tab = 'all';
                 this.filter();
                 return;
             }
@@ -327,7 +332,8 @@
             const words = query.split(/\s+/).filter(Boolean);
             let count = 0;
             const recentCount = this.rows.filter(row => row.dataset.recent === 'true').length;
-            if ((this.tab === 'favorites' && !this.favorites.size) || (this.tab === 'recent' && !recentCount)) this.tab = 'all';
+            const quick = this.root.dataset.quickPick === 'true';
+            if (!quick && ((this.tab === 'favorites' && !this.favorites.size) || (this.tab === 'recent' && !recentCount))) this.tab = 'all';
             this.rows.forEach(row => {
                 const id = exerciseId(row.dataset.exerciseId), group = row.dataset.group;
                 const muscle = !this.group.value || group === this.group.value || (this.group.value === 'Ноги' && ['Квадрицепсы', 'Задняя поверхность бедра', 'Ягодицы', 'Икры', 'Приводящие мышцы бедра', 'Отводящие мышцы бедра'].includes(group));
@@ -347,8 +353,8 @@
             }
             this.root.querySelectorAll('[data-library-tab]').forEach(button => {
                 button.setAttribute('aria-pressed', String(button.dataset.libraryTab === this.tab));
-                if (button.dataset.libraryTab === 'recent') button.hidden = !recentCount;
-                if (button.dataset.libraryTab === 'favorites') button.hidden = !this.favorites.size;
+                if (button.dataset.libraryTab === 'recent') button.hidden = !quick && !recentCount;
+                if (button.dataset.libraryTab === 'favorites') button.hidden = !quick && !this.favorites.size;
             });
             this.root.querySelector('[data-tab-count="recent"]').textContent = recentCount;
             this.root.querySelector('[data-tab-count="favorites"]').textContent = this.favorites.size;
@@ -417,6 +423,8 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             });
         }
         document.querySelectorAll('[data-template-filters]').forEach(form => {
+            // A sheet applies several choices together; selecting one field keeps it open.
+            if (form.closest('.native-filter-sheet')) return;
             form.classList.add('plan-filter-enhanced');
             form.querySelectorAll('select,input[type="checkbox"]').forEach(control => control.addEventListener('change', () => form.requestSubmit()));
         });
@@ -1584,6 +1592,96 @@ if (document.querySelector('.programs-page, .ep-heading')) {
 })();
 
 // Workout execution and synchronization.
+// Workout dialogs also run in layouts that do not load dashboard.js.
+(() => {
+    'use strict';
+    if (!document.querySelector('[data-active-workout]')) return;
+    const ids = new Set(['exercise-dialog', 'load-template-dialog', 'workout-outline-dialog', 'finish-workout-dialog', 'cancel-workout-dialog']);
+    document.addEventListener('click', event => {
+        const trigger = event.target.closest('[data-dialog]');
+        if (trigger && ids.has(trigger.dataset.dialog)) {
+            const dialog = document.getElementById(trigger.dataset.dialog);
+            trigger.closest('details')?.removeAttribute('open');
+            if (!dialog || dialog.open) return;
+            document.querySelectorAll('dialog[open]').forEach(item => item.close());
+            dialog.showModal();
+        }
+        const close = event.target.closest('[data-close]');
+        if (close && ids.has(close.closest('dialog')?.id)) close.closest('dialog').close();
+        if (event.target instanceof HTMLDialogElement && ids.has(event.target.id)) {
+            const box = event.target.getBoundingClientRect();
+            if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) event.target.close();
+        }
+    });
+})();
+
+// Bodyweight and the additional stages of a drop set share the set's completion.
+(() => {
+    'use strict';
+    const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
+    const dropMarkup = (drop, index, record = false) => {
+        const field = name => record ? `data-set-field="${name}"` : `name="AddSet.Drops[${index}].${name[0].toUpperCase() + name.slice(1)}" data-drop-field="${name}"`;
+        return `<div class="set-drop" data-drop-index="${index}"><div class="drop-main"><span class="drop-number">Дроп ${index + 1}</span><input type="${record ? 'text' : 'number'}" inputmode="decimal" min="0" max="10000" step="0.01" ${field('weight')} value="${escape(drop.weight)}" aria-label="Вес дропа ${index + 1}, кг" ${drop.isBodyweight ? 'hidden' : 'required'} /><span class="bodyweight-value" ${drop.isBodyweight ? '' : 'hidden'}>Собственный вес</span><input type="number" inputmode="numeric" min="1" max="1000" ${field('reps')} value="${escape(drop.reps)}" required aria-label="Повторения дропа ${index + 1}" /><button type="button" class="text-button danger-text" data-remove-drop aria-label="Удалить дроп ${index + 1}">×</button></div><label class="bodyweight-check"><input type="checkbox" ${field('isBodyweight')} value="true" data-bodyweight ${drop.isBodyweight ? 'checked' : ''} />Собственный вес</label></div>`;
+    };
+    const refreshBodyweight = container => container.querySelectorAll('[data-bodyweight]').forEach(check => {
+        const row = check.closest('[data-drop-index]') || check.closest('.set-form,.new-set-form,.record-set');
+        const weight = row?.querySelector('[name="AddSet.Weight"],[data-drop-field="weight"],[data-set-field="weight"]');
+        if (!weight) return;
+        if (check.checked) {
+            if (!weight.hidden) weight.dataset.externalWeight = weight.value;
+            weight.value = '0';
+        } else if (weight.hidden && weight.dataset.externalWeight != null) weight.value = weight.dataset.externalWeight;
+        weight.hidden = check.checked;
+        weight.required = !check.checked;
+        weight.setCustomValidity('');
+        const label = weight.nextElementSibling;
+        if (label?.classList.contains('bodyweight-value')) label.hidden = !check.checked;
+    });
+    const restoreDrops = (form, pairs) => {
+        const drops = [];
+        for (let i = 0; i < 10; i++) {
+            const value = name => pairs.find(([n]) => n === `AddSet.Drops[${i}].${name}`)?.[1];
+            if (value('Reps') == null) break;
+            drops.push({weight: value('Weight') ?? '', reps: value('Reps'), isBodyweight: value('IsBodyweight') === 'true'});
+        }
+        const host = form.querySelector('[data-set-drops]');
+        if (host) host.innerHTML = drops.map((d, i) => dropMarkup(d, i)).join('');
+        const add = form.querySelector('[data-add-drop]');
+        if (add) add.disabled = drops.length >= 10;
+        const help = form.querySelector('.drop-help');
+        if (help) help.hidden = !drops.length;
+        const badge = form.querySelector('[data-drop-badge]');
+        if (badge) badge.hidden = !drops.length;
+    };
+    window.WorkoutSetFields = {dropMarkup, refreshBodyweight, restoreDrops};
+    document.addEventListener('change', event => {
+        if (event.target.matches('[data-bodyweight]')) refreshBodyweight(event.target.closest('form'));
+    }, true);
+    const root = document.querySelector('[data-active-workout]');
+    if (!root) return;
+    root.addEventListener('click', event => {
+        const button = event.target.closest('[data-add-drop],[data-remove-drop]');
+        if (!button) return;
+        const form = button.closest('.set-form'), host = form.querySelector('[data-set-drops]');
+        const drops = [...host.children].map(row => ({
+            weight: row.querySelector('[data-drop-field="weight"]').value,
+            reps: row.querySelector('[data-drop-field="reps"]').value,
+            isBodyweight: row.querySelector('[data-bodyweight]').checked
+        }));
+        if (button.hasAttribute('data-add-drop') && drops.length < 10)
+            drops.push({weight: '', reps: drops.at(-1)?.reps || form.elements.namedItem('AddSet.Reps').value, isBodyweight: false});
+        else if (button.hasAttribute('data-remove-drop')) drops.splice(Number(button.closest('[data-drop-index]').dataset.dropIndex), 1);
+        host.innerHTML = drops.map((d, i) => dropMarkup(d, i)).join('');
+        form.querySelector('[data-add-drop]').disabled = drops.length >= 10;
+        form.querySelector('.drop-help').hidden = !drops.length;
+        const badge = form.querySelector('[data-drop-badge]');
+        if (badge) badge.hidden = !drops.length;
+        form.dispatchEvent(new Event('input', {bubbles: true}));
+        if (button.hasAttribute('data-add-drop')) host.lastElementChild?.querySelector('input').focus();
+    });
+    refreshBodyweight(root);
+})();
+
 // Set results and effort guidance.
 (() => {
     'use strict';
@@ -1629,7 +1727,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     'use strict';
     const root = document.querySelector('[data-active-workout]');
     const initial = document.getElementById('workout-execution-state');
-    if (!root || !initial) return;
+    if (!root || !initial || root.hasAttribute('data-training-log')) return;
     let state = JSON.parse(initial.textContent);
     if (!['InProgress', 'Paused'].includes(state.status)) return;
     const storageKey = `enix-workout-view:${root.dataset.viewer}:${root.dataset.sessionId}`;
@@ -1656,7 +1754,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     } catch { /* The server session remains usable without local storage. */
     }
     root.classList.add('workout-app');
-    overview.hidden = dock.hidden = false;
+    overview.hidden = false;
 
     function select(id, scroll = false) {
         const card = cards().find(item => item.id === id);
@@ -1864,6 +1962,13 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         root.querySelector('[data-app-count]').textContent = total ? `${done} / ${total} подходов` : 'Начните с первого упражнения';
         root.querySelector('[data-app-outline-count]').textContent = `Состав · ${cards().length}`;
         sidebar.hidden = cards().length === 0;
+        const hasExercises = cards().length > 0;
+        overview.hidden = !hasExercises;
+        dock.hidden = !hasExercises || state.status === 'Paused';
+        root.querySelector('[data-exercises-heading]').hidden = !hasExercises;
+        root.querySelector('[data-exercise-total]').textContent = cards().length;
+        root.querySelector('.workout-empty')?.toggleAttribute('hidden', hasExercises);
+        overview.querySelector('[data-dialog="workout-outline-dialog"]').hidden = !hasExercises;
         if (!editingOrder) orderDialog.querySelector('[data-order-edit]').hidden = !canReorder();
         cards().forEach(item => {
             const selectedCard = item === card;
@@ -1900,8 +2005,8 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         if (paused) {
             caption = 'Занятие на паузе';
             detail = rest != null ? `Отдых остановлен · ${clock(rest)}` : 'Продолжите, когда будете готовы';
-            label = 'Продолжить занятие';
-            mode = 'resume';
+            label = 'Тренировка на паузе';
+            mode = 'paused';
         } else if (rest > 0) {
             caption = 'Отдых после подхода';
             detail = clock(rest);
@@ -1920,14 +2025,17 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             label = 'Следующее упражнение';
             mode = 'next';
         } else {
-            detail = 'Можно добавить подходы или завершить';
-            label = 'Завершить тренировку';
-            mode = 'finish';
+            detail = 'Добавьте упражнение или завершите занятие кнопкой вверху';
+            label = 'Все подходы отмечены';
+            mode = 'done';
         }
         root.querySelector('[data-app-action-caption]').textContent = caption;
         root.querySelector('[data-app-action-detail]').textContent = detail;
         action.textContent = label;
         action.dataset.mode = mode;
+        action.disabled = paused || mode === 'done';
+        root.querySelector('[data-finish]').disabled = !all.some(form => completed(form) &&
+            !form.elements.namedItem('AddSet.IsWarmup').checked && Number(form.elements.namedItem('AddSet.Reps').value) > 0);
         dock.classList.toggle('is-resting', rest > 0 && !paused);
         dock.classList.toggle('is-paused', paused);
         root.querySelector('[data-app-rest-tools]').hidden = rest == null || rest <= 0 || paused;
@@ -2025,7 +2133,6 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             }
         }
     });
-    root.querySelector('[data-app-pause]').addEventListener('click', () => root.querySelector('[data-pause-button]').click());
     // Removal by the execution client must update counts and navigation as well.
     new MutationObserver(() => render()).observe(root.querySelector('.session-exercises'), {
         childList: true,
@@ -2071,6 +2178,14 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     if (!root) return;
     const initialState = document.getElementById('workout-execution-state');
     if (!initialState) return; // An older running server can still render the pre-migration page.
+    // Every command keeps the server-authorized owner context, including requests built in JS.
+    const workoutUrl = handler => {
+        const url = new URL(location.pathname, location.origin);
+        url.searchParams.set('handler', handler);
+        if (root.dataset.coachMode === 'true') url.searchParams.set('Coach', 'true');
+        return url.pathname + url.search;
+    };
+    root.workoutRequestUrl = workoutUrl;
     const key = `enix-session-queue:${root.dataset.viewer}:${root.dataset.sessionId}`;
     const status = root.querySelector('[data-sync-status]');
     let state = JSON.parse(initialState.textContent);
@@ -2085,7 +2200,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     let scratch = {}, rejectedOperationId = null;
     const debounce = new Map();
     const pickerRoot = document.getElementById('workout-library'), picker = pickerRoot?.exerciseLibrary;
-    let picking = false, ordering = false, pickAttempt = null, orderAttempt = null;
+    let picking = false, ordering = false, cancelling = false, pickAttempt = null, orderAttempt = null;
 
     async function flushResults() {
         for (const timeout of debounce.values()) clearTimeout(timeout);
@@ -2100,7 +2215,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     }
 
     root.reorderWorkout = async entries => {
-        if (picking || ordering) throw new Error('Дождитесь сохранения состава тренировки.');
+        if (picking || ordering || cancelling) throw new Error('Дождитесь сохранения состава тренировки.');
         ordering = true;
         try {
             await flushResults();
@@ -2112,7 +2227,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 expectedRevision: orderAttempt.revision,
                 __RequestVerificationToken: token
             });
-            const response = await fetch(`${location.pathname}?handler=Reorder`, {
+            const response = await fetch(workoutUrl('Reorder'), {
                 method: 'POST',
                 headers: {'X-Requested-With': 'XMLHttpRequest'},
                 body,
@@ -2132,24 +2247,59 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             ordering = false;
         }
     };
-    if (picker) pickerRoot.addEventListener('exercises-selected', async event => {
-        if (picking || ordering) return;
+    // Structural log edits use the same queue and revision as set results.
+    root.saveWorkoutStructure = async (form, submitter) => {
+        if (picking || ordering || cancelling) throw new Error('Дождитесь сохранения тренировки.');
+        ordering = true;
+        try {
+            await flushResults();
+            const fields = new FormData(form);
+            if (submitter?.name) fields.set(submitter.name, submitter.value);
+            form.dataset.operationId ||= crypto.randomUUID();
+            fields.set('operationId', form.dataset.operationId);
+            fields.set('expectedRevision', revision);
+            const response = await fetch(form.getAttribute('action') || location.pathname, {method: 'POST', body: fields, headers: {'X-Requested-With': 'XMLHttpRequest'}});
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.error || 'Не удалось сохранить изменение. Обновите страницу и повторите.');
+            }
+            const html = new DOMParser().parseFromString(await response.text(), 'text/html');
+            const nextState = html.getElementById('workout-execution-state');
+            const errors = html.querySelector('.validation-summary-errors');
+            if (errors) throw new Error(errors.textContent.trim());
+            const nextList = html.querySelector('.session-exercises');
+            if (!nextState || !nextList) throw new Error('Не удалось получить тренировку. Проверьте вход в аккаунт.');
+            root.dispatchEvent(new CustomEvent('workout-exercises-replacing'));
+            root.querySelector('.session-exercises').replaceChildren(...nextList.children);
+            const latest = JSON.parse(nextState.textContent);
+            revision = latest.revision;
+            persist();
+            update(latest);
+            picker?.setSelected([...root.querySelectorAll('[data-catalog-id]')].map(card => window.ExerciseIds.normalize(card.dataset.catalogId)));
+            root.dispatchEvent(new CustomEvent('workout-exercises-changed'));
+            syncMessage();
+            delete form.dataset.operationId;
+            return latest;
+        } finally { ordering = false; }
+    };
+    root.pickWorkoutExercises = async (exercises, entryId = 0) => {
+        if (picking || ordering || cancelling) throw new Error('Дождитесь сохранения состава тренировки.');
         picking = true;
         picker.setBusy(true);
         picker.message('');
         try {
             await flushResults();
-            const entry = document.querySelector('[data-exercise-entry]').value;
-            const signature = JSON.stringify([entry, event.detail.exercises]);
+            const entry = String(entryId);
+            const signature = JSON.stringify([entry, exercises]);
             if (pickAttempt?.signature !== signature) pickAttempt = {signature, id: crypto.randomUUID()};
             const body = new URLSearchParams({
                 __RequestVerificationToken: token,
-                selectionJson: JSON.stringify(event.detail.exercises),
+                selectionJson: JSON.stringify(exercises),
                 ExerciseEntryId: entry,
                 expectedRevision: revision,
                 operationId: pickAttempt.id
             });
-            const response = await fetch(`${location.pathname}?handler=PickExercises`, {
+            const response = await fetch(workoutUrl('PickExercises'), {
                 method: 'POST',
                 headers: {'X-Requested-With': 'XMLHttpRequest'},
                 body,
@@ -2164,6 +2314,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 nextState = html.getElementById('workout-execution-state');
             if (!nextList || !nextState) throw new Error('Обновите страницу, чтобы увидеть сохранённые упражнения.');
             const currentList = root.querySelector('.session-exercises');
+            root.dispatchEvent(new CustomEvent('workout-exercises-replacing'));
             if (entry === '0') {
                 const existing = new Set([...currentList.children].map(card => card.id));
                 for (const card of [...nextList.children]) if (!existing.has(card.id)) currentList.append(card);
@@ -2182,9 +2333,13 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             document.getElementById('exercise-dialog').close();
             const empty = root.querySelector('.workout-empty');
             if (empty) empty.hidden = true;
+            const heading = root.querySelector('[data-exercises-heading]');
+            if (heading) heading.hidden = false;
+            const total = root.querySelector('[data-exercise-total]');
+            if (total) total.textContent = currentList.children.length;
             root.querySelector('[data-dialog="load-template-dialog"]')?.setAttribute('hidden', '');
             syncMessage(entry === '0' ? 'Упражнения добавлены · все изменения сохранены' : 'Упражнение заменено · все изменения сохранены');
-            const ids = event.detail.exercises.map(p => p.exerciseId);
+            const ids = exercises.map(p => p.exerciseId);
             const card = [...root.querySelectorAll('.session-exercise')].find(el => ids.includes(window.ExerciseIds.normalize(el.dataset.catalogId)));
             root.dispatchEvent?.(new CustomEvent('workout-exercises-changed', {detail: {exerciseId: card?.id}}));
             card?.classList.add('exercise-just-added');
@@ -2193,12 +2348,17 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 block: 'start'
             });
             if (state.status !== 'Paused' && window.matchMedia?.('(min-width:1024px)')?.matches) card?.querySelector('input:not([type="hidden"])')?.focus({preventScroll: true});
+            return latest;
         } catch (error) {
             picker.message(error instanceof TypeError ? 'Нет соединения. Выбранные упражнения остались здесь — повторите добавление после восстановления связи.' : error.message);
+            throw error;
         } finally {
             picking = false;
             picker.setBusy(false);
         }
+    };
+    if (picker) pickerRoot.addEventListener('exercises-selected', event => {
+        void root.pickWorkoutExercises(event.detail.exercises, document.querySelector('[data-exercise-entry]').value).catch(() => {});
     });
 
     function persist() {
@@ -2243,9 +2403,12 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     }
 
     function tick() {
+        root.dataset.sessionStatus = state.status;
         const elapsed = state.elapsedSeconds + (state.status === 'InProgress' ? (Date.now() - sampledAt) / 1000 : 0);
-        const sessionClock = root.querySelector('[data-session-clock]');
-        if (sessionClock) sessionClock.textContent = clock(elapsed);
+        root.querySelectorAll('[data-session-clock]').forEach(sessionClock => {
+            sessionClock.textContent = root.hasAttribute('data-quick-workout') && !root.hasAttribute('data-workout-session')
+                ? `${String(Math.floor(elapsed / 3600)).padStart(2, '0')}:${clock(elapsed % 3600)}` : clock(elapsed);
+        });
         const paused = state.status === 'Paused', notice = root.querySelector('[data-pause-notice]'),
             pauseButton = root.querySelector('[data-pause-button]');
         if (notice) notice.hidden = !paused;
@@ -2256,7 +2419,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         root.querySelectorAll('.set-form input:not([type="hidden"]),.set-form button').forEach(input => {
             if (active()) input.disabled = paused;
         });
-        const remaining = paused ? state.restRemainingSeconds : state.restEndsAtUtc ? Math.max(0, Math.ceil((Date.parse(state.restEndsAtUtc) - Date.now() - offset) / 1000)) : null;
+        const remaining = paused ? state.restRemainingSeconds : state.restEndsAtUtc ? Math.max(0, Math.ceil((Date.parse(state.restEndsAtUtc) - Date.now() - offset) / 1000)) : state.restRemainingSeconds;
         root.dispatchEvent?.(new CustomEvent('workout-state', {
             detail: {
                 ...state,
@@ -2266,9 +2429,11 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         }));
         const panel = root.querySelector('[data-rest-panel]');
         if (panel) {
-            panel.hidden = remaining == null || !active();
-            root.querySelector('[data-rest-clock]').textContent = clock(remaining || 0);
-            root.querySelector('[data-rest-caption]').textContent = paused ? 'Отдых на паузе' : remaining === 0 ? 'Отдых закончен · можно начинать следующий подход' : 'Восстановитесь перед следующим подходом';
+            if (!root.hasAttribute('data-quick-workout')) {
+                panel.hidden = remaining == null || !active();
+                root.querySelector('[data-rest-clock]').textContent = clock(remaining || 0);
+                root.querySelector('[data-rest-caption]').textContent = paused ? 'Отдых на паузе' : remaining === 0 ? 'Можно продолжать' : 'Отдых после подхода';
+            }
             if (remaining === 0 && !paused && state.restEndsAtUtc && soundedRest !== state.restEndsAtUtc) {
                 soundedRest = state.restEndsAtUtc;
                 if (sound && audioContext) {
@@ -2302,6 +2467,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         for (const op of queue.filter(o => o.kind === 'set')) {
             const form = [...root.querySelectorAll('.set-form')].find(f => f.elements.namedItem('setId')?.value === op.setId);
             if (!form) continue;
+            window.WorkoutSetFields.restoreDrops(form, op.fields);
             for (const input of form.querySelectorAll('input[name]')) {
                 if (input.name === '__RequestVerificationToken') continue;
                 const pair = op.fields.find(([n]) => n === input.name);
@@ -2309,21 +2475,22 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             }
             form.classList.toggle('is-completed', form.elements.namedItem('completed').checked);
             form.classList.toggle('is-skipped', op.fields.some(([n, v]) => n === 'skipped' && v === 'true'));
+            window.WorkoutSetFields.refreshBodyweight(form);
         }
     }
 
     async function drain() {
-        if (sending || conflict || !queue.length) return;
+        if (sending || conflict || cancelling || !queue.length) return;
         sending = true;
         try {
-            while (queue.length) {
+            while (queue.length && !cancelling) {
                 const op = queue[0];
                 syncMessage('Сохраняем результаты…', 'pending');
                 const body = new URLSearchParams(op.fields);
                 body.set('__RequestVerificationToken', token);
                 body.set('operationId', op.id);
                 body.set('expectedRevision', revision);
-                const response = await fetch(`${location.pathname}?handler=${op.kind === 'set' ? 'Set' : 'Control'}`, {
+                const response = await fetch(workoutUrl(op.kind === 'set' ? 'Set' : 'Control'), {
                     method: 'POST',
                     headers: {'X-Requested-With': 'XMLHttpRequest'},
                     body,
@@ -2372,7 +2539,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 state.elapsedSeconds = Math.max(0, state.elapsedSeconds + (at - offset - sampledAt) / 1000);
                 sampledAt = Date.now();
                 state.status = 'Paused';
-                state.restRemainingSeconds = state.restEndsAtUtc ? Math.max(0, Math.ceil((Date.parse(state.restEndsAtUtc) - at) / 1000)) : null;
+                state.restRemainingSeconds = state.restEndsAtUtc ? Math.max(0, Math.ceil((Date.parse(state.restEndsAtUtc) - at) / 1000)) : state.restRemainingSeconds;
                 state.restEndsAtUtc = null;
             } else if (action === 'resume' && state.status === 'Paused') {
                 state.status = 'InProgress';
@@ -2383,8 +2550,22 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 state.restEndsAtUtc = null;
                 state.restRemainingSeconds = null;
                 state.restAfterSetId = null;
+            } else if (action === 'start-rest' && state.status === 'InProgress') {
+                state.restEndsAtUtc = new Date(at + seconds * 1000).toISOString();
+                state.restRemainingSeconds = null;
+                state.restAfterSetId = null;
+            } else if (action === 'pause-rest' && state.status === 'InProgress') {
+                state.restRemainingSeconds = state.restEndsAtUtc ? Math.max(0, Math.ceil((Date.parse(state.restEndsAtUtc) - at) / 1000)) : state.restRemainingSeconds;
+                state.restEndsAtUtc = null;
+            } else if (action === 'resume-rest' && state.status === 'InProgress') {
+                state.restEndsAtUtc = state.restRemainingSeconds > 0 ? new Date(at + state.restRemainingSeconds * 1000).toISOString() : null;
+                state.restRemainingSeconds = null;
+            } else if (action === 'set-rest' && state.status === 'InProgress') {
+                if (state.restEndsAtUtc) state.restEndsAtUtc = seconds > 0 ? new Date(at + seconds * 1000).toISOString() : null;
+                else if (state.restRemainingSeconds != null) state.restRemainingSeconds = seconds > 0 ? seconds : null;
+                if (seconds === 0) state.restAfterSetId = null;
             } else if (action === 'adjust-rest') {
-                if (state.status === 'Paused' && state.restRemainingSeconds != null) state.restRemainingSeconds = Math.max(0, Math.min(1800, state.restRemainingSeconds + seconds));
+                if (!state.restEndsAtUtc && state.restRemainingSeconds != null) state.restRemainingSeconds = Math.max(0, Math.min(1800, state.restRemainingSeconds + seconds));
                 else if (state.restEndsAtUtc) state.restEndsAtUtc = new Date(at + Math.max(0, Math.min(1800, (Date.parse(state.restEndsAtUtc) - at) / 1000 + seconds)) * 1000).toISOString();
             }
         }
@@ -2408,6 +2589,10 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             root.querySelector("[data-discard-operation]").hidden = true;
         }
         const fields = [...new FormData(form).entries()].filter(([n]) => n !== '__RequestVerificationToken');
+        if (completedInput.checked) form.classList.toggle('is-skipped', false);
+        else if (form.classList.contains('is-skipped') && !extra.some(([n]) => n === 'skipped')) extra.push(['skipped', 'true']);
+        // A completion checkbox changes the submitted values too. Track this snapshot so its acknowledgement clears the draft.
+        scratch[form.elements.namedItem('setId').value] = fields.map(pair => [...pair]);
         fields.push(...extra, ['performedAtUtc', new Date(Date.now() + offset).toISOString()]);
         const startsRest = form.elements.namedItem("completed").checked && !form.classList.contains("is-completed");
         form.classList.toggle("is-completed", form.elements.namedItem("completed").checked);
@@ -2420,6 +2605,23 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         enqueue({kind: "set", setId: form.elements.namedItem("setId").value, fields, startsRest});
         return true;
     }
+
+    root.addEventListener('click', event => {
+        const button = event.target.closest('[data-copy-previous]');
+        if (!button || !active() || state.status === 'Paused') return;
+        const form = button.closest('.set-form');
+        if (!form || form.classList.contains('is-completed') || form.classList.contains('is-skipped')) return;
+        const weight = form.elements.namedItem('AddSet.Weight');
+        const reps = form.elements.namedItem('AddSet.Reps');
+        const bodyweight = form.elements.namedItem('AddSet.IsBodyweight');
+        bodyweight.checked = button.dataset.previousBodyweight === 'true';
+        weight.value = bodyweight.checked ? '0' : button.dataset.weight;
+        weight.dataset.externalWeight = weight.value;
+        reps.value = button.dataset.reps;
+        // Use the existing draft/command queue; copying never marks a set complete or starts rest.
+        bodyweight.dispatchEvent(new Event('change', {bubbles: true}));
+        reps.focus();
+    });
 
     root.addEventListener("input", event => {
         const form = event.target.closest(".set-form");
@@ -2460,7 +2662,51 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         if (form.hasAttribute('data-native-order')) form.elements.namedItem('expectedRevision').value = revision;
     }
 
+    async function cancelWorkout(form) {
+        if (cancelling) return;
+        cancelling = true;
+        const message = form.closest('dialog').querySelector('[data-cancel-status]');
+        const submit = form.querySelector('[type="submit"]');
+        message.hidden = false;
+        message.textContent = 'Отменяем тренировку…';
+        submit.disabled = true;
+        form.setAttribute('aria-busy', 'true');
+        try {
+            // An invalid or offline set must not prevent cancellation. Wait only for requests already in flight.
+            for (const timeout of debounce.values()) clearTimeout(timeout);
+            debounce.clear();
+            for (let n = 0; (sending || picking || ordering) && n < 400; n++) await new Promise(resolve => setTimeout(resolve, 25));
+            if (sending || picking || ordering) throw new Error('Дождитесь ответа сервера и повторите отмену.');
+            const snapshot = await fetch(workoutUrl('State'), {cache: 'no-store', redirect: 'error'});
+            if (!snapshot.ok) throw new Error('Не удалось проверить тренировку. Повторите отмену.');
+            const latest = await snapshot.json();
+            const body = new URLSearchParams(new FormData(form));
+            body.set('expectedRevision', latest.revision);
+            const response = await fetch(form.action, {
+                method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}, body, redirect: 'error'
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || result.status !== 'Cancelled') throw new Error(result.error || 'Не удалось отменить тренировку. Повторите попытку.');
+            queue = [];
+            scratch = {};
+            persist();
+            try { localStorage.removeItem(`enix-workout-view:${root.dataset.viewer}:${root.dataset.sessionId}`); } catch { /* Optional view state. */ }
+            location.assign(root.dataset.workoutsUrl);
+        } catch (error) {
+            message.textContent = error instanceof TypeError ? 'Нет связи с сервером. Отмена не подтверждена. Подключитесь к сети и повторите.' : error.message;
+        } finally {
+            cancelling = false;
+            submit.disabled = false;
+            form.removeAttribute('aria-busy');
+        }
+    }
+
     document.addEventListener('submit', async event => {
+        if (event.target.hasAttribute('data-cancel-form')) {
+            event.preventDefault();
+            await cancelWorkout(event.target);
+            return;
+        }
         if (event.target.hasAttribute('data-pick-form')) {
             event.preventDefault();
             picker?.commit();
@@ -2475,46 +2721,40 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         }
         if (!root.contains(form) && !form.hasAttribute('data-complete-form') && !form.closest('#exercise-dialog,#load-template-dialog')) return;
         if (form.dataset.flushed) return;
-        for (const [id, pairs] of Object.entries(scratch)) {
-            const pendingForm = [...root.querySelectorAll(".set-form")].find(f => f.elements.namedItem("setId").value === id);
-            if (pendingForm && state.status !== "Paused" && !saveSet(pendingForm)) {
-                event.preventDefault();
-                return;
-            }
-        }
-        for (const setForm of root.querySelectorAll('.set-form:focus-within')) {
-            if (!saveSet(setForm)) {
-                event.preventDefault();
-                return;
-            }
-        }
-        if (!queue.length && !sending) {
+        event.preventDefault();
+        if (form.dataset.flushing) return;
+        form.dataset.flushing = 'true';
+        const message = form.closest('dialog')?.querySelector('[data-finish-status]');
+        try {
+            await flushResults();
+            form.dataset.flushed = 'true';
             nativeOrderRevision(form);
             if (form.hasAttribute('data-complete-form')) completionFields(form);
-            return;
+            // Let the original submit event finish before starting native submission again.
+            const submitter = event.submitter;
+            setTimeout(() => form.requestSubmit(submitter), 0);
+        } catch (error) {
+            syncMessage(error.message, 'error');
+            if (message) {
+                message.hidden = false;
+                message.textContent = error.message;
+            }
+        } finally {
+            delete form.dataset.flushing;
         }
-        event.preventDefault();
-        await drain();
-        if (queue.length || sending) {
-            syncMessage('Дождитесь отправки всех изменений перед переходом.');
-            return;
-        }
-        form.dataset.flushed = 'true';
-        nativeOrderRevision(form);
-        if (form.hasAttribute('data-complete-form')) completionFields(form);
-        form.requestSubmit(event.submitter);
     });
-    document.addEventListener('click', event => {
-        const control = event.target.closest("[data-control]");
-        if (control) {
+    root.controlWorkout = (action, seconds = 0) => {
             const op = {
                 kind: "control",
-                fields: [["action", control.dataset.control], ["seconds", control.dataset.seconds || "0"], ["performedAtUtc", new Date(Date.now() + offset).toISOString()]]
+                fields: [["action", action], ["seconds", String(seconds)], ["performedAtUtc", new Date(Date.now() + offset).toISOString()]]
             };
             previewOperation(op);
             tick();
             enqueue(op);
-        }
+    };
+    document.addEventListener('click', event => {
+        const control = event.target.closest("[data-control]");
+        if (control) root.controlWorkout(control.dataset.control, Number(control.dataset.seconds || 0));
         const skip = event.target.closest('[data-skip-set]');
         if (skip) {
             const form = skip.closest('.set-form');
@@ -2526,7 +2766,8 @@ if (document.querySelector('.programs-page, .ep-heading')) {
             const forms = [...root.querySelectorAll('.set-form')],
                 completed = forms.filter(f => f.elements.namedItem('completed').checked),
                 working = completed.filter(f => !f.elements.namedItem('AddSet.IsWarmup').checked);
-            const volume = working.reduce((sum, f) => sum + Number(f.elements.namedItem('AddSet.Weight').value) * Number(f.elements.namedItem('AddSet.Reps').value), 0);
+            const volume = working.reduce((sum, f) => sum + (f.elements.namedItem('AddSet.IsBodyweight').checked ? 0 : Number(f.elements.namedItem('AddSet.Weight').value) * Number(f.elements.namedItem('AddSet.Reps').value)) +
+                [...f.querySelectorAll('[data-drop-index]')].reduce((total, row) => total + (row.querySelector('[data-bodyweight]').checked ? 0 : Number(row.querySelector('[data-drop-field="weight"]').value) * Number(row.querySelector('[data-drop-field="reps"]').value)), 0), 0);
             document.querySelector('[data-finish-summary]').textContent = `Рабочих подходов: ${working.length} · Объём: ${volume.toLocaleString('ru-RU')} кг · Осталось: ${forms.length - completed.length}`;
         }
         const soundButton = event.target.closest('[data-sound]');
@@ -2542,7 +2783,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         const trigger = event.target.closest('[data-add-exercise],[data-replace-exercise]');
         if (trigger) {
             document.querySelector('[data-exercise-entry]').value = trigger.dataset.replaceExercise || '0';
-            document.getElementById('exercise-dialog-title').textContent = trigger.dataset.replaceExercise ? 'Заменить упражнение' : 'Добавить упражнения';
+            document.getElementById('exercise-dialog-title').textContent = trigger.dataset.replaceExercise ? 'Заменить упражнение' : root.hasAttribute('data-workout-session') ? 'Добавить упражнение' : 'Добавить упражнения';
             picker?.setSingle(!!trigger.dataset.replaceExercise);
             picker?.message('');
         }
@@ -2556,7 +2797,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     });
     root.querySelector('[data-reconcile]').addEventListener('click', async () => {
         try {
-            const response = await fetch(`${location.pathname}?handler=State`, {cache: 'no-store'});
+            const response = await fetch(workoutUrl('State'), {cache: 'no-store'});
             if (!response.ok) throw new Error();
             const data = await response.json();
             revision = data.revision;
@@ -2571,7 +2812,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     });
 
     async function refresh() {
-        if (picking || ordering || root.dataset.orderEditing === 'true' || pickerRoot?.closest('dialog')?.open) return;
+        if (picking || ordering || cancelling || root.dataset.orderEditing === 'true' || pickerRoot?.closest('dialog')?.open) return;
         if (queue.length) {
             drain();
             return;
@@ -2580,11 +2821,11 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         refreshing = true;
         const requestedRevision = revision;
         try {
-            const response = await fetch(`${location.pathname}?handler=State`, {cache: 'no-store'});
+            const response = await fetch(workoutUrl('State'), {cache: 'no-store'});
             if (!response.ok) return;
             const data = await response.json();
             // A result saved while this GET was in flight owns the newer revision.
-            if (queue.length || sending || revision !== requestedRevision || picking || ordering || root.dataset.orderEditing === 'true' || pickerRoot?.closest('dialog')?.open) return;
+            if (queue.length || sending || revision !== requestedRevision || picking || ordering || cancelling || root.dataset.orderEditing === 'true' || pickerRoot?.closest('dialog')?.open) return;
             if (data.revision !== revision) {
                 location.reload();
                 return;
@@ -2624,11 +2865,13 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     for (const [id, pairs] of Object.entries(scratch)) {
         const form = [...root.querySelectorAll(".set-form")].find(f => f.elements.namedItem("setId").value === id);
         if (!form) continue;
+        window.WorkoutSetFields.restoreDrops(form, pairs);
         for (const input of form.querySelectorAll("input[name]")) {
             if (input.name === "__RequestVerificationToken") continue;
             const pair = pairs.find(([n]) => n === input.name);
             if (input.type === "checkbox") input.checked = !!pair; else if (pair) input.value = pair[1];
         }
+        window.WorkoutSetFields.refreshBodyweight(form);
         if (active() && state.status !== "Paused") saveSet(form);
     }
     syncMessage();
@@ -2663,7 +2906,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     }[c]));
     const number = value => Number(String(value).trim().replace(',', '.'));
     const format = value => new Intl.NumberFormat('ru-RU', {maximumFractionDigits: 2}).format(value);
-    const blankSet = () => ({weight: '', reps: '', rir: '', isWarmup: false, notes: ''});
+    const blankSet = () => ({weight: '', reps: '', rir: '', isWarmup: false, isBodyweight: false, drops: [], notes: ''});
     const exerciseId = window.ExerciseIds.normalize;
     const normalize = value => {
         if (!Array.isArray(value) || value.length > 40) throw new Error('Invalid draft');
@@ -2678,6 +2921,8 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                         reps: s.reps ?? '',
                         rir: s.rir ?? '',
                         isWarmup: !!s.isWarmup,
+                        isBodyweight: !!s.isBodyweight,
+                        drops: Array.isArray(s.drops) ? s.drops.slice(0, 10).map(d => ({weight: d.weight ?? '', reps: d.reps ?? '', isBodyweight: !!d.isBodyweight})) : [],
                         notes: s.notes ?? ''
                     };
                 })
@@ -2722,7 +2967,9 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         for (const input of list.querySelectorAll('[data-set-field]')) {
             const exercise = exercises[Number(input.closest('[data-index]').dataset.index)];
             const set = exercise.sets[Number(input.closest('[data-set-index]').dataset.setIndex)];
-            set[input.dataset.setField] = input.type === 'checkbox' ? input.checked : input.value;
+            const drop = input.closest('[data-drop-index]');
+            const target = drop ? set.drops[Number(drop.dataset.dropIndex)] : set;
+            target[input.dataset.setField] = input.type === 'checkbox' ? input.checked : input.value;
         }
     }
 
@@ -2794,8 +3041,14 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 <header><span class="exercise-order">${i + 1}</span><div><h2>${escape(row?.dataset.name || 'Упражнение недоступно')}</h2><p>${escape(row?.dataset.group || '')} · подходов: ${exercise.sets.length}</p></div><details class="exercise-menu"><summary aria-label="Действия с упражнением">⋯</summary><div><button type="button" data-move-exercise="-1" ${i === 0 ? 'disabled' : ''}>Выше в списке</button><button type="button" data-move-exercise="1" ${i === exercises.length - 1 ? 'disabled' : ''}>Ниже в списке</button><button type="button" class="danger-text" data-remove-exercise>Удалить упражнение</button></div></details></header>
                 <details class="record-batch"><summary>Одинаковый вес и повторения</summary><div><label>Вес для всех<input type="text" inputmode="decimal" data-batch-weight placeholder="кг" aria-label="Вес для всех подходов" /></label><label>Повторения<input type="number" min="1" max="1000" data-batch-reps placeholder="раз" aria-label="Повторения для всех подходов" /></label><button type="button" class="button secondary" data-apply-batch>Применить</button></div></details>
                 <div class="record-set-labels"><span>№</span><span>Вес, кг</span><span>Повторения</span><span></span></div>
-                ${exercise.sets.map((s, n) => `<div class="record-set app-set-row" data-set-index="${n}"><div class="record-set-main"><span class="set-number">${n + 1}</span><input type="text" inputmode="decimal" data-set-field="weight" value="${escape(s.weight)}" required aria-label="Вес подхода ${n + 1}, кг" placeholder="0" /><input type="number" inputmode="numeric" data-set-field="reps" value="${escape(s.reps)}" min="1" max="1000" required aria-label="Повторения подхода ${n + 1}" /><button type="button" class="text-button danger-text" data-remove-set aria-label="Удалить подход ${n + 1}">×</button></div><details class="set-extra app-disclosure" ${s.isWarmup || s.notes || s.rir !== '' ? 'open' : ''}><summary>Разминка, усилие и заметка</summary><div><label>Осталось повторов (RIR)<input type="number" min="0" max="10" inputmode="numeric" data-set-field="rir" value="${escape(s.rir)}" /></label><label class="set-note">Заметка<input maxlength="500" data-set-field="notes" value="${escape(s.notes)}" /></label><label class="warmup-check"><input type="checkbox" data-set-field="isWarmup" ${s.isWarmup ? 'checked' : ''} />Разминка</label></div></details></div>`).join('')}
-                <p class="record-weight-hint">Для упражнения с собственным весом укажите 0 кг.</p>
+                ${exercise.sets.map((s, n) => `<div class="record-set app-set-row" data-set-index="${n}">
+                    <div class="record-set-main"><span class="set-number">${n + 1}</span><input type="text" inputmode="decimal" data-set-field="weight" value="${escape(s.weight)}" ${s.isBodyweight ? 'hidden' : 'required'} aria-label="Вес подхода ${n + 1}, кг" placeholder="кг" /><span class="bodyweight-value" ${s.isBodyweight ? '' : 'hidden'}>Собственный вес</span><input type="number" inputmode="numeric" data-set-field="reps" value="${escape(s.reps)}" min="1" max="1000" required aria-label="Повторения подхода ${n + 1}" /><button type="button" class="text-button danger-text" data-remove-set aria-label="Удалить подход ${n + 1}">×</button></div>
+                    <div class="set-kind-controls"><label class="bodyweight-check"><input type="checkbox" data-set-field="isBodyweight" data-bodyweight ${s.isBodyweight ? 'checked' : ''} />Собственный вес</label>${s.drops.length ? '<span class="drop-set-badge">Дропсет</span>' : ''}</div>
+                    <div class="set-drops" data-set-drops>${s.drops.map((d, i) => window.WorkoutSetFields.dropMarkup(d, i, true)).join('')}</div>
+                    <button type="button" class="text-button add-drop" data-add-drop ${s.drops.length >= 10 ? 'disabled' : ''}>+ Дроп: снизить вес</button>
+                    ${s.drops.length ? '<small class="drop-help">Ступени выполняются без отдыха и входят в один подход.</small>' : ''}
+                    <details class="set-extra app-disclosure" ${s.isWarmup || s.notes || s.rir !== '' ? 'open' : ''}><summary>Разминка, усилие и заметка</summary><div><label>Осталось повторов (RIR)<input type="number" min="0" max="10" inputmode="numeric" data-set-field="rir" value="${escape(s.rir)}" /></label><label class="set-note">Заметка<input maxlength="500" data-set-field="notes" value="${escape(s.notes)}" /></label><label class="warmup-check"><input type="checkbox" data-set-field="isWarmup" ${s.isWarmup ? 'checked' : ''} />Разминка</label></div></details></div>`).join('')}
+                <p class="record-weight-hint">Без дополнительного отягощения отметьте «Собственный вес».</p>
                 <footer class="record-exercise-footer"><button type="button" class="button secondary" data-add-set ${exercise.sets.length >= 20 ? 'disabled' : ''}>+ Подход</button><div>${i > 0 ? `<button type="button" class="button secondary" data-record-neighbor="${exercises[i - 1].exerciseId}">Назад</button>` : ''}${i < exercises.length - 1 ? `<button type="button" class="button secondary" data-record-neighbor="${exercises[i + 1].exerciseId}">Следующее →</button>` : ''}</div></footer>
             </section>`;
         }).join('');
@@ -2877,7 +3130,13 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 [exercises[i], exercises[target]] = [exercises[target], exercises[i]];
             }, 'Порядок упражнений изменён.');
         } else if (button.hasAttribute('data-add-set') && exercise.sets.length < 20) {
-            change(() => exercise.sets.push({...exercise.sets.at(-1) || blankSet()}), 'Подход добавлен. Проверьте вес и повторения.');
+            change(() => exercise.sets.push(structuredClone(exercise.sets.at(-1) || blankSet())), 'Подход добавлен. Проверьте вес и повторения.');
+        } else if (button.hasAttribute('data-add-drop')) {
+            const set = exercise.sets[Number(button.closest('[data-set-index]').dataset.setIndex)];
+            if (set.drops.length < 10) change(() => set.drops.push({weight: '', reps: set.drops.at(-1)?.reps || set.reps, isBodyweight: false}), 'Дроп добавлен. Укажите сниженный вес и повторения.');
+        } else if (button.hasAttribute('data-remove-drop')) {
+            const set = exercise.sets[Number(button.closest('[data-set-index]').dataset.setIndex)];
+            change(() => set.drops.splice(Number(button.closest('[data-drop-index]').dataset.dropIndex), 1), 'Ступень дропсета удалена.');
         } else if (button.hasAttribute('data-remove-set')) change(() => {
             exercise.sets.splice(Number(button.closest('[data-set-index]').dataset.setIndex), 1);
             if (!exercise.sets.length) exercise.sets.push(blankSet());
@@ -2898,7 +3157,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 return;
             }
             change(() => exercise.sets.forEach(s => {
-                if (weight !== '') s.weight = weight;
+                if (weight !== '') { s.weight = weight; s.isBodyweight = false; }
                 if (reps !== '') s.reps = reps;
             }), 'Значения применены ко всем подходам упражнения.');
         }
@@ -2992,7 +3251,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
     function validate() {
         syncResults();
         for (const input of list.querySelectorAll('[data-set-field="weight"]'))
-            input.setCustomValidity(input.value.trim() !== '' && Number.isFinite(number(input.value)) && number(input.value) >= 0 && number(input.value) <= 10000 ? '' : 'Введите вес от 0 до 10000 кг. Для собственного веса укажите 0.');
+            input.setCustomValidity(input.hidden || input.value.trim() !== '' && Number.isFinite(number(input.value)) && number(input.value) >= 0 && number(input.value) <= 10000 ? '' : 'Введите вес от 0 до 10000 кг или отметьте «Собственный вес».');
         const invalid = [...form.querySelectorAll('input:invalid,textarea:invalid')].find(input => !input.matches('[data-batch-weight],[data-batch-reps]'));
         if (invalid) {
             message('Проверьте выделенное поле.');
@@ -3010,10 +3269,12 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         const payload = exercises.map(e => ({
             exerciseId: e.exerciseId,
             sets: e.sets.map(s => ({
-                weight: number(s.weight),
+                weight: s.isBodyweight ? 0 : number(s.weight),
                 reps: number(s.reps),
                 rir: s.rir === '' || s.rir == null ? null : number(s.rir),
                 isWarmup: !!s.isWarmup,
+                isBodyweight: !!s.isBodyweight,
+                drops: s.drops.map(d => ({weight: d.isBodyweight ? 0 : number(d.weight), reps: number(d.reps), isBodyweight: !!d.isBodyweight})),
                 notes: s.notes || null
             }))
         }));
@@ -3037,7 +3298,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
                 month: 'long',
                 year: 'numeric'
             }).format(new Date(field('Date').value + 'T12:00:00'));
-            review.querySelector('[data-record-review-content]').innerHTML = `<h3>${escape(field('Title').value)}</h3><p class="record-review-date">${escape(date)} · ${field('DurationMinutes').value ? escape(field('DurationMinutes').value) + ' мин' : 'Длительность не указана'}</p><div class="record-review-stats"><div><span>Рабочих подходов</span><strong>${working.length}</strong></div><div><span>Объём, кг</span><strong>${format(working.reduce((sum, s) => sum + s.weight * s.reps, 0))}</strong></div></div><ul class="record-review-list">${payload.map(e => `<li><strong>${escape(library.byId.get(e.exerciseId).dataset.name)}</strong><span>${e.sets.length} подх.</span></li>`).join('')}</ul>${sets.some(s => s.isWarmup) ? `<p class="record-review-date">Разминочных подходов: ${sets.length - working.length}</p>` : ''}`;
+            review.querySelector('[data-record-review-content]').innerHTML = `<h3>${escape(field('Title').value)}</h3><p class="record-review-date">${escape(date)} · ${field('DurationMinutes').value ? escape(field('DurationMinutes').value) + ' мин' : 'Длительность не указана'}</p><div class="record-review-stats"><div><span>Рабочих подходов</span><strong>${working.length}</strong></div><div><span>Объём, кг</span><strong>${format(working.reduce((sum, s) => sum + s.weight * s.reps + s.drops.reduce((v, d) => v + d.weight * d.reps, 0), 0))}</strong></div></div><ul class="record-review-list">${payload.map(e => `<li><strong>${escape(library.byId.get(e.exerciseId).dataset.name)}</strong><span>${e.sets.length} подх.${e.sets.some(s => s.drops.length) ? ' · дропсет' : ''}${e.sets.some(s => s.isBodyweight) ? ' · собственный вес' : ''}</span></li>`).join('')}</ul>${sets.some(s => s.isWarmup) ? `<p class="record-review-date">Разминочных подходов: ${sets.length - working.length}</p>` : ''}`;
             save();
             review.showModal();
             return;
@@ -3152,6 +3413,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         revision,
         step,
         goal: selected('Input.Goal')[0],
+        level: selected('Input.Level')[0],
         location: selected('Input.Location')[0],
         equipment: selected('Input.Equipment'),
         days: selected('Input.Days'),
@@ -3166,7 +3428,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         }
     };
     const renderSummary = () => {
-        const rows = [['Цель', title(form.querySelector('[name="Input.Goal"]:checked')) || 'Выберите цель'], ['Место', title(form.querySelector('[name="Input.Location"]:checked')) || 'Выберите место'], ['Оборудование', [...form.querySelectorAll('[name="Input.Equipment"]:checked')].map(title).join(', ') || 'Без дополнительного оборудования'], ['Удобные дни', later.checked ? 'Дни выберу позже' : dayInputs.filter(input => input.checked).map(input => input.closest('label').querySelector('small').textContent).join(', ') || 'Выберите дни']];
+        const rows = [['Цель', title(form.querySelector('[name="Input.Goal"]:checked')) || 'Выберите цель'], ['Уровень', title(form.querySelector('[name="Input.Level"]:checked')) || 'Выберите уровень'], ['Место', title(form.querySelector('[name="Input.Location"]:checked')) || 'Выберите место'], ['Оборудование', [...form.querySelectorAll('[name="Input.Equipment"]:checked')].map(title).join(', ') || 'Без дополнительного оборудования'], ['Удобные дни', later.checked ? 'Дни выберу позже' : dayInputs.filter(input => input.checked).map(input => input.closest('label').querySelector('small').textContent).join(', ') || 'Выберите дни']];
         form.querySelectorAll('[data-setup-preview],[data-setup-review]').forEach(dl => {
             dl.replaceChildren(...rows.map(([label, value]) => {
                 const row = document.createElement('div'), dt = document.createElement('dt'),
@@ -3226,7 +3488,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         try {
             const draft = JSON.parse(sessionStorage.getItem(key));
             if (draft?.version === 1 && draft.revision === revision) {
-                for (const [name, values] of [['Input.Goal', [draft.goal]], ['Input.Location', [draft.location]], ['Input.Equipment', draft.equipment], ['Input.Days', draft.days]]) {
+                for (const [name, values] of [['Input.Goal', [draft.goal]], ['Input.Level', [draft.level]], ['Input.Location', [draft.location]], ['Input.Equipment', draft.equipment], ['Input.Days', draft.days]]) {
                     if (!Array.isArray(values)) continue;
                     form.querySelectorAll(`[name="${name}"]`).forEach(input => input.checked = values.includes(input.value));
                 }

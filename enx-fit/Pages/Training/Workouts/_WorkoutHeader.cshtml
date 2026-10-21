@@ -2,14 +2,19 @@
 @{
     var workout = Model.Workout;
     var locked = workout.IsFinished;
+    var isFree = workout.IsActive && workout.SourceProgramWorkoutId is null && workout.TrainingProgramId is null;
 }
 <a class="workout-back" asp-page="@(Model.IsAdministrator ? "/Training/Workouts/Index" : "/Dashboard/Index")"
    asp-route-UserId="@(Model.IsAdministrator ? workout.UserId : null)">
     <admin-icon name="back"/>@(Model.IsAdministrator ? "Записи пользователя" : "На главную")</a>
 <header class="active-header">
     <div>
-        <p class="eyebrow">@(workout.State == WorkoutStatus.Cancelled ? "ТРЕНИРОВКА ОТМЕНЕНА" : locked ? "ТРЕНИРОВКА ЗАВЕРШЕНА" : workout.IsActive ? "ЗДЕСЬ И СЕЙЧАС" : "ПЛАН ТРЕНИРОВКИ") · @workout.Date.ToString("dd.MM.yyyy")</p>
+        <p class="eyebrow">@(workout.State == WorkoutStatus.Cancelled ? "ТРЕНИРОВКА ОТМЕНЕНА" : locked ? "ТРЕНИРОВКА ЗАВЕРШЕНА" : isFree ? "ТРЕНИРОВКА НА ЛЕТУ" : workout.IsActive ? "ТРЕНИРОВКА ИДЁТ" : "ПЛАН ТРЕНИРОВКИ") · @workout.Date.ToString("dd.MM.yyyy")</p>
         <h1>@(workout.Title ?? "Быстрая тренировка")</h1>
+        @if (workout.IsActive)
+        {
+            <p class="workout-purpose">Добавляйте упражнения по ходу занятия. Записывайте вес и повторения, затем отмечайте выполненные подходы.</p>
+        }
         @if (workout.StartedAtUtc is { } started)
         {
             <p class="active-session-meta"><span class="live-dot"></span><strong
@@ -28,12 +33,6 @@
         }
     </div>
     <div class="active-header-actions">
-        @if (!locked && workout.WorkoutExercises.Count == 0)
-        {
-            <button class="button secondary" data-dialog="load-template-dialog">Загрузить шаблон
-                <admin-icon name="chevron"/>
-            </button>
-        }
         @if (workout.State == WorkoutStatus.Planned)
         {
             <form method="post" asp-page-handler="Start">
@@ -44,14 +43,27 @@
         }
         @if (workout.IsActive)
         {
-            <button type="button" class="button secondary"
-                    data-control="@(workout.State == WorkoutStatus.Paused ? "resume" : "pause")"
-                    data-pause-button>@(workout.State == WorkoutStatus.Paused ? "Продолжить" : "Пауза")</button>
+            <button class="button" type="button" data-dialog="finish-workout-dialog" data-finish
+                    disabled="@(!workout.WorkoutExercises.Any(e => e.SetEntries.Any(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0)))">
+                <admin-icon name="check"/>Завершить
+            </button>
         }
         @if (workout.TrainingProgramId is { } programId)
         {
             <a class="button secondary" asp-page="/Training/Programs/Details" asp-route-id="@programId">К программе</a>
         }
-        <a class="button secondary" asp-page="./Edit" asp-route-id="@workout.Id">Название и заметки</a>
+        <details class="workout-session-menu">
+            <summary aria-label="Меню тренировки"><span>Ещё</span><span aria-hidden="true">⋯</span></summary>
+            <div>
+                @if (workout.IsActive) {
+                    <button type="button" data-control="@(workout.State == WorkoutStatus.Paused ? "resume" : "pause")" data-pause-button>@(workout.State == WorkoutStatus.Paused ? "Продолжить" : "Пауза")</button>
+                }
+                <a asp-page="./Edit" asp-route-id="@workout.Id">Название и заметки</a>
+                @if (workout.IsActive)
+                {
+                    <button class="danger-text" type="button" data-dialog="cancel-workout-dialog">Отменить тренировку</button>
+                }
+            </div>
+        </details>
     </div>
 </header>

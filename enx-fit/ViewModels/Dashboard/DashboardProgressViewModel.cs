@@ -119,5 +119,5 @@ public sealed class DashboardProgressViewModel
 
     private static bool ValidSet(SetEntry set) => set.IsCompleted && !set.IsSkipped && !set.IsWarmup && set.Reps > 0 && set.Weight > 0;
     private static decimal WorkingVolume(WorkoutSession workout) => workout.WorkoutExercises.SelectMany(e => e.SetEntries)
-        .Where(s => s.IsCompleted && !s.IsSkipped && !s.IsWarmup && s.Reps > 0 && s.Weight >= 0).Sum(s => s.Weight * s.Reps);
+        .Where(s => s.IsCompleted && !s.IsSkipped && !s.IsWarmup && s.Reps > 0 && s.Weight >= 0).Sum(s => s.Volume);
 }

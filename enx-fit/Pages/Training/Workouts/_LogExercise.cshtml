@@ -1,0 +1,34 @@
+@using enx_fit.Presentation.Exercises
+@using System.Globalization
+@model enx_fit.ViewModels.Workouts.WorkoutExerciseViewModel
+@{ var e = Model.Exercise; var rest = e.TargetRestSeconds ?? 90; var inv = CultureInfo.InvariantCulture; }
+<section class="session-exercise log-exercise" id="exercise-@e.Id" data-catalog-id="@e.ExerciseId" data-entry-id="@e.Id" data-block-key="@Model.Block.Key" data-block-name="@Model.Block.Name" data-block-kind="@Model.Block.Kind" data-block-type="@Model.Block.Type"
+         data-has-record="@((Model.Performance is not null).ToString().ToLowerInvariant())" data-record-weight="@((Model.Performance?.BestWeight ?? 0).ToString(inv))" data-record-volume="@((Model.Performance?.BestSetVolume ?? 0).ToString(inv))" data-record-reps="@(Model.Performance?.BestBodyweightReps ?? 0)">
+    <header class="log-exercise-heading"><span class="log-exercise-number">@Model.Number.ToString("00")</span><div><h2><button type="button" data-exercise-history="@e.ExerciseId">@ExercisePresentation.DisplayName(e.Exercise)</button></h2><p>@e.Exercise.MuscleGroup <span>·</span> @e.Exercise.Equipment</p></div>
+    @if (!Model.Locked) {
+        <details class="exercise-menu log-menu"><summary aria-label="Действия: @ExercisePresentation.DisplayName(e.Exercise)"><reference-icon name="more" /></summary><div>
+            <button type="button" data-dialog="exercise-dialog" data-replace-exercise="@e.Id">Заменить упражнение</button>
+            <form method="post" asp-page-handler="Exercise" data-native-order><input type="hidden" name="ExerciseEntryId" value="@e.Id" /><input type="hidden" name="operationId" value="@Guid.NewGuid()" /><input type="hidden" name="expectedRevision" value="@Model.Revision" />
+                <button name="action" value="up" disabled="@(!Model.CanMoveUp)" data-order-disabled="@(!Model.CanMoveUp ? "true" : null)">Переместить выше</button><button name="action" value="down" disabled="@(!Model.CanMoveDown)" data-order-disabled="@(!Model.CanMoveDown ? "true" : null)">Переместить ниже</button><button name="action" value="remove" class="danger-text">Удалить упражнение</button>
+            </form></div></details>
+    }</header>
+    <div class="log-exercise-tools">
+        @if (!Model.Locked) {
+        <label class="log-rest-setting"><reference-icon name="clock" /><span>Отдых</span><select data-exercise-rest aria-label="Отдых: @ExercisePresentation.DisplayName(e.Exercise)">@foreach (var seconds in new[] { 0, 30, 60, 90, 120, 150, 180, 240, 300 }.Append(rest).Distinct().Order()) { <option value="@seconds" selected="@(seconds == rest)">@(seconds == 0 ? "Выкл." : $"{seconds / 60}:{seconds % 60:00}")</option> }</select></label>
+        }
+        <button type="button" class="text-button" data-exercise-history="@e.ExerciseId"><reference-icon name="bars-outline" />История</button>
+        @if (ExerciseTechniqueCatalog.Find(e.Exercise) is { } technique) { <details class="log-technique"><summary>Техника</summary><partial name="/Pages/Shared/Exercises/_ExerciseTechnique.cshtml" model="technique" /></details> }
+    </div>
+    @if (e.TargetSets is { } target) { <p class="log-prescription">План: @target × @(e.TargetRepsMin == e.TargetRepsMax ? e.TargetRepsMin.ToString() : $"{e.TargetRepsMin}–{e.TargetRepsMax}") повт.@(e.TargetRir is { } rir ? $" · RIR {rir}" : "") · @Model.Block.Type</p> }
+    @if (!string.IsNullOrWhiteSpace(e.Notes) && e.Notes != Model.Block.Name) { <p class="log-prescription">@e.Notes</p> }
+    <div class="log-set-head" aria-hidden="true"><span>Подход</span><span>Прошлый</span><span>кг</span><span>Повт.</span><span>✓</span></div>
+    @foreach (var set in Model.Sets) { <partial name="_LogSet" model="set" /> }
+    @if (Model.PreviousResult is { } previous) {
+        <details class="log-previous" data-exercise-previous><summary>В прошлый раз · @previous.Date.ToString("d MMMM", CultureInfo.GetCultureInfo("ru-RU")) <span>⌄</span></summary><div>@foreach (var s in previous.Sets) { <p>Подход @s.Number: <strong>@(s.IsBodyweight ? "Собственный вес" : s.Weight.ToString("0.##") + " кг") × @s.Reps</strong>@foreach (var d in s.Drops.OrderBy(d => d.Order)) { <span> → @(d.IsBodyweight ? "Собственный вес" : d.Weight.ToString("0.##") + " кг") × @d.Reps</span> }</p> }<a asp-page="./Details" asp-route-id="@previous.WorkoutId">Открыть запись ↗</a></div></details>
+    }
+    @if (!Model.Locked) {
+        <form method="post" asp-page-handler="AddSet" class="new-set-form log-add-set"><input type="hidden" name="AddSet.WorkoutExerciseId" value="@e.Id" /><input type="hidden" name="AddSet.SetNumber" value="@Model.NextSetNumber" /><input type="hidden" name="completed" value="false" /><input type="hidden" name="AddSet.RestSeconds" value="@rest" /><input type="hidden" name="AddSet.Weight" value="@Model.NextWeight.ToString(inv)" /><input type="hidden" name="AddSet.Reps" value="@Model.NextReps" />@if (Model.NextIsBodyweight) { <input type="hidden" name="AddSet.IsBodyweight" value="true" /> }<button type="submit"><reference-icon name="plus" />Добавить подход</button></form>
+    }
+    <p class="log-record-badge" data-live-record hidden><reference-icon name="trophy" /><span></span></p>
+</section>
+

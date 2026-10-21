@@ -95,8 +95,8 @@
 .ef-start>svg { width:28px; height:28px; }
 .ef-workout-shortcuts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:center; height:51px; margin-top:14px; border-top:1px solid #7596ed40; }
 .ef-workout-shortcuts button { display:flex; align-items:center; justify-content:center; gap:14px; padding:0 4px; min-height:32px; width:100%; color:#afc7f8; font-size:14px; white-space:nowrap; }
-.ef-workout-shortcuts>button:first-child { justify-content:flex-start; }
-.ef-workout-shortcuts>button+button,.ef-workout-shortcuts>form { border-left:1px solid #6481d510; }
+.ef-workout-shortcuts>button:first-child,.ef-workout-shortcuts>form:first-child>button { justify-content:flex-start; }
+.ef-workout-shortcuts>:not(:first-child) { border-left:1px solid #6481d510; }
 .ef-workout-shortcuts svg { width:22px; height:22px; color:#a0bbf3; }
 .ef-week { min-height:265px; padding:21px 15px 26px; }
 .ef-week .ef-card-heading { min-height:24px; margin:0 4px 21px; }
@@ -273,7 +273,7 @@
   .ef-primary.ef-start { width:100%; min-width:0; font-size:18px; }
   .ef-workout-shortcuts { height:62px; }
   .ef-workout-shortcuts button { flex-direction:column; gap:4px; min-height:56px; font-size:11px; }
-  .ef-workout-shortcuts>button:first-child { justify-content:center; }
+  .ef-workout-shortcuts>button:first-child,.ef-workout-shortcuts>form:first-child>button { justify-content:center; }
   .ef-workout-shortcuts svg { width:20px; height:20px; }
   .ef-week { padding:17px 10px 19px; min-height:235px; }
   .ef-week .ef-card-heading { gap:7px; margin:0 3px 16px; }

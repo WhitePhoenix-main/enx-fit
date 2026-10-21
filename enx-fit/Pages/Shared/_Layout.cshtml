@@ -1,3 +1,5 @@
+@inject enx_fit.Security.IFeatureAccessService SubscriptionAccess
+@{ var subscriptionAccess = User.Identity?.IsAuthenticated == true ? await SubscriptionAccess.GetAsync() : null; }
 @using enx_fit.ViewModels.Navigation
 @{
     var authenticated = User.Identity?.IsAuthenticated == true;
@@ -18,9 +20,13 @@
         <partial name="/Pages/Shared/Icons/_AppIcons.cshtml" />
         <link rel="stylesheet" href="~/css/mobile-shell.css" asp-append-version="true" />
         <link rel="stylesheet" href="~/css/app-components.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/mobile-coach.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/native-app.css" asp-append-version="true" />
     }
+    <link rel="stylesheet" href="~/css/subscription-theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app-chrome.css" asp-append-version="true" />
 </head>
-<body class="@(authenticated ? "em-app-shell" : "")">
+<body data-subscription="@subscriptionAccess?.Plan.ToString().ToLowerInvariant()" class="@(authenticated ? "em-app-shell" : "")">
     <a class="skip-link" href="#main-content">Перейти к основному содержимому</a>
     <partial name="/Pages/Shared/Navigation/_Header.cshtml" />
     @if (authenticated) { <partial name="/Pages/Shared/Navigation/_MobileAppShell.cshtml" model="mobileNavigation" /><partial name="/Pages/Shared/Workouts/_WorkoutResume.cshtml" model="mobileNavigation" /> }

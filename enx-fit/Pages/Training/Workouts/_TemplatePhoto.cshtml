@@ -1,0 +1,3 @@
+@model string
+@{ var (x,y)=Model switch { "legs"=>(512,0),"bodyweight"=>(1024,0),"tone"=>(0,512),"full"=>(512,512),"lunge"=>(1024,512),_=>(0,0) }; }
+<span class="tc-art tc-art-@Model" aria-hidden="true"><svg viewBox="@x @y 512 512" preserveAspectRatio="@(Model is "full" or "lunge" ? "xMidYMid slice":"xMidYMin slice")" focusable="false"><image href="@Url.Content("~/images/training/template-photos-v1.png")" width="1536" height="1024" /></svg></span>

@@ -1,0 +1,35 @@
+@using System.Globalization
+@model enx_fit.ViewModels.Workouts.WorkoutSetViewModel
+@{ var s = Model.Set; var e = Model.Exercise; var locked = Model.Locked; }
+<form method="post" asp-page-handler="Set" class="set-form log-set @(s.IsCompleted ? "is-completed" : "") @(s.IsSkipped ? "is-skipped" : "")" data-effort-needed="false">
+    <input type="hidden" name="setId" value="@s.Id" /><input type="hidden" name="AddSet.WorkoutExerciseId" value="@e.Id" /><input type="hidden" name="AddSet.SetNumber" value="@s.SetNumber" />
+    <div class="set-main log-set-main">
+
+        <details class="set-extra log-set-options" id="set-extra-@s.Id"><summary aria-label="Подход @s.SetNumber: тип и действия">@(s.IsWarmup ? "Р" : s.SetNumber.ToString())<span aria-hidden="true">⌄</span></summary><div>
+            @if (Model.HasTarget || Model.Prescription is not null) {
+                var targetWeight=Model.Prescription?.Weight ?? e.TargetWeightKg;
+                var targetReps=Model.Prescription?.Reps ?? e.TargetRepsMin;
+                var repsLabel=targetReps?.ToString() ?? "—";
+                if(Model.Prescription is null && targetReps is int min && e.TargetRepsMax is int max && max>min) repsLabel=$"{min}–{max}";
+                <p class="ws-set-target" data-session-target aria-label="План подхода @s.SetNumber">По плану: @(targetReps is null ? "—" : targetWeight is >0 ? $"{targetWeight:0.##} × {repsLabel}" : $"{repsLabel} повт.")@if(e.TargetRir is {} rir){<span> · RIR @rir</span>}@if(e.TargetRpe is {} rpe){<span> · RPE @rpe</span>}</p>
+            }
+            <label class="warmup-check"><input type="checkbox" name="AddSet.IsWarmup" value="true" checked="@s.IsWarmup" disabled="@locked" />Разминочный подход</label>
+            <label class="bodyweight-check"><input type="checkbox" name="AddSet.IsBodyweight" value="true" data-bodyweight checked="@s.IsBodyweight" disabled="@locked" />Собственный вес</label>
+            @if (ViewData["WorkoutSession"] is true && Model.Previous is { } prior && !locked && prior.Drops.Count == 0 && s.Drops.Count == 0) { <button type="button" data-copy-previous data-weight="@prior.Weight.ToString(CultureInfo.InvariantCulture)" data-reps="@prior.Reps" data-previous-bodyweight="@prior.IsBodyweight.ToString().ToLowerInvariant()">Повторить прошлый: @prior.Weight.ToString("0.##") × @prior.Reps</button> }
+            <label>Запас повторений · RIR<input name="AddSet.Rir" type="number" inputmode="numeric" min="0" max="10" value="@s.Rir" placeholder="Не указан" readonly="@locked" /></label>
+            <label>Отдых, с<input name="AddSet.RestSeconds" type="number" inputmode="numeric" min="0" max="1800" value="@(s.RestSeconds ?? e.TargetRestSeconds ?? 90)" readonly="@locked" /></label>
+            <label>Заметка<input name="AddSet.Notes" maxlength="500" value="@s.Notes" readonly="@locked" /></label>
+            @if (!locked) { <button type="button" data-add-drop>+ Дропсет</button><button type="button" data-skip-set>Пропустить подход</button><button name="remove" value="true" formnovalidate class="danger-text">Удалить подход</button> }
+            <small>Р — разминка. RIR — сколько повторений осталось в запасе.</small>
+        </div></details>
+        <div class="set-previous-cell">@if (Model.Previous is { } previous) { @if (!locked && previous.Drops.Count == 0 && s.Drops.Count == 0) { <button type="button" data-copy-previous data-weight="@previous.Weight.ToString("0.##", CultureInfo.InvariantCulture)" data-reps="@previous.Reps" data-previous-bodyweight="@previous.IsBodyweight.ToString().ToLowerInvariant()" aria-label="Повторить прошлый подход @s.SetNumber">@(previous.IsBodyweight ? "Свой вес" : previous.Weight.ToString("0.##")) × @previous.Reps</button> } else { <span>@(previous.IsBodyweight ? "Свой вес" : previous.Weight.ToString("0.##")) × @previous.Reps</span> } } else { <span>—</span> }</div>
+        <input aria-label="Вес подхода @s.SetNumber, кг" name="AddSet.Weight" type="number" inputmode="decimal" min="0" max="10000" step="0.01" value="@s.Weight.ToString("0.##", CultureInfo.InvariantCulture)" readonly="@locked" hidden="@s.IsBodyweight" required="@(!s.IsBodyweight)" /><span class="bodyweight-value" hidden="@(!s.IsBodyweight)">Свой вес</span>
+        <input aria-label="Повторения подхода @s.SetNumber" name="AddSet.Reps" type="number" inputmode="numeric" min="0" max="1000" value="@s.Reps" readonly="@locked" required />
+        <label class="set-completed"><input type="checkbox" name="completed" value="true" checked="@s.IsCompleted" disabled="@locked" aria-label="Подход @s.SetNumber выполнен" /><span><reference-icon name="check-circle" /></span></label>
+    </div>
+    <div class="set-drops" data-set-drops>@foreach (var stage in s.Drops.OrderBy(d => d.Order).Select((drop, index) => (drop, index))) { <div class="set-drop" data-drop-index="@stage.index"><div class="drop-main"><span class="drop-number">Дроп @(stage.index + 1)</span><input name="AddSet.Drops[@stage.index].Weight" type="number" inputmode="decimal" min="0" max="10000" step="0.01" value="@stage.drop.Weight.ToString("0.##", CultureInfo.InvariantCulture)" data-drop-field="weight" aria-label="Вес дропа @(stage.index + 1), кг" hidden="@stage.drop.IsBodyweight" required="@(!stage.drop.IsBodyweight)" readonly="@locked" /><span class="bodyweight-value" hidden="@(!stage.drop.IsBodyweight)">Свой вес</span><input name="AddSet.Drops[@stage.index].Reps" type="number" inputmode="numeric" min="1" max="1000" value="@stage.drop.Reps" data-drop-field="reps" aria-label="Повторения дропа @(stage.index + 1)" required readonly="@locked" />@if (!locked) { <button type="button" data-remove-drop aria-label="Удалить дроп">×</button> }</div><label><input type="checkbox" name="AddSet.Drops[@stage.index].IsBodyweight" value="true" data-drop-field="isBodyweight" data-bodyweight checked="@stage.drop.IsBodyweight" disabled="@locked" />Свой вес</label></div> }</div>
+    <small class="drop-help" hidden="@(s.Drops.Count == 0)">Дропы выполняются без отдыха, затем отмечается весь подход.</small>
+    @if (s.IsSkipped) { <small>Пропущен</small> }
+    <p class="set-save-status" role="status" hidden></p>
+    @if (!locked) { <noscript><button type="submit">Сохранить подход</button></noscript> }
+</form>

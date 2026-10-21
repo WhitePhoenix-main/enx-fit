@@ -24,9 +24,10 @@ public sealed class DashboardQuery(ApplicationDbContext db, CurrentUser currentU
                 e.SetEntries.Any(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0)));
         var daily = await completed.GroupBy(w => w.Date).Select(g => new DashboardDay(g.Key, g.Count(),
             g.Sum(w => w.WorkoutExercises.SelectMany(e => e.SetEntries)
-                .Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0).Sum(s => s.Weight * s.Reps))))
+                .Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0)
+                .Sum(s => (s.IsBodyweight ? 0 : s.Weight * s.Reps) + s.Drops.Sum(d => d.IsBodyweight ? 0 : d.Weight * d.Reps)))))
             .ToListAsync();
-        var recordSince = today.AddDays(-29);
+        var recordSince = today.AddDays(-27);
         var exerciseRows = completed.SelectMany(w => w.WorkoutExercises.SelectMany(e => e.SetEntries
             .Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0)
             .Select(s => new { w.Date, WorkoutId = w.Id, e.ExerciseId, e.Exercise.Name, s.Weight, s.IsSkipped })));
@@ -51,6 +52,7 @@ public sealed class DashboardQuery(ApplicationDbContext db, CurrentUser currentU
             .OrderBy(w => w.Date).ThenBy(w => w.Id).Select(w => (int?)w.Id).Take(1);
         // Disjoint windows keep an old selected period from loading every intervening year.
         var detail = sessions.Where(w => (w.Date >= since && w.Date <= until) ||
+            (w.Date >= today.AddDays(-27) && w.Date <= today) ||
             (w.Date >= progressSince && w.Date <= until) ||
             (w.Date >= week && w.Date < week.AddDays(7)) ||
             (w.Date >= monday && w.Date <= today) ||
@@ -64,7 +66,7 @@ public sealed class DashboardQuery(ApplicationDbContext db, CurrentUser currentU
             {
                 Id = w.Id, UserId = w.UserId, Title = w.Title, Notes = w.Notes, Date = w.Date,
                 Status = w.Status, EntryMode = w.EntryMode, StartedAtUtc = w.StartedAtUtc, CompletedAtUtc = w.CompletedAtUtc,
-                CreatedAtUtc = w.CreatedAtUtc, DurationSeconds = w.DurationSeconds,
+                CreatedAtUtc = w.CreatedAtUtc, DurationSeconds = w.DurationSeconds, PlannedMinutes = w.PlannedMinutes,
                 TrainingProgramId = w.TrainingProgramId, ProgramWorkoutKey = w.ProgramWorkoutKey, ScheduledDate = w.ScheduledDate,
                 WorkoutExercises = w.WorkoutExercises.Select(e => new WorkoutExercise
                 {
@@ -73,6 +75,7 @@ public sealed class DashboardQuery(ApplicationDbContext db, CurrentUser currentU
                     SetEntries = e.SetEntries.Select(s => new SetEntry
                     {
                         Id = s.Id, SetNumber = s.SetNumber, Weight = s.Weight, Reps = s.Reps,
+                        IsBodyweight = s.IsBodyweight, Drops = s.Drops,
                         IsCompleted = s.IsCompleted, IsWarmup = s.IsWarmup, IsSkipped = s.IsSkipped
                     }).ToList()
                 }).ToList()
@@ -86,7 +89,7 @@ public sealed class DashboardQuery(ApplicationDbContext db, CurrentUser currentU
             History = new(daily, records), Workouts = workouts,
             Measurements = await measurements.Where(m => m.Date >= until.AddDays(-28) || lastMeasurements.Contains(m.Id))
                 .OrderBy(m => m.Date).ThenBy(m => m.Id).ToListAsync(),
-            CheckIns = await db.DailyCheckIns.AsNoTracking().Where(c => c.UserId == subject.Id && c.Date >= today.AddDays(-6) && c.Date <= today)
+            CheckIns = await db.DailyCheckIns.AsNoTracking().Where(c => c.UserId == subject.Id && c.Date >= today.AddDays(-29) && c.Date <= today)
                 .OrderBy(c => c.Date).ToListAsync()
         };
         return new(data, config.Layout?.WidgetsJson, config.Layout is null);

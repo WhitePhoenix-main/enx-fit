@@ -34,12 +34,16 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
     [BindProperty(SupportsGet = true)] public string? ProgressMetric { get; set; } = "consistency";
     // An explicit visual snapshot reproduces the reference content without altering user records.
     [BindProperty(SupportsGet = true)] public bool Reference { get; set; }
+    [BindProperty(SupportsGet = true), StringLength(10)] public string? ReferencePlan { get; set; }
+    public SubscriptionDashboardViewModel SubscriptionHome { get; private set; } = null!;
     [BindProperty(SupportsGet = true)] public DateOnly? Month { get; set; }
     [BindProperty(SupportsGet = true), StringLength(120)] public string? Search { get; set; }
     [BindProperty(SupportsGet = true)] public string? WorkoutProgram { get; set; }
     [BindProperty(SupportsGet = true)] public int? SelectedWorkout { get; set; }
     [BindProperty(SupportsGet = true)] public DateOnly? WorkoutDate { get; set; }
     public IReadOnlyList<TrainingProgram> WorkoutPrograms { get; private set; } = [];
+    public IReadOnlyList<enx_fit.ViewModels.Workouts.WorkoutTemplateCard> CoachTemplates { get; private set; } = [];
+    public IReadOnlyList<CoachCalendarEntry> CoachCalendar { get; private set; } = [];
     [BindProperty] public GoalInput Goal { get; set; } = new();
     [BindProperty] public CheckInInput CheckIn { get; set; } = new();
     public DashboardData Data { get; private set; } = null!;
@@ -139,6 +143,20 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
         return RedirectToPage(new { Days, Until = Until?.ToString("yyyy-MM-dd") });
     }
 
+    public async Task<IActionResult> OnPostWellbeingAsync(string choice, int? feeling)
+    {
+        var subject = await dashboard.GetSubjectAsync(ClientId);
+        if (subject is null) return NotFound();
+        if (Reference || subject.Id != currentUser.Id) return Forbid();
+        foreach (var key in ModelState.Keys.Where(k => k.StartsWith("Goal.") || k.StartsWith("CheckIn.")).ToArray()) ModelState.Remove(key);
+        if (choice is not ("feeling" or "clear" or "rest" or "resume") || choice == "feeling" && feeling is not (>= 1 and <= 3))
+            ModelState.AddModelError("feeling", "Выберите самочувствие или день отдыха.");
+        if (!ModelState.IsValid) { await LoadAsync(subject); return Page(); }
+        await commands.SaveWellbeingAsync(choice, feeling);
+        StatusMessage = choice switch { "rest" => "Сегодня выбран отдых. План тренировок сохранён.", "resume" => "Отметка отдыха убрана.", "clear" => "Отметка самочувствия убрана.", _ => "Самочувствие на сегодня сохранено." };
+        return RedirectToPage(new { ClientId, Month = Month?.ToString("yyyy-MM-dd") });
+    }
+
     public async Task<IActionResult> OnPostLayoutAsync([FromBody] DashboardLayoutInput? input)
     {
         var subject = await performance.MeasureAsync("subject", () => dashboard.GetSubjectAsync(ClientId));
@@ -170,12 +188,15 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
 
     private async Task<bool> LoadAsync(ApplicationUser? authorizedSubject = null)
     {
+        if (CurrentPage == "/Training/Index" && ClientId is null && await features.CanUseAsync(Feature.CoachClientManagement))
+            ClientId = (await dashboard.GetClientsAsync()).FirstOrDefault()?.Id;
         var subject = authorizedSubject ?? await performance.MeasureAsync("subject", () => dashboard.GetSubjectAsync(ClientId));
         if (subject is null) return false;
         if (CurrentPage == "/Training/Index" && !Request.Query.ContainsKey("Days")) Days = 30;
         WeekOffset = Math.Clamp(WeekOffset, -52, 52);
         ProgressWeeks = ProgressWeeks is 2 or 4 or 6 or 12 ? ProgressWeeks : 6;
         ChartWeeks = ChartWeeks is 2 or 4 or 6 or 12 ? ChartWeeks : 6;
+        if (CurrentPage == "/Dashboard/Index" && !Request.Query.ContainsKey("ChartWeeks")) ChartWeeks = 4;
         if (!Reference && CurrentPage == "/Progress/Index" && !Request.Query.ContainsKey("ChartWeeks")) ChartWeeks = ProgressWeeks;
         ProgressTab = ProgressTab is "overview" or "analytics" or "records" ? ProgressTab : "overview";
         ProgressMetric = ProgressMetric is "consistency" or "strength" or "body" || (ProgressTab == "analytics" && ProgressMetric == "volume") ? ProgressMetric : "consistency";
@@ -190,7 +211,7 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
         }
         else Data = await performance.MeasureAsync("history", () => dashboard.LoadAsync(subject, Days, Until!.Value));
         homeProgress = null;
-        if (CurrentPage == "/Training/Index")
+        if (CurrentPage is "/Training/Index" or "/Training/Plans")
         {
             Search = Search?.Trim();
             if (Search?.Length > 120) Search = Search[..120];
@@ -213,6 +234,12 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
         }
         Clients = await performance.MeasureAsync("clients", () => dashboard.GetClientsAsync());
         CanManageClients = await features.CanUseAsync(Feature.CoachClientManagement);
+        if (CurrentPage == "/Training/Index")
+        {
+            CoachTemplates = await HttpContext.RequestServices.GetRequiredService<WorkoutTemplateCatalog>().ListAsync();
+            var monday = today.AddDays(-((int)today.DayOfWeek + 6) % 7);
+            if (CanManageClients) CoachCalendar = await HttpContext.RequestServices.GetRequiredService<CoachCalendarService>().WeekAsync(monday);
+        }
         if (CurrentPage is "/Dashboard/Index" or "/Progress/Index")
         {
             if (CurrentPage == "/Dashboard/Index" && !IsCoachView && await features.CanUseAsync(Feature.CoachClientAlerts))
@@ -257,6 +284,15 @@ public class DashboardModel(DashboardService dashboard, ApplicationDbContext db,
             Widgets = DashboardWidgets.Read(preference?.WidgetsJson, IsCoachView);
         }
         ViewData["Dashboard"] = this;
+        if (CurrentPage == "/Dashboard/Index")
+        {
+            var access = await features.GetAsync();
+            var coachHome = !IsCoachView && access.Plan == SubscriptionPlan.Coach && access.CanUse(Feature.CoachClientManagement);
+            var query = HttpContext.RequestServices.GetRequiredService<SubscriptionDashboardQuery>();
+            var cards = Reference ? [] : await query.ProgramsAsync(coachHome);
+            var overview = !Reference && coachHome ? await query.CoachAsync(today) : null;
+            SubscriptionHome = new(this, access, cards, overview);
+        }
         Response.Headers.CacheControl = "no-cache, no-store";
         return true;
     }

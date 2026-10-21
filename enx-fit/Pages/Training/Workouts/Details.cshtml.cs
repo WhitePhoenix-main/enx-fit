@@ -17,8 +17,26 @@ public class DetailsModel(
     WorkoutService workoutService,
     CurrentUser currentUser,
     UserDirectoryService userDirectory,
-    ExerciseService exerciseService) : PageModel
+    ExerciseService exerciseService, IFeatureAccessService featureAccess) : PageModel
 {
+    [BindProperty(SupportsGet = true, Name = "Coach")] public bool CoachMode { get; set; }
+    public override async Task OnPageHandlerExecutionAsync(Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutingContext context,
+        Microsoft.AspNetCore.Mvc.Filters.PageHandlerExecutionDelegate next)
+    {
+        if (CoachMode)
+        {
+            if (!context.HandlerArguments.TryGetValue("id", out var value) || value is not int id || !await workoutService.EnterCoachExecutionAsync(id, featureAccess))
+            { context.Result = NotFound(); return; }
+            ViewData["CoachWorkout"] = true;
+        }
+        var executed = await next();
+        if (CoachMode && executed.Result is RedirectToPageResult redirect &&
+            (redirect.PageName is null || redirect.PageName == "/Training/Workouts/Details"))
+        {
+            redirect.RouteValues ??= new Microsoft.AspNetCore.Routing.RouteValueDictionary();
+            redirect.RouteValues["Coach"] = true;
+        }
+    }
     public WorkoutSession Workout { get; private set; } = null!;
 
     public WorkoutBuilderInput? Blueprint { get; private set; }
@@ -55,8 +73,14 @@ public class DetailsModel(
     }
 
     public Task<IActionResult> OnPostLoadTemplateAsync(int id, int templateId) => MutateAsync(id, () => workoutService.LoadTemplateAsync(id, templateId));
+    public Task<IActionResult> OnPostClearAsync(int id, Guid? operationId, Guid? expectedRevision) =>
+        MutateAsync(id, () => workoutService.ClearExercisesAsync(id, operationId, expectedRevision));
+    public Task<IActionResult> OnPostSessionRestAsync(int id, int seconds, Guid? operationId, Guid? expectedRevision) =>
+        MutateAsync(id, () => workoutService.SetSessionRestAsync(id, seconds, operationId, expectedRevision));
     public Task<IActionResult> OnPostExerciseAsync(int id, string action, Guid? operationId, Guid? expectedRevision) =>
         MutateAsync(id, () => workoutService.ChangeExerciseAsync(id, ExerciseEntryId, action, operationId: operationId, expectedRevision: expectedRevision));
+    public Task<IActionResult> OnPostRestAsync(int id, int seconds, Guid? operationId, Guid? expectedRevision) =>
+        MutateAsync(id, () => workoutService.ChangeExerciseRestAsync(id, ExerciseEntryId, seconds, operationId, expectedRevision));
     public async Task<IActionResult> OnPostReorderAsync(int id, string orderJson, Guid? operationId, Guid? expectedRevision)
     {
         ModelState.Clear();
@@ -89,12 +113,47 @@ public class DetailsModel(
         try { return new JsonResult(await workoutService.ExecutionStateAsync(id)); }
         catch (KeyNotFoundException) { return NotFound(); }
     }
+    public async Task<IActionResult> OnGetHistoryAsync(int id, Guid exerciseId)
+    {
+        Response.Headers.CacheControl = "no-store";
+        try {
+            var performance = (await workoutService.PerformanceAsync(exerciseId, id)).FirstOrDefault();
+            return new JsonResult(new { performance });
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+    }
     public async Task<IActionResult> OnPostControlAsync(int id, string action, Guid? operationId, Guid? expectedRevision, int seconds, DateTime? performedAtUtc)
     {
         try { return new JsonResult(await workoutService.ControlAsync(id, action, operationId, expectedRevision, seconds, performedAtUtc)); }
         catch (KeyNotFoundException) { return NotFound(); }
         catch (WorkoutConflictException ex) { return StatusCode(409, new { error = ex.Message }); }
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
+
+    public async Task<IActionResult> OnPostCancelAsync(int id, Guid? operationId, Guid? expectedRevision)
+    {
+        ModelState.Clear();
+        var ajax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+        try
+        {
+            var state = await workoutService.ControlAsync(id, "cancel", operationId, expectedRevision);
+            if (ajax) return new JsonResult(state);
+            TempData["StatusMessage"] = "Тренировка отменена. Можно начать новое занятие.";
+            return RedirectToPage(IsAdministrator ? "/Training/Workouts/Index" : "/Training/Index");
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (WorkoutConflictException ex)
+        {
+            if (ajax) return StatusCode(409, new { error = ex.Message });
+            ModelState.AddModelError("", ex.Message);
+            return await LoadPageAsync(id);
+        }
+        catch (InvalidOperationException ex)
+        {
+            if (ajax) return BadRequest(new { error = ex.Message });
+            ModelState.AddModelError("", ex.Message);
+            return await LoadPageAsync(id);
+        }
     }
     public async Task<IActionResult> OnPostSetAsync(int id, int setId, bool completed, bool remove,
         Guid? operationId, Guid? expectedRevision, DateTime? performedAtUtc, bool skipped)
@@ -128,6 +187,8 @@ public class DetailsModel(
             return RedirectToPage(new { id });
         }
         catch (KeyNotFoundException) { return NotFound(); }
+        catch (WorkoutConflictException ex) when (Request.Headers["X-Requested-With"] == "XMLHttpRequest") { return StatusCode(409, new { error = ex.Message }); }
+        catch (InvalidOperationException ex) when (Request.Headers["X-Requested-With"] == "XMLHttpRequest") { return BadRequest(new { error = ex.Message }); }
         catch (InvalidOperationException ex) { ModelState.AddModelError("", ex.Message); return await LoadPageAsync(id); }
     }
 
@@ -190,7 +251,7 @@ public class DetailsModel(
         return RedirectToPage(new { id });
     }
 
-    public async Task<IActionResult> OnPostAddSetAsync(int id, bool? completed)
+    public async Task<IActionResult> OnPostAddSetAsync(int id, bool? completed, Guid? operationId, Guid? expectedRevision)
     {
         ValidateOnly(nameof(AddSet));
 
@@ -200,14 +261,16 @@ public class DetailsModel(
         }
 
         AddSetEntryResult result;
-        try { result = await workoutService.AddSetAsync(id, AddSet, completed ?? true); }
+        try { result = await workoutService.AddSetAsync(id, AddSet, completed ?? true, operationId, expectedRevision); }
         catch (WorkoutConflictException ex) { ModelState.AddModelError("", ex.Message); return await LoadPageAsync(id); }
+        catch (InvalidOperationException ex) { ModelState.AddModelError("", ex.Message); return await LoadPageAsync(id); }
         if (result == AddSetEntryResult.WorkoutExerciseNotFound)
         {
             return NotFound();
         }
 
         TempData["StatusMessage"] = "Подход добавлен.";
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return await LoadPageAsync(id);
         return RedirectToPage(new { id });
     }
 
@@ -234,8 +297,10 @@ public class DetailsModel(
         Response.Headers.CacheControl = "no-cache, no-store";
         if (workout.BuilderConfigurationJson is not null && WorkoutBuilderInput.TryParse(workout.BuilderConfigurationJson, out var blueprint))
             Blueprint = blueprint;
-        Exercises = WorkoutExerciseViewModel.CreateAll(workout, Blueprint, PreviousResults, Execution.Revision);
-        if (IsAdministrator)
+        var performances = (await workoutService.PerformanceAsync(beforeWorkoutId: id)).ToDictionary(e => e.Exercise.Id);
+        Exercises = WorkoutExerciseViewModel.CreateAll(workout, Blueprint, PreviousResults, Execution.Revision)
+            .Select(e => e with { Performance = performances.GetValueOrDefault(e.Exercise.ExerciseId) }).ToArray();
+        if (IsAdministrator || CoachMode)
         {
             OwnerName = await userDirectory.GetDisplayNameAsync(workout.UserId);
         }

@@ -1,0 +1,30 @@
+@using System.Globalization
+@using enx_fit.Services.Programs
+@model DetailsModel
+@{
+    var p = Model.Item;
+    var ru = CultureInfo.GetCultureInfo("ru-RU");
+    var calendar = Model.Calendar;
+    var entries = calendar.Entries.Where(e => calendar.Days.Contains(e.Occurrence.Date)).ToList();
+}
+<div class="pw-details-grid"><section>
+<header class="pw-section-heading"><div><h2>@(calendar.Days.Contains(Model.Today) ? "Эта неделя" : "Неделя программы")</h2><p>@calendar.Monday.ToString("dd", ru) — @calendar.Monday.AddDays(6).ToString("d MMMM", ru)</p></div><a class="pw-link" asp-route-id="@p.Id" asp-route-Tab="schedule"><reference-icon name="calendar" /><span>В календарь</span><reference-icon name="chevron" /></a></header>
+<div class="pw-week-agenda">
+@foreach(var entry in entries){
+    var o = entry.Occurrence;
+    var completed = entry.Session?.State == WorkoutStatus.Completed;
+    <a class="pw-card pw-week-row @(o.Date == Model.Today ? "is-today" : "")" asp-route-id="@p.Id" asp-route-Tab="schedule" asp-route-Week="@o.Date.ToString("yyyy-MM-dd")" asp-route-Day="@o.Date.ToString("yyyy-MM-dd")" asp-route-OpenDay="true"><time datetime="@o.Date.ToString("yyyy-MM-dd")"><span>@o.Date.ToString("ddd", ru)</span><strong>@o.Date.Day</strong></time><span class="pw-week-title"><strong>@o.Workout.Name</strong><small>@o.Workout.Exercises.Count упражнений · @o.Workout.EstimatedMinutes мин</small></span><span class="pw-week-status @(completed ? "is-done" : "")">@if(completed){<reference-icon name="check-circle" />}<span>@(completed ? "Завершена" : entry.Status)</span></span><reference-icon name="chevron" /></a>
+}
+@if(entries.Count == 0){<section class="pw-card pw-empty"><reference-icon name="calendar" /><h2>@(p.StartDate.HasValue ? "На этой неделе занятий нет" : "Запланируем тренировки?")</h2><p>@(p.StartDate.HasValue ? "Посмотрите расписание цикла или выберите другую неделю в календаре." : "Задайте дату начала, чтобы программа появилась в вашем календаре.")</p><a class="pw-secondary" asp-route-id="@p.Id" asp-route-Tab="schedule">Открыть расписание</a></section>}
+</div>
+</section><div class="pw-detail-actions">
+@if(Model.CanAnalyze && !p.IsArchived && Model.OverviewExercise is {} exercise){
+    var recommendation = Model.OverviewRecommendation;
+    <section class="pw-card pw-recommendation"><span class="pw-kicker"><reference-icon name="dumbbell-outline" />Для следующей тренировки</span><h2>@(recommendation?.Type == RecommendationType.IncreaseWeight ? "Можно повысить вес" : recommendation is not null ? "Рекомендация по нагрузке" : "Прогрессия нагрузки")</h2><p>@exercise.Exercise.Name</p>
+    @if(recommendation is not null){<strong class="pw-recommendation-value">@recommendation.CurrentValue.ToString("0.##", ru) → @recommendation.SuggestedValue.ToString("0.##", ru) кг</strong><p>@recommendation.Reason</p>}
+    else {<p>Проверьте результаты и рассчитайте нагрузку на следующее занятие.</p>}
+    <a class="pw-link" asp-route-id="@p.Id" asp-route-Tab="progression" asp-route-ExerciseId="@exercise.Id">@(recommendation is not null ? "Рассмотреть рекомендацию" : "Открыть прогрессию") <reference-icon name="arrow" /></a><small>Изменения — после подтверждения</small></section>
+}
+@if(!p.IsArchived && Model.IsOwner && Model.Next is {} next){<form method="post" asp-page-handler="Start" asp-route-id="@p.Id" class="pw-overview-start" data-busy><button class="pw-primary" type="submit">@(Model.Sessions.Any(s => s.IsActive) ? "Продолжить тренировку" : "Начать тренировку") <reference-icon name="arrow" /></button></form>}
+<details class="pw-card pw-about"><summary>О программе <reference-icon name="chevron-down" /></summary><p>@p.Goal</p>@if(!string.IsNullOrWhiteSpace(p.Description)){<p>@p.Description</p>}<dl><div><dt>Длительность</dt><dd>@p.Weeks недель</dd></div><div><dt>В неделю</dt><dd>@p.DaysPerWeek тренировки</dd></div><div><dt>Среднее время</dt><dd>@(p.Workouts.Count > 0 ? $"≈ {p.Workouts.Average(w => w.EstimatedMinutes):0} мин" : "—")</dd></div></dl>@if(p.Blocks.Count > 0){<ol class="program-blocks">@foreach(var block in p.Blocks.OrderBy(b => b.StartWeek)){<li><small>Недели @block.StartWeek–@block.EndWeek</small><strong>@block.Name</strong></li>}</ol>}</details>
+</div></div>

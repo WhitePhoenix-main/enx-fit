@@ -38,10 +38,18 @@
             План: @(exercise.TargetWeightKg is { } targetWeight ? Number(targetWeight) + " кг" : "вес на выбор") × @(exercise.TargetRepsMin == exercise.TargetRepsMax ? exercise.TargetRepsMin.ToString() : $"{exercise.TargetRepsMin}–{exercise.TargetRepsMax}") повт.</p>
     }
     <div class="set-main"><span class="set-number">@set.SetNumber</span>
+        <div class="set-previous-cell">
+            @if (Model.Previous is { } previous) {
+                @if (!locked && !set.IsCompleted && !set.IsSkipped && previous.Drops.Count == 0 && set.Drops.Count == 0) {
+                    <button type="button" data-copy-previous data-weight="@previous.Weight.ToString(CultureInfo.InvariantCulture)" data-reps="@previous.Reps" data-previous-bodyweight="@previous.IsBodyweight.ToString().ToLowerInvariant()" aria-label="Перенести вес и повторения прошлого подхода @set.SetNumber" title="Повторить значения">@(previous.IsBodyweight ? "Свой вес" : Number(previous.Weight)) × @previous.Reps</button>
+                } else { <span>@(previous.IsBodyweight ? "Свой вес" : Number(previous.Weight)) × @previous.Reps</span> }
+            } else { <span aria-label="Нет прошлого результата">—</span> }
+        </div>
         <input aria-label="Вес подхода @set.SetNumber, кг" name="AddSet.Weight" type="number"
                inputmode="decimal" min="0" max="10000" step="0.01"
                value="@set.Weight.ToString(CultureInfo.InvariantCulture)" readonly="@locked"
-               required/>
+               hidden="@set.IsBodyweight" required="@(!set.IsBodyweight)"/>
+        <span class="bodyweight-value" hidden="@(!set.IsBodyweight)">Собственный вес</span>
         <input aria-label="Повторения подхода @set.SetNumber" name="AddSet.Reps" type="number"
                inputmode="numeric" min="0" max="1000" value="@set.Reps" readonly="@locked"
                required/>
@@ -50,6 +58,38 @@
                                             aria-label="Подход @set.SetNumber выполнен"/><span><admin-icon
                     name="check"/></span></label>
     </div>
+    <div class="set-kind-controls">
+        <label class="bodyweight-check"><input type="checkbox" name="AddSet.IsBodyweight" value="true"
+            data-bodyweight checked="@set.IsBodyweight" disabled="@locked" />Собственный вес</label>
+        <span class="drop-set-badge" data-drop-badge hidden="@(set.Drops.Count == 0)">Дропсет</span>
+    </div>
+    <div class="set-drops" data-set-drops>
+        @foreach (var stage in set.Drops.OrderBy(d => d.Order).Select((drop, index) => (drop, index)))
+        {
+            <div class="set-drop" data-drop-index="@stage.index">
+                <div class="drop-main">
+                    <span class="drop-number">Дроп @(stage.index + 1)</span>
+                    <input name="AddSet.Drops[@stage.index].Weight" type="number" inputmode="decimal" min="0" max="10000" step="0.01"
+                        value="@stage.drop.Weight.ToString(CultureInfo.InvariantCulture)" data-drop-field="weight"
+                        aria-label="Вес дропа @(stage.index + 1), кг" hidden="@stage.drop.IsBodyweight" required="@(!stage.drop.IsBodyweight)" readonly="@locked" />
+                    <span class="bodyweight-value" hidden="@(!stage.drop.IsBodyweight)">Собственный вес</span>
+                    <input name="AddSet.Drops[@stage.index].Reps" type="number" inputmode="numeric" min="1" max="1000"
+                        value="@stage.drop.Reps" data-drop-field="reps" aria-label="Повторения дропа @(stage.index + 1)" required readonly="@locked" />
+                    @if (!locked)
+                    {
+                        <button type="button" class="text-button danger-text" data-remove-drop aria-label="Удалить дроп @(stage.index + 1)">×</button>
+                    }
+                </div>
+                <label class="bodyweight-check"><input name="AddSet.Drops[@stage.index].IsBodyweight" type="checkbox" value="true"
+                    data-drop-field="isBodyweight" data-bodyweight checked="@stage.drop.IsBodyweight" disabled="@locked" />Собственный вес</label>
+            </div>
+        }
+    </div>
+    @if (!locked)
+    {
+        <button type="button" class="text-button add-drop" data-add-drop disabled="@(set.Drops.Count >= 10)">+ Дроп: снизить вес</button>
+        <small class="drop-help" hidden="@(set.Drops.Count == 0)">Ступени выполняются без отдыха. Отметьте выполнение после всего дропсета.</small>
+    }
     @if (!locked)
     {
         <div class="set-effort-prompt" data-effort-prompt
@@ -61,7 +101,7 @@
         </div>
     }
     <details class="set-extra app-disclosure" id="set-extra-@set.Id">
-        <summary>Дополнительно: запас, отдых и действия</summary>
+        <summary aria-label="Подход @set.SetNumber: запас, отдых и действия"><span class="set-options-caption">Дополнительно: запас, отдых и действия</span><span class="set-options-number" aria-hidden="true">@(set.IsWarmup ? "Р" : set.SetNumber.ToString())<reference-icon name="chevron" /></span></summary>
         <div>
             <label class="set-effort">Запас повторений (RIR)<input type="number"
                                                                    inputmode="numeric"

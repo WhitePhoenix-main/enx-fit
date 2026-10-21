@@ -9,6 +9,19 @@ public sealed class WorkoutConflictException(string message) : InvalidOperationE
 
 public partial class WorkoutService
 {
+    public async Task ChangeExerciseRestAsync(int id, int entryId, int seconds, Guid? operationId, Guid? expectedRevision)
+    {
+        if (await CommandExistsAsync(id, operationId)) return;
+        if (seconds is < 0 or > 1800) throw new InvalidOperationException("Отдых: от 0 до 1800 секунд.");
+        var session = await EditableSessionAsync(id);
+        CheckRevision(session, expectedRevision);
+        if (session.State == WorkoutStatus.Paused) throw new InvalidOperationException("Продолжите тренировку перед изменением отдыха.");
+        var entry = session.WorkoutExercises.SingleOrDefault(e => e.Id == entryId) ?? throw new KeyNotFoundException();
+        entry.TargetRestSeconds = seconds;
+        foreach (var set in entry.SetEntries.Where(s => !s.IsCompleted && !s.IsSkipped)) set.RestSeconds = seconds;
+        await SaveCommandAsync(session, operationId);
+    }
+
     internal static WorkoutExecutionState State(WorkoutSession session)
     {
         var sets = session.WorkoutExercises.SelectMany(e => e.SetEntries).ToList();
@@ -63,7 +76,7 @@ public partial class WorkoutService
                 break;
             case "pause" when session.State == WorkoutStatus.InProgress:
                 session.Status = WorkoutStatus.Paused; session.PausedAtUtc = at;
-                session.RestRemainingSeconds = session.RestEndsAtUtc is { } end ? Math.Max(0, (int)Math.Ceiling((end - at).TotalSeconds)) : null;
+                session.RestRemainingSeconds = session.RestEndsAtUtc is { } end ? Math.Max(0, (int)Math.Ceiling((end - at).TotalSeconds)) : session.RestRemainingSeconds;
                 session.RestEndsAtUtc = null;
                 break;
             case "resume" when session.State == WorkoutStatus.Paused:
@@ -74,10 +87,31 @@ public partial class WorkoutService
                 break;
             case "adjust-rest":
                 if (seconds is < -300 or > 300) throw new InvalidOperationException("Измените отдых не более чем на 300 секунд.");
-                if (session.State == WorkoutStatus.Paused && session.RestRemainingSeconds.HasValue)
+                if (session.RestRemainingSeconds.HasValue && session.RestEndsAtUtc is null)
                     session.RestRemainingSeconds = Math.Clamp(session.RestRemainingSeconds.Value + seconds, 0, 1800);
                 else if (session.RestEndsAtUtc is { } restEnd)
                     session.RestEndsAtUtc = at.AddSeconds(Math.Clamp((restEnd - at).TotalSeconds + seconds, 0, 1800));
+                break;
+            case "start-rest" when session.State == WorkoutStatus.InProgress:
+                if (seconds is < 1 or > 900) throw new InvalidOperationException("Таймер: от 1 до 900 секунд.");
+                session.RestEndsAtUtc = at.AddSeconds(seconds);
+                session.RestRemainingSeconds = null;
+                session.RestAfterSetId = null;
+                break;
+            case "pause-rest" when session.State == WorkoutStatus.InProgress:
+                session.RestRemainingSeconds = session.RestEndsAtUtc is { } deadline
+                    ? Math.Max(0, (int)Math.Ceiling((deadline - at).TotalSeconds)) : session.RestRemainingSeconds;
+                session.RestEndsAtUtc = null;
+                break;
+            case "resume-rest" when session.State == WorkoutStatus.InProgress:
+                session.RestEndsAtUtc = session.RestRemainingSeconds is > 0 ? at.AddSeconds(session.RestRemainingSeconds.Value) : null;
+                session.RestRemainingSeconds = null;
+                break;
+            case "set-rest" when session.State == WorkoutStatus.InProgress:
+                if (seconds is < 0 or > 900) throw new InvalidOperationException("Таймер: от 0 до 900 секунд.");
+                if (session.RestEndsAtUtc.HasValue) session.RestEndsAtUtc = seconds > 0 ? at.AddSeconds(seconds) : null;
+                else if (session.RestRemainingSeconds.HasValue) session.RestRemainingSeconds = seconds > 0 ? seconds : null;
+                if (seconds == 0) session.RestAfterSetId = null;
                 break;
             case "skip-rest":
                 session.RestEndsAtUtc = null; session.RestRemainingSeconds = null; session.RestAfterSetId = null;

@@ -1,3 +1,5 @@
-<link rel="icon" href="~/images/landing/favicon.svg" type="image/svg+xml" asp-append-version="true" />
-<link rel="apple-touch-icon" href="~/images/brand/icon-180.png" sizes="180x180" asp-append-version="true" />
-<link rel="manifest" href="~/manifest.webmanifest" asp-append-version="true" />
+@inject enx_fit.Security.IFeatureAccessService IconAccess
+@{ var brand = await enx_fit.Presentation.Navigation.BrandPresentation.ResolveAsync(ViewData, User, IconAccess); }
+<link rel="icon" href="@($"~/images/brand/icon-{brand.Theme}.svg")" type="image/svg+xml" asp-append-version="true" />
+<link rel="apple-touch-icon" href="@($"~/images/brand/icon-180{brand.IconSuffix}.png")" sizes="180x180" asp-append-version="true" />
+<link rel="manifest" href="@($"~/manifest{brand.IconSuffix}.webmanifest")" asp-append-version="true" />

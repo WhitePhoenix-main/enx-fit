@@ -1,0 +1,82 @@
+@using enx_fit.ViewModels.Dashboard
+@using enx_fit.Services.Dashboard
+@model SubscriptionDashboardViewModel
+@{
+    var vm = new AthleteHomeViewModel(Model);
+    var dashboardPage = vm.Page;
+    var ru = DashboardWorkoutsViewModel.Russian;
+    string? Link(string target) => Url.Page(target, dashboardPage.NavigationValues);
+    string? NextUrl() => vm.Preview ? Url.Page("/Training/Plans", new { Reference = true })
+        : vm.Next?.ProgramId is { } programId ? Url.Page("/Training/Programs/Details", new { id = programId, Tab = "schedule", Day = vm.Next.Date.ToString("yyyy-MM-dd"), Week = vm.Next.Date.ToString("yyyy-MM-dd"), OpenDay = true })
+        : vm.Next?.WorkoutId is { } workoutId ? Url.Page("/Training/Workouts/Details", new { id = workoutId }) : Link("/Training/Plans");
+}
+<div class="ah-home" data-athlete-home data-home-state="@vm.State">
+    <div class="ah-date"><h1>@(ru.TextInfo.ToTitleCase(vm.Today.ToString("ddd", ru)) + vm.Today.ToString(", d MMMM", ru))</h1><a href="@Link("/Training/Plans")"><reference-icon name="calendar" />Расписание</a></div>
+    <section class="ah-workout" aria-labelledby="ah-workout-title">
+        <div class="ah-workout-body"><div class="ah-workout-photo" aria-hidden="true"></div><div class="ah-workout-copy">
+            <p class="ah-eyebrow">@vm.Eyebrow</p><h2 id="ah-workout-title">@vm.Title</h2>
+            @if (vm.Exercises.Count > 0) {
+                <p class="ah-workout-meta">@if (vm.Minutes is > 0) { <span>@(vm.State == "completed" ? "" : "≈ ")@vm.Minutes мин · </span> }@DashboardWorkoutsViewModel.ExerciseCount(vm.Exercises.Count)</p>
+                @if (vm.Active is not null) { <p class="ah-workout-status">Выполнено подходов: @vm.CompletedSets</p> }
+                else { <p class="ah-exercise-preview">@string.Join(" · ", vm.Exercises.Take(2))</p> }
+                <button class="ah-text-link" type="button" data-dialog="ah-workout-preview">@(vm.Active is null && vm.Exercises.Count > 2 ? "Ещё " + DashboardWorkoutsViewModel.ExerciseCount(vm.Exercises.Count - 2) : "Все упражнения") <reference-icon name="arrow" /></button>
+            }
+            else if (vm.State == "rest") { <p class="ah-workout-description">Следующее занятие — @vm.Next!.Date.ToString("d MMMM", ru).<br />@vm.Next.Title</p> }
+            else { <p class="ah-workout-description">Подбери программу под свою цель<br />или начни без плана.</p> }
+        </div></div>
+        @if (dashboardPage.IsCoachView) { <a class="ah-primary" href="@Link("/Training/Plans")">Открыть план клиента <reference-icon name="arrow" /></a> }
+        else if (vm.Preview) { <button class="ah-primary" type="button" data-dialog="preview-action-dialog">Начать тренировку <reference-icon name="play" /></button> }
+        else if (vm.Active is not null) { <a class="ah-primary" asp-page="/Training/Workouts/Details" asp-route-id="@vm.Active.Id">Продолжить тренировку <reference-icon name="play" /></a> }
+        else if (vm.State == "planned") {
+            <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="@(vm.Session is not null ? "planned" : "program")" /><input type="hidden" name="plannedId" value="@vm.Session?.Id" /><input type="hidden" name="programId" value="@dashboardPage.ActiveProgram?.Id" /><button class="ah-primary" type="submit">Начать тренировку <reference-icon name="play" /></button></form>
+        }
+        else if (vm.State == "completed") { <a class="ah-primary" asp-page="/Training/Workouts/Details" asp-route-id="@vm.Session!.Id">Результат тренировки <reference-icon name="arrow" /></a> }
+        else if (vm.State == "rest") { <a class="ah-primary" href="@NextUrl()">Посмотреть следующее занятие <reference-icon name="arrow" /></a> }
+        else { <a class="ah-primary" asp-page="@(dashboardPage.ShowSetupPrompt ? "/Account/TrainingSetup" : "/Training/Programs/Index")">Подобрать программу <reference-icon name="arrow" /></a> }
+    </section>
+    @if (!dashboardPage.IsCoachView) {
+        <nav class="ah-actions" aria-label="Начать или записать тренировку">
+            @if (vm.Preview) { <button class="ah-action" type="button" data-dialog="preview-action-dialog"><span class="ah-icon-tile"><reference-icon name="plus" /></span><span><strong>Без плана</strong><small>Добавлять по ходу</small></span></button> }
+            else { <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="empty" /><button class="ah-action" type="submit"><span class="ah-icon-tile"><reference-icon name="plus" /></span><span><strong>Без плана</strong><small>Добавлять по ходу</small></span></button></form> }
+            <button class="ah-action" type="button" data-dialog="@(vm.Preview ? "preview-action-dialog" : "template-start-dialog")"><span class="ah-icon-tile"><reference-icon name="document" /></span><span><strong>Из шаблона</strong><small>Готовый состав</small></span></button>
+            <a class="ah-action" href="@(vm.Preview ? "#preview-action-dialog" : Url.Page("/Training/Workouts/Record"))" data-dialog="@(vm.Preview ? "preview-action-dialog" : null)"><span class="ah-icon-tile"><reference-icon name="pencil" /></span><span><strong>Записать</strong><small>Прошедшее занятие</small></span></a>
+            @if (vm.Preview) { <button class="ah-action" type="button" data-dialog="preview-action-dialog"><span class="ah-icon-tile"><reference-icon name="repeat" /></span><span><strong>Повторить</strong><small>Верх тела · 19 окт.</small></span></button> }
+            else if (vm.Last is not null) { <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="previous" /><input type="hidden" name="previousId" value="@vm.Last.Id" /><button class="ah-action" type="submit"><span class="ah-icon-tile"><reference-icon name="repeat" /></span><span><strong>Повторить</strong><small>@vm.Last.Title · @vm.Last.Date.ToString("d MMM", ru)</small></span></button></form> }
+            else { <button class="ah-action" type="button" disabled><span class="ah-icon-tile"><reference-icon name="repeat" /></span><span><strong>Повторить</strong><small>После первого занятия</small></span></button> }
+        </nav>
+    }
+    <section class="ah-week" aria-labelledby="ah-week-title">
+        <header class="ah-section-heading"><h2 id="ah-week-title">Эта неделя</h2><button type="button" data-dialog="goal-dialog" aria-label="Изменить недельную цель">@vm.WeeklyDone из @vm.WeeklyGoal выполнено</button></header>
+        <div class="ah-week-days">
+            @foreach (var day in vm.Week) {
+                <a class="ah-day @(day.Today ? "is-today" : "")" href="@Link("/Training/Plans")" data-dialog="ah-day-@day.Date.ToString("yyyy-MM-dd")" aria-current="@(day.Today ? "date" : null)" aria-label="@day.Date.ToString("d MMMM", ru): @day.Title@(day.Done ? ", выполнено" : "")"><span>@day.Name</span><strong>@day.Date.Day</strong><i class="@(day.Done ? "is-done" : day.Planned ? "is-planned" : "is-rest")" aria-hidden="true">@if (day.Done) { <reference-icon name="check" /> } else if (!day.Planned) { <span>—</span> }</i><small title="@day.Title">@AthleteHomeViewModel.ShortTitle(day.Title)</small></a>
+            }
+        </div>
+        @if (vm.Next is { } next) { <a class="ah-next" href="@NextUrl()"><span>Далее: @(next.Date == vm.Today.AddDays(1) ? "завтра" : next.Date.ToString("d MMMM", ru)) · @next.Title</span><reference-icon name="chevron" /></a> }
+    </section>
+    <a class="ah-program ah-surface" href="@(vm.Preview ? Link("/Training/Programs/Index") : dashboardPage.ActiveProgram is { } p ? Url.Page("/Training/Programs/Details", new { id = p.Id }) : Link("/Training/Programs/Index"))"><span class="ah-icon-tile"><reference-icon name="calendar" /></span><span><small>Моя программа</small><strong>@vm.ProgramName</strong><small>@(vm.ProgramWeek > 0 ? $"Неделя {vm.ProgramWeek} из {vm.ProgramWeeks}" : "Готовые планы под твою цель")</small></span><reference-icon name="chevron" /></a>
+    <section class="ah-progress" id="home-progress" aria-labelledby="ah-progress-title">
+        <header class="ah-section-heading"><h2 id="ah-progress-title">За 4 недели</h2><a href="@Link("/Progress/Index")">Весь прогресс <reference-icon name="arrow" /></a></header>
+        <div class="ah-stats"><a href="@Link("/Training/Index")"><strong>@vm.MonthlyCount</strong><span>@AthleteHomeViewModel.Noun(vm.MonthlyCount, "тренировка", "тренировки", "тренировок")</span></a><a href="@Link("/Progress/Index")"><strong>@(vm.MonthlyMinutes / 60) ч @(vm.MonthlyMinutes % 60) мин</strong><span>в зале</span></a><a href="@Link("/Training/Records")"><strong>@vm.MonthlyRecords</strong><span>@AthleteHomeViewModel.Noun(vm.MonthlyRecords, "рекорд", "рекорда", "рекордов")</span></a></div>
+        <partial name="/Pages/Shared/Dashboard/Subscription/_AthleteStrength.cshtml" model="dashboardPage" />
+    </section>
+    <section class="ah-history" aria-labelledby="ah-history-title">
+        <header class="ah-section-heading"><h2 id="ah-history-title">Последнее занятие</h2><a href="@Link("/Training/Index")">История <reference-icon name="arrow" /></a></header>
+        @if (vm.Last is not null || vm.Preview) {
+            var last = vm.Last;
+            var lastUrl = vm.Preview ? Link("/Training/Index") : Url.Page("/Training/Workouts/Details", new { id = last!.Id });
+            <article class="ah-last ah-surface"><a class="ah-last-summary" href="@lastUrl"><span class="ah-last-photo" aria-hidden="true"></span><span class="ah-last-details"><strong>@(vm.Preview ? "Верх тела" : last!.Title)</strong><small>@(vm.Preview ? "19 окт. · 47 мин · 7 упражнений" : last!.Date.ToString("d MMM", ru) + (last.DurationSeconds is >= 60 ? $" · {last.DurationSeconds / 60} мин" : "") + " · " + DashboardWorkoutsViewModel.ExerciseCount(last.WorkoutExercises.Count))</small><span class="ah-last-stats"><span><b>@(vm.Preview ? 18 : DashboardData.WorkingSets(last!).Count())</b><small>рабочих подходов</small></span><span><b>@(vm.Preview ? "3 250" : DashboardWorkoutsViewModel.Number(DashboardData.Volume(last!))) кг</b><small>объём</small></span></span></span></a>
+                @if (!dashboardPage.IsCoachView) {
+                    if (vm.Preview) { <button class="ah-repeat" type="button" data-dialog="preview-action-dialog"><reference-icon name="repeat" /><span>Повторить тренировку</span><reference-icon name="chevron" /></button> }
+                    else { <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start"><input type="hidden" name="source" value="previous" /><input type="hidden" name="previousId" value="@last!.Id" /><button class="ah-repeat" type="submit"><reference-icon name="repeat" /><span>Повторить тренировку</span><reference-icon name="chevron" /></button></form> }
+                }
+            </article>
+        }
+        else { <div class="ah-empty ah-surface"><reference-icon name="workout" /><p>Здесь будет последнее занятие.<small>Записывай подходы — результаты сохранятся в истории.</small></p></div> }
+    </section>
+    <nav class="ah-library ah-surface" aria-label="Упражнения и замеры">
+        <a href="@Link("/Training/Exercises/Index")"><span class="ah-icon-tile"><reference-icon name="dumbbell-outline" /></span><span><strong>Библиотека упражнений</strong><small>Техника и описание</small></span><reference-icon name="chevron" /></a>
+        <a href="@Link("/Progress/Measurements/Index")"><span class="ah-icon-tile"><reference-icon name="body-scale" /></span><span><strong>Замеры тела</strong><small>Вес и изменения</small></span><reference-icon name="chevron" /></a>
+    </nav>
+    <partial name="/Pages/Shared/Dashboard/Subscription/_AthleteDialogs.cshtml" model="vm" />
+</div>

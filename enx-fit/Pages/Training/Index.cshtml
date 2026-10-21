@@ -1,12 +1,4 @@
 @page "/Dashboard/Workouts"
-@using enx_fit.Pages.Dashboard
-
-@model enx_fit.Pages.Dashboard.DashboardModel
-@{ Layout = "/Pages/Shared/Layouts/_DashboardReferenceLayout.cshtml"; ViewData["Title"] = "Тренировки"; }
-@section Styles {
-    <link rel="stylesheet" href="~/css/workouts-reference.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/home-interactive.css" asp-append-version="true" />
-}
-<partial name="/Pages/Shared/Dashboard/_DashboardWorkouts.cshtml" model="Model" />
-<partial name="/Pages/Shared/Workouts/_QuickWorkoutDialogs.cshtml" model="Model" />
-<partial name="/Pages/Shared/Workouts/_WorkoutHistorySheets.cshtml" model="Model" />
+@model enx_fit.Pages.Training.IndexModel
+@{Layout="/Pages/Shared/Layouts/_WorkoutHubLayout.cshtml";ViewData["Title"]="Тренировки";}
+<partial name="_HubOverview" model="Model" />

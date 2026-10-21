@@ -1,0 +1,13 @@
+@using enx_fit.ViewModels.Dashboard
+@using enx_fit.Presentation.Exercises
+@model SubscriptionDashboardViewModel
+@{ var dashboardPage = Model.Page; var target = dashboardPage.NextGoalExercise; var proposal = dashboardPage.NextRecommendation; }
+<section class="rd-card rd-next-goal"><header class="rd-section-header"><h2>Следующая цель</h2><button type="button" data-dialog="goal-dialog">Изменить</button></header>
+    @if (Model.Preview || target is not null) { <div class="rd-goal-body"><span class="rd-goal-photo" aria-hidden="true"></span><div><strong>@(Model.Preview ? "Жим лёжа" : ExercisePresentation.DisplayName(target!.Exercise))</strong><p>@(Model.Preview ? "60" : (proposal?.CurrentValue ?? target!.Prescription.WeightKg)?.ToString("0.##") ?? "—") <span>→</span> <b>@(Model.Preview ? "80 кг" : proposal?.SuggestedValue is { } weight ? $"{weight:0.##} кг" : "по плану")</b></p><div class="rd-goal-progress"><i style="width:@(Model.Preview ? 67 : 0)%"></i></div></div></div><p class="rd-small">@(Model.Preview ? "Осталось 3 недели" : proposal?.Reason ?? "Записывайте рабочие подходы, чтобы отслеживать движение к цели.")</p><p class="rd-small rd-goal-encouragement">@(Model.Preview ? "Ты на 20 кг ближе к своей цели. Продолжай в том же духе!" : dashboardPage.ActiveProgram?.Name)</p> }
+    else { <div class="rd-insight-empty"><reference-icon name="target" /><p>Выберите программу для своей цели.</p><a asp-page="/Training/Programs/Index">Найти программу →</a></div> }
+</section>
+<section class="rd-card rd-records"><header class="rd-section-header"><h2>Личные рекорды</h2><a asp-page="/Progress/Achievements">Все <reference-icon name="arrow" /></a></header>
+    @if (Model.Preview) { @foreach (var (name, value, date) in new[] { ("Жим лёжа", "100 кг", "12 сен 2024"), ("Присед", "140 кг", "2 окт 2024"), ("Становая тяга", "180 кг", "18 авг 2024"), ("Подтягивания", "+32 кг", "6 окт 2024") }) { <div class="rd-record-row"><reference-icon name="workout-outline" /><span>@name</span><span><strong>@value</strong><small>@date</small></span></div> } }
+    else if (dashboardPage.Data.Records.Any()) { @foreach (var record in dashboardPage.Data.Records.Take(4)) { <a class="rd-record-row" asp-page="/Progress/Achievements"><reference-icon name="workout-outline" /><span>@record.Name</span><span><strong>@record.Weight.ToString("0.##") кг</strong>@if (record.Gain is { } gain) { <small>+@gain.ToString("0.##") кг</small> }</span></a> } }
+    else { <div class="rd-insight-empty"><reference-icon name="trophy" /><p>Здесь появятся ваши лучшие результаты.</p></div> }
+</section>

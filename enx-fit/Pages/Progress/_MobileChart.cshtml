@@ -1,0 +1,40 @@
+@using enx_fit.ViewModels.Progress
+@using System.Globalization
+@model ProgressChart
+@{
+    var values=Model.Points.SelectMany(p=>new[]{p.Value,p.Comparison}).Where(x=>x.HasValue).Select(x=>x!.Value).ToArray();
+    var empty=values.Length==0;
+    var high=values.DefaultIfEmpty(1).Max();var low=Model.ZeroBaseline?0:values.DefaultIfEmpty(0).Min();
+    if(high==low){high=low+1;low=Math.Max(0,low-1);}
+    var span=high-low;
+    var left=Model.Bars?36m:38m;const decimal right=332,top=14,bottom=114;
+    var count=Model.Points.Count;var step=(right-left)/Math.Max(1,count);
+    string N(decimal n)=>n.ToString("0.##",CultureInfo.InvariantCulture);
+    decimal X(int i)=>count<2?(left+right)/2:left+(right-left)*i/(count-1);
+    decimal Y(decimal v)=>bottom-(v-low)/span*(bottom-top);
+    var line=string.Join(" ",Model.Points.Select((p,i)=>(p,i)).Where(x=>x.p.Value.HasValue).Select(x=>$"{N(X(x.i))},{N(Y(x.p.Value!.Value))}"));
+    var comparison=Model.ComparisonLabel is not null;
+    var divisor=Model.Bars&&high>=1000?1000m:1m;
+}
+<figure class="mp-chart @(Model.Bars?"mp-bar-chart":"mp-line-chart")" aria-label="@Model.Label">
+@if(empty){<div class="mp-chart-empty"><reference-icon name="chart-outline" /><p>Здесь появится ваш прогресс</p><small>Завершите тренировку или добавьте замер.</small></div>}
+else{
+    @if(comparison){<div class="mp-chart-legend"><span><i></i>Этот период</span><span><i class="is-prior"></i>Предыдущий</span></div>}
+    @if(divisor>1){<p class="mp-chart-unit">тыс. кг</p>}
+    <svg viewBox="0 0 350 145" role="img" aria-labelledby="mp-chart-title-@Model.Id"><title id="mp-chart-title-@Model.Id">@Model.Label · @Model.Unit</title>
+    <defs><linearGradient id="mp-fill-@Model.Id" x1="0" y1="0" x2="0" y2="1"><stop stop-color="var(--plan-accent)" stop-opacity=".22" /><stop offset="1" stop-color="var(--plan-accent)" stop-opacity="0" /></linearGradient></defs>
+    @for(var t=0;t<4;t++){var value=high-span*t/3;var y=Y(value);<g class="mp-grid"><path d="@($"M{N(left)} {N(y)} H{N(right)}")" /><text x="@N(left-7)" y="@N(y+4)" text-anchor="end">@ProgressOverview.Number(Math.Round(value/divisor,1))</text></g>}
+    @if(Model.Bars){
+        @for(var i=0;i<count;i++){var point=Model.Points[i];var bar=Math.Min(34,step*(comparison ? .34m : .52m));var x=left+step*i+(step-bar*(comparison?2:1))/2;var value=point.Value??0;<g class="mp-plot-point" tabindex="0"><title>@point.Label: @ProgressOverview.Number(value) @Model.Unit</title><rect class="mp-current-bar @(i==count-1&&!comparison?"is-incomplete":"")" x="@N(x)" y="@N(Y(value))" width="@N(bar)" height="@N(bottom-Y(value))" rx="2" />@if(count<=6){<g><text class="mp-bar-value" x="@N(x+bar/2)" y="@N(Y(value)-5)" text-anchor="middle">@ProgressOverview.Number(Math.Round(value/divisor,1))</text></g>}</g>
+            @if(point.Comparison is {} prior && comparison){<g class="mp-plot-point" tabindex="0"><title>@point.Label, предыдущий период: @ProgressOverview.Number(prior) @Model.Unit</title><rect class="mp-prior-bar" x="@N(x+bar+2)" y="@N(Y(prior))" width="@N(bar)" height="@N(bottom-Y(prior))" rx="2" /></g>}
+            @if(count<=6||i%2==0||i==count-1){<g><text x="@N(left+step*(i+.5m))" y="137" text-anchor="middle">@point.Label</text></g>}
+        }
+    }else{
+        @if(Model.Points.Count(x=>x.Value.HasValue)>1){<path d="@($"M {N(X(0))},{bottom} L {line} L {N(X(count-1))},{bottom} Z")" fill="url(#mp-fill-@Model.Id)" /><polyline class="mp-chart-line" points="@line" />}
+        @for(var i=0;i<count;i++){var point=Model.Points[i];if(point.Value is {} value){<g class="mp-plot-point" tabindex="0"><title>@point.Label: @ProgressOverview.Number(value) @Model.Unit</title><path class="mp-vertical-grid" d="@($"M{N(X(i))} {top} V{bottom}")" /><circle cx="@N(X(i))" cy="@N(Y(value))" r="3.7" /></g>}}
+        @if(count>0){<g><text x="@N(left)" y="137">@Model.Points[0].Label</text></g>@if(count>1){<g><text x="@right" y="137" text-anchor="end">@Model.Points[^1].Label</text></g>}}
+    }
+    </svg>
+    <details class="mp-chart-data"><summary>Данные графика</summary><table><thead><tr><th>Дата</th><th>@Model.Label, @Model.Unit</th>@if(comparison){<th>Предыдущий период</th>}</tr></thead><tbody>@foreach(var point in Model.Points){<tr><td>@point.Label</td><td>@(point.Value is {} v?ProgressOverview.Number(v):"—")</td>@if(comparison){<td>@(point.Comparison is {} c?ProgressOverview.Number(c):"—")</td>}</tr>}</tbody></table></details>
+}
+</figure>

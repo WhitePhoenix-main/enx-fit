@@ -13,5 +13,5 @@ public sealed class TrainingVolumeService : ITrainingVolumeService
         .Where(s => s.State == WorkoutStatus.Completed).SelectMany(s => s.WorkoutExercises)
         .GroupBy(e => string.IsNullOrWhiteSpace(e.Exercise.MuscleGroup) ? "Группа не указана" : e.Exercise.MuscleGroup)
         .Select(g => new MuscleVolume(g.Key, g.Sum(e => e.SetEntries.Count(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0)),
-            g.SelectMany(e => e.SetEntries).Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0).Sum(s => s.Weight * s.Reps))).ToList();
+            g.SelectMany(e => e.SetEntries).Where(s => s.IsCompleted && !s.IsWarmup && s.Reps > 0).Sum(s => s.Volume))).ToList();
 }

@@ -1,0 +1,19 @@
+@model enx_fit.ViewModels.Navigation.MobileAppNavigationViewModel
+@{
+    var items = new[] {
+        ("home", "/Dashboard/Index", "home", "Главная"),
+        ("workouts", "/Training/Index", "dumbbell-outline", "Тренировки"),
+        ("programs", "/Training/Programs/Index", "clipboard-outline", "Программы"),
+        ("progress", "/Progress/Index", "chart-outline", "Прогресс")
+    };
+}
+<nav id="enix-primary-navigation" class="enix-bottom-nav" aria-label="Мобильная навигация" data-app-navigation="primary">
+    @foreach (var (key, itemPage, icon, label) in items)
+    {
+        <a href="@Model.PageUrl(Url, itemPage)" aria-current="@(Model.IsActive(key) ? "page" : null)"><reference-icon name="@(key == "home" && !Model.IsActive(key) ? "home-outline" : icon)" /><span>@label</span></a>
+    }
+    <button type="button" data-app-menu-open aria-controls="enix-navigation-dialog" aria-haspopup="dialog" aria-expanded="false" aria-current="@(Model.IsActive("more") ? "page" : null)"><reference-icon name="more" /><span>Ещё</span></button>
+</nav>
+<partial name="/Pages/Shared/Navigation/_MoreNavigationDialog.cshtml" model="Model" />
+<noscript><details class="enix-native-menu"><summary>Все разделы</summary><partial name="/Pages/Shared/Navigation/_MobileMenuLinks.cshtml" model="Model" /></details></noscript>
+<script src="~/js/app-chrome.js" asp-append-version="true" defer></script>

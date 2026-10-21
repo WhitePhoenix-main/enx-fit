@@ -1,0 +1,60 @@
+@using enx_fit.Services.Programs
+@using enx_fit.ViewModels.Programs
+@using System.Globalization
+@model IndexModel
+@{
+    var coach = Model.Access.CanUse(Feature.CoachProgramAssignment);
+    var cards = Model.Items.Select(p => new ProgramOverviewCard(p, Model.Sessions.GetValueOrDefault(p.Id) ?? [], "row")).ToList();
+    var active = Model.Tab == "mine" && !Model.Archived ? cards.FirstOrDefault(c => c.Program.StartDate <= Model.Today && !c.Finished) : null;
+    var others = cards.Where(c => c != active).ToList();
+}
+<div class="programs-page" data-program-workspace data-program-view="@Model.Tab">
+<header class="pw-heading"><h1>Программы</h1><span class="pw-badge">@Model.Access.Plan</span></header>
+@if (TempData["StatusMessage"] is string status) { <p class="wh-notice" role="status">@status</p> }
+<div asp-validation-summary="All" class="wh-validation" role="alert"></div>
+@if (Model.PageError is not null) { <partial name="_ProgramError" model="Model.PageError" /> }
+else {
+@if (coach) {
+    <nav class="pw-tabs pw-scope" aria-label="Программы тренера"><a asp-route-Tab="assigned" aria-current="@(Model.Tab == "assigned" ? "page" : null)">Клиенты</a><a asp-route-Tab="mine" aria-current="@(Model.Tab != "assigned" ? "page" : null)">Мои программы</a></nav>
+}
+@if (Model.Tab == "assigned" && coach) {
+    <partial name="_WorkspaceClients" model="Model" />
+} else {
+<nav class="pw-tabs" aria-label="Разделы программ"><a asp-route-Tab="mine" aria-current="@(Model.Tab == "mine" && !Model.Archived ? "page" : null)">Мои</a><a asp-route-Tab="templates" asp-route-SelectedClient="@Model.SelectedClient" aria-current="@(Model.Tab == "templates" ? "page" : null)">Каталог</a><a asp-route-Tab="mine" asp-route-Archived="true" aria-current="@(Model.Archived ? "page" : null)">Архив</a></nav>
+@if (Model.Tab == "templates") {
+    @if (Model.SelectedClient is {} clientId) { <p class="pw-recipient">Выберите программу для @Model.ClientNames[clientId]</p> }
+    <partial name="_ProgramTemplateFilters" model="Model" />
+    <div class="pw-catalog">@foreach (var card in cards) {
+        var p = card.Program;
+        <article class="pw-card pw-template"><design-photo kind="@(p.Categories.Contains("Дом") ? "pushup" : p.Name.Contains("Ног", StringComparison.OrdinalIgnoreCase) ? "squat" : "row")" /><div class="pw-template-copy"><span class="pw-kicker">@ProgramSchedule.LevelName(p.Level)</span><h2>@p.Name</h2><p>@(p.Description ?? p.Goal)</p><small>@p.Weeks недель · @p.DaysPerWeek раза в неделю</small></div><button type="button" class="pw-secondary" data-dialog="template-preview-@p.Id">Посмотреть программу <reference-icon name="arrow" /></button>@if(coach){<a class="pw-link" asp-page="Assign" asp-route-id="@p.Id" asp-route-ClientId="@Model.SelectedClient">Назначить клиенту <reference-icon name="chevron" /></a>}</article>
+    }</div>
+    @if (cards.Count == 0) { <section class="pw-empty"><reference-icon name="layers" /><h2>Нет подходящих программ</h2><p>Измените фильтры или создайте свой план.</p><a class="pw-primary" asp-page="Edit">Создать программу <reference-icon name="plus" /></a></section> }
+    @foreach (var p in Model.Items) { <partial name="_ProgramTemplatePreview" model="p" /> }
+} else {
+<div class="pw-overview-grid"><div>
+@if (active is not null) {
+    var p = active.Program;
+    var next = ProgramSchedule.Next(p, active.Sessions, Model.Today);
+    var currentWeek = Math.Clamp((Model.Today.DayNumber - p.StartDate!.Value.DayNumber) / 7 + 1, 1, p.Weeks);
+    var activeSession = active.Sessions.FirstOrDefault(s => s.IsActive);
+    <section class="pw-card pw-active" data-active-program="@p.Id">
+        <div class="pw-active-heading"><span class="pw-kicker"><i></i>Активная программа</span><partial name="_ProgramOverviewMenu" model="new ProgramOverviewMenu(Model, active)" /><h2><a asp-page="Details" asp-route-id="@p.Id">@p.Name</a></h2><p class="pw-meta">@p.Weeks недель · @p.DaysPerWeek раза в неделю · @ProgramSchedule.LevelName(p.Level)</p></div>
+        <div class="pw-progress"><div><strong>Неделя @currentWeek из @p.Weeks</strong><span>@active.Done из @active.Total занятий</span></div><div class="pw-progress-track"><progress value="@active.Percent" max="100" aria-label="Выполнение программы">@active.Percent%</progress><span>@active.Percent%</span></div></div>
+        @if(next is not null) { <a class="pw-next" asp-page="Details" asp-route-id="@p.Id" asp-route-Tab="schedule" asp-route-Week="@next.Date.ToString("yyyy-MM-dd")" asp-route-Day="@next.Date.ToString("yyyy-MM-dd")"><span class="pw-round-icon"><reference-icon name="dumbbell-outline" /></span><span><small>Следующая · @(next.Date == Model.Today ? "Сегодня" : next.Date.ToString("d MMMM", CultureInfo.GetCultureInfo("ru-RU")))</small><strong>@next.Workout.Name</strong><span>@next.Workout.Exercises.Count упражнений · @next.Workout.EstimatedMinutes мин</span></span><reference-icon name="chevron" /></a>
+            <form method="post" asp-page-handler="Start" asp-route-id="@p.Id" data-busy><button type="submit" class="pw-primary">@(activeSession is not null ? "Продолжить тренировку" : "Начать тренировку") <reference-icon name="arrow" /></button></form>
+        } else { <p class="pw-hint">Ближайших занятий нет. Проверьте расписание и историю выполнения.</p> }
+        <a class="pw-link pw-active-link" asp-page="Details" asp-route-id="@p.Id"><reference-icon name="calendar" /><span>Программа и расписание</span><reference-icon name="chevron" /></a>
+    </section>
+} else if (!Model.Archived && cards.Count == 0) {
+    <section class="pw-card pw-empty"><reference-icon name="clipboard-outline" /><h2>Ваш следующий шаг</h2><p>Выберите готовый план или соберите свою программу. Тренировки и расписание будут здесь.</p><a class="pw-primary" asp-route-Tab="templates">Выбрать программу <reference-icon name="arrow" /></a></section>
+}
+@if(!Model.Archived){<partial name="_WorkspaceShortcuts" />}
+</div><section>
+<header class="pw-section-heading"><h2>@(Model.Archived ? "Архив программ" : active is not null ? "Другие программы" : "Мои программы") <span>@others.Count</span></h2>@if(Model.Archived){<a class="pw-link" asp-route-Tab="mine">К текущим</a>}</header>
+<div class="pw-program-list">@foreach (var card in others) { <partial name="_WorkspaceProgramCard" model="new ProgramOverviewMenu(Model, card)" /> }</div>
+@if(Model.Archived && cards.Count == 0){<section class="pw-empty"><reference-icon name="history" /><h2>Архив пока пуст</h2><p>Архивные программы и их история появятся здесь.</p></section>}
+</section></div>
+}
+}
+}
+</div>

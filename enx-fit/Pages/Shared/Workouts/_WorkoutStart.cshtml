@@ -41,7 +41,13 @@ else
                 </form>
             }
             else { <button class="button full" data-dialog="quick-workout-dialog"><admin-icon name="play" />Начать тренировку <admin-icon name="arrow" /></button> }
-            <div class="start-secondary"><button class="button secondary" data-dialog="quick-workout-dialog"><admin-icon name="activity" />Быстрая тренировка</button><button class="button secondary" data-dialog="template-start-dialog">Загрузить шаблон <admin-icon name="chevron" /></button></div>
+            <div class="start-secondary">
+                <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start" data-quick-start>
+                    <input type="hidden" name="source" value="empty" />
+                    <button type="submit" class="button secondary"><admin-icon name="activity" />Быстрая тренировка</button>
+                </form>
+                <button class="button secondary" data-dialog="template-start-dialog">Загрузить шаблон <admin-icon name="chevron" /></button>
+            </div>
         </div>
         <form method="post" asp-page="/Dashboard/Index" asp-page-handler="Start" class="repeat-workout"><input type="hidden" name="source" value="previous" />
             <button type="submit" disabled="@(previous is null)"><span><admin-icon name="history" />Повторить последнюю</span><strong>@(previous?.Title ?? "Пока нет завершённых тренировок")</strong><small>@(previous is null ? "Появится после первого занятия" : $"{previous.Date:dd.MM} · {previous.WorkoutExercises.Count} упражнений")</small></button>

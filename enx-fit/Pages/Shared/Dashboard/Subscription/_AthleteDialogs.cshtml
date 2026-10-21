@@ -1,0 +1,23 @@
+@using enx_fit.ViewModels.Dashboard
+@using enx_fit.Services.Programs
+@using enx_fit.Presentation.Exercises
+@model AthleteHomeViewModel
+@{ var ru = DashboardWorkoutsViewModel.Russian; }
+<dialog class="app-dialog rd-dialog ah-sheet" id="ah-workout-preview" aria-labelledby="ah-preview-title">
+    <div class="dialog-heading"><h2 id="ah-preview-title">@Model.Title</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
+    <p class="ah-muted">@DashboardWorkoutsViewModel.ExerciseCount(Model.Exercises.Count)@if (Model.Minutes is > 0) { <span> · ≈ @Model.Minutes мин</span> }</p>
+    <ol class="ah-exercise-list">@foreach (var exercise in Model.Exercises) { <li>@exercise</li> }</ol><button class="ah-sheet-secondary" type="button" data-close>Вернуться на главную</button>
+</dialog>
+@foreach (var day in Model.Week) {
+    var sessions = Model.SessionsOn(day.Date).ToList();
+    var plans = Model.PlansOn(day.Date).ToList();
+    <dialog class="app-dialog rd-dialog ah-sheet" id="ah-day-@day.Date.ToString("yyyy-MM-dd")" aria-labelledby="ah-day-title-@day.Date.DayNumber">
+        <div class="dialog-heading"><h2 id="ah-day-title-@day.Date.DayNumber">@ru.TextInfo.ToTitleCase(day.Date.ToString("dddd, d MMMM", ru))</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
+        @if (Model.Preview) { <article class="ah-day-detail"><h3>@day.Title</h3><p>@(day.Done ? "Выполнено" : day.Planned ? "По программе «Сила и масса»" : "На этот день занятий нет")</p><button class="ah-sheet-secondary" type="button" data-dialog="preview-action-dialog">Открыть занятие <reference-icon name="arrow" /></button></article> }
+        else {
+            @foreach (var session in sessions) { <article class="ah-day-detail"><h3>@session.Title</h3><p>@(session.State == WorkoutStatus.Completed ? "Выполнено" : session.IsActive ? "В процессе" : "Запланировано") · @DashboardWorkoutsViewModel.ExerciseCount(session.WorkoutExercises.Count)</p><a class="ah-sheet-secondary" asp-page="/Training/Workouts/Details" asp-route-id="@session.Id">@(session.State == WorkoutStatus.Completed ? "Посмотреть результат" : "Открыть тренировку") <reference-icon name="arrow" /></a></article> }
+            @foreach (var plan in plans) { <article class="ah-day-detail"><h3>@plan.Workout.Name</h3><p>По программе · @DashboardWorkoutsViewModel.ExerciseCount(plan.Workout.Exercises.Count)</p><ul>@foreach (var e in plan.Workout.Exercises.OrderBy(e => e.Order).Take(4)) { <li>@ExercisePresentation.DisplayName(e.Exercise)</li> }</ul><a class="ah-sheet-secondary" asp-page="/Training/Programs/Details" asp-route-id="@Model.Page.ActiveProgram!.Id" asp-route-Tab="schedule" asp-route-Day="@day.Date.ToString("yyyy-MM-dd")" asp-route-Week="@day.Date.ToString("yyyy-MM-dd")" asp-route-OpenDay="true">Открыть или перенести <reference-icon name="arrow" /></a></article> }
+            @if (sessions.Count == 0 && plans.Count == 0) { <article class="ah-day-detail"><h3>Свободный день</h3><p>На этот день занятий нет.</p><a class="ah-sheet-secondary" asp-page="/Training/Plans" asp-route-ClientId="@Model.Page.ClientId" asp-route-Day="@day.Date.ToString("yyyy-MM-dd")">Открыть расписание <reference-icon name="arrow" /></a></article> }
+        }
+    </dialog>
+}

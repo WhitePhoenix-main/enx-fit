@@ -8,6 +8,22 @@ public enum TrainingEquipment { None = 0, Dumbbells = 1, Barbell = 2, Bench = 4,
 
 public static class TrainingPreferences
 {
+    public static readonly (ProgramLevel Value, string Title)[] Levels = [
+        (ProgramLevel.Beginner, "Начинающий"), (ProgramLevel.Intermediate, "Есть опыт"), (ProgramLevel.Advanced, "Продвинутый")
+    ];
+    public static string LevelTitle(ProgramLevel? level) => Levels.FirstOrDefault(l => l.Value == level).Title ?? "Уровень пока не выбран";
+
+    // Ranking uses the catalog's declared goal/categories, never invented user results.
+    // Equipment and frequency remain explicit filters; goal only affects ordering.
+    public static bool MatchesGoal(TrainingProgram program, TrainingGoal? goal) => goal switch
+    {
+        TrainingGoal.Strength => program.Categories.Split('|').Contains("Сила") || program.Goal == "Развитие силы",
+        TrainingGoal.Muscle => program.Categories.Split('|').Contains("Набор массы") || program.Goal == "Набор мышечной массы",
+        TrainingGoal.Weight => program.Categories.Split('|').Contains("Снижение веса") || program.Goal == "Снижение веса",
+        TrainingGoal.GeneralFitness => program.Goal is "Общая физическая подготовка" or "Общая подготовка",
+        TrainingGoal.Regularity => program.Goal == "Регулярность",
+        _ => false
+    };
     public static readonly (TrainingGoal Value, string Title, string Description)[] Goals = [
         (TrainingGoal.Regularity, "Тренироваться регулярно", "Записывать занятия и видеть свой ритм."),
         (TrainingGoal.Strength, "Развивать силу", "Следить за рабочими весами и повторениями."),

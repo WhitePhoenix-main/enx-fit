@@ -8,6 +8,7 @@ public sealed class DashboardSettings
     public string? TrainerNote { get; set; }
     public SetupStatus SetupStatus { get; set; }
     public TrainingGoal? TrainingGoal { get; set; }
+    public ProgramLevel? TrainingLevel { get; set; }
     public TrainingLocation? TrainingLocation { get; set; }
     public TrainingEquipment AvailableEquipment { get; set; }
     public int PreferredDays { get; set; }

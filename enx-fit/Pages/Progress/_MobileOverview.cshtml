@@ -1,0 +1,20 @@
+@using System.Globalization
+@model enx_fit.Pages.Progress.IndexModel
+@{var d=Model.Data; var ru=CultureInfo.GetCultureInfo("ru-RU");}
+<div class="mp-page @(d.Coach?"mp-coach":"")" data-progress-overview>
+    <header class="mp-heading">
+        <h1>Прогресс <span class="mp-badge">@d.Badge</span></h1>
+        <form method="get" id="progress-filters">
+            @if(Model.Personal){<input type="hidden" name="Personal" value="true" />}
+            @if(Model.SelectedClient is not null){<input type="hidden" name="SelectedClient" value="@Model.SelectedClient" />}
+            @if(Model.ClientId is not null){<input type="hidden" name="ClientId" value="@Model.ClientId" />}
+            @if(Model.ProgramId.HasValue){<input type="hidden" name="ProgramId" value="@Model.ProgramId" />}
+            <input type="hidden" name="Metric" value="@Model.Metric" />
+            <label class="mp-period"><span class="mp-sr">Период</span><select name="Weeks" data-progress-submit>@foreach(var w in d.Advanced?new[]{4,6,8,12}:new[]{4,6}){<option value="@w" selected="@(w==d.Weeks)">@w @(w==4?"недели":"недель")</option>}</select><reference-icon name="chevron-down" /></label>
+            <noscript><button type="submit">Применить</button></noscript>
+        </form>
+        <p>@d.Start.ToString("d MMMM",ru) — @d.Today.ToString("d MMMM",ru)</p>
+    </header>
+    @if(d.Coach){<partial name="_MobileCoach" model="Model" />}else{<partial name="_MobilePersonal" model="Model" />}
+    <p class="mp-data-note">Учтены завершённые рабочие подходы. Разминка и пропуски исключены.</p>
+</div>

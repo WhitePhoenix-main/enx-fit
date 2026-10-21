@@ -82,6 +82,9 @@ public static class ProgramServiceRegistration
         services.AddSingleton<IProgramAnalysisService, ProgramAnalysisService>();
         services.AddSingleton<ITrainingVolumeService, TrainingVolumeService>();
         services.AddScoped<CoachAttentionService>();
+        services.AddScoped<enx_fit.Services.Dashboard.SubscriptionDashboardQuery>();
+        services.AddScoped<enx_fit.Services.Workouts.WorkoutTemplateCatalog>();
+        services.AddScoped<ProgressOverviewQuery>();
         return services;
     }
 }

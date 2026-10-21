@@ -1,0 +1,4 @@
+@using enx_fit.ViewModels.Progress
+@model IReadOnlyList<ProgressSlice>
+@{var total=Model.Sum(s=>s.Count);decimal offset=0;var segments=new List<string>();foreach(var slice in Model){var next=offset+(total==0?0:slice.Count*100m/total);segments.Add($"{slice.Color} {offset.ToString("0.##",System.Globalization.CultureInfo.InvariantCulture)}% {next.ToString("0.##",System.Globalization.CultureInfo.InvariantCulture)}%");offset=next;}var gradient=total==0?"#18314b 0 100%":string.Join(',',segments);}
+<div class="pa-donut-layout"><div class="pa-donut" style="background:conic-gradient(@gradient)" role="img" aria-label="Всего: @total"><div><strong>@total</strong><small>всего</small></div></div><ul class="pa-donut-legend">@foreach(var slice in Model){<li><i style="background:@slice.Color"></i><span>@slice.Name</span><b>@ProgressOverview.Percent(slice.Count,total)%</b></li>}@if(total==0){<li>Данные появятся после тренировок.</li>}</ul></div>

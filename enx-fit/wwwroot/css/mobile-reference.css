@@ -127,7 +127,7 @@
   .em-hero-start svg { width:27px; height:27px; }
   .em-shortcuts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); min-height:80px; margin-top:12px; border-top:1px solid #7d9ad466; padding:12px 0; }
   .em-shortcuts>button,.em-shortcuts form>button { display:flex; flex-direction:column; align-items:center; gap:6px; justify-content:flex-start; width:100%; height:100%; padding:0; border:0; color:#b6ceff; background:none; font-size:12px; line-height:15px; }
-  .em-shortcuts>button+button,.em-shortcuts>form { border-left:1px solid #7190d533; }
+  .em-shortcuts>:not(:first-child) { border-left:1px solid #7190d533; }
   .em-shortcuts svg { width:22px; height:22px; }
   .em-shortcuts button:disabled { opacity:.45; }
   .em-workout-stats { display:grid; grid-template-columns:1fr 1fr; padding:10px 17px; margin:10px 0 12px; min-height:81px; }

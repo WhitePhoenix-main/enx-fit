@@ -1,0 +1,17 @@
+@using enx_fit.ViewModels.Workouts
+@model enx_fit.Pages.Training.IndexModel
+<div class="wh-page" data-workout-hub>
+<header class="wh-heading"><h1>Тренировки <span class="wh-badge">@Model.Badge</span></h1></header>
+@if(Model.Access.CanUse(Feature.CoachClientManagement)){
+<nav class="wh-tabs wh-scope" aria-label="Режим тренировок"><a asp-page="/Training/Index" aria-current="@(Model.Coach?"page":null)">Клиенты</a><a asp-page="/Training/Index" asp-route-Personal="true" aria-current="@(!Model.Coach?"page":null)">Мои тренировки</a></nav>}
+@if(!Model.Coach){<nav class="wh-tabs" aria-label="Разделы тренировок">@foreach(var(key,title) in new[]{("train","Тренироваться"),("calendar","Календарь"),("templates","Шаблоны"),("history","История")}){<a href="@Url.Page(null,Model.Values(view:key))" aria-current="@(Model.View==key?"page":null)">@title</a>}</nav>}
+@if(Model.StatusMessage is {} message){<p class="wh-notice" role="status">@message</p>}
+<div asp-validation-summary="All" class="wh-validation" role="alert"></div>
+@if(Model.View=="history"){<partial name="_HubHistory" model="Model" />}
+else if(Model.View=="templates"){<partial name="_HubTemplates" model="Model" />}
+else if(Model.Coach&&Model.Detail is not null){<partial name="_HubClient" model="Model" />}
+else if(Model.View=="calendar"){<partial name="_HubCalendar" model="Model" />}
+else if(Model.Coach){<partial name="_HubAgenda" model="Model" />}
+else{<partial name="_HubTrain" model="Model" />}
+@if(Model.Coach){<partial name="_HubCoachDialogs" model="Model" />}
+</div>

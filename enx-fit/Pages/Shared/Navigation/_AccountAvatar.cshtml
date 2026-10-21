@@ -1,0 +1,14 @@
+@{
+    var name = (User.Identity?.Name ?? "Спортсмен").Split('@')[0];
+    var initials = string.Concat(name.Split(new[] { ' ', '.', '_', '-' }, StringSplitOptions.RemoveEmptyEntries).Take(2).Select(x => x[..1])).ToUpperInvariant();
+}
+<details class="account-avatar" data-account-menu>
+    <summary aria-label="Меню аккаунта" title="Меню аккаунта"><span>@initials</span></summary>
+    <div class="account-popover">
+        <strong>@name</strong>
+        <a asp-page="/Account/Profile"><reference-icon name="user" />Мой профиль</a>
+        <a asp-page="/Account/Subscription"><reference-icon name="crown" />Подписка</a>
+        <a asp-area="Identity" asp-page="/Account/Manage/Index"><reference-icon name="settings" />Настройки аккаунта</a>
+        <form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Public/Index", new { area = "" })"><button type="submit"><reference-icon name="arrow" />Выйти</button></form>
+    </div>
+</details>

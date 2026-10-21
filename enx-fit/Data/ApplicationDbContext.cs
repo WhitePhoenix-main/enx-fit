@@ -11,6 +11,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     : IdentityDbContext<ApplicationUser>(options)
 {
     public DbSet<Exercise> Exercises => Set<Exercise>();
+    public DbSet<MealEntry> MealEntries => Set<MealEntry>();
+    public DbSet<NutritionSettings> NutritionSettings => Set<NutritionSettings>();
     public DbSet<TrainingProgram> TrainingPrograms => Set<TrainingProgram>();
     public DbSet<ProgramScheduleChange> ProgramScheduleChanges => Set<ProgramScheduleChange>();
     public DbSet<AssignedProgram> AssignedPrograms => Set<AssignedProgram>();
@@ -23,6 +25,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<SetEntry> SetEntries => Set<SetEntry>();
 
     public DbSet<BodyMeasurement> BodyMeasurements => Set<BodyMeasurement>();
+    public DbSet<ProgressPhoto> ProgressPhotos => Set<ProgressPhoto>();
     public DbSet<DashboardSettings> DashboardSettings => Set<DashboardSettings>();
     public DbSet<DailyCheckIn> DailyCheckIns => Set<DailyCheckIn>();
     public DbSet<DashboardLayoutPreference> DashboardLayoutPreferences => Set<DashboardLayoutPreference>();
@@ -36,6 +39,44 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         modelBuilder.Entity<IdentityUserToken<string>>().Property(x => x.LoginProvider).HasMaxLength(128);
         modelBuilder.Entity<IdentityUserToken<string>>().Property(x => x.Name).HasMaxLength(128);
         modelBuilder.ConfigureTrainingPrograms();
+        modelBuilder.Entity<WorkoutTemplateCollection>(entity =>
+        {
+            entity.Property(c => c.UserId).HasMaxLength(450);
+            entity.Property(c => c.Name).HasMaxLength(60);
+            entity.HasIndex(c => c.UserId);
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<CoachMessage>(entity =>
+        {
+            entity.Property(m => m.SenderId).HasMaxLength(450);
+            entity.Property(m => m.RecipientId).HasMaxLength(450);
+            entity.Property(m => m.Text).HasMaxLength(2000);
+            entity.HasIndex(m => new { m.SenderId, m.RequestId }).IsUnique();
+            entity.HasIndex(m => new { m.RecipientId, m.CreatedAtUtc });
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(m => m.SenderId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(m => m.RecipientId).OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<NutritionSettings>(entity =>
+        {
+            entity.HasKey(s => s.UserId);
+            entity.Property(s => s.Goal).HasMaxLength(120);
+            entity.HasOne<ApplicationUser>().WithOne().HasForeignKey<NutritionSettings>(s => s.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<MealEntry>(entity =>
+        {
+            entity.Property(m => m.UserId).HasMaxLength(450);
+            entity.Property(m => m.Name).HasMaxLength(120);
+            entity.Property(m => m.Type).HasMaxLength(20);
+            entity.HasIndex(m => new { m.UserId, m.Date });
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(m => m.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<ProgressPhoto>(entity =>
+        {
+            entity.Property(p => p.UserId).HasMaxLength(450);
+            entity.Property(p => p.ContentType).HasMaxLength(20);
+            entity.HasIndex(p => new { p.UserId, p.Date });
+            entity.HasOne<ApplicationUser>().WithMany().HasForeignKey(p => p.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
 
         modelBuilder.Entity<ApplicationUser>(user =>
         {
@@ -145,6 +186,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         });
 
         modelBuilder.Entity<SetEntry>().Property(s => s.IsCompleted).HasDefaultValue(true).HasSentinel(true);
+        modelBuilder.Entity<SetEntry>().OwnsMany(s => s.Drops, drop =>
+        {
+            drop.ToTable("SetDrops");
+            drop.WithOwner().HasForeignKey("SetEntryId");
+            drop.HasKey(d => d.Id);
+            drop.Property(d => d.Id).ValueGeneratedOnAdd();
+        });
 
         modelBuilder.Entity<WorkoutCommand>(entity =>
         {

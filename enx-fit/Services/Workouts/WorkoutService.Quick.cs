@@ -12,7 +12,7 @@ public sealed record WorkoutTemplateOption(int Id, string Name, string ProgramNa
 public partial class WorkoutService
 {
     public Task<WorkoutSession?> ActiveAsync() => dbContext.WorkoutSessions.AsNoTracking()
-        .Include(w => w.WorkoutExercises).Where(w => w.UserId == currentUser.Id).Where(WorkoutStates.Active)
+        .Include(w => w.WorkoutExercises).Where(w => w.UserId == WorkoutOwnerId).Where(WorkoutStates.Active)
         .OrderByDescending(w => w.CreatedAtUtc).FirstOrDefaultAsync();
 
     // ProgramWorkout already represents a reusable prescription. Do not introduce a second template store.
@@ -20,7 +20,7 @@ public partial class WorkoutService
     {
         return await (from w in dbContext.Set<ProgramWorkout>().AsNoTracking()
                       join p in dbContext.TrainingPrograms on w.TrainingProgramId equals p.Id
-                      where !p.IsArchived && (p.OwnerId == currentUser.Id || p.IsTemplate) && w.Exercises.Any()
+                      where !p.IsArchived && (p.OwnerId == WorkoutOwnerId || p.IsTemplate) && w.Exercises.Any()
                       orderby p.IsTemplate, p.Name, w.Order
                       select new WorkoutTemplateOption(w.Id, w.Name, p.Name, w.Exercises.Count)).ToListAsync();
     }
@@ -33,19 +33,25 @@ public partial class WorkoutService
         if (source == "planned")
         {
             session = await dbContext.WorkoutSessions.Include(w => w.WorkoutExercises).ThenInclude(e => e.SetEntries)
-                .SingleOrDefaultAsync(w => w.Id == plannedId && w.UserId == currentUser.Id && w.CompletedAtUtc == null)
+                .SingleOrDefaultAsync(w => w.Id == plannedId && w.UserId == WorkoutOwnerId && w.CompletedAtUtc == null)
                 ?? throw new InvalidOperationException("Запланированная тренировка недоступна.");
             MaterializeBuilder(session);
+            foreach (var exercise in session.WorkoutExercises.Where(e => e.SetEntries.Count == 0 && e.TargetSets > 0))
+                exercise.SetEntries = Enumerable.Range(1, exercise.TargetSets!.Value).Select(n => new SetEntry
+                {
+                    SetNumber = n, Weight = exercise.TargetWeightKg ?? 0, Reps = exercise.TargetRepsMin ?? 8,
+                    RestSeconds = exercise.TargetRestSeconds, IsCompleted = false, IsWarmup = exercise.BlockKind == "warmup"
+                }).ToList();
             if (session.IsFinished) throw new InvalidOperationException("Эта тренировка уже завершена.");
         }
         else
         {
-            session = new() { UserId = currentUser.Id, Title = "Свободная тренировка" };
+            session = new() { UserId = WorkoutOwnerId, Title = "Быстрая тренировка" };
             if (source == "template") await CopyTemplateAsync(session, templateId ?? 0);
             else if (source == "previous")
             {
                 var previous = await dbContext.WorkoutSessions.AsNoTracking().Include(w => w.WorkoutExercises).ThenInclude(e => e.SetEntries)
-                    .Where(w => w.UserId == currentUser.Id && w.Date <= today && (!previousId.HasValue || w.Id == previousId.Value)).Where(WorkoutStates.Completed)
+                    .Where(w => w.UserId == WorkoutOwnerId && w.Date <= today && (!previousId.HasValue || w.Id == previousId.Value)).Where(WorkoutStates.Completed)
                     .OrderByDescending(w => w.Date).ThenByDescending(w => w.Id).FirstOrDefaultAsync()
                     ?? throw new InvalidOperationException(previousId.HasValue ? "Эта тренировка недоступна для повторения." : "Сначала завершите первую тренировку.");
                 session.Title = previous.Title;
@@ -57,6 +63,7 @@ public partial class WorkoutService
                     TargetRestSeconds = e.TargetRestSeconds, BlockKind = e.BlockKind,
                     SetEntries = e.SetEntries.Where(s => s.IsCompleted).OrderBy(s => s.SetNumber).Select(s => new SetEntry
                     { SetNumber = s.SetNumber, Weight = s.Weight, Reps = s.Reps, RestSeconds = s.RestSeconds, IsWarmup = s.IsWarmup,
+                        IsBodyweight = s.IsBodyweight, Drops = SetDropInput.ToEntries(SetDropInput.FromEntries(s.Drops)),
                         Notes = s.Notes, IsCompleted = false }).ToList()
                 }).ToList();
             }
@@ -92,7 +99,7 @@ public partial class WorkoutService
     {
         var template = await dbContext.Set<ProgramWorkout>().AsNoTracking().Include(w => w.Exercises)
             .SingleOrDefaultAsync(w => w.Id == id && dbContext.TrainingPrograms.Any(p => p.Id == w.TrainingProgramId &&
-                !p.IsArchived && (p.OwnerId == currentUser.Id || p.IsTemplate)))
+                !p.IsArchived && (p.OwnerId == WorkoutOwnerId || p.IsTemplate)))
             ?? throw new InvalidOperationException("Шаблон недоступен.");
         if (template.Exercises.Count == 0) throw new InvalidOperationException("В шаблоне пока нет упражнений.");
         var program = await dbContext.TrainingPrograms.AsNoTracking().SingleAsync(p => p.Id == template.TrainingProgramId);
@@ -167,6 +174,7 @@ public partial class WorkoutService
         var session = await EditableSessionAsync(id);
         CheckRevision(session, expectedRevision);
         var ordered = session.WorkoutExercises.OrderBy(e => e.Order).ThenBy(e => e.Id).ToList();
+        if (session.State == WorkoutStatus.Paused) throw new InvalidOperationException("Продолжите тренировку перед изменением упражнений.");
         var exercise = ordered.SingleOrDefault(e => e.Id == exerciseEntryId) ?? throw new KeyNotFoundException();
         if (action == "remove") { dbContext.WorkoutExercises.Remove(exercise); ordered.Remove(exercise); }
         else if (action == "replace")
@@ -178,7 +186,7 @@ public partial class WorkoutService
             var block = WorkoutExerciseBlocks.Describe(session)[exercise.Id];
             exercise.ExerciseId = replacementId;
             // Results belong to the old exercise; a replacement starts with fresh, uncompleted sets.
-            foreach (var set in exercise.SetEntries) { set.IsCompleted = false; set.Weight = 0; set.Rir = null; set.Notes = null; }
+            foreach (var set in exercise.SetEntries) { set.IsCompleted = false; set.Weight = 0; set.IsBodyweight = false; set.Drops.Clear(); set.Rir = null; set.Notes = null; }
             exercise.Notes = block.Key.StartsWith("plan:") || block.Kind != "strength" ? block.Name : null;
             exercise.TargetWeightKg = null; exercise.TargetRir = null; exercise.TargetRpe = null;
         }
@@ -211,7 +219,10 @@ public partial class WorkoutService
             Validator.ValidateObject(input, new ValidationContext(input), true);
             if (completed && input.Reps < 1) throw new InvalidOperationException("У выполненного подхода должно быть хотя бы одно повторение.");
             var justCompleted = completed && !set.IsCompleted;
-            set.Weight = input.Weight; set.Reps = input.Reps; set.Rir = input.Rir;
+            set.Weight = input.IsBodyweight ? 0 : input.Weight; set.Reps = input.Reps; set.Rir = input.Rir;
+            set.IsBodyweight = input.IsBodyweight;
+            set.Drops.Clear();
+            set.Drops.AddRange(SetDropInput.ToEntries(input.Drops));
             set.IsWarmup = input.IsWarmup; set.Notes = input.Notes?.Trim(); set.IsCompleted = completed;
             set.IsSkipped = !completed && skipped;
             set.RestSeconds = input.RestSeconds;
@@ -238,19 +249,19 @@ public partial class WorkoutService
 
     public async Task<bool> CanUpdateTemplateAsync(WorkoutSession session) => session.SourceProgramWorkoutId is { } source &&
         await dbContext.Set<ProgramWorkout>().AnyAsync(w => w.Id == source && dbContext.TrainingPrograms.Any(p =>
-            p.Id == w.TrainingProgramId && p.OwnerId == currentUser.Id && !p.IsTemplate && !p.IsArchived && p.Revision == session.SourceProgramRevision));
+            p.Id == w.TrainingProgramId && p.OwnerId == WorkoutOwnerId && !p.IsTemplate && !p.IsArchived && p.Revision == session.SourceProgramRevision));
 
     public async Task DecideTemplateAsync(int id, string choice, string? name, Guid? operationId = null)
     {
         if (await CommandExistsAsync(id, operationId)) return;
         var session = await VisibleWorkouts().Include(w => w.WorkoutExercises).ThenInclude(e => e.SetEntries)
             .SingleOrDefaultAsync(w => w.Id == id) ?? throw new KeyNotFoundException();
-        if (!session.CompletedAtUtc.HasValue) throw new InvalidOperationException("Сначала завершите тренировку.");
+        if (session.State != WorkoutStatus.Completed) throw new InvalidOperationException("Сохранить шаблон можно только из завершённой тренировки.");
         if (choice is not ("keep" or "update" or "new")) throw new InvalidOperationException("Выберите действие с шаблоном.");
         if (!session.TemplateDecisionPending && choice != "new") return;
         if (choice != "keep")
         {
-            if (session.UserId != currentUser.Id) throw new KeyNotFoundException();
+            if (session.UserId != WorkoutOwnerId) throw new KeyNotFoundException();
             var entries = session.WorkoutExercises.OrderBy(e => e.Order).Select(e => new
             {
                 Exercise = e,
@@ -276,7 +287,7 @@ public partial class WorkoutService
             {
                 if (string.IsNullOrWhiteSpace(name) || name.Trim().Length > 120) throw new InvalidOperationException("Название шаблона: от 1 до 120 символов.");
                 template = new() { Name = name.Trim() };
-                program = new() { OwnerId = currentUser.Id, Name = name.Trim(), Goal = "Моя тренировка", Weeks = 1, DaysPerWeek = 1, Workouts = [template] };
+                program = new() { OwnerId = WorkoutOwnerId, Name = name.Trim(), Goal = "Моя тренировка", Weeks = 1, DaysPerWeek = 1, Workouts = [template] };
                 dbContext.TrainingPrograms.Add(program);
             }
             else throw new InvalidOperationException("Выберите действие с шаблоном.");
@@ -300,3 +311,4 @@ public partial class WorkoutService
         await SaveCommandAsync(session, operationId);
     }
 }
+

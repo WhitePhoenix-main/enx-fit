@@ -23,8 +23,11 @@ public sealed class HomeProgressViewModel
             Exercises = [new(ExerciseIds.FromLegacy(1), "Жим лёжа"), new(ExerciseIds.FromLegacy(2), "Приседания")];
             ExerciseId = model.ProgressExercise == ExerciseIds.FromLegacy(2) ? ExerciseIds.FromLegacy(2) : ExerciseIds.FromLegacy(1);
             ExerciseName = Exercises.Single(e => e.Id == ExerciseId).Name;
-            Results = Enumerable.Range(0, 6).Select(i => new HomeProgressResult(new DateOnly(2026, 9, 1).AddDays(i * 6), -1,
-                (ExerciseId == ExerciseIds.FromLegacy(2) ? 70m : 55m) + i / 2 * 2.5m, 10)).ToList();
+            decimal[] weights = [65m, 66.5m, 67.5m, 68m, 68.5m, 69m, 71m, 72.5m];
+            int[] offsets = [0, 4, 8, 12, 15, 19, 23, 27];
+            Results = weights.Select((weight, i) => new HomeProgressResult(new DateOnly(2026, 9, 22).AddDays(offsets[i]), -1,
+                weight + (ExerciseId == ExerciseIds.FromLegacy(2) ? 20m : 0m), 8))
+                .Where(r => r.Date >= new DateOnly(2026, 10, 19).AddDays(1 - model.ChartWeeks * 7)).ToList();
             return;
         }
         var observations = model.Data.Completed.Where(w => w.Date <= model.Data.Until)

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root = path.resolve('enx-fit');
-const categories = new Set(['Public', 'Account', 'Dashboard', 'Training', 'Progress', 'Coaching', 'Admin', 'Errors']);
+const categories = new Set(['Public', 'Account', 'Dashboard', 'Training', 'Progress', 'Coaching', 'Nutrition', 'Admin', 'Errors']);
 const views = [];
 const errors = [];
 function visit(directory) {

@@ -1,6 +1,9 @@
 @page "/Dashboard/Plans"
 @using enx_fit.Pages.Dashboard
+@inject enx_fit.Security.IFeatureAccessService CalendarAccess
 
 @model enx_fit.Pages.Dashboard.DashboardModel
-@{ Layout = "/Pages/Shared/Layouts/_DashboardLayout.cshtml"; ViewData["Title"] = Model.Section!.Title; }
-<partial name="/Pages/Shared/Dashboard/_DashboardSection.cshtml" model="Model" />
+@{ Layout = "/Pages/Shared/Layouts/_DashboardReferenceLayout.cshtml"; ViewData["Title"] = "План / Календарь"; }
+@if((await CalendarAccess.GetAsync()).Plan!=SubscriptionPlan.Free && Request.Query["View"]!="month" && Request.Query["View"]!="list"){<partial name="/Pages/Training/_ProCalendar.cshtml" model="Model" />}else{<partial name="/Pages/Training/_ReferenceCalendar.cshtml" model="Model" />}
+
+

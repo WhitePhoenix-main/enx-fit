@@ -28,7 +28,7 @@ public partial class WorkoutService
                 e.ExerciseId, e.WorkoutSessionId, e.WorkoutSession.Date, e.WorkoutSession.Title,
                 Sets = e.SetEntries.Where(s => s.IsCompleted && !s.IsSkipped && !s.IsWarmup && s.Reps > 0)
                     .OrderBy(s => s.SetNumber).ThenBy(s => s.Id)
-                    .Select(s => new PreviousWorkingSet(s.SetNumber, s.Weight, s.Reps, s.Rir)).ToList()
+                    .Select(s => new PreviousWorkingSet(s.SetNumber, s.Weight, s.Reps, s.Rir, s.IsBodyweight, s.Drops)).ToList()
             }).ToListAsync();
         return results.ToDictionary(e => e.ExerciseId,
             e => new PreviousExerciseResult(e.WorkoutSessionId, e.Date, e.Title ?? "Прошлая тренировка", e.Sets));

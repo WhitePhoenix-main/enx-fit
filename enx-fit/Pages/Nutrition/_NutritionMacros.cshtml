@@ -1,0 +1,18 @@
+@model enx_fit.Services.Nutrition.NutritionDay
+@{
+    var energy = Model.Protein * 4 + Model.Fat * 9 + Model.Carbs * 4;
+    var protein = energy > 0 ? (int)Math.Round(Model.Protein * 400d / energy) : 0;
+    var fat = energy > 0 ? (int)Math.Round(Model.Fat * 900d / energy) : 0;
+    var carbs = energy > 0 ? 100 - protein - fat : 0;
+}
+<div class="ref-macro-summary">
+    <div class="ref-ring ref-macro-ring @(energy == 0 ? "is-empty" : "")" style="--macro-protein:@protein%;--macro-fat:@(protein + fat)%" role="img" aria-label="Распределение энергии: белки @protein%, жиры @fat%, углеводы @carbs%">
+        <div><strong>@Model.Calories.ToString("N0")</strong><small>ккал</small></div>
+    </div>
+    <div class="ref-macro-legend">
+        @foreach (var (name, value, percent, color) in new[] { ("Белки", Model.Protein, protein, "#009dff"), ("Жиры", Model.Fat, fat, "#ffb42d"), ("Углеводы", Model.Carbs, carbs, "#8c44ff") })
+        {
+            <p><i style="background:@color"></i><span>@name</span><strong>@value г</strong><small>@percent%</small></p>
+        }
+    </div>
+</div>

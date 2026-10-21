@@ -1,0 +1,32 @@
+@using enx_fit.ViewModels.Progress
+@using System.Globalization
+@model ProgressChart
+@{ var valid=Model.Points.Where(p=>p.Value.HasValue).ToArray(); var high=valid.SelectMany(p=>new[]{p.Value??0,p.Comparison??0}).DefaultIfEmpty().Max();
+   var low=Model.ZeroBaseline||valid.Length==0?0:valid.Min(p=>p.Value!.Value);
+   var span=Math.Max(1,high-low);var rough=span/4;var power=(decimal)Math.Pow(10,Math.Floor(Math.Log10((double)rough)));var fraction=rough/power;
+   var tick=(fraction<=1?1:fraction<=2?2:fraction<=2.5m?2.5m:fraction<=5?5:10)*power;
+   var min=Model.ZeroBaseline?0:Math.Max(0,Math.Floor((low-span*.1m)/tick)*tick);
+   var max=Math.Ceiling((high+(Model.ZeroBaseline?0:span*.1m))/tick)*tick;if(max<=min)max=min+tick;
+   var ticks=(int)((max-min)/tick);var count=Model.Points.Count;
+   var width=Model.Bars?320:650;var height=Model.Bars?168:218;var left=Model.Bars?40:48;var right=Model.Bars?310:618;var bottom=Model.Bars?136:176;var top=Model.Bars?18:28;
+   string N(decimal n)=>n.ToString("0.##",CultureInfo.InvariantCulture);
+   decimal X(int i)=> count<2?(right+left)/2m:left+i*(right-left)/(decimal)(count-1);
+   decimal Y(decimal value)=>bottom-(value-min)/(max-min)*(bottom-top);
+   var line=string.Join(" ",Model.Points.Select((p,i)=>(p,i)).Where(x=>x.p.Value.HasValue).Select(x=>$"{N(X(x.i))},{N(Y(x.p.Value!.Value))}"));
+   var comparison=string.Join(" ",Model.Points.Select((p,i)=>(p,i)).Where(x=>x.p.Comparison.HasValue).Select(x=>$"{N(X(x.i))},{N(Y(x.p.Comparison!.Value))}"));
+   var step=count==0?1:(right-left)/(decimal)count; var barWidth=Math.Min(35,step*.57m);
+}
+<figure class="pa-chart @(Model.Bars?"pa-chart-bars":"pa-chart-line")" aria-label="@Model.Label">
+@if(valid.Length==0||valid.All(p=>p.Value==0)){<div class="pa-chart-empty"><reference-icon name="bars-outline" /><p>Пока недостаточно данных</p><small>Здесь появятся ваши результаты.</small></div>}
+else{
+<svg viewBox="0 0 @width @height" preserveAspectRatio="none" role="img" aria-labelledby="chart-title-@Model.Id chart-desc-@Model.Id"><title id="chart-title-@Model.Id">@Model.Label (@Model.Unit)</title><desc id="chart-desc-@Model.Id">@string.Join("; ",Model.Points.Select(p=>$"{p.Label}: {ProgressOverview.Number(p.Value??0)} {Model.Unit}"))</desc>
+<defs><linearGradient id="chart-fill-@Model.Id" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--plan-accent)" stop-opacity=".28" /><stop offset="100%" stop-color="var(--plan-accent)" stop-opacity="0" /></linearGradient><linearGradient id="chart-bar-@Model.Id" x1="0" y1="0" x2="0" y2="1"><stop stop-color="var(--plan-bright)" /><stop offset="100%" stop-color="var(--plan-accent)" stop-opacity=".55" /></linearGradient></defs>
+@for(var i=0;i<=ticks;i++){var y=top+i*(bottom-top)/(decimal)ticks;var value=max-tick*i;<g class="pa-gridline"><path d="M@left @N(y) H@right" /><text x="@(left-9)" y="@N(y+4)" text-anchor="end">@ProgressOverview.Number(value)</text></g>}
+@if(Model.Bars){@for(var i=0;i<count;i++){var p=Model.Points[i];var x=left+step*i+(step-barWidth)/2;<g class="pa-chart-point" tabindex="0"><title>@p.Label: @ProgressOverview.Number(p.Value??0) @Model.Unit</title><rect x="@N(x)" y="@N(Y(p.Value??0))" width="@N(barWidth)" height="@N(bottom-Y(p.Value??0))" rx="3" fill="url(#chart-bar-@Model.Id)" /></g>}}
+else{if(valid.Length>1){<path class="pa-chart-area" d="M @N(X(0)),@bottom L @line L @N(X(count-1)),@bottom Z" fill="url(#chart-fill-@Model.Id)" />}if(comparison.Length>0){<polyline points="@comparison" class="pa-comparison-line" />}<polyline points="@line" class="pa-main-line" />@for(var i=0;i<count;i++){var p=Model.Points[i];if(p.Value is {} value){<g class="pa-chart-point" tabindex="0"><title>@p.Label: @ProgressOverview.Number(value) @Model.Unit</title><circle cx="@N(X(i))" cy="@N(Y(value))" r="4" /></g>}}}
+@for(var i=0;i<count;i++){var labelStep=(count+5)/6;if(i==0||i==count-1||i%labelStep==0&&i<count-labelStep){<g class="pa-chart-label"><text x="@N(Model.Bars?left+step*(i+.5m):X(i))" y="@(height-14)" text-anchor="middle">@Model.Points[i].Label</text></g>}}
+</svg>
+@if(!Model.Bars){<div class="pa-chart-legend"><span><i></i>@Model.Label (@Model.Unit)</span>@if(Model.ComparisonLabel is {} label){<span><i class="pa-muted-dot"></i>@label</span>}</div>}
+<details class="pa-chart-data"><summary>Данные графика</summary><table><thead><tr><th>Дата</th><th>@Model.Label, @Model.Unit</th>@if(Model.ComparisonLabel!=null){<th>@Model.ComparisonLabel</th>}</tr></thead><tbody>@foreach(var point in Model.Points){<tr><td>@point.Label</td><td>@(point.Value.HasValue?ProgressOverview.Number(point.Value.Value):"—")</td>@if(Model.ComparisonLabel!=null){<td>@(point.Comparison.HasValue?ProgressOverview.Number(point.Comparison.Value):"—")</td>}</tr>}</tbody></table></details>
+}
+</figure>

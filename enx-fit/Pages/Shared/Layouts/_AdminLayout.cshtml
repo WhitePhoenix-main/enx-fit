@@ -1,6 +1,8 @@
+@inject enx_fit.Security.IFeatureAccessService SubscriptionAccess
 @using enx_fit.ViewModels.Admin
 @using System.Security.Claims
-@{
+@{ var subscriptionAccess = await SubscriptionAccess.GetAsync();
+
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
     var accountName = string.IsNullOrWhiteSpace(User.Identity?.Name) ? "Администратор" : User.Identity.Name;
     var initial = accountName[..1].ToUpperInvariant();
@@ -27,22 +29,15 @@
         <link rel="stylesheet" href="~/css/mobile-shell.css" asp-append-version="true" />
         <link rel="stylesheet" href="~/css/admin-workspace.css" asp-append-version="true" />
         <link rel="stylesheet" href="~/css/app-components.css" asp-append-version="true" />
-    </head>
-    <body class="admin-shell em-app-shell">
+        <link rel="stylesheet" href="~/css/training-experience.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/native-app.css" asp-append-version="true" />
+        <link rel="stylesheet" href="~/css/app-chrome.css" asp-append-version="true" />
+</head>
+    <body class="admin-shell em-app-shell" data-subscription="@subscriptionAccess.Plan.ToString().ToLowerInvariant()">
         <a class="admin-skip" href="#main-content">К содержимому</a>
         <aside class="admin-sidebar" id="admin-sidebar" aria-label="Меню администратора">
             <a class="admin-brand" asp-page="/Admin/Index">
-                <span class="admin-brand-mark">
-                    <i>
-                    </i>
-                    <i>
-                    </i>
-                    <i>
-                    </i>
-                </span>
-                <span>enix<span class="admin-brand-light">fit</span>
-                    <small>ADMINISTRATION</small>
-                </span>
+                <partial name="/Pages/Shared/Navigation/_Brand.cshtml" />
             </a>
             <div class="admin-workspace">
                 <span class="admin-workspace-icon">
