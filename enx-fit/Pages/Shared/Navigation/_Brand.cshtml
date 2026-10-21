@@ -1,5 +1,7 @@
-<span class="enix-brand">
-    <span class="enix-brand-mark" aria-hidden="true"><svg viewBox="0 0 44 36" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 1h13l-9 16H7L16 1Z" fill="#75ACF4"/><path d="M32 1h12l-6 10H26L32 1Z" fill="#537DD5"/><path d="M6 20h12L9 35H0L6 20Z" fill="#4277E8"/><path d="M24 14h13L24 35H11l13-21Z" fill="#7CB8F5"/></svg></span>
+@inject enx_fit.Security.IFeatureAccessService BrandAccess
+@{ var brand = await enx_fit.Presentation.Navigation.BrandPresentation.ResolveAsync(ViewData, User, BrandAccess); }
+<span class="enix-brand" data-brand-plan="@brand.Theme" style="--brand-color:@brand.Color">
+    <span class="enix-brand-mark" aria-hidden="true"><svg viewBox="0 0 124 72" fill="currentColor" focusable="false" xmlns="http://www.w3.org/2000/svg"><use href="@Url.Content("~/images/brand/ef-mark.svg")#enix-ef" /></svg></span>
     <span class="enix-brand-copy">
         <strong class="enix-brand-name">enix fit</strong>
         <small class="enix-brand-tagline">Fitness &amp; progress</small>

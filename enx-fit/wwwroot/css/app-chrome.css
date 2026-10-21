@@ -1,24 +1,26 @@
 /* One brand mark and one mobile navigation for every application shell. */
 @font-face{font-family:EnixChrome;src:url('../fonts/app-sans-cyrillic.woff2') format('woff2');font-weight:100 900;font-display:swap;unicode-range:U+0400-052F}
 @font-face{font-family:EnixChrome;src:url('../fonts/app-sans-latin.woff2') format('woff2');font-weight:100 900;font-display:swap;unicode-range:U+0000-024F}
+@font-face{font-family:EnixNavigation;src:url('../fonts/dashboard-sans.ttf') format('truetype');font-style:normal;font-weight:100 900;font-display:swap}
 :root,[data-subscription="free"]{--chrome-accent:#009dff;--mobile-nav-bg:#020e1b;--mobile-nav-border:rgba(0,140,255,.24)}
 [data-subscription="pro"]{--chrome-accent:#ff921f;--mobile-nav-bg:#0b0d10;--mobile-nav-border:rgba(255,157,36,.22)}
 [data-subscription="coach"]{--chrome-accent:#ff5369;--mobile-nav-bg:#090d17;--mobile-nav-border:rgba(255,47,85,.2)}
-body .enix-brand{--brand-size:33px;--brand-light:#b4c8ff;--brand-middle:#8096ff;--brand-dark:#0064ff;display:inline-flex;align-items:center;flex:none;gap:10px;color:#f6f8fe;font:700 23px/1.1 EnixChrome,'Segoe UI',sans-serif;letter-spacing:-.6px;white-space:nowrap}
+body .enix-brand{--brand-size:33px;display:inline-flex;align-items:center;flex:none;gap:10px;color:#f6f8fe;font:700 23px/1.1 EnixChrome,'Segoe UI',sans-serif;letter-spacing:-.6px;white-space:nowrap}
 body .enix-brand-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
 body .enix-brand-name{display:block;margin:0;color:inherit;font:inherit;letter-spacing:inherit}
 body .enix-brand-tagline{display:none;margin:0;color:#a9bfdc;font:600 9px/1.3 EnixChrome,'Segoe UI',sans-serif;letter-spacing:.08em;text-transform:uppercase}
 body :is(.enix-landing .brand,.auth-brand,.navbar-brand) .enix-brand-tagline{display:block}
-body .enix-brand-mark{display:inline-flex;align-items:center;flex:none;width:calc(var(--brand-size)*1.22);height:var(--brand-size);vertical-align:middle}
+body .enix-brand-mark{display:inline-flex;align-items:center;flex:none;width:calc(var(--brand-size)*1.72222);height:var(--brand-size);color:var(--brand-color,#4389ff);vertical-align:middle}
 body .enix-brand-mark>svg{display:block;width:100%;height:100%;flex:none}
-body .enix-brand-mark>i{display:block;flex:none;width:calc(var(--brand-size)*.235);height:54%;margin:0;border:0;border-radius:999px;background:linear-gradient(165deg,var(--brand-light),var(--brand-middle) 42%,var(--brand-dark));box-shadow:inset 1px 1px 1px #ffffff38}
-body .enix-brand-mark>i:nth-child(2){height:77%}
-body .enix-brand-mark>i:nth-child(3){height:100%}
 .rd-app .rd-sidebar>.rd-brand{gap:7px;padding-inline:4px;font-size:20px}
 .rd-app .rd-sidebar>.rd-brand .enix-brand{--brand-size:30px;font-size:22px;gap:9px}
 .rd-app .rd-sidebar>.rd-brand .rd-badge{font-size:11px;padding-inline:6px}
 .qw-brand{gap:10px}
 .enix-bottom-nav,.enix-native-menu{display:none}
+/* Dashboard navigation owns its typography and palette independently of page themes. */
+#enix-primary-navigation{--navigation-active:#4389ff}
+body[data-subscription="pro"] #enix-primary-navigation{--navigation-active:#ffad52}
+body[data-subscription="coach"] #enix-primary-navigation{--navigation-active:#ff4668}
 .enix-more-dialog{box-sizing:border-box;width:min(480px,calc(100vw - 32px));max-width:100%;max-height:88dvh;margin:auto;padding:0;border:1px solid #354047;border-radius:24px;background:#151d22;color:#f2f4f6;font:14px/1.5 EnixChrome,'Segoe UI',sans-serif;overflow:hidden;overscroll-behavior:contain;box-shadow:0 24px 80px #0009;color-scheme:dark}
 .enix-more-dialog[open]{display:flex;flex-direction:column}
 .enix-more-dialog::backdrop{background:#050a10ae;backdrop-filter:blur(7px)}
@@ -64,25 +66,22 @@ body:has(.enix-more-dialog[open]){overflow:hidden}
 @media(max-width:1023px){
   body .enix-brand{--brand-size:28px;font-size:21px;gap:9px}
   .wellbeing-app .wb-nav{display:none}
-  body .enix-bottom-nav{box-sizing:border-box;position:fixed;z-index:50;inset:auto 0 0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;width:100%;min-height:76px;margin:0;padding:9px max(6px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));border:0;border-top:1px solid #334356;background:#0d151ef7;box-shadow:none;backdrop-filter:blur(18px);isolation:isolate}
-  body .enix-bottom-nav>:is(a,button){box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:56px;margin:0;padding:0 2px;border:0;border-radius:0;background:none;color:#b2c5e5;text-decoration:none;text-align:center;font:500 11px/16px EnixChrome,'Segoe UI',sans-serif;letter-spacing:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-  body .enix-bottom-nav svg{display:block;flex:none;width:27px;height:27px;stroke-width:1.8;color:inherit;filter:none}
-  body .enix-bottom-nav span{display:block;font:inherit;color:inherit;white-space:nowrap}
-  body .enix-bottom-nav>[aria-current="page"]{color:var(--chrome-accent);background:none;border:0;box-shadow:none}
-  body .enix-bottom-nav[data-app-navigation]{background:color-mix(in srgb,var(--mobile-nav-bg) 94%,transparent);border-top-color:var(--mobile-nav-border)}
-  body .enix-bottom-nav[data-app-navigation]>[aria-current="page"]{color:var(--plan-bright,var(--chrome-accent))}
+  body{--app-navigation-height:calc(62px + env(safe-area-inset-bottom))}
+  #enix-primary-navigation{box-sizing:border-box;position:fixed;z-index:50;inset:auto 0 0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;width:100%;min-height:var(--app-navigation-height);margin:0;padding:6px max(6px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));border:0;border-top:1px solid #30373d;background:#111518f5;box-shadow:none;backdrop-filter:blur(14px);isolation:isolate;-webkit-font-smoothing:antialiased;font-synthesis:none}
+  #enix-primary-navigation>:is(a,button){box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:43px;margin:0;padding:0 2px;border:0;border-radius:0;background:none;color:#b5bcc7;text-decoration:none;text-align:center;font:500 10px/16px EnixNavigation,Arial,sans-serif;letter-spacing:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  #enix-primary-navigation svg{display:block;flex:none;width:22px;height:22px;stroke-width:1.8;color:inherit;filter:none}
+  #enix-primary-navigation span{display:block;font:inherit;color:inherit;white-space:nowrap}
+  #enix-primary-navigation>[aria-current="page"]{color:var(--navigation-active);background:none;border:0;box-shadow:none}
+  #enix-primary-navigation>:is(a,button):focus-visible{outline:2px solid var(--navigation-active);outline-offset:-3px}
   .enix-native-menu{display:block;margin:12px;padding:10px;border:1px solid #334356;border-radius:12px;background:#101b29;color:#edf3ff;font:14px/1.5 EnixChrome,'Segoe UI',sans-serif}
   .enix-more-dialog{max-height:90dvh;margin:auto auto 0;width:min(600px,100%);padding:0;border-radius:24px 24px 0 0;border-bottom:0}
   .enix-more-dialog::before{content:"";display:block;flex:none;width:34px;height:4px;margin:10px auto 0;border-radius:4px;background:#56616a}
   .enix-more-heading{padding:18px 18px 20px}
   .enix-more-dialog .em-mobile-menu-links{padding-inline:18px}
-  html:has(.enix-bottom-nav){scroll-padding-bottom:calc(90px + env(safe-area-inset-bottom))}
+  html:has(#enix-primary-navigation){scroll-padding-bottom:calc(90px + env(safe-area-inset-bottom));scrollbar-width:none}
 }
 @media(max-width:700px){
-  body.ref-app.coach-execution>.enix-bottom-nav[data-app-navigation]{display:grid}
   body.ref-app.coach-execution .ref-coach-complete-set{bottom:calc(90px + env(safe-area-inset-bottom))}
   body.ref-app.coach-execution .rd-content{padding-bottom:calc(170px + env(safe-area-inset-bottom))}
 }
-@media(min-width:600px) and (max-width:1023px){body .enix-bottom-nav{padding-inline:max(6px,calc((100% - 620px)/2))}body .enix-bottom-nav>:is(a,button){font-size:13px}}
-@media(max-width:359px){body .enix-bottom-nav[data-app-navigation]>:is(a,button){font-size:10px}}
 @media(prefers-reduced-motion:no-preference){.enix-bottom-nav>:is(a,button){transition:color .15s}}

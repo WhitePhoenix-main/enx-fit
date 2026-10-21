@@ -12,8 +12,6 @@ namespace enx_fit.ViewModels.Navigation;
 public sealed record MobileAppNavigationViewModel(
     string Page, DashboardModel? Dashboard, bool Reference, bool IsTrainer, bool IsAdministrator, CoachContextViewModel? Client = null)
 {
-    public bool IsAdminShell { get; init; }
-
     public RouteValueDictionary RouteValues => new(Dashboard?.NavigationValues ?? (Client is not null ? new { ClientId = Client.Id } : Reference ? new { Reference = true } : null))
     {
         ["area"] = ""

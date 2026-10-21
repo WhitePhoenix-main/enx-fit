@@ -34,3 +34,10 @@ body.workout-session[data-subscription=coach]{--plan-accent:#ff4056;--plan-brigh
 .ws-session-note,.ws-exercise-note{color:var(--log-muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere;padding:6px 0;margin:0 0 8px}
 .ws-block-label{color:var(--plan-bright);font:600 12px DashboardCondensed,Arial,sans-serif;padding:6px 0;margin:0;overflow-wrap:anywhere}
 .ws-set-target{font-size:13px;line-height:1.5;color:var(--plan-bright);margin:0 0 10px;padding-bottom:9px;border-bottom:1px solid var(--log-line)}
+/* Session actions remain reachable above the shared Dashboard navigation. */
+@media(max-width:1023px){
+  .workout-session .qs-controls{bottom:var(--app-navigation-height);padding-bottom:10px}
+  .workout-session .rd-content{padding-bottom:calc(227px + env(safe-area-inset-bottom))}
+  .workout-session .log-set-options[open]>div{bottom:calc(123px + var(--app-navigation-height))}
+  .workout-session .log-toast{bottom:calc(125px + var(--app-navigation-height))}
+}
