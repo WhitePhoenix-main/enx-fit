@@ -1,0 +1,37 @@
+<dialog class="app-dialog qs-set-sheet" id="session-set-dialog" aria-labelledby="session-set-title">
+    <div class="dialog-heading"><h2 id="session-set-title">Подход</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
+    <p class="qs-sheet-context" data-session-set-context></p>
+    <p class="qs-sheet-plan" data-session-set-plan hidden></p>
+    <div class="qs-set-choices" role="group" aria-label="Тип подхода">
+        <button type="button" data-session-set-kind="working" aria-pressed="false"><reference-icon name="chart-outline" /><span>Рабочий подход</span><i aria-hidden="true"></i></button>
+        <button type="button" data-session-set-kind="warmup" aria-pressed="false"><reference-icon name="flame" /><span>Разминочный подход</span><i aria-hidden="true"></i></button>
+        <button type="button" data-session-menu-drop><reference-icon name="plus" /><span>Добавить ступень дропсета</span><reference-icon name="chevron" /></button>
+    </div>
+    <button type="button" class="qs-sheet-more" data-session-more>Другие параметры <reference-icon name="chevron" /></button>
+</dialog>
+<dialog class="app-dialog qs-rir-sheet" id="session-rir-dialog" aria-labelledby="session-rir-title">
+    <div class="dialog-heading"><h2 id="session-rir-title">Запас повторений · RIR</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
+    <p class="qs-sheet-context" data-session-rir-context></p>
+    <strong class="qs-rir-result" data-session-rir-result></strong>
+    <div class="qs-rir-comparison"><span data-session-rir-plan></span><span data-session-rir-previous></span></div>
+    <div class="qs-rir-choices" role="group" aria-label="Повторения в запасе">
+        @foreach (var rir in new[] { 0, 1, 2, 3, 4, 5 }) { <button type="button" data-session-rir-choice="@rir" aria-pressed="false">@(rir == 5 ? "5+" : rir.ToString())</button> }
+    </div>
+    <p class="qs-rir-description" data-session-rir-description aria-live="polite"></p>
+    <p class="qs-rir-help">Сколько повторений вы могли бы сделать ещё?</p>
+    <button type="button" class="qs-rir-custom-toggle" data-session-rir-custom>Ввести другое значение</button>
+    <label class="qs-rir-custom" hidden>Повторения в запасе, от 0 до 10<input type="number" min="0" max="10" step="1" inputmode="numeric" data-session-rir-input /></label>
+    <button type="button" class="button qs-sheet-primary" data-session-rir-save>Записать RIR</button>
+    <button type="button" class="qs-rir-clear" data-session-rir-clear>Не указывать</button>
+</dialog>
+<dialog class="app-dialog qs-parameters-sheet" id="session-parameters-dialog" aria-labelledby="session-parameters-title">
+    <div class="dialog-heading"><h2 id="session-parameters-title">Параметры подхода</h2><button type="button" data-close aria-label="Закрыть"><reference-icon name="close" /></button></div>
+    <p class="qs-sheet-context" data-session-parameters-context></p>
+    <p class="qs-sheet-plan" data-session-parameters-plan hidden></p>
+    <label class="qs-bodyweight-option"><input type="checkbox" data-session-bodyweight />Собственный вес</label>
+    <label>Отдых, с<input type="number" min="0" max="1800" step="1" inputmode="numeric" data-session-rest-input required /></label>
+    <label>Заметка<textarea rows="3" maxlength="500" data-session-note-input placeholder="Комментарий к подходу"></textarea></label>
+    <button type="button" class="qs-sheet-more" data-session-copy-previous>Повторить прошлый подход</button>
+    <div class="qs-set-secondary-actions"><button type="button" data-session-skip>Пропустить подход</button><button type="button" class="danger-text" data-session-remove>Удалить подход</button></div>
+    <button type="button" class="button qs-sheet-primary" data-session-parameters-save>Готово</button>
+</dialog>
