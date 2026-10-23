@@ -2388,7 +2388,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
 
     function syncMessage(message, explicitState) {
         const hasDraft = Object.keys(scratch).length > 0;
-        status.textContent = message || (queue.length ? storageAvailable ? `${queue.length} изменений на устройстве · ожидают отправки` : `${queue.length} изменений ожидают отправки · локальное восстановление недоступно` : hasDraft ? storageAvailable ? 'Черновик полей сохранён на устройстве' : 'Черновик полей остаётся на странице · восстановление недоступно' : storageAvailable ? 'Все изменения сохранены' : 'Сохранено на сервере. Локальное восстановление недоступно.');
+        status.textContent = message || (queue.length ? storageAvailable ? `${queue.length} изменений на устройстве · ожидают отправки` : `${queue.length} изменений ожидают отправки · локальное восстановление недоступно` : hasDraft ? storageAvailable ? 'Черновик полей сохранён на устройстве' : 'Черновик полей остаётся на странице · восстановление недоступно' : storageAvailable ? root.hasAttribute('data-workout-session') ? 'Сохранено' : 'Все изменения сохранены' : 'Сохранено на сервере. Локальное восстановление недоступно.');
         status.classList.toggle('has-pending', queue.length > 0);
         window.AppComponents?.setNoticeState(status, explicitState || (queue.length ? 'pending' : hasDraft ? storageAvailable ? 'local' : 'error' : 'saved'));
     }
@@ -2415,6 +2415,7 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         if (pauseButton) {
             pauseButton.dataset.control = paused ? 'resume' : 'pause';
             pauseButton.textContent = paused ? 'Продолжить' : 'Пауза';
+            pauseButton.setAttribute('aria-label', paused ? 'Продолжить тренировку' : 'Приостановить тренировку');
         }
         root.querySelectorAll('.set-form input:not([type="hidden"]),.set-form button').forEach(input => {
             if (active()) input.disabled = paused;
@@ -2765,10 +2766,11 @@ if (document.querySelector('.programs-page, .ep-heading')) {
         if (event.target.closest('[data-finish]')) {
             const forms = [...root.querySelectorAll('.set-form')],
                 completed = forms.filter(f => f.elements.namedItem('completed').checked),
-                working = completed.filter(f => !f.elements.namedItem('AddSet.IsWarmup').checked);
+                working = completed.filter(f => !f.elements.namedItem('AddSet.IsWarmup').checked && !f.classList.contains('is-skipped') && Number(f.elements.namedItem('AddSet.Reps').value) > 0);
             const volume = working.reduce((sum, f) => sum + (f.elements.namedItem('AddSet.IsBodyweight').checked ? 0 : Number(f.elements.namedItem('AddSet.Weight').value) * Number(f.elements.namedItem('AddSet.Reps').value)) +
                 [...f.querySelectorAll('[data-drop-index]')].reduce((total, row) => total + (row.querySelector('[data-bodyweight]').checked ? 0 : Number(row.querySelector('[data-drop-field="weight"]').value) * Number(row.querySelector('[data-drop-field="reps"]').value)), 0), 0);
-            document.querySelector('[data-finish-summary]').textContent = `Рабочих подходов: ${working.length} · Объём: ${volume.toLocaleString('ru-RU')} кг · Осталось: ${forms.length - completed.length}`;
+            const remaining = root.hasAttribute('data-workout-session') ? forms.filter(f => !f.elements.namedItem('AddSet.IsWarmup').checked && !f.classList.contains('is-skipped') && !f.elements.namedItem('completed').checked).length : forms.length - completed.length;
+            document.querySelector('[data-finish-summary]').textContent = `Рабочих подходов: ${working.length} · Объём: ${volume.toLocaleString('ru-RU')} кг · Осталось: ${remaining}`;
         }
         const soundButton = event.target.closest('[data-sound]');
         if (soundButton) {

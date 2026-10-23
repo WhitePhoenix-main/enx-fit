@@ -1,0 +1,76 @@
+@using System.Globalization
+@using System.Text.Json
+@using enx_fit.ViewModels.Workouts
+@model WorkoutSetViewModel
+@{
+    var s = Model.Set;
+    var e = Model.Exercise;
+    var previous = Model.Previous;
+    var drops = s.Drops.OrderBy(d => d.Order).ToArray();
+    var priorDrops = previous?.Drops.OrderBy(d => d.Order).ToArray();
+    var targetRir = e.TargetRir;
+    var targetWeight = Model.Prescription?.Weight ?? e.TargetWeightKg;
+    var targetReps = Model.Prescription?.Reps ?? e.TargetRepsMin;
+    string N(decimal value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+}
+<form method="post" asp-page-handler="Set" class="set-form log-set qs-set @(s.IsCompleted ? "is-completed" : "") @(s.IsSkipped ? "is-skipped" : "")"
+      data-effort-needed="false" data-target-rir="@targetRir" data-previous-rir="@previous?.Rir"
+      data-previous-drops="@JsonSerializer.Serialize(priorDrops, WorkoutBuilderInput.JsonOptions)">
+    <input type="hidden" name="setId" value="@s.Id" />
+    <input type="hidden" name="AddSet.WorkoutExerciseId" value="@e.Id" />
+    <input type="hidden" name="AddSet.SetNumber" value="@s.SetNumber" />
+    <div class="set-main log-set-main">
+        <button type="button" class="qs-set-number" data-session-set-menu aria-label="Подход @s.SetNumber: тип и действия" aria-haspopup="dialog" aria-controls="session-set-dialog" disabled="@Model.Locked"><span data-session-set-number>@(s.IsWarmup ? "Р" : s.SetNumber.ToString())</span><reference-icon name="chevron-down" /></button>
+        <div class="set-previous-cell">
+            @if (previous is not null)
+            {
+                @if (!Model.Locked && previous.Drops.Count == 0 && drops.Length == 0)
+                {
+                    <button type="button" data-copy-previous data-weight="@N(previous.Weight)" data-reps="@previous.Reps" data-previous-bodyweight="@previous.IsBodyweight.ToString().ToLowerInvariant()" aria-label="Повторить прошлый подход @s.SetNumber">@(previous.IsBodyweight ? "СВ" : N(previous.Weight)) × @previous.Reps</button>
+                }
+                else { <span>@(previous.IsBodyweight ? "СВ" : N(previous.Weight)) × @previous.Reps</span> }
+            }
+            else { <span>—</span> }
+        </div>
+        <input name="AddSet.Weight" type="number" inputmode="decimal" min="0" max="10000" step="0.01" value="@N(s.Weight)" aria-label="Вес подхода @s.SetNumber, кг" readonly="@Model.Locked" hidden="@s.IsBodyweight" required="@(!s.IsBodyweight)" />
+        <span class="bodyweight-value" hidden="@(!s.IsBodyweight)">Свой вес</span>
+        <input name="AddSet.Reps" type="number" inputmode="numeric" min="0" max="1000" value="@s.Reps" aria-label="Повторения подхода @s.SetNumber" readonly="@Model.Locked" required />
+        <button type="button" class="qs-rir-picker" data-session-rir aria-label="Запас повторений в подходе @s.SetNumber: @(s.Rir?.ToString() ?? "не указан")" aria-haspopup="dialog" aria-controls="session-rir-dialog" disabled="@Model.Locked"><span>@(s.Rir?.ToString() ?? "—")</span><reference-icon name="chevron-down" /></button>
+        <label class="set-completed"><input type="checkbox" name="completed" value="true" checked="@s.IsCompleted" disabled="@Model.Locked" aria-label="Подход @s.SetNumber выполнен" /><span><reference-icon name="check" /></span></label>
+    </div>
+    <div class="qs-set-caption" data-session-set-caption hidden></div>
+    <div class="qs-set-fields" hidden>
+        @if (Model.HasTarget || Model.Prescription is not null)
+        {
+            <p data-session-target>По плану: @(targetWeight is > 0 ? $"{N(targetWeight.Value)} × {targetReps}" : $"{targetReps} повт.")@if(targetRir is {} rir){<span> · RIR @rir</span>}@if(e.TargetRpe is {} rpe){<span> · RPE @rpe</span>}</p>
+        }
+        <input type="checkbox" name="AddSet.IsWarmup" value="true" checked="@s.IsWarmup" disabled="@Model.Locked" />
+        <input type="checkbox" name="AddSet.IsBodyweight" value="true" data-bodyweight checked="@s.IsBodyweight" disabled="@Model.Locked" />
+        <input type="hidden" name="AddSet.Rir" value="@s.Rir" />
+        <input type="hidden" name="AddSet.RestSeconds" value="@(s.RestSeconds ?? e.TargetRestSeconds ?? 90)" />
+        <input type="hidden" name="AddSet.Notes" value="@s.Notes" />
+        <button type="button" data-skip-set disabled="@Model.Locked">Пропустить подход</button>
+        <button type="submit" name="remove" value="true" formnovalidate disabled="@Model.Locked">Удалить подход</button>
+    </div>
+    <div class="set-drops" data-set-drops>
+        @for (var index = 0; index < drops.Length; index++)
+        {
+            var drop = drops[index];
+            var prior = priorDrops?.ElementAtOrDefault(index);
+            <div class="set-drop" data-drop-index="@index">
+                <div class="drop-main">
+                    <span class="drop-number">Д@(index + 1)</span>
+                    <span class="qs-drop-previous" data-drop-previous>@(prior is null ? "—" : $"{(prior.IsBodyweight ? "СВ" : N(prior.Weight))} × {prior.Reps}")</span>
+                    <input name="AddSet.Drops[@index].Weight" type="number" inputmode="decimal" min="0" max="10000" step="0.01" value="@N(drop.Weight)" data-drop-field="weight" aria-label="Вес дропа @(index + 1), кг" hidden="@drop.IsBodyweight" required="@(!drop.IsBodyweight)" readonly="@Model.Locked" />
+                    <span class="bodyweight-value" hidden="@(!drop.IsBodyweight)">Свой вес</span>
+                    <input name="AddSet.Drops[@index].Reps" type="number" inputmode="numeric" min="1" max="1000" value="@drop.Reps" data-drop-field="reps" aria-label="Повторения дропа @(index + 1)" required readonly="@Model.Locked" />
+                    <span class="qs-drop-effort" aria-hidden="true">—</span>
+                    <details class="log-menu qs-drop-menu"><summary aria-label="Действия дропа @(index + 1)"><reference-icon name="more" /></summary><div><label class="bodyweight-check"><input type="checkbox" name="AddSet.Drops[@index].IsBodyweight" value="true" data-drop-field="isBodyweight" data-bodyweight checked="@drop.IsBodyweight" disabled="@Model.Locked" />Собственный вес</label><button type="button" data-remove-drop disabled="@Model.Locked">Удалить ступень</button></div></details>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="qs-drop-footer" hidden="@(drops.Length == 0)"><small class="drop-help">Без отдыха между ступенями</small><button type="button" data-add-drop disabled="@(Model.Locked || drops.Length >= 10)">+ Ступень</button></div>
+    <p class="set-save-status" role="status" hidden></p>
+    @if (!Model.Locked) { <noscript><button type="submit">Сохранить подход</button></noscript> }
+</form>
