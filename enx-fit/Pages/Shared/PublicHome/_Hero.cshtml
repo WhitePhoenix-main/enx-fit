@@ -1,0 +1,23 @@
+@model enx_fit.ViewModels.Public.PublicHomeViewModel
+<section class="ph-hero ph-wrap" aria-labelledby="home-title">
+    <div class="ph-hero-copy">
+        <p class="ph-hero-category">Дневник силовых тренировок</p>
+        <h1 id="home-title">Тренировки<br /><span>и прогресс.</span></h1>
+        <p class="ph-intro">Прошлые веса, план и таймер отдыха — прямо в тренировке.</p>
+        <div class="ph-hero-actions">
+            <a class="ph-button" href="@Model.StartUrl">@Model.StartLabel <svg class="ph-icon"><use href="#ph-arrow" /></svg></a>
+        </div>
+    </div>
+    <div class="ph-hero-art" id="mobile">
+        <picture class="ph-hero-photo" aria-hidden="true">
+            <source media="(max-width: 600px)" srcset="@Url.Content("~/images/landing/home-squat-mobile.webp")" />
+            <img src="~/images/landing/home-squat.webp" asp-append-version="true" width="1659" height="948" fetchpriority="high" alt="" />
+        </picture>
+    </div>
+</section>
+<div class="ph-benefit-band"><div class="ph-benefits ph-wrap">
+    <a href="#product"><svg class="ph-icon"><use href="#ph-target" /></svg><span><b>Программы</b><small>План и расписание</small></span></a>
+    <a href="#product"><svg class="ph-icon"><use href="#ph-dumbbell" /></svg><span><b>Дневник</b><small>Подходы и отдых</small></span></a>
+    <a href="#analytics"><svg class="ph-icon"><use href="#ph-chart" /></svg><span><b>Прогресс</b><small>История и рекорды</small></span></a>
+    <a href="#coach"><svg class="ph-icon"><use href="#ph-users" /></svg><span><b>Для тренеров</b><small>Программы клиентов</small></span></a>
+</div></div>

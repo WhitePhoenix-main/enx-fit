@@ -1,0 +1,44 @@
+@using enx_fit.Presentation.Navigation
+@{ var signedIn = User.Identity?.IsAuthenticated == true; }
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#111518" />
+    <meta name="description" content="@ViewData["Description"]" />
+    <title>@ViewData["Title"] — Enix Fit</title>
+    <partial name="/Pages/Shared/Icons/_AppIcons.cshtml" />
+    <link rel="preload" href="~/fonts/dashboard-condensed.ttf" as="font" type="font/ttf" crossorigin />
+    <link rel="stylesheet" href="~/css/public-home.css" asp-append-version="true" />
+</head>
+<body class="public-home">
+    <a class="ph-skip" href="#main-content">Перейти к содержимому</a>
+    <partial name="/Pages/Shared/PublicHome/_Icons.cshtml" />
+    <header class="ph-header ph-wrap">
+        <a class="ph-logo" asp-page="/Public/Index" aria-label="Enix Fit — главная"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /></a>
+        <nav class="ph-desktop-nav" aria-label="Основная навигация">
+            <a href="#product">Продукт</a><a href="#pro">Pro</a><a href="#coach">Для тренеров</a><a href="#pricing">Тарифы</a>
+        </nav>
+        <div class="ph-header-actions">
+            @if (!signedIn) { <a class="ph-login" asp-page="/Account/Login" asp-page-handler="Login" asp-route-returnUrl="@Url.Page("/Dashboard/Index")">Войти</a> }
+            <a class="ph-button ph-header-start" href="@PublicPageLinks.Open(Url, User, "/Dashboard/Index")">@(signedIn ? "Открыть приложение" : "Начать бесплатно")</a>
+            <details class="ph-menu" data-home-menu>
+                <summary aria-label="Меню сайта"><svg class="ph-icon"><use href="#ph-menu" /></svg></summary>
+                <nav aria-label="Мобильная навигация">
+                    <a href="#product">Продукт</a><a href="#pro">Pro</a><a href="#coach">Для тренеров</a><a href="#pricing">Тарифы</a>
+                    <a asp-page="/Public/Contact">Поддержка</a><a href="@PublicPageLinks.Open(Url, User, "/Dashboard/Index")">@(signedIn ? "Открыть приложение" : "Начать бесплатно") <span aria-hidden="true">→</span></a>
+                </nav>
+            </details>
+        </div>
+    </header>
+    <main id="main-content" tabindex="-1">@RenderBody()</main>
+    <footer class="ph-footer ph-wrap">
+        <a class="ph-logo" asp-page="/Public/Index" aria-label="Enix Fit — главная"><partial name="/Pages/Shared/Navigation/_Brand.cshtml" /></a>
+        <small>© @DateTime.UtcNow.Year Enix Fit</small>
+        <nav aria-label="Ссылки в подвале"><a asp-page="/Public/Contact">Поддержка</a><a asp-page="/Public/About">О проекте</a></nav>
+        <a class="ph-button" href="@PublicPageLinks.Open(Url, User, "/Dashboard/Index")">@(signedIn ? "Открыть приложение" : "Начать бесплатно") <svg class="ph-icon"><use href="#ph-arrow" /></svg></a>
+    </footer>
+    <script src="~/js/public-home.js" asp-append-version="true" defer></script>
+</body>
+</html>

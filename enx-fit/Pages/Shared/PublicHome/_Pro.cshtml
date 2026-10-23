@@ -1,0 +1,19 @@
+@model enx_fit.ViewModels.Public.PublicHomeViewModel
+<section class="ph-feature-band ph-pro-band" id="pro" aria-labelledby="pro-title">
+    <span class="ph-anchor" id="analytics"></span>
+    <div class="ph-feature ph-wrap">
+        <div class="ph-feature-copy">
+            <p class="ph-tier-label"><span><svg class="ph-icon"><use href="#ph-crown" /></svg></span>PRO</p>
+            <h2 id="pro-title">Рекомендации по нагрузке</h2>
+            <ul class="ph-feature-list">
+                <li><span class="ph-feature-icon"><svg class="ph-icon"><use href="#ph-chart" /></svg></span><div><h3>Следующий рабочий вес</h3><p>По выполненным подходам и запасу повторений.</p></div></li>
+                <li><span class="ph-feature-icon"><svg class="ph-icon"><use href="#ph-layers" /></svg></span><div><h3>Понятное объяснение</h3><p>Почему стоит изменить вес или сохранить нагрузку.</p></div></li>
+            </ul>
+            <a class="ph-text-link" href="#plan-pro">Все возможности Pro <svg class="ph-icon"><use href="#ph-arrow" /></svg></a>
+        </div>
+        <picture class="ph-demo ph-demo-pro">
+            <source media="(max-width: 600px)" srcset="@Url.Content("~/images/landing/demos/pro-mobile.webp")" width="1230" height="1110" />
+            <img src="~/images/landing/demos/pro-desktop.webp" asp-append-version="true" width="1920" height="1281" loading="lazy" decoding="async" draggable="false" alt="Три подхода жима лёжа по 60 кг на 12 повторений с запасом 2 повтора. Рекомендация Pro: следующий рабочий вес 62,5 кг." />
+        </picture>
+    </div>
+</section>

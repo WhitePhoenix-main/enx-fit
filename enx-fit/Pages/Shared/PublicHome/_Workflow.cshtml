@@ -1,0 +1,35 @@
+@model enx_fit.ViewModels.Public.PublicHomeViewModel
+@{
+    var examples = new[] {
+        (Id: "plan", Image: "native-program", Duration: 6000, Alt: "Программа Enix Fit «Сила и масса»: тренировка на верх тела с жимом лёжа."),
+        (Id: "session", Image: "native-session", Duration: 6500, Alt: "Та же тренировка Enix Fit: записаны подходы жима штанги лёжа по 62,5 кг на 10 повторений, отдых — 90 секунд."),
+        (Id: "results", Image: "native-results", Duration: 10000, Alt: "История того же жима лёжа в Enix Fit: рабочий вес вырос с 55 до 62,5 кг за четыре недели, сохранены результаты шести тренировок.")
+    };
+}
+<section class="ph-section ph-workflow ph-wrap" id="product" aria-labelledby="product-title" data-workflow-carousel data-interval="6000">
+    <span class="ph-anchor" id="planner"></span>
+    <div class="ph-workflow-copy">
+        <h2 id="product-title">От плана до результата</h2><p class="ph-section-intro">Программа, подходы и прогресс — на примере жима лёжа.</p>
+        <ol class="ph-workflow-steps" role="tablist" aria-label="Шаги от плана до результата" aria-orientation="vertical" data-workflow-tabs>
+            <li role="presentation"><button type="button" role="tab" id="workflow-tab-plan" aria-controls="workflow-panel-plan" aria-selected="true" disabled><span class="ph-step-number" aria-hidden="true">01<svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="25" pathLength="100" data-workflow-ring /></svg></span><span><strong>Выбери программу</strong><small>«Сила и масса»: верх тела с жимом лёжа.</small></span></button></li>
+            <li role="presentation"><button type="button" role="tab" id="workflow-tab-session" aria-controls="workflow-panel-session" aria-selected="false" tabindex="-1" disabled><span class="ph-step-number" aria-hidden="true">02<svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="25" pathLength="100" data-workflow-ring /></svg></span><span><strong>Записывай подходы</strong><small>62,5 кг × 10. Вес, повторы и отдых сохранены.</small></span></button></li>
+            <li role="presentation"><button type="button" role="tab" id="workflow-tab-results" aria-controls="workflow-panel-results" aria-selected="false" tabindex="-1" disabled><span class="ph-step-number" aria-hidden="true">03<svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="25" pathLength="100" data-workflow-ring /></svg></span><span><strong>Сравнивай результаты</strong><small>Тот же жим: с 55 до 62,5 кг за четыре недели.</small></span></button></li>
+        </ol>
+    </div>
+    <div class="ph-workflow-visual">
+        <div class="ph-workflow-frame" data-workflow-frame>
+            @for (var index = 0; index < examples.Length; index++)
+            {
+                var example = examples[index];
+                <div class="ph-workflow-panel ph-workflow-panel--@example.Id" id="workflow-panel-@example.Id" role="tabpanel" aria-labelledby="workflow-tab-@example.Id" aria-hidden="@(index != 0 ? "true" : "false")" data-active="@(index == 0 ? "true" : "false")" data-duration="@example.Duration" tabindex="@(index == 0 ? 0 : -1)" hidden="@(index != 0)">
+                    <picture class="ph-demo ph-demo-program">
+                        <source media="(max-width: 600px)" srcset="@Url.Content($"~/images/landing/demos/{example.Image}-mobile.webp")" width="960" height="960" />
+                        <img src="@Url.Content($"~/images/landing/demos/{example.Image}-desktop.webp")" asp-append-version="true" width="1800" height="1040" loading="lazy" decoding="async" draggable="false" alt="@example.Alt" />
+                    </picture>
+                    <span class="ph-workflow-accent" aria-hidden="true" data-workflow-accent></span>
+                </div>
+            }
+        </div>
+        <p class="ph-sr-only" role="status" aria-live="polite" data-workflow-status></p>
+    </div>
+</section>

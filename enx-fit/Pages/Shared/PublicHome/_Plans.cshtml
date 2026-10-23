@@ -1,0 +1,36 @@
+@model enx_fit.ViewModels.Public.PublicHomeViewModel
+<section class="ph-pricing ph-wrap" id="pricing" aria-labelledby="pricing-title">
+    <h2 id="pricing-title">Тарифы</h2>
+    <div class="ph-plan-grid">
+        <article class="ph-plan-card ph-plan-free" id="plan-free" aria-labelledby="plan-free-title">
+            <div class="ph-plan-main">
+                <h3 id="plan-free-title"><span class="ph-plan-icon"><svg class="ph-icon"><use href="#ph-dumbbell" /></svg></span>Free</h3>
+                <p class="ph-plan-price"><strong>0 ₽</strong><small>бесплатно</small></p>
+                <p class="ph-plan-purpose">Записывать тренировки</p>
+                <ul class="ph-plan-points"><li>Программы без лимита</li><li>Дневник и таймер отдыха</li><li>История, рекорды и замеры</li></ul>
+                <a class="ph-button ph-plan-cta" href="@Model.StartUrl">@Model.StartLabel</a>
+            </div>
+            <details class="ph-plan-more"><summary>Подробности <svg class="ph-icon"><use href="#ph-chevron" /></svg></summary><div><p>Бесплатный дневник для регулярных тренировок:</p><ul><li>Свои программы и готовые шаблоны без подписочной квоты.</li><li>Расписание, свободные тренировки и запись после занятия.</li><li>Вес, повторения, время отдыха и история упражнений.</li><li>Личные рекорды, замеры тела и дневник питания.</li></ul></div></details>
+        </article>
+        <article class="ph-plan-card ph-plan-pro" id="plan-pro" aria-labelledby="plan-pro-title">
+            <div class="ph-plan-main">
+                <h3 id="plan-pro-title"><span class="ph-plan-icon"><svg class="ph-icon"><use href="#ph-crown" /></svg></span>Pro</h3>
+                <p class="ph-plan-price"><strong>399 ₽</strong><small>/ мес</small></p>
+                <p class="ph-plan-purpose">Выбирать нагрузку</p>
+                <ul class="ph-plan-points"><li>Всё из Free</li><li>Рекомендации рабочего веса</li><li>Проверка плато и аналитика</li></ul>
+                <a class="ph-button ph-plan-cta" href="@Model.SubscriptionUrl">Выбрать Pro</a>
+            </div>
+            <details class="ph-plan-more ph-plan-roadmap"><summary>В разработке <span>· 2 функции</span><svg class="ph-icon"><use href="#ph-chevron" /></svg></summary><div><p class="ph-future-note">Будущие функции ещё недоступны.</p><h4>План Б на 30 минут</h4><p>Есть только 30 минут? Предложим сокращение занятия с сохранением главных упражнений — с учётом времени и доступного оборудования.</p><h4>Баланс нагрузки и разгрузка</h4><p>Проверка программы и предложение облегчённой недели.</p></div></details>
+        </article>
+        <article class="ph-plan-card ph-plan-coach" id="plan-coach" aria-labelledby="plan-coach-title">
+            <div class="ph-plan-main">
+                <h3 id="plan-coach-title"><span class="ph-plan-icon"><svg class="ph-icon"><use href="#ph-users" /></svg></span>Coach</h3>
+                <p class="ph-plan-price"><strong><span>от </span>1 990 ₽</strong><small>/ мес</small></p>
+                <p class="ph-plan-purpose">Вести клиентов</p>
+                <ul class="ph-plan-points"><li>Всё из Pro</li><li>Программы и сигналы клиентов</li><li>Календарь и сообщения</li></ul>
+                <a class="ph-button ph-plan-cta" href="@Model.SubscriptionUrl">Выбрать Coach</a>
+            </div>
+            <details class="ph-plan-more ph-plan-roadmap"><summary>В разработке <span>· 2 функции</span><svg class="ph-icon"><use href="#ph-chevron" /></svg></summary><div><p class="ph-future-note">Будущие функции ещё недоступны.</p><h4>План действий по сигналам</h4><p>Приоритеты клиентов и черновики изменений для проверки тренером.</p><h4>Недельный отчёт клиенту</h4><p>Результаты, решения и следующий шаг в отчёте, который проверяет тренер.</p></div></details>
+        </article>
+    </div>
+</section>
